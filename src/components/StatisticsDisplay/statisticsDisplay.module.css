@@ -1,0 +1,14 @@
+.statisticsEnter {
+    transform: translateX(100%);
+}
+.statisticsEnterActive {
+    transform: translateX(0);
+    transition: transform 300ms ease-out;
+}
+.statisticsExit {
+    transform: translateX(0);
+}
+.statisticsExitActive {
+    transform: translateX(100%);
+    transition: transform 300ms ease-in;
+}

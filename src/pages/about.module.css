@@ -1,0 +1,92 @@
+.pageContainer {
+    min-height: calc(100vh - 55px);
+    background-color: #ecebeb;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+}
+
+.mainHeader {
+    padding: 20px;
+    color: black;
+    font-size: 35px;
+    text-align: center;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 900px;
+}
+
+.section {
+    margin-bottom: 30px;
+}
+
+.sectionHeader {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.sectionText {
+    font-size: 16px;
+    line-height: 1.5;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.memberList {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.memberItem {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.memberName {
+    font-weight: bold;
+    font-size: 18px;
+    margin-bottom: 5px;
+}
+
+.memberRole {
+    font-size: 14px;
+    color: #888;
+}
+
+.contactInfo {
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+.infoResourcesWrapper {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+/* Update the .section class if needed to control width and spacing of each column */
+.section {
+    margin-bottom: 30px;
+    flex: 1;
+    /* makes each section take equal space */
+    margin-right: 15px;
+    /* add some space between the columns */
+}
+
+/* This is to make sure the last section does not have extra margin on the right */
+.infoResourcesWrapper>.section:last-child {
+    margin-right: 0;
+}

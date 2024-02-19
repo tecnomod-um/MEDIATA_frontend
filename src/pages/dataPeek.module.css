@@ -1,0 +1,40 @@
+.dropContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 55px);
+    background-color: #f0f2f5;
+    transition: background-color 0.2s ease;
+    padding: 20px;
+}
+
+.statisticsEnter {
+    transform: translateX(100%);
+}
+.statisticsEnterActive {
+    transform: translateX(0);
+    transition: transform 300ms ease-out;
+}
+.statisticsExit {
+    transform: translateX(0);
+}
+.statisticsExitActive {
+    transform: translateX(100%);
+    transition: transform 300ms ease-in;
+}
+
+.toolTrayEnter {
+    transform: translateX(-100%);
+}
+.toolTrayEnterActive {
+    transform: translateX(0);
+    transition: transform 300ms ease-out;
+}
+.toolTrayExit {
+    transform: translateX(0);
+}
+.toolTrayExitActive {
+    transform: translateX(-100%);
+    transition: transform 300ms ease-in;
+}

@@ -1,0 +1,91 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.link {
+    text-decoration: none;
+    color: #fff;
+}
+
+.listItem {
+    list-style: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px;
+    background-color: #c22535;
+    color: #fff;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 10;
+}
+
+.menu {
+    display: flex;
+    gap: 1em;
+    font-size: 18px;
+    z-index: 11;
+}
+
+.menu div {
+    display: flex;
+    width: 100%;
+}
+
+.menu a {
+    display: block;
+    width: 100%;
+    padding: 5px 14px;
+}
+
+.menu li:hover {
+    background-color: #5f0d19;
+}
+
+input[type=checkbox] {
+    display: none;
+}
+
+.hamburger {
+    display: none;
+    font-size: 24px;
+    user-select: none;
+    cursor: pointer;
+}
+
+.hamburger,
+label[for="menuToggle"] {
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .menu {
+        display: block;
+        position: absolute;
+        background-color: #c22535;
+        right: 0;
+        left: 0;
+        text-align: center;
+        padding: 16px 0;
+        transform: translateY(calc(-100% - 50px));
+        transition: transform 0.3s ease-in-out;
+        z-index: 11;
+        top: 50px;
+    }
+
+    input[type=checkbox]:checked~.menu {
+        transform: translateY(0);
+    }
+
+    .hamburger {
+        display: block;
+    }
+}
