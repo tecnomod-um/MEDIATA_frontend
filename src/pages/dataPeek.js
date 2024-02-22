@@ -10,11 +10,15 @@ import { uploadFile, logError } from "../util/petitionHandler";
 function DataPeek() {
     const [file, setFile] = useState(null);
     const [dataStatistics, setDataStatistics] = useState(null);
+    const [filteredDataStatistics, setFilteredDataStatistics] = useState(null);
     const [uploadStatus, setUploadStatus] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     // Prevent the overlay from flickering
     const [dragCounter, setDragCounter] = useState(0);
     const isDragOver = dragCounter > 0;
+
+    // Graph control hooks
+    const [showOutliers, setShowOutliers] = useState(false);
 
     useEffect(() => {
         const upload = async () => {
@@ -25,6 +29,7 @@ function DataPeek() {
                     const data = await uploadFile(file);
                     setUploadStatus('Upload successful!');
                     setDataStatistics(data);
+                    setFilteredDataStatistics(data);
                     setFile(null);
                 } catch (error) {
                     const errorMsg = error.message || 'Upload failed';
@@ -89,20 +94,20 @@ function DataPeek() {
                 errorMessage={errorMessage}
             />
             <CSSTransition
-                in={!!dataStatistics}
+                in={!!filteredDataStatistics}
                 classNames={{
                     enter: DataPeekStyles.statisticsEnter,
                     enterActive: DataPeekStyles.statisticsEnterActive,
                     exit: DataPeekStyles.statisticsExit,
                     exitActive: DataPeekStyles.statisticsExitActive,
                 }}
-                timeout={300}
+                timeout={500}
                 unmountOnExit
             >
-                <StatisticsDisplay data={dataStatistics} />
+                <StatisticsDisplay data={filteredDataStatistics} showOutliers={showOutliers}/>
             </CSSTransition>
             <CSSTransition
-                in={!!dataStatistics}
+                in={!!filteredDataStatistics}
                 classNames={{
                     enter: DataPeekStyles.toolTrayEnter,
                     enterActive: DataPeekStyles.toolTrayEnterActive,
@@ -112,7 +117,7 @@ function DataPeek() {
                 timeout={300}
                 unmountOnExit
             >
-                <ToolTray data={dataStatistics} />
+                <ToolTray data={dataStatistics} showOutliers={showOutliers} setShowOutliers={setShowOutliers} setFilteredDataStatistics={setFilteredDataStatistics} filteredDataStatistics={filteredDataStatistics} />
             </CSSTransition>
         </div>
     );

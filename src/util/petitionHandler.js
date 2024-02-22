@@ -16,7 +16,7 @@ export const logError = (error, info) => {
         .catch(err => console.error('Error logging to server:', err));
 }
 
-export const uploadFile = async (file) => {
+export const uploadFile = async (file, onUploadProgress) => {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -25,6 +25,7 @@ export const uploadFile = async (file) => {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
+            onUploadProgress,
         });
         return response.data;
     } catch (error) {

@@ -24,8 +24,13 @@ function DataUploadButton({ onFileSelected, uploadStatus, errorMessage }) {
             />
             <button
                 className={`${DataUploadButtonStyles.button} ${DataUploadButtonStyles.big_button}`}
-                onClick={triggerFileSelect}>
-                {uploadStatus || 'Upload File'}
+                onClick={triggerFileSelect}
+                disabled={uploadStatus.includes('Uploading')}>
+                {uploadStatus.includes('Uploading') ? (
+                    <div className={DataUploadButtonStyles.spinner}></div>
+                ) : (
+                    uploadStatus || 'Upload File'
+                )}
             </button>
             {errorMessage && <p className={DataUploadButtonStyles.error}>{errorMessage}</p>}
         </div>
