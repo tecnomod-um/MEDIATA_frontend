@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
-import DataPeekStyles from "./dataPeek.module.css";
+import CsvCheckerStyles from "./csvChecker.module.css";
 import DataUploadButton from "../components/DataUploadButton/dataUploadButton";
 import StatisticsDisplay from "../components/StatisticsDisplay/statisticsDisplay";
 import ToolTray from "../components/ToolTray/toolTray";
+import EntrySearch from "../components/EntrySearch/entrySearch";
 import DragAndDropOverlay from "../components/DragAndDropOverlay/dragAndDropOverlay";
 import { CSSTransition } from 'react-transition-group';
 import { uploadFile, logError } from "../util/petitionHandler";
 
-function DataPeek() {
+function CsvChecker() {
     const [file, setFile] = useState(null);
     const [dataStatistics, setDataStatistics] = useState(null);
     const [filteredDataStatistics, setFilteredDataStatistics] = useState(null);
@@ -19,7 +20,11 @@ function DataPeek() {
 
     // Graph control hooks
     const [showOutliers, setShowOutliers] = useState(false);
+    const [isToolTrayOpen, setIsToolTrayOpen] = useState(true);
+    const [selectedEntry, setSelectedEntry] = useState(null);
+    const toggleToolTray = () => setIsToolTrayOpen(!isToolTrayOpen);
 
+    console.log(selectedEntry)
     useEffect(() => {
         const upload = async () => {
             if (file) {
@@ -86,41 +91,54 @@ function DataPeek() {
     }, []);
 
     return (
-        <div className={DataPeekStyles.dropContainer}>
+        <div className={CsvCheckerStyles.dropContainer}>
             <DragAndDropOverlay onDrop={handleFilesSelected} isVisible={isDragOver} />
-            <DataUploadButton
-                onFileSelected={handleFilesSelected}
-                uploadStatus={uploadStatus}
-                errorMessage={errorMessage}
-            />
+            {!filteredDataStatistics && (
+                <DataUploadButton
+                    onFileSelected={handleFilesSelected}
+                    uploadStatus={uploadStatus}
+                    errorMessage={errorMessage}
+                />
+            )}
             <CSSTransition
                 in={!!filteredDataStatistics}
                 classNames={{
-                    enter: DataPeekStyles.statisticsEnter,
-                    enterActive: DataPeekStyles.statisticsEnterActive,
-                    exit: DataPeekStyles.statisticsExit,
-                    exitActive: DataPeekStyles.statisticsExitActive,
+                    enter: CsvCheckerStyles.statisticsEnter,
+                    enterActive: CsvCheckerStyles.statisticsEnterActive,
+                    exit: CsvCheckerStyles.statisticsExit,
+                    exitActive: CsvCheckerStyles.statisticsExitActive,
                 }}
                 timeout={500}
                 unmountOnExit
             >
-                <StatisticsDisplay data={filteredDataStatistics} showOutliers={showOutliers}/>
+                <StatisticsDisplay data={filteredDataStatistics} showOutliers={showOutliers}
+                    onGraphClick={setSelectedEntry} selectedChart={selectedEntry} />
             </CSSTransition>
             <CSSTransition
                 in={!!filteredDataStatistics}
                 classNames={{
-                    enter: DataPeekStyles.toolTrayEnter,
-                    enterActive: DataPeekStyles.toolTrayEnterActive,
-                    exit: DataPeekStyles.toolTrayExit,
-                    exitActive: DataPeekStyles.toolTrayExitActive,
+                    enter: CsvCheckerStyles.toolTrayEnter,
+                    enterActive: CsvCheckerStyles.toolTrayEnterActive,
+                    exit: CsvCheckerStyles.toolTrayExit,
+                    exitActive: CsvCheckerStyles.toolTrayExitActive,
                 }}
                 timeout={300}
                 unmountOnExit
             >
-                <ToolTray data={dataStatistics} showOutliers={showOutliers} setShowOutliers={setShowOutliers} setFilteredDataStatistics={setFilteredDataStatistics} filteredDataStatistics={filteredDataStatistics} />
+                <ToolTray
+                    data={dataStatistics}
+                    showOutliers={showOutliers}
+                    setShowOutliers={setShowOutliers}
+                    setFilteredDataStatistics={setFilteredDataStatistics}
+                    filteredDataStatistics={filteredDataStatistics}
+                    isToolTrayOpen={isToolTrayOpen}
+                    toggleToolTray={toggleToolTray}
+                    handleFilesSelected={handleFilesSelected}
+                    selectedEntry={selectedEntry}
+                />
             </CSSTransition>
         </div>
     );
 }
 
-export default DataPeek;
+export default CsvChecker;

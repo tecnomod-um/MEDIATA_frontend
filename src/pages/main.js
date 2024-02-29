@@ -84,7 +84,7 @@ function Main() {
                 </div>
                 {/* Get Started Button */}
                 <div className={MainStyles.buttonContainer}>
-                    <Link to={"/datapeek"}>
+                    <Link to={"/csvchecker"}>
                         <button className={MainStyles.big_button}>Get Started</button>
                     </Link>
                 </div>

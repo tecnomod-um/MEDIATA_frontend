@@ -1,198 +1,104 @@
 import React from 'react';
-import { Bar, Pie, Line } from 'react-chartjs-2';
+import ContinuousChart from '../ContinuousChart/continuousChart';
+import CategoricalChart from '../CategoricalChart/categoricalChart';
+import DateChart from '../DateChart/dateChart';
+import EntrySearch from '../EntrySearch/entrySearch';
 import StatisticsDisplayStyles from './statisticsDisplay.module.css';
-import distinctColors from 'distinct-colors';
-import chroma from 'chroma-js';
-import { Chart as ChartJS, registerables } from 'chart.js';
-import 'chartjs-adapter-moment';
 
-ChartJS.register(...registerables);
+function StatisticsDisplay({ data, showOutliers, onGraphClick, selectedChart }) {
 
-function StatisticsDisplay({ data, showOutliers }) {
     console.log(data)
+    const getMissingEntriesChartText = (count, missingValuesCount) => {
+        if (missingValuesCount === 0) {
+            return 'No missing entries';
+        }
+        const missingPercentage = (missingValuesCount / count * 100).toFixed(2);
+        return `Missing Entries: ${missingValuesCount} (${missingPercentage}%)`;
+    };
 
-    const generateColorList = (statistics) => {
-        if (!statistics) return [];
-        const colorCount = Object.keys(statistics).length;
-        const palette = distinctColors({
-            count: colorCount,
-            chromaMin: 15,
-            chromaMax: 95,
-            lightMin: 65,
-            lightMax: 90
-        }).map(color => color.hex());
-
-        palette.push('#D3D3D3');
-
-        return palette;
+    let continuousDataForTable = {
+        Name: data.continuousFeatures.map(feature => feature.featureName),
+        'Count': data.continuousFeatures.map(feature => feature.count.toString()),
+        'Mean': data.continuousFeatures.map(feature => feature.typeStatistics.Mean.toFixed(2)),
+        'Std. Dev.': data.continuousFeatures.map(feature => feature.typeStatistics.StdDev.toFixed(2)),
+        'Min': data.continuousFeatures.map(feature => feature.typeStatistics.Min.toString()),
+        '1st Qrt.': data.continuousFeatures.map(feature => feature.typeStatistics.Qrt1.toFixed(2)),
+        'Median': data.continuousFeatures.map(feature => feature.typeStatistics.Median.toFixed(2)),
+        '3rd Qrt.': data.continuousFeatures.map(feature => feature.typeStatistics.Qrt3.toFixed(2)),
+        'Max': data.continuousFeatures.map(feature => feature.typeStatistics.Max.toString()),
+        'Missing Entries': data.continuousFeatures.map(feature => getMissingEntriesChartText(feature.count, feature.missingValuesCount)),
     }
 
-    const renderContinuousChart = (feature, key) => {
-        let labels = Array.from({ length: data.histograms[feature.featureName].length }, (_, i) => `Bin ${i + 1}`);
-        let dataPoints = data.histograms[feature.featureName];
-    
-        if (!showOutliers && feature.statistics.Outliers) {
-            const outliersSet = new Set(feature.statistics.Outliers);
-            labels = labels.filter((_, index) => !outliersSet.has(dataPoints[index]));
-            dataPoints = dataPoints.filter(value => !outliersSet.has(value));
-        }
-    
-        const chartData = {
-            labels,
-            datasets: [{
-                label: feature.featureName,
-                data: dataPoints,
-                backgroundColor: 'rgba(255, 159, 64, 0.2)',
-                borderColor: 'rgba(255, 159, 64, 1)',
-                borderWidth: 1,
-            }],
-        }
-
-        const chartOptions = {
-            scales: {
-                y: { beginAtZero: true },
-            },
-            plugins: {
-                legend: { display: false },
-                title: { display: true, text: feature.featureName }
-            }
-        }
-
-        return (
-            <div key={key} className={StatisticsDisplayStyles.chartContainer}>
-                <Bar data={chartData} options={chartOptions} />
-                <div className={StatisticsDisplayStyles.statisticsInfo}>
-                    <p>Count: {feature.statistics.Count}</p>
-                    <p>Mean: {feature.statistics.Mean.toFixed(2)}</p>
-                    <p>Standard Deviation: {feature.statistics.StdDev.toFixed(2)}</p>
-                    <p>Min: {feature.statistics.Min}</p>
-                    <p>Max: {feature.statistics.Max}</p>
-                    <p>Missing Values: {feature.missingValuesCount}</p>
-                </div>
-            </div>
-        );
+    const categoricalDataForTable = {
+        Name: data.categoricalFeatures.map(feature => feature.featureName),
+        'Total Count': data.categoricalFeatures.map(feature => feature.count.toString()),
+        'Mode': data.categoricalFeatures.map(feature => feature.mode || 'N/A'),
+        'Mode Frequency': data.categoricalFeatures.map(feature => feature.modeFrequency ? feature.modeFrequency.toString() : 'N/A'),
+        'Mode %': data.categoricalFeatures.map(feature => feature.modeFrequencyPercentage ? `${feature.modeFrequencyPercentage.toFixed(2)}%` : 'N/A'),
+        '2nd Mode': data.categoricalFeatures.map(feature => feature.secondMode || 'N/A'),
+        '2nd Mode Frequency': data.categoricalFeatures.map(feature => feature.secondModeFrequency ? feature.secondModeFrequency.toString() : 'N/A'),
+        '2nd Mode %': data.categoricalFeatures.map(feature => feature.secondModePercentage ? `${feature.secondModePercentage.toFixed(2)}%` : 'N/A'),
+        'Missing Entries': data.categoricalFeatures.map(feature => getMissingEntriesChartText(feature.count, feature.missingValuesCount)),
     }
 
-    const renderCategoricalChart = (feature, key) => {
-        const { MissingValues, ...cleanedStatistics } = feature.statistics;
-        const labels = Object.keys(cleanedStatistics);
-        const dataPoints = Object.values(cleanedStatistics);
-
-        if (MissingValues !== undefined) {
-            labels.push('No data');
-            dataPoints.push(MissingValues);
-        }
-
-        const colors = generateColorList(cleanedStatistics);
-        const borderColors = colors.map(color => chroma(color).darken(1.5).hex());
-
-        const chartData = {
-            labels,
-            datasets: [{
-                data: dataPoints,
-                backgroundColor: colors,
-                borderColor: borderColors,
-                borderWidth: 1,
-            }],
-        }
-
-        const chartOptions = {
-            plugins: {
-                legend: { position: 'top' },
-                title: { display: true, text: feature.featureName }
-            }
-        }
-
-        return (
-            <div key={key} className={StatisticsDisplayStyles.chartContainer}>
-                <Pie data={chartData} options={chartOptions} />
-                <div className={StatisticsDisplayStyles.statisticsInfo}>
-                    <p>Total Count: {feature.count}</p>
-                    <p>Missing Entries: {MissingValues || 0}</p>
-                </div>
-            </div>
-        )
-    }
-
-    const renderDateChart = (dateDataKey) => {
-        const dateData = data.dateStatistics[dateDataKey];
-        const sortedEntries = Object.entries(dateData.dateHistogram).sort((a, b) => new Date(a[0]) - new Date(b[0]));
-        const chartData = {
-            labels: sortedEntries.map(([date, _]) => date),
-            datasets: [{
-                label: 'Date Distribution',
-                data: sortedEntries.map(([_, count]) => count),
-                backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1,
-                fill: false,
-            }],
-        }
-
-        const chartOptions = {
-            responsive: true,
-            maintainAspectRatio: true,
-            scales: {
-                x: {
-                    type: 'time',
-                    time: {
-                        parser: 'YYYY-MM-DD',
-                        unit: 'year',
-                        displayFormats: {
-                            year: 'YYYY'
-                        }
-                    },
-                    title: {
-                        display: true,
-                        text: 'Date'
-                    },
-                    ticks: {
-                        autoSkip: true,
-                        maxTicksLimit: 20
-                    }
-                },
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Count'
-                    }
-                }
-            },
-            plugins: {
-                legend: { display: false },
-                title: { display: true, text: `${dateDataKey} Distribution Over Time` }
-            },
-            elements: {
-                line: {
-                    tension: 0
-                },
-                point: {
-                    radius: 0
-                }
-            }
-        }
-
-        return (
-            <div key={dateDataKey} className={StatisticsDisplayStyles.chartContainer} style={{ maxWidth: '100%' }}>
-                <Line data={chartData} options={chartOptions} />
-                <div className={StatisticsDisplayStyles.statisticsInfo}>
-                    <p>Total Count: {dateData.count}</p>
-                    <p>Missing Values: {dateData.missingValuesCount}</p>
-                    <p>Earliest Date: {dateData.earliestDate}</p>
-                    <p>Latest Date: {dateData.latestDate}</p>
-                </div>
-            </div>
-        );
+    if (data.dateStatistics) {
+        Object.keys(data.dateStatistics).forEach(key => {
+            const dateStat = data.dateStatistics[key];
+            continuousDataForTable.Name.push(key + ' Date');
+            continuousDataForTable.Count.push(dateStat.count.toString());
+            continuousDataForTable.Mean.push(dateStat.mean ? dateStat.mean : 'N/A');
+            continuousDataForTable['Std. Dev.'].push(dateStat.stdDev ? dateStat.stdDev.toFixed(2) : 'N/A'); // Also ensure it's toFixed(2) for consistency
+            continuousDataForTable.Min.push(dateStat.earliestDate || 'N/A');
+            continuousDataForTable['1st Qrt.'].push(dateStat.q1 || 'N/A');
+            continuousDataForTable.Median.push(dateStat.median || 'N/A');
+            continuousDataForTable['3rd Qrt.'].push(dateStat.q3 || 'N/A');
+            continuousDataForTable.Max.push(dateStat.latestDate || 'N/A');
+            continuousDataForTable['Missing Entries'].push(getMissingEntriesChartText(dateStat.count, dateStat.missingValuesCount));
+        });
     }
 
     return (
         <div className={StatisticsDisplayStyles.chartFlexContainer}>
-            {data.continuousFeatures?.map((feature, index) => renderContinuousChart(feature, `continuous-${index}`))}
-            {data.categoricalFeatures?.map((feature, index) => renderCategoricalChart(feature, `categorical-${index}`))}
-            {data.dateStatistics ? Object.keys(data.dateStatistics).map((key, index) => renderDateChart(key, `date-${index}`)) : null}
+            <div className={StatisticsDisplayStyles.tablesContainer}>
+                <div className={StatisticsDisplayStyles.entrySearchWrapper}>
+                    <EntrySearch resultData={continuousDataForTable} />
+                </div>
+                <div className={StatisticsDisplayStyles.entrySearchWrapper}>
+                    <EntrySearch resultData={categoricalDataForTable} />
+                </div>
+            </div>
+            {data.continuousFeatures?.map((feature, index) => (
+                <ContinuousChart
+                    key={`continuous-${index}`}
+                    feature={feature}
+                    showOutliers={showOutliers}
+                    missingEntriesText={getMissingEntriesChartText(feature.count, feature.missingValuesCount)}
+                    onClick={() => onGraphClick({ type: 'continuous', featureName: feature.featureName })}
+                    isSelected={selectedChart?.type === 'continuous' && selectedChart?.featureName === feature.featureName}
+                />
+            ))}
+            {data.categoricalFeatures?.map((feature, index) => (
+                <CategoricalChart
+                    key={`categorical-${index}`}
+                    feature={feature}
+                    missingEntriesText={getMissingEntriesChartText(feature.count, feature.missingValuesCount)}
+                    onClick={() => onGraphClick({ type: 'categorical', featureName: feature.featureName })}
+                    isSelected={selectedChart?.type === 'categorical' && selectedChart?.featureName === feature.featureName}
+                />
+            ))}
+            {data.dateStatistics && Object.keys(data.dateStatistics).map((key, index) => (
+                <DateChart
+                    key={`date-${index}`}
+                    dateData={data.dateStatistics[key]}
+                    dateDataKey={key}
+                    showOutliers={showOutliers}
+                    missingEntriesText={getMissingEntriesChartText(data.dateStatistics[key].count, data.dateStatistics[key].missingValuesCount)}
+                    onClick={() => onGraphClick({ type: 'date', key: key })}
+                    isSelected={selectedChart?.type === 'date' && selectedChart?.key === key}
+                />
+            ))}
         </div>
-    )
+    );
 }
 
 export default StatisticsDisplay;

@@ -5,7 +5,7 @@ import './index.css';
 import Navbar from "./components/Navbar/navbar";
 import ErrorBoundary from "./components/ErrorBoundary/errorBoundary";
 import Main from "./pages/main";
-import DataPeek from "./pages/dataPeek";
+import CsvChecker from "./pages/csvChecker";
 import About from "./pages/about";
 
 // Route definition
@@ -21,8 +21,8 @@ root.render(
                     element={<Main />}
                 ></Route>
                 <Route
-                    path="/datapeek"
-                    element={<DataPeek />}
+                    path="/csvchecker"
+                    element={<CsvChecker />}
                 ></Route>
                 <Route
                     path="/about"

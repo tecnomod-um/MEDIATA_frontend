@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { CSSTransition } from 'react-transition-group';
 import DragAndDropOverlayStyles from "./dragAndDropOverlay.module.css";
 
-const DragAndDropOverlay = ({ onDrop, isVisible }) => {
+function DragAndDropOverlay({ onDrop, isVisible }) {
     const handleDragOver = (e) => {
         e.stopPropagation();
         e.preventDefault();
@@ -42,6 +42,6 @@ const DragAndDropOverlay = ({ onDrop, isVisible }) => {
         </CSSTransition>,
         overlayContainer
     );
-};
+}
 
 export default DragAndDropOverlay;
