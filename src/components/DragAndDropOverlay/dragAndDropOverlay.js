@@ -1,19 +1,51 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { CSSTransition } from 'react-transition-group';
 import DragAndDropOverlayStyles from "./dragAndDropOverlay.module.css";
 
-function DragAndDropOverlay({ onDrop, isVisible }) {
-    const handleDragOver = (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-    };
+function DragAndDropOverlay({ onDrop }) {
+    const [isDragOver, setIsDragOver] = useState(false);
+    // prevents flickering
+    const [dragCounter, setDragCounter] = useState(0);
 
-    const handleSquareDrop = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        onDrop(e.dataTransfer.files[0]);
-    };
+    useEffect(() => {
+        const handleDragEnter = (e) => {
+            e.preventDefault();
+            setDragCounter(prevCount => prevCount + 1);
+        };
+
+        const handleDragOver = (e) => {
+            e.preventDefault();
+        };
+
+        const handleDragLeave = (e) => {
+            e.preventDefault();
+            setDragCounter(prevCount => prevCount - 1);
+        };
+
+        const handleDrop = (e) => {
+            e.preventDefault();
+            setIsDragOver(false);
+            setDragCounter(0);
+            onDrop(e.dataTransfer.files[0]);
+        };
+
+        window.addEventListener('dragenter', handleDragEnter);
+        window.addEventListener('dragover', handleDragOver);
+        window.addEventListener('dragleave', handleDragLeave);
+        window.addEventListener('drop', handleDrop);
+
+        return () => {
+            window.removeEventListener('dragenter', handleDragEnter);
+            window.removeEventListener('dragover', handleDragOver);
+            window.removeEventListener('dragleave', handleDragLeave);
+            window.removeEventListener('drop', handleDrop);
+        };
+    }, [onDrop]);
+
+    useEffect(() => {
+        setIsDragOver(dragCounter > 0);
+    }, [dragCounter]);
 
     let overlayContainer = document.getElementById('overlay');
     if (!overlayContainer) {
@@ -24,7 +56,7 @@ function DragAndDropOverlay({ onDrop, isVisible }) {
 
     return ReactDOM.createPortal(
         <CSSTransition
-            in={isVisible}
+            in={isDragOver}
             classNames={{
                 enter: DragAndDropOverlayStyles.fadeEnter,
                 enterActive: DragAndDropOverlayStyles.fadeEnterActive,
@@ -34,8 +66,8 @@ function DragAndDropOverlay({ onDrop, isVisible }) {
             timeout={200}
             unmountOnExit
         >
-            <div className={DragAndDropOverlayStyles.dropOverlay} onDragOver={handleDragOver}>
-                <div className={DragAndDropOverlayStyles.dropSquare} onDrop={handleSquareDrop} onDragOver={handleDragOver}>
+            <div className={DragAndDropOverlayStyles.dropOverlay} onDragOver={(e) => e.preventDefault()}>
+                <div className={DragAndDropOverlayStyles.dropSquare} onDragOver={(e) => e.preventDefault()}>
                     Drop .csv file here
                 </div>
             </div>

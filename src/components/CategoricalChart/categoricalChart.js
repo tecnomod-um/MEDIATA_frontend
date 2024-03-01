@@ -23,7 +23,7 @@ const generateColorList = (statistics) => {
 }
 
 function CategoricalChart({ feature, onClick, isSelected, missingEntriesText }) {
-    const statistics = feature.typeStatistics;
+    const statistics = feature.categoryCounts;
     const labels = Object.keys(statistics).filter(stat => stat !== 'MissingValues');
     const dataPoints = labels.map(label => statistics[label]);
     if (feature.missingValuesCount > 0) {

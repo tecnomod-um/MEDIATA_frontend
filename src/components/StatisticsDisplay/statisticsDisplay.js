@@ -15,18 +15,22 @@ function StatisticsDisplay({ data, showOutliers, onGraphClick, selectedChart }) 
         const missingPercentage = (missingValuesCount / count * 100).toFixed(2);
         return `Missing Entries: ${missingValuesCount} (${missingPercentage}%)`;
     };
+    const formatMissingEntries = (count, missingValuesCount) => {
+        const missingPercentage = (missingValuesCount / count * 100).toFixed(2);
+        return missingValuesCount === 0 ? '0 (0%)' : `${missingValuesCount} (${missingPercentage}%)`;
+    };
 
     let continuousDataForTable = {
         Name: data.continuousFeatures.map(feature => feature.featureName),
         'Count': data.continuousFeatures.map(feature => feature.count.toString()),
-        'Mean': data.continuousFeatures.map(feature => feature.typeStatistics.Mean.toFixed(2)),
-        'Std. Dev.': data.continuousFeatures.map(feature => feature.typeStatistics.StdDev.toFixed(2)),
-        'Min': data.continuousFeatures.map(feature => feature.typeStatistics.Min.toString()),
-        '1st Qrt.': data.continuousFeatures.map(feature => feature.typeStatistics.Qrt1.toFixed(2)),
-        'Median': data.continuousFeatures.map(feature => feature.typeStatistics.Median.toFixed(2)),
-        '3rd Qrt.': data.continuousFeatures.map(feature => feature.typeStatistics.Qrt3.toFixed(2)),
-        'Max': data.continuousFeatures.map(feature => feature.typeStatistics.Max.toString()),
-        'Missing Entries': data.continuousFeatures.map(feature => getMissingEntriesChartText(feature.count, feature.missingValuesCount)),
+        'Mean': data.continuousFeatures.map(feature => feature.mean.toFixed(2)),
+        'Std. Dev.': data.continuousFeatures.map(feature => feature.stdDev.toFixed(2)),
+        'Min': data.continuousFeatures.map(feature => feature.min.toString()),
+        '1st Qrt.': data.continuousFeatures.map(feature => feature.qrt1.toFixed(2)),
+        'Median': data.continuousFeatures.map(feature => feature.median.toFixed(2)),
+        '3rd Qrt.': data.continuousFeatures.map(feature => feature.qrt3.toFixed(2)),
+        'Max': data.continuousFeatures.map(feature => feature.max.toString()),
+        'Missing Entries': data.continuousFeatures.map(feature => formatMissingEntries(feature.count, feature.missingValuesCount)),
     }
 
     const categoricalDataForTable = {
@@ -38,7 +42,7 @@ function StatisticsDisplay({ data, showOutliers, onGraphClick, selectedChart }) 
         '2nd Mode': data.categoricalFeatures.map(feature => feature.secondMode || 'N/A'),
         '2nd Mode Frequency': data.categoricalFeatures.map(feature => feature.secondModeFrequency ? feature.secondModeFrequency.toString() : 'N/A'),
         '2nd Mode %': data.categoricalFeatures.map(feature => feature.secondModePercentage ? `${feature.secondModePercentage.toFixed(2)}%` : 'N/A'),
-        'Missing Entries': data.categoricalFeatures.map(feature => getMissingEntriesChartText(feature.count, feature.missingValuesCount)),
+        'Missing Entries': data.categoricalFeatures.map(feature => formatMissingEntries(feature.count, feature.missingValuesCount)),
     }
 
     if (data.dateStatistics) {
@@ -47,13 +51,13 @@ function StatisticsDisplay({ data, showOutliers, onGraphClick, selectedChart }) 
             continuousDataForTable.Name.push(key + ' Date');
             continuousDataForTable.Count.push(dateStat.count.toString());
             continuousDataForTable.Mean.push(dateStat.mean ? dateStat.mean : 'N/A');
-            continuousDataForTable['Std. Dev.'].push(dateStat.stdDev ? dateStat.stdDev.toFixed(2) : 'N/A'); // Also ensure it's toFixed(2) for consistency
+            continuousDataForTable['Std. Dev.'].push(dateStat.stdDev ? dateStat.stdDev.toFixed(2) : 'N/A');
             continuousDataForTable.Min.push(dateStat.earliestDate || 'N/A');
             continuousDataForTable['1st Qrt.'].push(dateStat.q1 || 'N/A');
             continuousDataForTable.Median.push(dateStat.median || 'N/A');
             continuousDataForTable['3rd Qrt.'].push(dateStat.q3 || 'N/A');
             continuousDataForTable.Max.push(dateStat.latestDate || 'N/A');
-            continuousDataForTable['Missing Entries'].push(getMissingEntriesChartText(dateStat.count, dateStat.missingValuesCount));
+            continuousDataForTable['Missing Entries'].push(formatMissingEntries(dateStat.count, dateStat.missingValuesCount));
         });
     }
 

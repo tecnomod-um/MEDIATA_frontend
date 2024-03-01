@@ -6,8 +6,8 @@ ChartJS.register(...registerables);
 
 function ContinuousChart({ feature, showOutliers, onClick, isSelected, missingEntriesText }) {
     console.log(isSelected)
-    let histogram = feature.typeStatistics.Histogram;
-    let binRanges = feature.typeStatistics.BinRanges || [];
+    let histogram = feature.histogram;
+    let binRanges = feature.binRanges || [];
 
     let labels = histogram ? Array.from({ length: histogram.length }, (_, i) => binRanges[i]) : [];
     let dataPoints = histogram || [];
