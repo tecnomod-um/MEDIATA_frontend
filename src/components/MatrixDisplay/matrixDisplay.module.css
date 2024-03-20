@@ -1,0 +1,155 @@
+.statsContainer {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: calc(100vh - 55px);
+    width: 100vw;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.statsBlock {
+    top: -25px;
+    overflow: auto;
+    width: calc(100% - 40px);
+    max-height: 95vh;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.selectPosition {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 50px;
+    z-index: 10;
+    font-weight: bold;
+    width: 100%;
+    max-width: 190px;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+}
+
+.matrixCorner {
+    position: relative;
+    width: auto;
+    min-width: 200px;
+    background-color: transparent;
+    border: none;
+}
+
+.tabs {
+    display: flex;
+    justify-content: center;
+}
+
+.tab {
+    font-size: 1em;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    background-color: #c22535;
+    border: none;
+    border-radius: 15px;
+
+    transition: all 0.5s ease-in-out;
+    background-image: linear-gradient(to right, #c22535, #e14e53, #eb3941, #e2373f);
+    box-shadow: 0 3px 8px rgba(242, 97, 103, 0.3);
+}
+
+.tab:hover {
+    background-position: 100% 0;
+}
+
+.tab:not(.activeTab) {
+    background-color: #f3f3f3;
+    color: #333;
+    background-image: none;
+    box-shadow: none;
+}
+
+.activeTab {
+    background-position: 100% 0;
+}
+
+.statsTitle {
+    font-size: 1.8em;
+    font-weight: bold;
+    text-align: center;
+    color: #c22535;
+    padding: 5px 0px;
+    border-radius: 4px;
+    display: inline-block;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.matrix {
+    position: relative;
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0;
+}
+
+.matrixHeader {
+    background-color: #c22535;
+    color: #fff;
+    padding: 20px 10px;
+    border: 1px solid #c22535;
+    text-align: center;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.matrixCell {
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    text-align: center;
+    background-color: #f9f9f9;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.matrixCell:hover {
+    background-color: #f0f0f0;
+}
+
+.matrixCell.diagonal {
+    background-color: #c22535;
+    color: #fff;
+}
+
+.statsBlock::-webkit-scrollbar {
+    height: 6px;
+}
+
+.statsBlock::-webkit-scrollbar-thumb {
+    background-color: #c22535;
+    border-radius: 3px;
+}
+
+.statsBlock::-webkit-scrollbar-track {
+    background-color: #f7f7f7;
+}
+
+@media (max-width: 768px) {
+    .selectPosition {
+        width: 70%;
+    }
+
+    .matrixCorner,
+    .matrixHeader {
+        min-width: 120px;
+    }
+}
+
+@media (max-width: 480px) {
+    .statsTitle {
+        font-size: 1.5em;
+    }
+}

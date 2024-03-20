@@ -6,7 +6,6 @@ import { Chart as ChartJS, registerables } from 'chart.js';
 ChartJS.register(...registerables);
 
 function DateChart({ dateData, dateDataKey, showOutliers, onClick, isSelected, missingEntriesText }) {
-    console.log(isSelected)
     const sortedEntries = Object.entries(dateData.dateHistogram).sort((a, b) => new Date(a[0]) - new Date(b[0]));
     const outlierDatesSet = new Set(dateData.outliers);
 
@@ -34,7 +33,7 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, isSelected, m
             borderWidth: 1,
             fill: false,
         }],
-    };
+    }
 
     const chartOptions = {
         responsive: true,

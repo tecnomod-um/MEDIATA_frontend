@@ -3,8 +3,8 @@
     color: #fff;
     position: fixed;
     right: 0;
-    top: 55px; /* Start below the navbar */
-    height: calc(100% - 55px); /* Extend to the bottom, accounting for the navbar height */
+    top: 55px;
+    height: calc(100% - 55px);
     min-width: 250px;
     width: 20%;
     transform: translateX(100%);
@@ -13,9 +13,8 @@
     z-index: 12;
     flex-direction: column;
     padding: 20px;
-    box-shadow: -2px 0 5px rgba(0,0,0,0.5);
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5);
 }
-
 
 .open {
     transform: translateX(0);
@@ -25,31 +24,13 @@
     transform: translateX(100%);
 }
 
-.uploadButtonContainer {
-    margin-bottom: 20px;
-}
-
-.columnSelector, .exportButton {
-    margin-bottom: 20px;
-}
-
-.exportButton button, .uploadButtonContainer button {
-    cursor: pointer;
-    background-color: #444;
-    border: none;
-    color: white;
-    padding: 10px 20px;
-    margin: 5px;
-    border-radius: 5px;
-}
-
 .toggleButton {
-    position: fixed;
+    position: absolute;
     left: -30px;
     top: 0px;
     width: 30px;
     height: 8%;
-    background-color: #c22535; 
+    background-color: #c22535;
     color: white;
     display: flex;
     align-items: center;
@@ -58,7 +39,208 @@
     border-radius: 0 0 0 15px;
 }
 
-
 .toggleButton:hover {
     background-color: #5f0d19;
+}
+
+.uploadButtonContainer button,
+.exportButton button {
+    cursor: pointer;
+    background-color: #444;
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    margin: 10px auto;
+    display: block;
+    width: 90%;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.uploadButtonContainer button:hover,
+.exportButton button:hover {
+    background-color: #555;
+}
+
+.featuresList {
+    color: #333;
+    background-color: #eee;
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    overflow-y: auto;
+    max-height: 300px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    scrollbar-width: thin;
+    scrollbar-color: #888 #f1f1f1;
+}
+
+.featuresList::-webkit-scrollbar {
+    width: 5px;
+}
+
+.featuresList::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.featuresList::-webkit-scrollbar-thumb {
+    background: #888;
+}
+
+.featuresList::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.featuresList ul {
+    list-style: none;
+    padding: 0;
+}
+
+.featuresList li {
+    padding: 5px 0;
+}
+
+.featuresList label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+#toggleOutliers {
+    margin-left: 10px;
+}
+
+.selectedGraphInfo,
+.topSection {
+    background-color: #f0f0f0;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.selectedGraphInfo h3,
+.topSection h3 {
+    text-align: center;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    display: block;
+}
+
+.selectedGraphInfo p,
+.topSection p {
+    margin: 5px 0;
+}
+
+.sectionTitle {
+    margin: 10px 0;
+    color: #fff;
+}
+
+.toggleFeatureTypeButton {
+    background-color: #444;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: bold;
+    width: 100%;
+    min-height: 40px;
+    transition: background-color 0.3s;
+}
+
+.toggleFeatureTypeButton:hover {
+    background-color: #555;
+}
+
+.toggleFeatureTypeButton:disabled {
+    background-color: #333;
+    color: #aaa;
+    cursor: not-allowed;
+}
+
+.iconSpin {
+    font-size: 20px;
+}
+
+.toggleFeatureTypeButton:hover .iconSpin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(360deg);
+    }
+
+    100% {
+        transform: rotate(0deg);
+    }
+}
+
+.outliersToggleSection {
+    background-color: #f0f0f0;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #333;
+}
+
+.outliersLabel {
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.outliersSwitch {
+    margin-left: 10px;
+}
+
+/* Enhanced spinner styles with larger and more spaced-out dots */
+.spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px; /* Increase as needed to accommodate larger, spaced-out dots */
+    height: 20px; /* Adjust height if needed, based on the new dot size */
+}
+
+.spinner div {
+    width: 10px; /* Increase dot size */
+    height: 10px; /* Increase dot size */
+    background-color: #fff;
+    border-radius: 50%;
+    display: inline-block;
+    animation: dotFlashing 1s infinite linear;
+    margin: 0 5px; /* Add space between dots */
+}
+
+.spinner div:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.spinner div:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes dotFlashing {
+    0%, 100% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
 }

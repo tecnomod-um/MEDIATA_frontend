@@ -5,7 +5,6 @@ import { Chart as ChartJS, registerables } from 'chart.js';
 ChartJS.register(...registerables);
 
 function ContinuousChart({ feature, showOutliers, onClick, isSelected, missingEntriesText }) {
-    console.log(isSelected)
     let histogram = feature.histogram;
     let binRanges = feature.binRanges || [];
 

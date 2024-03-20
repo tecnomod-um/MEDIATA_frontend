@@ -25,23 +25,30 @@ const generateColorList = (statistics) => {
 function CategoricalChart({ feature, onClick, isSelected, missingEntriesText }) {
     const statistics = feature.categoryCounts;
     const labels = Object.keys(statistics).filter(stat => stat !== 'MissingValues');
-    const dataPoints = labels.map(label => statistics[label]);
-    if (feature.missingValuesCount > 0) {
-        labels.push('No data');
-        dataPoints.push(feature.missingValuesCount);
-    }
     const colors = generateColorList(statistics);
     const borderColors = colors.map(color => chroma(color).darken(1.5).hex());
 
-    const chartData = {
-        labels,
-        datasets: [{
-            label: feature.featureName,
-            data: dataPoints,
-            backgroundColor: colors,
-            borderColor: borderColors,
+    const datasets = labels.map((label, index) => ({
+        label: label,
+        data: [statistics[label]],
+        backgroundColor: colors[index],
+        borderColor: borderColors[index],
+        borderWidth: 1,
+    }));
+
+    if (feature.missingValuesCount > 0) {
+        datasets.push({
+            label: 'No data',
+            data: [feature.missingValuesCount],
+            backgroundColor: '#D3D3D3',
+            borderColor: chroma('#D3D3D3').darken(1.5).hex(),
             borderWidth: 1,
-        }],
+        });
+    }
+
+    const chartData = {
+        labels: [''],
+        datasets: datasets,
     };
 
     const chartOptions = {
@@ -49,39 +56,30 @@ function CategoricalChart({ feature, onClick, isSelected, missingEntriesText }) 
         plugins: {
             legend: {
                 display: true,
-                position: 'top'
+                position: 'top',
             },
             title: {
                 display: true,
-                text: feature.featureName
-            }
+                text: feature.featureName,
+            },
         },
         scales: {
             x: {
                 beginAtZero: true,
+            },
+            y: {
+                ticks: {
+                    display: false
+                }
             }
-        }
+        },
     };
 
     return (
         <div className={`${CategoricalChartStyles.chartContainer} ${isSelected ? CategoricalChartStyles.selected : ''}`} onClick={onClick}>
             <Bar data={chartData} options={chartOptions} />
-            {/*
-            <div className={CategoricalChartStyles.statisticsInfo}>
-                <p>Total Count: {feature.count}</p>
-                <p>Cardinality: {feature.cardinality}</p>
-                {feature.mode && (
-                    <>
-                        <p>Mode: {feature.mode} </p>
-                        <p>Mode Frequency: {feature.modeFrequency} ({feature.modeFrequencyPercentage.toFixed(2)}%)</p>
-                    </>
-                )}
-                <p>{missingEntriesText}</p>
-            </div>
-                */}
         </div>
     );
 }
 
 export default CategoricalChart;
-

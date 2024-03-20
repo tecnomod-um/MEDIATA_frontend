@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo } from "react";
 import EntryTable from "../EntryTable/entryTable";
 import EntrySearchStyles from "./entrySearch.module.css";
 
-function EntrySearch({ resultData }) {
+function EntrySearch({ resultData, onRowSelect, selectedEntry, type }) {
     const [searchTerm, setSearchTerm] = useState("");
 
     const handleChange = e => setSearchTerm(e.target.value.toLowerCase());
@@ -12,9 +12,7 @@ function EntrySearch({ resultData }) {
         if (resultData) {
             Object.keys(resultData).forEach(key => {
                 filteredResult[key] = resultData[key].filter((_, idx) => {
-                    // Check if the searchTerm exists in any of the array entries at the current index
-                    return Object.values(resultData).some(array =>
-                        array[idx] && array[idx].toLowerCase().includes(searchTerm)
+                    return Object.values(resultData).some(array => array[idx] && String(array[idx]).toLowerCase().includes(searchTerm)
                     );
                 });
             });
@@ -37,7 +35,7 @@ function EntrySearch({ resultData }) {
                 {Object.values(filteredResult)[0]?.length}
             </span>
             <div className={EntrySearchStyles.dataContainer}>
-                <EntryTable filteredLists={filteredResult} minCellWidth={120} />
+                <EntryTable filteredLists={filteredResult} minCellWidth={120} onRowSelect={onRowSelect} selectedEntry={selectedEntry} type={type} />
             </div>
         </span>
     );

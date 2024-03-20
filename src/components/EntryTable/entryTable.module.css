@@ -8,6 +8,8 @@
     color: #333333;
     border-collapse: separate;
     border-spacing: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid #dee2e6;
 }
 
 .resThead,
@@ -18,9 +20,10 @@
 
 .resTh {
     position: relative;
-    font-size: 18px;
-    background-color: #f0f0f0;
+    font-size: 16px;
+    background-color: #f8f9fa;
     padding: 10px;
+    color: #495057;
 }
 
 .resTable .resTh,
@@ -28,7 +31,7 @@
     text-align: left;
     min-width: 100px;
     padding: 10px;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e9ecef;
 }
 
 .resSpan {
@@ -39,7 +42,7 @@
 }
 
 .resTable .resTr .resTd {
-    border-top: 1px solid #ccc;
+    border-top: 1px solid #dee2e6;
 }
 
 .resizeHandle {
@@ -54,11 +57,11 @@
 }
 
 .resizeHandle:hover {
-    border-color: #f47e7e;
+    border-color: #adb5bd;
 }
 
 .resizeHandle.active {
-    border-color: #c22535;
+    border-color: #6c757d;
 }
 
 .resTable::-webkit-scrollbar {
@@ -74,13 +77,36 @@
     background-color: #f5f5f5;
 }
 
-.resTable,
-.resTh,
-.resTd {
-    border-radius: 0;
+.selectedEntry {
+    background-color: #e9ecef;
+    transition: background-color 0.3s ease;
 }
 
-.resTable {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e0e0e0;
+.resTh,
+.resTd {
+    display: flex;
+    align-items: center;
+    min-height: 40px;
+    max-height: 60px;
+}
+
+.resTh>span,
+.resTd>span {
+    padding: 0 10px;
+}
+
+.resTr {
+    height: auto;
+    max-height: 60px;
+}
+
+.resTable .resTbody .fillerRow .resTd {
+    background-color: #f7f7f7;
+    color: #ccc;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }

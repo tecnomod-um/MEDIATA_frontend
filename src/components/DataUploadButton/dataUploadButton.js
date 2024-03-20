@@ -1,5 +1,5 @@
 // DataUploadButton.js
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import DataUploadButtonStyles from './dataUploadButton.module.css';
 
 function DataUploadButton({ onFileSelected, uploadStatus, errorMessage }) {
@@ -11,8 +11,9 @@ function DataUploadButton({ onFileSelected, uploadStatus, errorMessage }) {
         const files = event.target.files;
         if (files && files.length > 0) {
             onFileSelected(files[0]);
+            event.target.value = '';
         }
-    }
+    };
 
     return (
         <div className={DataUploadButtonStyles.container}>
@@ -34,7 +35,7 @@ function DataUploadButton({ onFileSelected, uploadStatus, errorMessage }) {
             </button>
             {errorMessage && <p className={DataUploadButtonStyles.error}>{errorMessage}</p>}
         </div>
-    )
+    );
 }
 
 export default DataUploadButton;

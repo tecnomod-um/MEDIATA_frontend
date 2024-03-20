@@ -5,9 +5,8 @@ import DateChart from '../DateChart/dateChart';
 import EntrySearch from '../EntrySearch/entrySearch';
 import StatisticsDisplayStyles from './statisticsDisplay.module.css';
 
-function StatisticsDisplay({ data, showOutliers, onGraphClick, selectedChart }) {
+function StatisticsDisplay({ data, showOutliers, setSelectedEntry, selectedEntry }) {
 
-    console.log(data)
     const getMissingEntriesChartText = (count, missingValuesCount) => {
         if (missingValuesCount === 0) {
             return 'No missing entries';
@@ -45,18 +44,17 @@ function StatisticsDisplay({ data, showOutliers, onGraphClick, selectedChart }) 
         'Missing Entries': data.categoricalFeatures.map(feature => formatMissingEntries(feature.count, feature.missingValuesCount)),
     }
 
-    if (data.dateStatistics) {
-        Object.keys(data.dateStatistics).forEach(key => {
-            const dateStat = data.dateStatistics[key];
-            continuousDataForTable.Name.push(key + ' Date');
-            continuousDataForTable.Count.push(dateStat.count.toString());
-            continuousDataForTable.Mean.push(dateStat.mean ? dateStat.mean : 'N/A');
+    if (data.dateFeatures && data.dateFeatures.length > 0) {
+        data.dateFeatures.forEach(dateStat => {
+            continuousDataForTable.Name.push(dateStat.featureName);
+            continuousDataForTable['Count'].push(dateStat.count);
+            continuousDataForTable['Mean'].push(dateStat.mean ? dateStat.mean : 'N/A');
             continuousDataForTable['Std. Dev.'].push(dateStat.stdDev ? dateStat.stdDev.toFixed(2) : 'N/A');
-            continuousDataForTable.Min.push(dateStat.earliestDate || 'N/A');
+            continuousDataForTable['Min'].push(dateStat.earliestDate || 'N/A');
             continuousDataForTable['1st Qrt.'].push(dateStat.q1 || 'N/A');
-            continuousDataForTable.Median.push(dateStat.median || 'N/A');
+            continuousDataForTable['Median'].push(dateStat.median || 'N/A');
             continuousDataForTable['3rd Qrt.'].push(dateStat.q3 || 'N/A');
-            continuousDataForTable.Max.push(dateStat.latestDate || 'N/A');
+            continuousDataForTable['Max'].push(dateStat.latestDate || 'N/A');
             continuousDataForTable['Missing Entries'].push(formatMissingEntries(dateStat.count, dateStat.missingValuesCount));
         });
     }
@@ -65,10 +63,10 @@ function StatisticsDisplay({ data, showOutliers, onGraphClick, selectedChart }) 
         <div className={StatisticsDisplayStyles.chartFlexContainer}>
             <div className={StatisticsDisplayStyles.tablesContainer}>
                 <div className={StatisticsDisplayStyles.entrySearchWrapper}>
-                    <EntrySearch resultData={continuousDataForTable} />
+                    <EntrySearch resultData={continuousDataForTable} onRowSelect={setSelectedEntry} selectedEntry={selectedEntry} type="continuous" />
                 </div>
                 <div className={StatisticsDisplayStyles.entrySearchWrapper}>
-                    <EntrySearch resultData={categoricalDataForTable} />
+                    <EntrySearch resultData={categoricalDataForTable} onRowSelect={setSelectedEntry} selectedEntry={selectedEntry} type="categorical" />
                 </div>
             </div>
             {data.continuousFeatures?.map((feature, index) => (
@@ -77,8 +75,8 @@ function StatisticsDisplay({ data, showOutliers, onGraphClick, selectedChart }) 
                     feature={feature}
                     showOutliers={showOutliers}
                     missingEntriesText={getMissingEntriesChartText(feature.count, feature.missingValuesCount)}
-                    onClick={() => onGraphClick({ type: 'continuous', featureName: feature.featureName })}
-                    isSelected={selectedChart?.type === 'continuous' && selectedChart?.featureName === feature.featureName}
+                    onClick={() => setSelectedEntry({ type: 'continuous', featureName: feature.featureName })}
+                    isSelected={selectedEntry?.type === 'continuous' && selectedEntry?.featureName === feature.featureName}
                 />
             ))}
             {data.categoricalFeatures?.map((feature, index) => (
@@ -86,19 +84,19 @@ function StatisticsDisplay({ data, showOutliers, onGraphClick, selectedChart }) 
                     key={`categorical-${index}`}
                     feature={feature}
                     missingEntriesText={getMissingEntriesChartText(feature.count, feature.missingValuesCount)}
-                    onClick={() => onGraphClick({ type: 'categorical', featureName: feature.featureName })}
-                    isSelected={selectedChart?.type === 'categorical' && selectedChart?.featureName === feature.featureName}
+                    onClick={() => setSelectedEntry({ type: 'categorical', featureName: feature.featureName })}
+                    isSelected={selectedEntry?.type === 'categorical' && selectedEntry?.featureName === feature.featureName}
                 />
             ))}
-            {data.dateStatistics && Object.keys(data.dateStatistics).map((key, index) => (
+            {data.dateFeatures?.map((dateFeature, index) => (
                 <DateChart
                     key={`date-${index}`}
-                    dateData={data.dateStatistics[key]}
-                    dateDataKey={key}
+                    dateData={dateFeature}
+                    dateDataKey={dateFeature.featureName}
                     showOutliers={showOutliers}
-                    missingEntriesText={getMissingEntriesChartText(data.dateStatistics[key].count, data.dateStatistics[key].missingValuesCount)}
-                    onClick={() => onGraphClick({ type: 'date', key: key })}
-                    isSelected={selectedChart?.type === 'date' && selectedChart?.key === key}
+                    missingEntriesText={getMissingEntriesChartText(dateFeature.count, dateFeature.missingValuesCount)}
+                    onClick={() => setSelectedEntry({ type: 'continuous', featureName: dateFeature.featureName })}
+                    isSelected={selectedEntry?.type === 'continuous' && selectedEntry?.featureName === dateFeature.featureName}
                 />
             ))}
         </div>

@@ -3,6 +3,7 @@ import CsvCheckerStyles from "./csvChecker.module.css";
 import DataUploadButton from "../components/DataUploadButton/dataUploadButton";
 import StatisticsDisplay from "../components/StatisticsDisplay/statisticsDisplay";
 import ToolTray from "../components/ToolTray/toolTray";
+import MatrixDisplay from '../components/MatrixDisplay/matrixDisplay';
 import DragAndDropOverlay from "../components/DragAndDropOverlay/dragAndDropOverlay";
 import { CSSTransition } from 'react-transition-group';
 import { uploadFile, logError } from "../util/petitionHandler";
@@ -11,6 +12,7 @@ function CsvChecker() {
     const [file, setFile] = useState(null);
     const [dataStatistics, setDataStatistics] = useState(null);
     const [filteredDataStatistics, setFilteredDataStatistics] = useState(null);
+    const [showIndividualView, toggleShownView] = useState(true);
     const [uploadStatus, setUploadStatus] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [showOutliers, setShowOutliers] = useState(false);
@@ -28,7 +30,6 @@ function CsvChecker() {
                     setUploadStatus('Upload successful!');
                     setDataStatistics(data);
                     setFilteredDataStatistics(data);
-                    setFile(null);
                 } catch (error) {
                     const errorMsg = error.message || 'Upload failed';
                     setUploadStatus('Upload failed.');
@@ -65,9 +66,20 @@ function CsvChecker() {
                 timeout={500}
                 unmountOnExit
             >
-                <StatisticsDisplay data={filteredDataStatistics} showOutliers={showOutliers}
-                    onGraphClick={setSelectedEntry} selectedChart={selectedEntry} />
-            </CSSTransition>
+                <>
+                    {showIndividualView && (
+                        <StatisticsDisplay data={filteredDataStatistics} showOutliers={showOutliers}
+                            setSelectedEntry={setSelectedEntry} selectedEntry={selectedEntry} />
+                    )}
+                    {!showIndividualView && (
+                        <MatrixDisplay
+                            covariances={filteredDataStatistics.covariances}
+                            pearsonCorrelations={filteredDataStatistics.pearsonCorrelations}
+                            spearmanCorrelations={filteredDataStatistics.spearmanCorrelations}
+                        />
+                    )}
+                </>
+            </CSSTransition >
             <CSSTransition
                 in={!!filteredDataStatistics}
                 classNames={{
@@ -81,17 +93,22 @@ function CsvChecker() {
             >
                 <ToolTray
                     data={dataStatistics}
+                    filteredData={filteredDataStatistics}
+                    setFilteredData={setFilteredDataStatistics}
+                    setData={setDataStatistics}
                     showOutliers={showOutliers}
                     setShowOutliers={setShowOutliers}
-                    setFilteredDataStatistics={setFilteredDataStatistics}
-                    filteredDataStatistics={filteredDataStatistics}
                     isToolTrayOpen={isToolTrayOpen}
                     toggleToolTray={toggleToolTray}
                     handleFilesSelected={handleFilesSelected}
                     selectedEntry={selectedEntry}
+                    setSelectedEntry={setSelectedEntry}
+                    showIndividualView={showIndividualView}
+                    toggleView={() => toggleShownView(currentView => !currentView)}
+                    file={file}
                 />
             </CSSTransition>
-        </div>
+        </div >
     );
 }
 

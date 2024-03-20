@@ -32,3 +32,21 @@ export const uploadFile = async (file, onUploadProgress) => {
         throw error;
     }
 }
+
+export const recalculateFeature = async (file, featureName, featureType) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('featureName', featureName);
+    formData.append('featureType', featureType);
+
+    try {
+        const response = await axios.post(`${config.backendUrl}/api/data/reprocess`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}

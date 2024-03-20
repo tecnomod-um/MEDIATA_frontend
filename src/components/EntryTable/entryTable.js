@@ -6,17 +6,33 @@ function getTableHeaders(filteredLists) {
     return Object.keys(filteredLists);
 }
 
-function getTableContent(filteredLists, tbodyElement, maxRows) {
+function getTableContent(filteredLists, tbodyElement, maxRows, onRowClick, selectedEntry, type) {
     if (!filteredLists || Object.keys(filteredLists).length === 0) return null;
-    const rowCount = Math.min(Object.values(filteredLists)[0].length, maxRows);
+    const actualRowCount = Math.min(Object.values(filteredLists)[0].length, maxRows);
+    const fillerRowCount = Math.max(0, 8 - actualRowCount);
 
     return (
         <tbody className={EntryTableStyles.resTbody} ref={tbodyElement}>
-            {[...Array(rowCount)].map((_, rowIndex) => (
-                <tr key={`row-${rowIndex}`} className={EntryTableStyles.resTr}>
-                    {Object.keys(filteredLists).map((key) => (
-                        <td key={`${key}-${rowIndex}`} className={EntryTableStyles.resTd}>
-                            <span className={EntryTableStyles.resSpan}>{filteredLists[key][rowIndex]}</span>
+            {[...Array(actualRowCount)].map((_, rowIndex) => {
+                const isRowSelected = selectedEntry && filteredLists['Name'][rowIndex] === selectedEntry.featureName && type === selectedEntry.type;
+                const rowClassName = `${EntryTableStyles.resTr} ${isRowSelected ? EntryTableStyles.selectedRow : ''}`;
+                return (
+                    <tr key={`row-${rowIndex}`} className={rowClassName} onClick={() =>
+                        onRowClick({ featureName: filteredLists['Name'][rowIndex], type: type })}>
+                        {Object.keys(filteredLists).map((key) => (
+                            <td key={`${key}-${rowIndex}`} className={`${EntryTableStyles.resTd} ${isRowSelected ? EntryTableStyles.selectedEntry : ''}`}>
+                                <span className={EntryTableStyles.resSpan}>{filteredLists[key][rowIndex]}</span>
+                            </td>
+                        ))}
+                    </tr>
+                );
+            })}
+            {[...Array(fillerRowCount)].map((_, fillerIndex) => (
+                <tr key={`filler-${fillerIndex}`} className={`${EntryTableStyles.resTr} ${EntryTableStyles.fillerRow}`} style={{ backgroundColor: 'red' }}>
+
+                    {Object.keys(filteredLists).map((key, index) => (
+                        <td key={`filler-${fillerIndex}-${index}`} className={EntryTableStyles.resTd}>
+                            <span className={EntryTableStyles.resSpan}>&nbsp;</span>
                         </td>
                     ))}
                 </tr>
@@ -25,8 +41,7 @@ function getTableContent(filteredLists, tbodyElement, maxRows) {
     );
 }
 
-// Displays the query results in a compact table with resizable columns
-const EntryTable = ({ filteredLists, minCellWidth, maxRows = 1000 }) => {
+function EntryTable({ filteredLists, minCellWidth, maxRows = 1000, onRowSelect, selectedEntry, type }) {
     const [tableHeight, setTableHeight] = useState("auto");
     const [activeIndex, setActiveIndex] = useState(null);
     const [columns, setColumns] = useState(createHeaders(["."]));
@@ -128,7 +143,7 @@ const EntryTable = ({ filteredLists, minCellWidth, maxRows = 1000 }) => {
                     ))}
                 </tr>
             </thead>
-            {getTableContent(filteredLists, tbodyElement, maxRows)}
+            {getTableContent(filteredLists, tbodyElement, maxRows, onRowSelect, selectedEntry, type)}
         </table>
     );
 }
