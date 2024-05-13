@@ -22,7 +22,7 @@ const generateColorList = (statistics) => {
     return palette;
 }
 
-function CategoricalChart({ feature, onClick, isSelected, missingEntriesText }) {
+function CategoricalChart({ feature, onClick, isSelected, missingEntriesText, onDoubleClick }) {
     const statistics = feature.categoryCounts;
     const labels = Object.keys(statistics).filter(stat => stat !== 'MissingValues');
     const colors = generateColorList(statistics);
@@ -76,7 +76,11 @@ function CategoricalChart({ feature, onClick, isSelected, missingEntriesText }) 
     };
 
     return (
-        <div className={`${CategoricalChartStyles.chartContainer} ${isSelected ? CategoricalChartStyles.selected : ''}`} onClick={onClick}>
+        <div
+            className={`${CategoricalChartStyles.chartContainer} ${isSelected ? CategoricalChartStyles.selected : ''}`}
+            onClick={onClick}
+            onDoubleClick={onDoubleClick}
+        >
             <Bar data={chartData} options={chartOptions} />
         </div>
     );

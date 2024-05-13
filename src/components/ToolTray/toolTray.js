@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { MdChevronRight, MdChevronLeft, MdSync } from 'react-icons/md';
 import Switch from 'react-switch';
 import ToolTrayStyles from './toolTray.module.css';
+import DataExporter from '../DataExporter/dataExporter';
 import { recalculateFeature } from '../../util/petitionHandler';
 
 function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, setShowOutliers, isToolTrayOpen, toggleToolTray, handleFilesSelected, selectedEntry, setSelectedEntry, file, showIndividualView, toggleView }) {
@@ -46,7 +47,7 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
 
     const toggleFeatureType = async () => {
         if (!selectedEntry || !file) return;
-
+    
         setIsLoading(true);
         try {
             const switchType = selectedEntry.type === 'categorical' ? 'continuous' : 'categorical';
@@ -54,13 +55,19 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
             const newType = recalcData.dateFeatures?.some(f => f.featureName === selectedEntry.featureName) ?
                 'date' : recalcData.categoricalFeatures?.some(f => f.featureName === selectedEntry.featureName) ?
                     'categorical' : 'continuous';
+            
             const newDataStatistics = { ...data };
             ['dateFeatures', 'categoricalFeatures', 'continuousFeatures'].forEach(featureArray => {
                 newDataStatistics[featureArray] = newDataStatistics[featureArray].filter(f => f.featureName !== selectedEntry.featureName);
             });
-
+    
             newDataStatistics[`${newType}Features`] = (newDataStatistics[`${newType}Features`] || []).concat(recalcData[`${newType}Features`]);
-
+    
+            if (recalcData.chiSquareTest) 
+                newDataStatistics.chiSquareTest = recalcData.chiSquareTest;
+            else 
+                newDataStatistics.chiSquareTest = { ...data.chiSquareTest };
+    
             setData(newDataStatistics);
             setFilteredData(newDataStatistics);
             setSelectedEntry({ ...selectedEntry, type: newType === 'date' ? 'continuous' : newType });
@@ -70,10 +77,10 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
             setIsLoading(false);
         }
     }
+    
 
     const handleFeatureCheck = (featureName, featureType) => {
-        console.log(featureName + " " + featureType)
-        const newFilteredData = { ...filteredData };
+        const newFilteredData = { ...filteredData, chiSquareTest: { ...data.chiSquareTest } };
         const featureListKey = `${featureType}Features`;
         const featureIndex = newFilteredData[featureListKey].findIndex(f => f.featureName === featureName);
 
@@ -90,7 +97,7 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
     return (
         <div className={`${ToolTrayStyles.container} ${isToolTrayOpen ? ToolTrayStyles.open : ToolTrayStyles.closed}`}>
             <div className={ToolTrayStyles.toggleButton} onClick={toggleToolTray}>
-                {isToolTrayOpen ? <MdChevronRight /> : <MdChevronLeft />}
+                {isToolTrayOpen ? <MdChevronLeft /> : <MdChevronRight />}
             </div>
             <div className={ToolTrayStyles.topSection}>
                 {selectedEntry ? (
@@ -113,7 +120,7 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
                     <h3>No entry selected</h3>
                 )}
             </div>
-            <h4 className={ToolTrayStyles.sectionTitle}>Toggle Displayed Entries</h4>
+            <h4 className={ToolTrayStyles.sectionTitle}>Displayed Entries</h4>
             <div className={ToolTrayStyles.featuresList}>
                 <ul>
                     {getEntrySet(data).map((entry) => (
@@ -124,9 +131,9 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
                                     onChange={() => handleFeatureCheck(entry.name, entry.type)}
                                     height={20}
                                     width={40}
-                                    handleDiameter={18}
+                                    handleDiameter={16}
                                     offColor="#888"
-                                    onColor="#0D0"
+                                    onColor="#c22535"
                                 />
                                 {entry.name}
                             </label>
@@ -136,18 +143,18 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
             </div>
             <div className={ToolTrayStyles.outliersToggleSection}>
                 <label htmlFor="toggleOutliers" className={ToolTrayStyles.outliersLabel}>
-                    {showOutliers ? "Outliers are shown" : "Outliers are hidden"}
                     <Switch
                         checked={showOutliers}
                         onChange={setShowOutliers}
                         id="toggleOutliers"
                         height={20}
-                        width={48}
-                        handleDiameter={18}
+                        width={40}
+                        handleDiameter={16}
                         offColor="#888"
-                        onColor="#0D0"
+                        onColor="#c22535"
                         className={ToolTrayStyles.outliersSwitch}
                     />
+                    {showOutliers ? "Outliers shown" : "Outliers hidden"}
                 </label>
             </div>
             <div className={ToolTrayStyles.exportButton} onClick={() => toggleView()}>
@@ -163,7 +170,7 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
                 />
             </div>
             <div className={ToolTrayStyles.exportButton}>
-                <button>Export Data</button>
+                <DataExporter data={data} filteredData={filteredData} />
             </div>
         </div>
     );

@@ -1,5 +1,5 @@
 const config = {
-    backendUrl: 'http://localhost:8088',
+    backendUrl: 'http://localhost:8088/taniwha',
     chunkSize: 1024 * 1024,
     debounceDelay: 500,
 }

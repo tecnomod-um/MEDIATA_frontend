@@ -5,7 +5,7 @@ import DateChartStyles from './dateChart.module.css';
 import { Chart as ChartJS, registerables } from 'chart.js';
 ChartJS.register(...registerables);
 
-function DateChart({ dateData, dateDataKey, showOutliers, onClick, isSelected, missingEntriesText }) {
+function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick , isSelected, missingEntriesText }) {
     const sortedEntries = Object.entries(dateData.dateHistogram).sort((a, b) => new Date(a[0]) - new Date(b[0]));
     const outlierDatesSet = new Set(dateData.outliers);
 
@@ -84,6 +84,7 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, isSelected, m
             className={`${DateChartStyles.chartContainer} ${isSelected ? DateChartStyles.selected : ''}`}
             onClick={onClick}
             style={{ maxWidth: '100%' }}
+            onDoubleClick={onDoubleClick}
         >
             <Line data={chartData} options={chartOptions} />
             {/*

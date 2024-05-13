@@ -3,7 +3,7 @@ import CsvCheckerStyles from "./csvChecker.module.css";
 import DataUploadButton from "../components/DataUploadButton/dataUploadButton";
 import StatisticsDisplay from "../components/StatisticsDisplay/statisticsDisplay";
 import ToolTray from "../components/ToolTray/toolTray";
-import MatrixDisplay from '../components/MatrixDisplay/matrixDisplay';
+import AggregateDisplay from '../components/AggregatesDisplay/aggregateDisplay';
 import DragAndDropOverlay from "../components/DragAndDropOverlay/dragAndDropOverlay";
 import { CSSTransition } from 'react-transition-group';
 import { uploadFile, logError } from "../util/petitionHandler";
@@ -18,8 +18,10 @@ function CsvChecker() {
     const [showOutliers, setShowOutliers] = useState(false);
     const [isToolTrayOpen, setIsToolTrayOpen] = useState(true);
     const [selectedEntry, setSelectedEntry] = useState(null);
+    const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
     const toggleToolTray = () => setIsToolTrayOpen(!isToolTrayOpen);
 
+    // Handle file upload
     useEffect(() => {
         const upload = async () => {
             if (file) {
@@ -41,6 +43,23 @@ function CsvChecker() {
         upload();
     }, [file]);
 
+    useEffect(() => {
+        const handleResize = () => {
+            setViewportWidth(window.innerWidth);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // Make sure toolTray always shows on big viewports
+    useEffect(() => {
+        if (viewportWidth > 768)
+            setIsToolTrayOpen(true);
+        else
+            setIsToolTrayOpen(false);
+    }, [viewportWidth])
+
+
     const handleFilesSelected = (file) => {
         setFile(file);
     }
@@ -55,31 +74,6 @@ function CsvChecker() {
                     errorMessage={errorMessage}
                 />
             )}
-            <CSSTransition
-                in={!!filteredDataStatistics}
-                classNames={{
-                    enter: CsvCheckerStyles.statisticsEnter,
-                    enterActive: CsvCheckerStyles.statisticsEnterActive,
-                    exit: CsvCheckerStyles.statisticsExit,
-                    exitActive: CsvCheckerStyles.statisticsExitActive,
-                }}
-                timeout={500}
-                unmountOnExit
-            >
-                <>
-                    {showIndividualView && (
-                        <StatisticsDisplay data={filteredDataStatistics} showOutliers={showOutliers}
-                            setSelectedEntry={setSelectedEntry} selectedEntry={selectedEntry} />
-                    )}
-                    {!showIndividualView && (
-                        <MatrixDisplay
-                            covariances={filteredDataStatistics.covariances}
-                            pearsonCorrelations={filteredDataStatistics.pearsonCorrelations}
-                            spearmanCorrelations={filteredDataStatistics.spearmanCorrelations}
-                        />
-                    )}
-                </>
-            </CSSTransition >
             <CSSTransition
                 in={!!filteredDataStatistics}
                 classNames={{
@@ -108,6 +102,32 @@ function CsvChecker() {
                     file={file}
                 />
             </CSSTransition>
+            <CSSTransition
+                in={!!filteredDataStatistics}
+                classNames={{
+                    enter: CsvCheckerStyles.statisticsEnter,
+                    enterActive: CsvCheckerStyles.statisticsEnterActive,
+                    exit: CsvCheckerStyles.statisticsExit,
+                    exitActive: CsvCheckerStyles.statisticsExitActive,
+                }}
+                timeout={500}
+                unmountOnExit
+            >
+                <>
+                    {showIndividualView && (
+                        <StatisticsDisplay data={filteredDataStatistics} showOutliers={showOutliers}
+                            setSelectedEntry={setSelectedEntry} selectedEntry={selectedEntry} />
+                    )}
+                    {!showIndividualView && (
+                        <AggregateDisplay
+                            covariances={filteredDataStatistics.covariances}
+                            pearsonCorrelations={filteredDataStatistics.pearsonCorrelations}
+                            spearmanCorrelations={filteredDataStatistics.spearmanCorrelations}
+                            chiSquareTest={filteredDataStatistics.chiSquareTest}
+                        />
+                    )}
+                </>
+            </CSSTransition >
         </div >
     );
 }

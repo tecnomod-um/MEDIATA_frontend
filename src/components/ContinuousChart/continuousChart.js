@@ -4,7 +4,7 @@ import ContinuousChartStyles from './continuousChart.module.css';
 import { Chart as ChartJS, registerables } from 'chart.js';
 ChartJS.register(...registerables);
 
-function ContinuousChart({ feature, showOutliers, onClick, isSelected, missingEntriesText }) {
+function ContinuousChart({ feature, showOutliers, onClick, onDoubleClick, isSelected, missingEntriesText }) {
     let histogram = feature.histogram;
     let binRanges = feature.binRanges || [];
 
@@ -51,7 +51,8 @@ function ContinuousChart({ feature, showOutliers, onClick, isSelected, missingEn
 
     return (
         <div
-            className={`${ContinuousChartStyles.chartContainer} ${isSelected ? ContinuousChartStyles.selected : ''}`} onClick={onClick}>
+            className={`${ContinuousChartStyles.chartContainer} ${isSelected ? ContinuousChartStyles.selected : ''}`} onClick={onClick}
+            onDoubleClick={onDoubleClick}>
             <Bar data={chartData} options={chartOptions} />
             {/*
             <div className={ContinuousChartStyles.statisticsInfo}>
