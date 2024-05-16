@@ -5,7 +5,7 @@ import StatisticsDisplay from "../components/StatisticsDisplay/statisticsDisplay
 import ToolTray from "../components/ToolTray/toolTray";
 import AggregateDisplay from '../components/AggregatesDisplay/aggregateDisplay';
 import DragAndDropOverlay from "../components/DragAndDropOverlay/dragAndDropOverlay";
-import { CSSTransition } from 'react-transition-group';
+import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import { uploadFile, logError } from "../util/petitionHandler";
 
 function CsvChecker() {
@@ -19,9 +19,9 @@ function CsvChecker() {
     const [isToolTrayOpen, setIsToolTrayOpen] = useState(true);
     const [selectedEntry, setSelectedEntry] = useState(null);
     const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
+    const [filters, setFilters] = useState([]);
     const toggleToolTray = () => setIsToolTrayOpen(!isToolTrayOpen);
 
-    // Handle file upload
     useEffect(() => {
         const upload = async () => {
             if (file) {
@@ -51,18 +51,16 @@ function CsvChecker() {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Make sure toolTray always shows on big viewports
     useEffect(() => {
         if (viewportWidth > 768)
             setIsToolTrayOpen(true);
         else
             setIsToolTrayOpen(false);
-    }, [viewportWidth])
-
+    }, [viewportWidth]);
 
     const handleFilesSelected = (file) => {
         setFile(file);
-    }
+    };
 
     return (
         <div className={CsvCheckerStyles.dropContainer}>
@@ -100,6 +98,8 @@ function CsvChecker() {
                     showIndividualView={showIndividualView}
                     toggleView={() => toggleShownView(currentView => !currentView)}
                     file={file}
+                    filters={filters}
+                    setFilters={setFilters}
                 />
             </CSSTransition>
             <CSSTransition
@@ -110,25 +110,56 @@ function CsvChecker() {
                     exit: CsvCheckerStyles.statisticsExit,
                     exitActive: CsvCheckerStyles.statisticsExitActive,
                 }}
-                timeout={500}
+                timeout={300}
                 unmountOnExit
             >
-                <>
-                    {showIndividualView && (
-                        <StatisticsDisplay data={filteredDataStatistics} showOutliers={showOutliers}
-                            setSelectedEntry={setSelectedEntry} selectedEntry={selectedEntry} />
-                    )}
-                    {!showIndividualView && (
-                        <AggregateDisplay
-                            covariances={filteredDataStatistics.covariances}
-                            pearsonCorrelations={filteredDataStatistics.pearsonCorrelations}
-                            spearmanCorrelations={filteredDataStatistics.spearmanCorrelations}
-                            chiSquareTest={filteredDataStatistics.chiSquareTest}
-                        />
-                    )}
-                </>
-            </CSSTransition >
-        </div >
+                <div className={CsvCheckerStyles.statisticsContainer}>
+                    <TransitionGroup>
+                        {showIndividualView ? (
+                            <CSSTransition
+                                key="statistics"
+                                classNames={{
+                                    enter: CsvCheckerStyles.fadeEnter,
+                                    enterActive: CsvCheckerStyles.fadeEnterActive,
+                                    exit: CsvCheckerStyles.fadeExit,
+                                    exitActive: CsvCheckerStyles.fadeExitActive,
+                                }}
+                                timeout={200}
+                            >
+                                <div>
+                                    <StatisticsDisplay
+                                        data={filteredDataStatistics}
+                                        showOutliers={showOutliers}
+                                        setSelectedEntry={setSelectedEntry}
+                                        selectedEntry={selectedEntry}
+                                    />
+                                </div>
+                            </CSSTransition>
+                        ) : (
+                            <CSSTransition
+                                key="aggregate"
+                                classNames={{
+                                    enter: CsvCheckerStyles.fadeEnter,
+                                    enterActive: CsvCheckerStyles.fadeEnterActive,
+                                    exit: CsvCheckerStyles.fadeExit,
+                                    exitActive: CsvCheckerStyles.fadeExitActive,
+                                }}
+                                timeout={200}
+                            >
+                                <div>
+                                    <AggregateDisplay
+                                        covariances={filteredDataStatistics?.covariances}
+                                        pearsonCorrelations={filteredDataStatistics?.pearsonCorrelations}
+                                        spearmanCorrelations={filteredDataStatistics?.spearmanCorrelations}
+                                        chiSquareTest={filteredDataStatistics?.chiSquareTest}
+                                    />
+                                </div>
+                            </CSSTransition>
+                        )}
+                    </TransitionGroup>
+                </div>
+            </CSSTransition>
+        </div>
     );
 }
 

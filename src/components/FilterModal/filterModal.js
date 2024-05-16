@@ -1,12 +1,12 @@
 import React from 'react';
 import OverlayWrapper from '../OverlayWrapper/overlayWrapper';
 
-const ChartPreview = ({ isOpen, content, closeModal }) => {
+const FilterModal = ({ isOpen, closeModal }) => {
     return (
         <OverlayWrapper isOpen={isOpen} closeModal={closeModal}>
-            {content}
+            Test
         </OverlayWrapper>
     );
 }
 
-export default ChartPreview;
+export default FilterModal;

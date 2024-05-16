@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
 import chroma from 'chroma-js';
 import distinctColors from 'distinct-colors';
 import CategoricalChartStyles from './categoricalChart.module.css';
 import { Chart as ChartJS, registerables } from 'chart.js';
+
 ChartJS.register(...registerables);
 
 const generateColorList = (statistics) => {
@@ -23,6 +24,7 @@ const generateColorList = (statistics) => {
 }
 
 function CategoricalChart({ feature, onClick, isSelected, missingEntriesText, onDoubleClick }) {
+    const chartRef = useRef(null);
     const statistics = feature.categoryCounts;
     const labels = Object.keys(statistics).filter(stat => stat !== 'MissingValues');
     const colors = generateColorList(statistics);
@@ -46,12 +48,15 @@ function CategoricalChart({ feature, onClick, isSelected, missingEntriesText, on
         });
     }
 
-    const chartData = {
+    const chartData = useMemo(() => ({
         labels: [''],
         datasets: datasets,
-    };
+    }), [datasets]);
 
     const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: true,
+        animation: false,
         indexAxis: 'y',
         plugins: {
             legend: {
@@ -73,7 +78,14 @@ function CategoricalChart({ feature, onClick, isSelected, missingEntriesText, on
                 }
             }
         },
-    };
+    }
+
+    useEffect(() => {
+        const chart = chartRef.current;
+        if (chart) {
+            chart.update();
+        }
+    }, [chartData]);
 
     return (
         <div
@@ -81,7 +93,7 @@ function CategoricalChart({ feature, onClick, isSelected, missingEntriesText, on
             onClick={onClick}
             onDoubleClick={onDoubleClick}
         >
-            <Bar data={chartData} options={chartOptions} />
+            <Bar ref={chartRef} data={chartData} options={chartOptions} />
         </div>
     );
 }

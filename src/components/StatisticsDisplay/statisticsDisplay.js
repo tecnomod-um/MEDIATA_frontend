@@ -1,13 +1,14 @@
-import { React, useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import ContinuousChart from '../ContinuousChart/continuousChart';
 import CategoricalChart from '../CategoricalChart/categoricalChart';
 import DateChart from '../DateChart/dateChart';
 import EntrySearch from '../EntrySearch/entrySearch';
 import StatisticsDisplayStyles from './statisticsDisplay.module.css';
-import OverlayWrapper from '../OverlayWrapper/overlayWrapper';
+import ChartPreview from '../ChartPreview/chartPreview'; // Import ChartPreview
+import FilterModal from '../FilterModal/filterModal';
 
-function StatisticsDisplay({ data, showOutliers, setSelectedEntry, selectedEntry }) {
-    // Manages chart preview state
+// Display for all type graphs. Memoized to try improve performance
+const StatisticsDisplay = React.memo(({ data, showOutliers, setSelectedEntry, selectedEntry }) => {
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [previewContent, setPreviewContent] = useState(null);
 
@@ -24,20 +25,49 @@ function StatisticsDisplay({ data, showOutliers, setSelectedEntry, selectedEntry
         return missingValuesCount === 0 ? '0 (0%)' : `${missingValuesCount} (${missingPercentage}%)`;
     };
 
-    let continuousDataForTable = {
-        Name: data.continuousFeatures.map(feature => feature.featureName),
-        'Count': data.continuousFeatures.map(feature => feature.count.toString()),
-        'Mean': data.continuousFeatures.map(feature => feature.mean.toFixed(2)),
-        'Std. Dev.': data.continuousFeatures.map(feature => feature.stdDev.toFixed(2)),
-        'Min': data.continuousFeatures.map(feature => feature.min.toString()),
-        '1st Qrt.': data.continuousFeatures.map(feature => feature.qrt1.toFixed(2)),
-        'Median': data.continuousFeatures.map(feature => feature.median.toFixed(2)),
-        '3rd Qrt.': data.continuousFeatures.map(feature => feature.qrt3.toFixed(2)),
-        'Max': data.continuousFeatures.map(feature => feature.max.toString()),
-        'Missing Entries': data.continuousFeatures.map(feature => formatMissingEntries(feature.count, feature.missingValuesCount)),
-    }
+    const continuousDataForTable = useMemo(() => {
+        const table = {
+            Name: [],
+            'Count': [],
+            'Mean': [],
+            'Std. Dev.': [],
+            'Min': [],
+            '1st Qrt.': [],
+            'Median': [],
+            '3rd Qrt.': [],
+            'Max': [],
+            'Missing Entries': []
+        };
+        data.continuousFeatures.forEach(feature => {
+            table.Name.push(feature.featureName);
+            table['Count'].push(feature.count.toString());
+            table['Mean'].push(feature.mean.toFixed(2));
+            table['Std. Dev.'].push(feature.stdDev.toFixed(2));
+            table['Min'].push(feature.min.toString());
+            table['1st Qrt.'].push(feature.qrt1.toFixed(2));
+            table['Median'].push(feature.median.toFixed(2));
+            table['3rd Qrt.'].push(feature.qrt3.toFixed(2));
+            table['Max'].push(feature.max.toString());
+            table['Missing Entries'].push(formatMissingEntries(feature.count, feature.missingValuesCount));
+        });
+        if (data.dateFeatures && data.dateFeatures.length > 0) {
+            data.dateFeatures.forEach(dateStat => {
+                table.Name.push(dateStat.featureName);
+                table['Count'].push(dateStat.count);
+                table['Mean'].push(dateStat.mean ? dateStat.mean : 'N/A');
+                table['Std. Dev.'].push(dateStat.stdDev ? dateStat.stdDev.toFixed(2) : 'N/A');
+                table['Min'].push(dateStat.earliestDate || 'N/A');
+                table['1st Qrt.'].push(dateStat.q1 || 'N/A');
+                table['Median'].push(dateStat.median || 'N/A');
+                table['3rd Qrt.'].push(dateStat.q3 || 'N/A');
+                table['Max'].push(dateStat.latestDate || 'N/A');
+                table['Missing Entries'].push(formatMissingEntries(dateStat.count, dateStat.missingValuesCount));
+            });
+        }
+        return table;
+    }, [data]);
 
-    const categoricalDataForTable = {
+    const categoricalDataForTable = useMemo(() => ({
         Name: data.categoricalFeatures.map(feature => feature.featureName),
         'Total Count': data.categoricalFeatures.map(feature => feature.count.toString()),
         'Mode': data.categoricalFeatures.map(feature => feature.mode || 'N/A'),
@@ -47,24 +77,9 @@ function StatisticsDisplay({ data, showOutliers, setSelectedEntry, selectedEntry
         '2nd Mode Frequency': data.categoricalFeatures.map(feature => feature.secondModeFrequency ? feature.secondModeFrequency.toString() : 'N/A'),
         '2nd Mode %': data.categoricalFeatures.map(feature => feature.secondModePercentage ? `${feature.secondModePercentage.toFixed(2)}%` : 'N/A'),
         'Missing Entries': data.categoricalFeatures.map(feature => formatMissingEntries(feature.count, feature.missingValuesCount)),
-    }
+    }), [data]);
 
-    if (data.dateFeatures && data.dateFeatures.length > 0) {
-        data.dateFeatures.forEach(dateStat => {
-            continuousDataForTable.Name.push(dateStat.featureName);
-            continuousDataForTable['Count'].push(dateStat.count);
-            continuousDataForTable['Mean'].push(dateStat.mean ? dateStat.mean : 'N/A');
-            continuousDataForTable['Std. Dev.'].push(dateStat.stdDev ? dateStat.stdDev.toFixed(2) : 'N/A');
-            continuousDataForTable['Min'].push(dateStat.earliestDate || 'N/A');
-            continuousDataForTable['1st Qrt.'].push(dateStat.q1 || 'N/A');
-            continuousDataForTable['Median'].push(dateStat.median || 'N/A');
-            continuousDataForTable['3rd Qrt.'].push(dateStat.q3 || 'N/A');
-            continuousDataForTable['Max'].push(dateStat.latestDate || 'N/A');
-            continuousDataForTable['Missing Entries'].push(formatMissingEntries(dateStat.count, dateStat.missingValuesCount));
-        });
-    }
-
-    const handleChartDoubleClick = (chartType, feature) => {
+    const handleChartDoubleClick = useCallback((chartType, feature) => {
         let ChartComponent;
         let chartProps = {};
 
@@ -102,14 +117,24 @@ function StatisticsDisplay({ data, showOutliers, setSelectedEntry, selectedEntry
             <ChartComponent {...chartProps} />
         );
         setIsPreviewOpen(true);
-    };
+    }, [showOutliers]);
+
+    const handleContinuousClick = useCallback((featureName) => {
+        setSelectedEntry({ type: 'continuous', featureName });
+    }, [setSelectedEntry]);
+
+    const handleCategoricalClick = useCallback((featureName) => {
+        setSelectedEntry({ type: 'categorical', featureName });
+    }, [setSelectedEntry]);
+
+    const handleDateClick = useCallback((featureName) => {
+        setSelectedEntry({ type: 'continuous', featureName });
+    }, [setSelectedEntry]);
 
     return (
         <div className={StatisticsDisplayStyles.chartFlexContainer}>
             {isPreviewOpen &&
-                <OverlayWrapper isOpen={isPreviewOpen} closeModal={() => setIsPreviewOpen(false)} maxWidth="80vw">
-                    {previewContent}
-                </OverlayWrapper>}
+                <ChartPreview isOpen={isPreviewOpen} content={previewContent} closeModal={() => setIsPreviewOpen(false)} />}
             <div className={StatisticsDisplayStyles.tablesContainer}>
                 <div className={StatisticsDisplayStyles.entrySearchWrapper}>
                     <EntrySearch resultData={continuousDataForTable} onRowSelect={setSelectedEntry} selectedEntry={selectedEntry} type="continuous" />
@@ -124,7 +149,7 @@ function StatisticsDisplay({ data, showOutliers, setSelectedEntry, selectedEntry
                     feature={feature}
                     showOutliers={showOutliers}
                     missingEntriesText={getMissingEntriesChartText(feature.count, feature.missingValuesCount)}
-                    onClick={() => setSelectedEntry({ type: 'continuous', featureName: feature.featureName })}
+                    onClick={() => handleContinuousClick(feature.featureName)}
                     onDoubleClick={() => handleChartDoubleClick('continuous', feature)}
                     isSelected={selectedEntry?.type === 'continuous' && selectedEntry?.featureName === feature.featureName}
                 />
@@ -134,7 +159,7 @@ function StatisticsDisplay({ data, showOutliers, setSelectedEntry, selectedEntry
                     key={`categorical-${index}`}
                     feature={feature}
                     missingEntriesText={getMissingEntriesChartText(feature.count, feature.missingValuesCount)}
-                    onClick={() => setSelectedEntry({ type: 'categorical', featureName: feature.featureName })}
+                    onClick={() => handleCategoricalClick(feature.featureName)}
                     onDoubleClick={() => handleChartDoubleClick('categorical', feature)}
                     isSelected={selectedEntry?.type === 'categorical' && selectedEntry?.featureName === feature.featureName}
                 />
@@ -146,13 +171,13 @@ function StatisticsDisplay({ data, showOutliers, setSelectedEntry, selectedEntry
                     dateDataKey={feature.featureName}
                     showOutliers={showOutliers}
                     missingEntriesText={getMissingEntriesChartText(feature.count, feature.missingValuesCount)}
-                    onClick={() => setSelectedEntry({ type: 'continuous', featureName: feature.featureName })}
+                    onClick={() => handleDateClick(feature.featureName)}
                     onDoubleClick={() => handleChartDoubleClick('date', feature)}
                     isSelected={selectedEntry?.type === 'continuous' && selectedEntry?.featureName === feature.featureName}
                 />
             ))}
         </div>
     );
-}
+});
 
 export default StatisticsDisplay;

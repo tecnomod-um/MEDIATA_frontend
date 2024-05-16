@@ -1,29 +1,37 @@
-import React from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import 'chartjs-adapter-moment';
 import DateChartStyles from './dateChart.module.css';
 import { Chart as ChartJS, registerables } from 'chart.js';
+
 ChartJS.register(...registerables);
 
-function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick , isSelected, missingEntriesText }) {
-    const sortedEntries = Object.entries(dateData.dateHistogram).sort((a, b) => new Date(a[0]) - new Date(b[0]));
-    const outlierDatesSet = new Set(dateData.outliers);
+function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick, isSelected, missingEntriesText }) {
+    const chartRef = useRef(null);
 
-    let labels = [];
-    let chartDataPoints = [];
-    if (!showOutliers) {
-        sortedEntries.forEach(([date, count]) => {
-            if (!outlierDatesSet.has(date)) {
-                labels.push(date);
-                chartDataPoints.push(count);
-            }
-        });
-    } else {
-        labels = sortedEntries.map(([date, _]) => date);
-        chartDataPoints = sortedEntries.map(([_, count]) => count);
-    }
+    const sortedEntries = useMemo(() => (
+        Object.entries(dateData.dateHistogram).sort((a, b) => new Date(a[0]) - new Date(b[0]))
+    ), [dateData.dateHistogram]);
 
-    const chartData = {
+    const outlierDatesSet = useMemo(() => (
+        new Set(dateData.outliers)
+    ), [dateData.outliers]);
+
+    const labels = useMemo(() => {
+        if (!showOutliers) {
+            return sortedEntries.filter(([date]) => !outlierDatesSet.has(date)).map(([date]) => date);
+        }
+        return sortedEntries.map(([date]) => date);
+    }, [showOutliers, sortedEntries, outlierDatesSet]);
+
+    const chartDataPoints = useMemo(() => {
+        if (!showOutliers) {
+            return sortedEntries.filter(([date]) => !outlierDatesSet.has(date)).map(([, count]) => count);
+        }
+        return sortedEntries.map(([, count]) => count);
+    }, [showOutliers, sortedEntries, outlierDatesSet]);
+
+    const chartData = useMemo(() => ({
         labels,
         datasets: [{
             label: 'Date Distribution',
@@ -33,11 +41,12 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
             borderWidth: 1,
             fill: false,
         }],
-    }
+    }), [labels, chartDataPoints]);
 
     const chartOptions = {
         responsive: true,
         maintainAspectRatio: true,
+        animation: false,
         scales: {
             x: {
                 type: 'time',
@@ -79,6 +88,13 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
         }
     };
 
+    useEffect(() => {
+        const chart = chartRef.current;
+        if (chart) {
+            chart.update();
+        }
+    }, [chartData]);
+
     return (
         <div
             className={`${DateChartStyles.chartContainer} ${isSelected ? DateChartStyles.selected : ''}`}
@@ -86,20 +102,7 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
             style={{ maxWidth: '100%' }}
             onDoubleClick={onDoubleClick}
         >
-            <Line data={chartData} options={chartOptions} />
-            {/*
-            <div className={DateChartStyles.statisticsInfo}>
-                <p>Total Count: {dateData.count}</p>
-                <p>{missingEntriesText}</p>
-                <p>Earliest Date: {dateData.earliestDate}</p>
-                <p>Latest Date: {dateData.latestDate}</p>
-                <p>Mean Date: {dateData.mean}</p>
-                <p>Standard Deviation (Days): {dateData.stdDev.toFixed(2)}</p>
-                <p>Median Date: {dateData.median}</p>
-                <p>First Quartile (Q1) Date: {dateData.q1}</p>
-                <p>Third Quartile (Q3) Date: {dateData.q3}</p>
-            </div>
-    */}
+            <Line ref={chartRef} data={chartData} options={chartOptions} />
         </div>
     );
 }

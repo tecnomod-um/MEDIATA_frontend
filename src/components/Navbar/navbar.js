@@ -1,25 +1,37 @@
-import React, { useState } from "react";
-import { Link, useMatch, useResolvedPath } from "react-router-dom"
+import React, { useState, useEffect } from "react";
+import { Link, useMatch, useResolvedPath } from "react-router-dom";
 import NavbarStyles from "./navbar.module.css";
 import logo from "../../resources/images/umu_coat.png";
 
 export default function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false);
+    const [animate, setAnimate] = useState(false);
 
     const toggleMenu = () => {
+        if (!menuOpen) setAnimate(true);
         setMenuOpen(!menuOpen);
     };
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth > 768) 
+                setAnimate(false);
+            setMenuOpen(false);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     return (
         <nav className={NavbarStyles.navbar}>
             <Link to="/" className={`${NavbarStyles.logo} ${NavbarStyles.link}`}>
-                <img src={logo} width={40} height={40} alt="Home menu, displaying University of Murcia's logo." />
+                <img src={logo} width={40} height={40} alt="University of Murcia logo" />
             </Link>
             <ul className={NavbarStyles.navlinks}>
                 <input type="checkbox" id="menuToggle" className={NavbarStyles.checkbox_toggle} checked={menuOpen} onChange={toggleMenu} />
                 <label htmlFor="menuToggle" className={NavbarStyles.hamburger}>&#9776;</label>
-                <div className={NavbarStyles.menu}>
-                    <li className={NavbarStyles.listItem}>
+                <div className={`${NavbarStyles.menu} ${menuOpen && animate ? NavbarStyles.animate : ''}`}>
+                <li className={NavbarStyles.listItem}>
                         <CustomLink to="/" onClick={toggleMenu}>Home</CustomLink>
                     </li>
                     <li className={NavbarStyles.listItem}>
@@ -31,7 +43,7 @@ export default function Navbar() {
                 </div>
             </ul>
         </nav>
-    )
+    );
 }
 
 function CustomLink({ to, children, onClick, ...props }) {

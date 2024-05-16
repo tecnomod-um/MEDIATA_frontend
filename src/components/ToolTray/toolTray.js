@@ -5,7 +5,7 @@ import ToolTrayStyles from './toolTray.module.css';
 import DataExporter from '../DataExporter/dataExporter';
 import { recalculateFeature } from '../../util/petitionHandler';
 
-function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, setShowOutliers, isToolTrayOpen, toggleToolTray, handleFilesSelected, selectedEntry, setSelectedEntry, file, showIndividualView, toggleView }) {
+function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, setShowOutliers, isToolTrayOpen, toggleToolTray, handleFilesSelected, selectedEntry, setSelectedEntry, file, showIndividualView, toggleView, filters, setFilters }) {
     const [isLoading, setIsLoading] = useState(false);
 
     const getEntrySet = (dataSet) => {
@@ -120,7 +120,6 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
                     <h3>No entry selected</h3>
                 )}
             </div>
-            <h4 className={ToolTrayStyles.sectionTitle}>Displayed Entries</h4>
             <div className={ToolTrayStyles.featuresList}>
                 <ul>
                     {getEntrySet(data).map((entry) => (
@@ -157,10 +156,7 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
                     {showOutliers ? "Outliers shown" : "Outliers hidden"}
                 </label>
             </div>
-            <div className={ToolTrayStyles.exportButton} onClick={() => toggleView()}>
-                <button>{showIndividualView ? "Display aggregate metrics" : "Display individual metrics"}</button>
-            </div>
-            <div className={ToolTrayStyles.uploadButtonContainer}>
+            <div className={ToolTrayStyles.buttonContainer}>
                 <button onClick={triggerFileInputClick}>Upload New Data</button>
                 <input
                     type="file"
@@ -169,7 +165,13 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
                     onChange={(e) => handleFilesSelected(e.target.files[0])}
                 />
             </div>
-            <div className={ToolTrayStyles.exportButton}>
+            <div className={ToolTrayStyles.buttonContainer}>
+                <button onClick={() => toggleView()}>{showIndividualView ? "Display aggregate metrics" : "Display individual metrics"}</button>
+            </div>
+            <div className={ToolTrayStyles.buttonContainer}>
+                <button onClick={() => toggleView()}>{filters.length ? "Set filters" : "Filters added"}</button>
+            </div>
+            <div className={ToolTrayStyles.buttonContainer}>
                 <DataExporter data={data} filteredData={filteredData} />
             </div>
         </div>

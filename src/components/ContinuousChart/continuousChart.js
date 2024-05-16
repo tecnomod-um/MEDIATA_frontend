@@ -1,34 +1,55 @@
-import React from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
 import ContinuousChartStyles from './continuousChart.module.css';
 import { Chart as ChartJS, registerables } from 'chart.js';
+
 ChartJS.register(...registerables);
 
 function ContinuousChart({ feature, showOutliers, onClick, onDoubleClick, isSelected, missingEntriesText }) {
+    const chartRef = useRef(null);
     let histogram = feature.histogram;
-    let binRanges = feature.binRanges || [];
 
-    let labels = histogram ? Array.from({ length: histogram.length }, (_, i) => binRanges[i]) : [];
-    let dataPoints = histogram || [];
+    const binRanges = useMemo(() => feature.binRanges || [], [feature.binRanges]);
 
-    if (!showOutliers) {
-        const outliersSet = new Set(feature.outliers);
-        labels = labels.filter((_, index) => !outliersSet.has(dataPoints[index]));
-        dataPoints = dataPoints.filter(value => !outliersSet.has(value));
-    }
+    const labels = useMemo(() => (
+        histogram ? Array.from({ length: histogram.length }, (_, i) => binRanges[i]) : []
+    ), [histogram, binRanges]);
 
-    const chartData = {
-        labels,
+    const dataPoints = useMemo(() => (
+        histogram || []
+    ), [histogram]);
+
+    const filteredLabels = useMemo(() => {
+        if (!showOutliers) {
+            const outliersSet = new Set(feature.outliers);
+            return labels.filter((_, index) => !outliersSet.has(dataPoints[index]));
+        }
+        return labels;
+    }, [showOutliers, labels, dataPoints, feature.outliers]);
+
+    const filteredDataPoints = useMemo(() => {
+        if (!showOutliers) {
+            const outliersSet = new Set(feature.outliers);
+            return dataPoints.filter(value => !outliersSet.has(value));
+        }
+        return dataPoints;
+    }, [showOutliers, dataPoints, feature.outliers]);
+
+    const chartData = useMemo(() => ({
+        labels: filteredLabels,
         datasets: [{
             label: feature.featureName,
-            data: dataPoints,
+            data: filteredDataPoints,
             backgroundColor: 'rgba(255, 159, 64, 0.2)',
             borderColor: 'rgba(255, 159, 64, 1)',
             borderWidth: 1,
         }],
-    };
+    }), [filteredLabels, filteredDataPoints, feature.featureName]);
 
     const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: true,
+        animation: false,
         scales: {
             y: { beginAtZero: true },
         },
@@ -49,26 +70,21 @@ function ContinuousChart({ feature, showOutliers, onClick, onDoubleClick, isSele
         }
     }
 
+    useEffect(() => {
+        const chart = chartRef.current;
+        if (chart) {
+            chart.update();
+        }
+    }, [chartData]);
+
     return (
         <div
-            className={`${ContinuousChartStyles.chartContainer} ${isSelected ? ContinuousChartStyles.selected : ''}`} onClick={onClick}
-            onDoubleClick={onDoubleClick}>
-            <Bar data={chartData} options={chartOptions} />
-            {/*
-            <div className={ContinuousChartStyles.statisticsInfo}>
-                <p>Count: {feature.count}</p>
-                <p>Mean: {feature.typeStatistics.Mean.toFixed(2)}</p>
-                <p>Standard Deviation: {feature.typeStatistics.StdDev.toFixed(2)}</p>
-                <p>Min: {feature.typeStatistics.Min}</p>
-                <p>Max: {feature.typeStatistics.Max}</p>
-                <p>First Quartile (Q1): {feature.typeStatistics.Qrt1.toFixed(2)}</p>
-                <p>Median: {feature.typeStatistics.Median.toFixed(2)}</p>
-                <p>Third Quartile (Q3): {feature.typeStatistics.Qrt3.toFixed(2)}</p>
-                <p>{missingEntriesText}</p>
-            
+            className={`${ContinuousChartStyles.chartContainer} ${isSelected ? ContinuousChartStyles.selected : ''}`}
+            onClick={onClick}
+            onDoubleClick={onDoubleClick}
+        >
+            <Bar ref={chartRef} data={chartData} options={chartOptions} />
         </div>
-        */}
-        </div >
     );
 }
 

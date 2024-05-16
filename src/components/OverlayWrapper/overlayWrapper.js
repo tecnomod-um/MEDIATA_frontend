@@ -4,7 +4,7 @@ import { CSSTransition } from 'react-transition-group';
 import OverlayWrapperStyles from "./overlayWrapper.module.css";
 import CloseIcon from "@mui/icons-material/Close";
 
-const OverlayWrapper = ({ isOpen, children, closeModal, maxWidth }) => {
+function OverlayWrapper ({ isOpen, children, closeModal, maxWidth }) {
     // Modal behavior
     const modalRef = useRef(null);
     const [mouseDownOnBackdrop, setMouseDownOnBackdrop] = useState(false);

@@ -6,30 +6,41 @@ function getTableHeaders(filteredLists) {
     return Object.keys(filteredLists);
 }
 
-function getTableContent(filteredLists, tbodyElement, maxRows, onRowClick, selectedEntry, type) {
+const Row = React.memo(({ rowIndex, filteredLists, onRowClick, selectedEntry, type }) => {
+    const isRowSelected = selectedEntry && filteredLists['Name'][rowIndex] === selectedEntry.featureName && type === selectedEntry.type;
+    const rowClassName = `${EntryTableStyles.resTr} ${isRowSelected ? EntryTableStyles.selectedRow : ''}`;
+
+    return (
+        <tr key={`row-${rowIndex}`} className={rowClassName} onClick={() =>
+            onRowClick({ featureName: filteredLists['Name'][rowIndex], type: type })}>
+            {Object.keys(filteredLists).map((key) => (
+                <td key={`${key}-${rowIndex}`} className={`${EntryTableStyles.resTd} ${isRowSelected ? EntryTableStyles.selectedEntry : ''}`}>
+                    <span className={EntryTableStyles.resSpan}>{filteredLists[key][rowIndex]}</span>
+                </td>
+            ))}
+        </tr>
+    );
+});
+
+function getTableContent(filteredLists, maxRows, onRowClick, selectedEntry, type) {
     if (!filteredLists || Object.keys(filteredLists).length === 0) return null;
     const actualRowCount = Math.min(Object.values(filteredLists)[0].length, maxRows);
     const fillerRowCount = Math.max(0, 8 - actualRowCount);
 
     return (
-        <tbody className={EntryTableStyles.resTbody} ref={tbodyElement}>
-            {[...Array(actualRowCount)].map((_, rowIndex) => {
-                const isRowSelected = selectedEntry && filteredLists['Name'][rowIndex] === selectedEntry.featureName && type === selectedEntry.type;
-                const rowClassName = `${EntryTableStyles.resTr} ${isRowSelected ? EntryTableStyles.selectedRow : ''}`;
-                return (
-                    <tr key={`row-${rowIndex}`} className={rowClassName} onClick={() =>
-                        onRowClick({ featureName: filteredLists['Name'][rowIndex], type: type })}>
-                        {Object.keys(filteredLists).map((key) => (
-                            <td key={`${key}-${rowIndex}`} className={`${EntryTableStyles.resTd} ${isRowSelected ? EntryTableStyles.selectedEntry : ''}`}>
-                                <span className={EntryTableStyles.resSpan}>{filteredLists[key][rowIndex]}</span>
-                            </td>
-                        ))}
-                    </tr>
-                );
-            })}
+        <>
+            {[...Array(actualRowCount)].map((_, rowIndex) => (
+                <Row
+                    key={rowIndex}
+                    rowIndex={rowIndex}
+                    filteredLists={filteredLists}
+                    onRowClick={onRowClick}
+                    selectedEntry={selectedEntry}
+                    type={type}
+                />
+            ))}
             {[...Array(fillerRowCount)].map((_, fillerIndex) => (
                 <tr key={`filler-${fillerIndex}`} className={`${EntryTableStyles.resTr} ${EntryTableStyles.fillerRow}`} style={{ backgroundColor: 'red' }}>
-
                     {Object.keys(filteredLists).map((key, index) => (
                         <td key={`filler-${fillerIndex}-${index}`} className={EntryTableStyles.resTd}>
                             <span className={EntryTableStyles.resSpan}>&nbsp;</span>
@@ -37,7 +48,7 @@ function getTableContent(filteredLists, tbodyElement, maxRows, onRowClick, selec
                     ))}
                 </tr>
             ))}
-        </tbody>
+        </>
     );
 }
 
@@ -74,9 +85,8 @@ function EntryTable({ filteredLists, minCellWidth, maxRows = 1000, onRowSelect, 
                 for (let i = 0; i < rows.length; i++) {
                     const cells = rows[i].children;
                     let maxHeight = 0;
-                    for (let j = 0; j < cells.length; j++) {
+                    for (let j = 0; j < cells.length; j++)
                         maxHeight = Math.max(maxHeight, cells[j].getBoundingClientRect().height);
-                    }
                     totalHeight += maxHeight;
                 }
                 setTableHeight(`${totalHeight}px`);
@@ -143,7 +153,9 @@ function EntryTable({ filteredLists, minCellWidth, maxRows = 1000, onRowSelect, 
                     ))}
                 </tr>
             </thead>
-            {getTableContent(filteredLists, tbodyElement, maxRows, onRowSelect, selectedEntry, type)}
+            <tbody className={EntryTableStyles.resTbody} ref={tbodyElement}>
+                {getTableContent(filteredLists, maxRows, onRowSelect, selectedEntry, type)}
+            </tbody>
         </table>
     );
 }

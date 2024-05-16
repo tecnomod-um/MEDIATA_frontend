@@ -4,31 +4,14 @@
     left: 0;
     top: 55px;
     bottom: 0;
-    height: calc(100vh - 55px);
-    min-width: 250px;
-    width: 10%;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease-in-out;
+    width: 250px;
+    position: fixed;
+    transition: transform 0.3s ease, opacity 0.3s ease-in-out;
     display: flex;
     flex-direction: column;
     padding: 20px;
-    position: sticky;
-    min-height: auto;
     box-shadow: none;
-}
-
-@media (max-width: 768px) {
-    .container {
-        height: calc(100% - 55px);
-        position: fixed;
-        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
-        z-index: 12;
-    }
-
-    .toggleButton {
-        display: flex !important;
-    }
-
+    z-index: 10;
 }
 
 .open {
@@ -37,6 +20,25 @@
 
 .closed {
     transform: translateX(-100%);
+}
+
+@media (max-width: 768px) {
+    .container {
+        transform: translateX(-100%);
+        z-index: 12;
+    }
+
+    .open {
+        transform: translateX(0);
+    }
+
+    .closed {
+        transform: translateX(-100%);
+    }
+
+    .toggleButton {
+        display: flex !important;
+    }
 }
 
 .toggleButton {
@@ -58,21 +60,22 @@
     background-color: #5f0d19;
 }
 
-.uploadButtonContainer button,
-.exportButton button {
+.buttonContainer button {
     cursor: pointer;
     background-color: #444;
     border: none;
     color: white;
-    padding: 12px 24px;
-    margin: 10px auto;
+    padding: 10px 20px;
+    margin: 10px 0;
     display: block;
     border-radius: 5px;
     transition: background-color 0.3s ease;
+    width: 100%;
+    text-align: center;
+    font-size: 14px;
 }
 
-.uploadButtonContainer button:hover,
-.exportButton button:hover {
+.buttonContainer button:hover {
     background-color: #5f5f5f;
 }
 
@@ -82,6 +85,7 @@
     overflow-y: auto;
     max-height: 500px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    flex-grow: 1;
 }
 
 .featuresList ul {
@@ -106,7 +110,6 @@
     cursor: pointer;
 }
 
-
 .featuresList::-webkit-scrollbar {
     width: 5px;
 }
@@ -129,54 +132,44 @@
 
 .selectedGraphInfo,
 .topSection {
-    background-color: #f0f0f0;
+    background-color: #444;
     padding: 10px;
     border-radius: 5px;
-    margin-bottom: 20px;
-    color: #333;
+    margin-bottom: 10px;
+    color: #fff;
+    text-align: center;
 }
 
 .selectedGraphInfo h3,
 .topSection h3 {
-    text-align: center;
-    margin-top: 5px;
+    margin-top: 0;
     margin-bottom: 10px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     width: 100%;
-    display: block;
-}
-
-.selectedGraphInfo p,
-.topSection p {
-    margin: 5px 0;
-}
-
-.sectionTitle {
-    margin: 10px 0;
-    color: #fff;
 }
 
 .toggleFeatureTypeButton {
-    background-color: #444;
+    background-color: #555;
     color: white;
-    padding: 10px 15px;
+    padding: 8px 12px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    font-weight: bold;
+    gap: 5px;
+    font-size: 12px;
     width: 100%;
-    min-height: 40px;
+    height: 40px;
     transition: background-color 0.3s;
+    box-sizing: border-box; /* Ensure padding is included in height calculation */
 }
 
 .toggleFeatureTypeButton:hover {
-    background-color: #555;
+    background-color: #666;
 }
 
 .toggleFeatureTypeButton:disabled {
@@ -186,7 +179,7 @@
 }
 
 .iconSpin {
-    font-size: 20px;
+    font-size: 16px;
 }
 
 .toggleFeatureTypeButton:hover .iconSpin {
@@ -227,8 +220,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 80px;
-    height: 20px;
+    width: 100%;
+    height: 100%;
 }
 
 .spinner div {
@@ -250,7 +243,6 @@
 }
 
 @keyframes dotFlashing {
-
     0%,
     100% {
         opacity: 0;
@@ -259,14 +251,4 @@
     50% {
         opacity: 1;
     }
-}
-
-.uploadButtonContainer button,
-.exportButton button,
-.toggleFeatureTypeButton {
-    width: 100%;
-    padding: 12px 24px;
-    font-size: 16px;
-    font-weight: bold;
-    text-align: center;
 }

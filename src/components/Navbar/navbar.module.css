@@ -12,7 +12,7 @@
 .listItem {
     list-style: none;
     border-radius: 5px;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.25s ease;
 }
 
 .navbar {
@@ -67,23 +67,27 @@ label[for="menuToggle"] {
     cursor: pointer;
 }
 
+.animate {
+    transform: translateY(0);
+    transition: transform 0.25s ease-in-out;
+}
+
 @media (max-width: 768px) {
     .menu {
         display: block;
         position: absolute;
         background-color: #c22535;
         right: 0;
-        left: 0;
         text-align: center;
         padding: 16px 0;
         transform: translateY(calc(-100% - 50px));
-        transition: transform 0.3s ease-in-out;
-        z-index: 11;
         top: 50px;
+        width: 40%;
     }
 
-    input[type=checkbox]:checked~.menu {
+    .animate {
         transform: translateY(0);
+        transition: transform 0.25s ease-in-out;
     }
 
     .hamburger {

@@ -1,30 +1,24 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AggregateDisplayStyles from './aggregateDisplay.module.css';
 
 const AggregateDisplay = ({ covariances, pearsonCorrelations, spearmanCorrelations, chiSquareTest }) => {
     const [activeTab, setActiveTab] = useState('covariance');
-    const matrixRef = useRef(null);
     const selectRef = useRef(null);
+    const matrixRef = useRef(null);
     
     useEffect(() => {
-        const updateSelectPositionAndSize = () => {
-            const matrix = matrixRef.current;
-            if (matrix && selectRef.current) {
-                const matrixRect = matrix.getBoundingClientRect();
-                const firstRowHeader = matrix.querySelector('th:first-child');
-                if (firstRowHeader) {
-                    const headerRect = firstRowHeader.getBoundingClientRect();
-                    selectRef.current.style.top = `${matrixRect.top}px`;
-                    selectRef.current.style.left = `${matrixRect.left}px`;
-                    selectRef.current.style.width = `${headerRect.width}px`;
+        const updateSelectWidth = () => {
+            if (matrixRef.current && selectRef.current) {
+                const firstHeaderCell = matrixRef.current.querySelector('th');
+                if (firstHeaderCell) {
+                    selectRef.current.style.width = `${firstHeaderCell.offsetWidth}px`;
                 }
             }
-        }
-    
-        updateSelectPositionAndSize();
-        window.addEventListener('resize', updateSelectPositionAndSize);
-        return () => window.removeEventListener('resize', updateSelectPositionAndSize);
-    
+        };
+
+        updateSelectWidth();
+        window.addEventListener('resize', updateSelectWidth);
+        return () => window.removeEventListener('resize', updateSelectWidth);
     }, []);
     
     const renderMatrix = (stats) => {
