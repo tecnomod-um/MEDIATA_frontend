@@ -2,9 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CSSTransition } from 'react-transition-group';
 import OverlayWrapperStyles from "./overlayWrapper.module.css";
-import CloseIcon from "@mui/icons-material/Close";
 
-function OverlayWrapper ({ isOpen, children, closeModal, maxWidth }) {
+function OverlayWrapper({ isOpen, children, closeModal, maxWidth }) {
     // Modal behavior
     const modalRef = useRef(null);
     const [mouseDownOnBackdrop, setMouseDownOnBackdrop] = useState(false);
@@ -51,9 +50,6 @@ function OverlayWrapper ({ isOpen, children, closeModal, maxWidth }) {
                         {children}
                     </div>
                 </div>
-                <button className={OverlayWrapperStyles.closeBtn} onClick={closeModal}>
-                    <CloseIcon style={{ color: 'white', marginBottom: "-7px" }} />
-                </button>
             </div>
         </CSSTransition>
         , document.getElementById('overlay')

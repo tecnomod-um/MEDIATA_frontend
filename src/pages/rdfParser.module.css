@@ -1,0 +1,264 @@
+.pageContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: calc(100vh - 55px);
+    background-color: #ecebeb;
+    transition: background-color 0.2s ease;
+    width: 100%;
+    overflow: hidden;
+}
+
+.uploadContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.mappingContainer {
+    display: flex;
+    flex-direction: row;
+    padding: 0 1vh;
+    width: 100%;
+    gap: 1vh;
+    justify-content: space-between;
+    box-sizing: border-box;
+
+}
+
+.columnsSection {
+    flex: 1;
+    max-width: 30%;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    background-color: #f4f4f4;
+    padding: 5px;
+    border-radius: 8px;
+    height: 90vh;
+}
+
+.scrollableContainer {
+    overflow-y: auto;
+    max-height: 100%;
+}
+
+.columnItem {
+    padding: 10px;
+    margin: 5px 0;
+    background-color: #ddd;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.columnItem:hover {
+    background-color: #ccc;
+}
+
+.resultingSection {
+    flex: 1;
+    max-width: 30%;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    background-color: #f4f4f4;
+    padding: 10px;
+    border-radius: 8px;
+    height: 90vh;
+}
+
+.hierarchyItem {
+    position: relative;
+    padding-right: 20px;
+}
+
+.deleteIcon {
+    position: absolute;
+    right: 0;
+    top: 0;
+    font-size: 1.2em;
+    color: #ff0000;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.hierarchyItem:hover .deleteIcon {
+    opacity: 1;
+}
+
+.saveButton {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 20px;
+}
+
+.saveButton:hover {
+    background-color: #0056b3;
+}
+
+.defaultEntry, .customEntry {
+    margin-bottom: 15px;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.valueList {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+}
+
+.valueItem {
+    padding: 8px;
+    margin-bottom: 5px;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mappingItem {
+    margin-bottom: 5px;
+    font-size: 0.9em;
+    color: #555;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.mappingArrow {
+    display: inline-block;
+    width: 10px;
+    height: 2px;
+    background-color: #555;
+    position: relative;
+}
+
+.mappingArrow::before {
+    content: '';
+    position: absolute;
+    right: -4px;
+    top: -3px;
+    width: 0;
+    height: 0;
+    border-left: 5px solid #555;
+    border-top: 3px solid transparent;
+    border-bottom: 3px solid transparent;
+}
+
+.mappingDetail {
+    margin-left: 20px;
+    font-size: 0.9em;
+    color: #555;
+    display: flex;
+    align-items: center;
+}
+
+.entryContainer {
+    margin-bottom: 15px;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.groupContainer {
+    display: flex;
+    flex-direction: column;
+}
+
+.valueContainer {
+    margin-bottom: 10px;
+}
+
+.valueBox {
+    background-color: #fff;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.valueName {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.mappings {
+    margin-left: 15px;
+}
+
+.mappingItem {
+    margin-bottom: 5px;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.columnsSectionEnter {
+    transform: translateX(-100%);
+    opacity: 0;
+}
+.columnsSectionEnterActive {
+    transform: translateX(0);
+    opacity: 1;
+    transition: transform 500ms ease, opacity 500ms ease;
+}
+.columnsSectionExit {
+    transform: translateX(0);
+    opacity: 1;
+}
+.columnsSectionExitActive {
+    transform: translateX(-100%);
+    opacity: 0;
+    transition: transform 500ms ease, opacity 500ms ease;
+}
+
+.columnMappingEnter {
+    transform: translateY(100%);
+    opacity: 0;
+}
+.columnMappingEnterActive {
+    transform: translateY(0);
+    opacity: 1;
+    transition: transform 500ms ease, opacity 500ms ease;
+}
+.columnMappingExit {
+    transform: translateY(0);
+    opacity: 1;
+}
+.columnMappingExitActive {
+    transform: translateY(100%);
+    opacity: 0;
+    transition: transform 500ms ease, opacity 500ms ease;
+}
+
+.resultingSectionEnter {
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+.resultingSectionEnterActive {
+    transform: translateX(0);
+    opacity: 1;
+    transition: transform 500ms ease, opacity 500ms ease;
+}
+.resultingSectionExit {
+    transform: translateX(0);
+    opacity: 1;
+}
+.resultingSectionExitActive {
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 500ms ease, opacity 500ms ease;
+}

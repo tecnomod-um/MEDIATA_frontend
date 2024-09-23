@@ -3,9 +3,10 @@ import { MdChevronRight, MdChevronLeft, MdSync } from 'react-icons/md';
 import Switch from 'react-switch';
 import ToolTrayStyles from './toolTray.module.css';
 import DataExporter from '../DataExporter/dataExporter';
+import ElementExporter from '../ElementExporter/elementExporter';
 import { recalculateFeature } from '../../util/petitionHandler';
 
-function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, setShowOutliers, isToolTrayOpen, toggleToolTray, handleFilesSelected, selectedEntry, setSelectedEntry, file, showIndividualView, toggleView, filters, setFilters }) {
+function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, setShowOutliers, isToolTrayOpen, toggleToolTray, handleFilesSelected, selectedEntry, setSelectedEntry, file, showIndividualView, toggleView, filters, toggleFilters, uploadStatus }) {
     const [isLoading, setIsLoading] = useState(false);
 
     const getEntrySet = (dataSet) => {
@@ -35,19 +36,13 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
         document.getElementById('hiddenFileInput').click();
     }
 
-    const LoadingSpinner = () => (
-        <div className={ToolTrayStyles.spinner}>
-            <div></div><div></div><div></div>
-        </div>
-    )
-
     const isFeatureChecked = (featureName, featureType) => {
         return filteredData[`${featureType}Features`]?.some(item => item.featureName === featureName);
     }
 
     const toggleFeatureType = async () => {
         if (!selectedEntry || !file) return;
-    
+
         setIsLoading(true);
         try {
             const switchType = selectedEntry.type === 'categorical' ? 'continuous' : 'categorical';
@@ -55,19 +50,19 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
             const newType = recalcData.dateFeatures?.some(f => f.featureName === selectedEntry.featureName) ?
                 'date' : recalcData.categoricalFeatures?.some(f => f.featureName === selectedEntry.featureName) ?
                     'categorical' : 'continuous';
-            
+
             const newDataStatistics = { ...data };
             ['dateFeatures', 'categoricalFeatures', 'continuousFeatures'].forEach(featureArray => {
                 newDataStatistics[featureArray] = newDataStatistics[featureArray].filter(f => f.featureName !== selectedEntry.featureName);
             });
-    
+
             newDataStatistics[`${newType}Features`] = (newDataStatistics[`${newType}Features`] || []).concat(recalcData[`${newType}Features`]);
-    
-            if (recalcData.chiSquareTest) 
+
+            if (recalcData.chiSquareTest)
                 newDataStatistics.chiSquareTest = recalcData.chiSquareTest;
-            else 
+            else
                 newDataStatistics.chiSquareTest = { ...data.chiSquareTest };
-    
+
             setData(newDataStatistics);
             setFilteredData(newDataStatistics);
             setSelectedEntry({ ...selectedEntry, type: newType === 'date' ? 'continuous' : newType });
@@ -77,7 +72,14 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
             setIsLoading(false);
         }
     }
-    
+
+    const handleFileInputChange = async (file) => {
+        try {
+            await handleFilesSelected(file);
+        } catch (error) {
+            console.error('File upload failed:', error);
+        }
+    };
 
     const handleFeatureCheck = (featureName, featureType) => {
         const newFilteredData = { ...filteredData, chiSquareTest: { ...data.chiSquareTest } };
@@ -109,7 +111,7 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
                             disabled={isLoading}
                         >
                             {isLoading ? (
-                                <LoadingSpinner />
+                                <div className={ToolTrayStyles.spinner}></div>
                             ) : (<>
                                 <span className={ToolTrayStyles.entryType}>{selectedEntry.type.toUpperCase()}</span>
                                 <MdSync className={ToolTrayStyles.iconSpin} />
@@ -157,22 +159,30 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
                 </label>
             </div>
             <div className={ToolTrayStyles.buttonContainer}>
-                <button onClick={triggerFileInputClick}>Upload New Data</button>
+                <button className={ToolTrayStyles.uploadButton}
+                    onClick={triggerFileInputClick}
+                    disabled={uploadStatus.includes('Uploading')}>
+                    {uploadStatus.includes('Uploading') ? (
+                        <div className={ToolTrayStyles.loader}></div>) : 'Upload new file'}
+                </button>
                 <input
                     type="file"
                     id="hiddenFileInput"
                     style={{ display: 'none' }}
-                    onChange={(e) => handleFilesSelected(e.target.files[0])}
+                    onChange={(e) => handleFileInputChange(e.target.files[0])}
                 />
             </div>
             <div className={ToolTrayStyles.buttonContainer}>
                 <button onClick={() => toggleView()}>{showIndividualView ? "Display aggregate metrics" : "Display individual metrics"}</button>
             </div>
             <div className={ToolTrayStyles.buttonContainer}>
-                <button onClick={() => toggleView()}>{filters.length ? "Set filters" : "Filters added"}</button>
+                <button onClick={() => toggleFilters()}>{filters.length ? "Filters added" : "Set filters"}</button>
             </div>
             <div className={ToolTrayStyles.buttonContainer}>
                 <DataExporter data={data} filteredData={filteredData} />
+            </div>
+            <div className={ToolTrayStyles.buttonContainer}>
+                <ElementExporter data={filteredData} />
             </div>
         </div>
     );

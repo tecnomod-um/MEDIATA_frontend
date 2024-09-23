@@ -5,7 +5,6 @@ import DragAndDropOverlayStyles from "./dragAndDropOverlay.module.css";
 
 function DragAndDropOverlay({ onDrop }) {
     const [isDragOver, setIsDragOver] = useState(false);
-    // prevents flickering
     const [dragCounter, setDragCounter] = useState(0);
 
     useEffect(() => {
@@ -27,7 +26,9 @@ function DragAndDropOverlay({ onDrop }) {
             e.preventDefault();
             setIsDragOver(false);
             setDragCounter(0);
-            onDrop(e.dataTransfer.files[0]);
+            if (e.dataTransfer.files.length > 0) {
+                onDrop(e.dataTransfer.files);
+            }
         };
 
         window.addEventListener('dragenter', handleDragEnter);
@@ -68,7 +69,7 @@ function DragAndDropOverlay({ onDrop }) {
         >
             <div className={DragAndDropOverlayStyles.dropOverlay} onDragOver={(e) => e.preventDefault()}>
                 <div className={DragAndDropOverlayStyles.dropSquare} onDragOver={(e) => e.preventDefault()}>
-                    Drop .csv file here
+                    Drop .csv files here
                 </div>
             </div>
         </CSSTransition>,

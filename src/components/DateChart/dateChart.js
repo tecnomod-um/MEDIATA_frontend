@@ -6,7 +6,7 @@ import { Chart as ChartJS, registerables } from 'chart.js';
 
 ChartJS.register(...registerables);
 
-function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick, isSelected, missingEntriesText }) {
+function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick, isSelected }) {
     const chartRef = useRef(null);
 
     const sortedEntries = useMemo(() => (
@@ -18,9 +18,8 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
     ), [dateData.outliers]);
 
     const labels = useMemo(() => {
-        if (!showOutliers) {
+        if (!showOutliers) 
             return sortedEntries.filter(([date]) => !outlierDatesSet.has(date)).map(([date]) => date);
-        }
         return sortedEntries.map(([date]) => date);
     }, [showOutliers, sortedEntries, outlierDatesSet]);
 
@@ -46,7 +45,7 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
     const chartOptions = {
         responsive: true,
         maintainAspectRatio: true,
-        animation: false,
+        animation: true,
         scales: {
             x: {
                 type: 'time',
@@ -87,6 +86,17 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
             }
         }
     };
+
+    useEffect(() => {
+        const handleResize = () => {
+            const chart = chartRef.current;
+            if (chart) chart.resize();
+        };
+        window.addEventListener('resize', handleResize);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    }, []);
 
     useEffect(() => {
         const chart = chartRef.current;

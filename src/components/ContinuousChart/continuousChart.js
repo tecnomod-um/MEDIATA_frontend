@@ -5,7 +5,7 @@ import { Chart as ChartJS, registerables } from 'chart.js';
 
 ChartJS.register(...registerables);
 
-function ContinuousChart({ feature, showOutliers, onClick, onDoubleClick, isSelected, missingEntriesText }) {
+function ContinuousChart({ feature, showOutliers, onClick, onDoubleClick, isSelected }) {
     const chartRef = useRef(null);
     let histogram = feature.histogram;
 
@@ -49,7 +49,7 @@ function ContinuousChart({ feature, showOutliers, onClick, onDoubleClick, isSele
     const chartOptions = {
         responsive: true,
         maintainAspectRatio: true,
-        animation: false,
+        animation: true,
         scales: {
             y: { beginAtZero: true },
         },
@@ -70,6 +70,17 @@ function ContinuousChart({ feature, showOutliers, onClick, onDoubleClick, isSele
         }
     }
 
+    useEffect(() => {
+        const handleResize = () => {
+            const chart = chartRef.current;
+            if (chart) chart.resize();
+        };
+        window.addEventListener('resize', handleResize);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    }, []);
+    
     useEffect(() => {
         const chart = chartRef.current;
         if (chart) {

@@ -27,6 +27,19 @@
     width: 100%;
     z-index: 10;
     min-height: 55px;
+
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+}
+
+.navlinks {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    justify-content: space-between;
 }
 
 .menu {
@@ -34,6 +47,7 @@
     gap: 1em;
     font-size: 18px;
     z-index: 11;
+    margin-left: auto;
 }
 
 .menu div {
@@ -65,11 +79,61 @@ input[type=checkbox] {
 .hamburger,
 label[for="menuToggle"] {
     cursor: pointer;
+    margin-left: auto;
 }
 
 .animate {
     transform: translateY(0);
     transition: transform 0.25s ease-in-out;
+}
+
+.darkerContainer {
+    font-size: 20px;
+    display: flex;
+    gap: 0;
+    background-color: #a61e2e;
+    margin-left: 1em;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.darkerItem {
+    flex: 1;
+    padding: 10px;
+    white-space: nowrap;
+    transition: background-color 0.25s ease;
+}
+
+.darkerItem:first-child {
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+}
+
+.darkerItem:last-child {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+.darkerItem:hover {
+    background-color: #8b1a28;
+}
+
+.fadeEnter {
+    opacity: 0;
+}
+
+.fadeEnterActive {
+    opacity: 1;
+    transition: opacity 300ms;
+}
+
+.fadeExit {
+    opacity: 1;
+}
+
+.fadeExitActive {
+    opacity: 0;
+    transition: opacity 300ms;
 }
 
 @media (max-width: 768px) {

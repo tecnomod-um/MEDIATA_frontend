@@ -5,8 +5,10 @@ import StatisticsDisplay from "../components/StatisticsDisplay/statisticsDisplay
 import ToolTray from "../components/ToolTray/toolTray";
 import AggregateDisplay from '../components/AggregatesDisplay/aggregateDisplay';
 import DragAndDropOverlay from "../components/DragAndDropOverlay/dragAndDropOverlay";
+import FilterModal from "../components/FilterModal/filterModal";
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import { uploadFile, logError } from "../util/petitionHandler";
+import { useNode } from '../context/nodeContext';
 
 function CsvChecker() {
     const [file, setFile] = useState(null);
@@ -19,7 +21,9 @@ function CsvChecker() {
     const [isToolTrayOpen, setIsToolTrayOpen] = useState(true);
     const [selectedEntry, setSelectedEntry] = useState(null);
     const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
+    const [isFiltersOpen, setIsFiltersopen] = useState(false);
     const [filters, setFilters] = useState([]);
+    const { selectedNode } = useNode();
     const toggleToolTray = () => setIsToolTrayOpen(!isToolTrayOpen);
 
     useEffect(() => {
@@ -58,12 +62,20 @@ function CsvChecker() {
             setIsToolTrayOpen(false);
     }, [viewportWidth]);
 
-    const handleFilesSelected = (file) => {
-        setFile(file);
+    const handleFilesSelected = (files) => {
+        if (files && files.length > 0) 
+            setFile(files[0]);
     };
+
+    useEffect(() => {
+        if (selectedNode) {
+            console.log('Selected Node Info in CSV Checker:', selectedNode);
+        }
+    }, [selectedNode]);
 
     return (
         <div className={CsvCheckerStyles.dropContainer}>
+            <FilterModal isOpen={isFiltersOpen} dataStatistics={dataStatistics} filters={filters} setFilters={setFilters} setFilteredDataStatistics={setFilteredDataStatistics} closeModal={() => setIsFiltersopen(false)} inputFile={file} />
             <DragAndDropOverlay onDrop={handleFilesSelected} />
             {!filteredDataStatistics && (
                 <DataUploadButton
@@ -99,7 +111,8 @@ function CsvChecker() {
                     toggleView={() => toggleShownView(currentView => !currentView)}
                     file={file}
                     filters={filters}
-                    setFilters={setFilters}
+                    toggleFilters={() => setIsFiltersopen(isFiltersOpen => !isFiltersOpen)}
+                    uploadStatus={uploadStatus}
                 />
             </CSSTransition>
             <CSSTransition
@@ -152,6 +165,7 @@ function CsvChecker() {
                                         pearsonCorrelations={filteredDataStatistics?.pearsonCorrelations}
                                         spearmanCorrelations={filteredDataStatistics?.spearmanCorrelations}
                                         chiSquareTest={filteredDataStatistics?.chiSquareTest}
+                                        omittedFeatures={filteredDataStatistics?.omittedFeatures}
                                     />
                                 </div>
                             </CSSTransition>

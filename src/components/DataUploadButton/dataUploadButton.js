@@ -1,4 +1,3 @@
-// DataUploadButton.js
 import React, { useRef } from 'react';
 import DataUploadButtonStyles from './dataUploadButton.module.css';
 
@@ -10,7 +9,7 @@ function DataUploadButton({ onFileSelected, uploadStatus, errorMessage }) {
     const handleFileChange = (event) => {
         const files = event.target.files;
         if (files && files.length > 0) {
-            onFileSelected(files[0]);
+            onFileSelected(files);
             event.target.value = '';
         }
     };
@@ -22,6 +21,7 @@ function DataUploadButton({ onFileSelected, uploadStatus, errorMessage }) {
                 type="file"
                 onChange={handleFileChange}
                 style={{ display: 'none' }}
+                multiple
             />
             <button
                 className={`${DataUploadButtonStyles.button} ${DataUploadButtonStyles.big_button}`}
@@ -30,7 +30,7 @@ function DataUploadButton({ onFileSelected, uploadStatus, errorMessage }) {
                 {uploadStatus.includes('Uploading') ? (
                     <div className={DataUploadButtonStyles.spinner}></div>
                 ) : (
-                    uploadStatus || 'Upload File'
+                    uploadStatus || 'Upload Files'
                 )}
             </button>
             {errorMessage && <p className={DataUploadButtonStyles.error}>{errorMessage}</p>}

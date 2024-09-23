@@ -4,26 +4,29 @@ import CategoricalChart from '../CategoricalChart/categoricalChart';
 import DateChart from '../DateChart/dateChart';
 import EntrySearch from '../EntrySearch/entrySearch';
 import StatisticsDisplayStyles from './statisticsDisplay.module.css';
-import ChartPreview from '../ChartPreview/chartPreview'; // Import ChartPreview
-import FilterModal from '../FilterModal/filterModal';
+import ChartPreview from '../ChartPreview/chartPreview';
 
 // Display for all type graphs. Memoized to try improve performance
 const StatisticsDisplay = React.memo(({ data, showOutliers, setSelectedEntry, selectedEntry }) => {
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [previewContent, setPreviewContent] = useState(null);
 
-    const getMissingEntriesChartText = (count, missingValuesCount) => {
-        if (missingValuesCount === 0) {
-            return 'No missing entries';
-        }
-        const missingPercentage = (missingValuesCount / count * 100).toFixed(2);
-        return `Missing Entries: ${missingValuesCount} (${missingPercentage}%)`;
-    };
-
     const formatMissingEntries = (count, missingValuesCount) => {
         const missingPercentage = (missingValuesCount / count * 100).toFixed(2);
         return missingValuesCount === 0 ? '0 (0%)' : `${missingValuesCount} (${missingPercentage}%)`;
-    };
+    }
+     // Sort features by their count (Ascending)
+     const sortedContinuousFeatures = useMemo(() => {
+        return [...data.continuousFeatures].sort((a, b) => a.count - b.count);
+    }, [data.continuousFeatures]);
+
+    const sortedCategoricalFeatures = useMemo(() => {
+        return [...data.categoricalFeatures].sort((a, b) => a.count - b.count);
+    }, [data.categoricalFeatures]);
+
+    const sortedDateFeatures = useMemo(() => {
+        return [...data.dateFeatures].sort((a, b) => a.count - b.count);
+    }, [data.dateFeatures]);
 
     const continuousDataForTable = useMemo(() => {
         const table = {
@@ -89,14 +92,12 @@ const StatisticsDisplay = React.memo(({ data, showOutliers, setSelectedEntry, se
                 chartProps = {
                     feature,
                     showOutliers,
-                    missingEntriesText: getMissingEntriesChartText(feature.count, feature.missingValuesCount),
                 };
                 break;
             case 'categorical':
                 ChartComponent = CategoricalChart;
                 chartProps = {
                     feature,
-                    missingEntriesText: getMissingEntriesChartText(feature.count, feature.missingValuesCount),
                 };
                 break;
             case 'date':
@@ -105,7 +106,6 @@ const StatisticsDisplay = React.memo(({ data, showOutliers, setSelectedEntry, se
                     dateData: feature,
                     dateDataKey: feature.featureName,
                     showOutliers,
-                    missingEntriesText: getMissingEntriesChartText(feature.count, feature.missingValuesCount),
                 };
                 break;
             default:
@@ -119,22 +119,9 @@ const StatisticsDisplay = React.memo(({ data, showOutliers, setSelectedEntry, se
         setIsPreviewOpen(true);
     }, [showOutliers]);
 
-    const handleContinuousClick = useCallback((featureName) => {
-        setSelectedEntry({ type: 'continuous', featureName });
-    }, [setSelectedEntry]);
-
-    const handleCategoricalClick = useCallback((featureName) => {
-        setSelectedEntry({ type: 'categorical', featureName });
-    }, [setSelectedEntry]);
-
-    const handleDateClick = useCallback((featureName) => {
-        setSelectedEntry({ type: 'continuous', featureName });
-    }, [setSelectedEntry]);
-
     return (
         <div className={StatisticsDisplayStyles.chartFlexContainer}>
-            {isPreviewOpen &&
-                <ChartPreview isOpen={isPreviewOpen} content={previewContent} closeModal={() => setIsPreviewOpen(false)} />}
+            <ChartPreview isOpen={isPreviewOpen} content={previewContent} closeModal={() => setIsPreviewOpen(false)} />
             <div className={StatisticsDisplayStyles.tablesContainer}>
                 <div className={StatisticsDisplayStyles.entrySearchWrapper}>
                     <EntrySearch resultData={continuousDataForTable} onRowSelect={setSelectedEntry} selectedEntry={selectedEntry} type="continuous" />
@@ -143,41 +130,38 @@ const StatisticsDisplay = React.memo(({ data, showOutliers, setSelectedEntry, se
                     <EntrySearch resultData={categoricalDataForTable} onRowSelect={setSelectedEntry} selectedEntry={selectedEntry} type="categorical" />
                 </div>
             </div>
-            {data.continuousFeatures?.map((feature, index) => (
-                <ContinuousChart
-                    key={`continuous-${index}`}
-                    feature={feature}
-                    showOutliers={showOutliers}
-                    missingEntriesText={getMissingEntriesChartText(feature.count, feature.missingValuesCount)}
-                    onClick={() => handleContinuousClick(feature.featureName)}
-                    onDoubleClick={() => handleChartDoubleClick('continuous', feature)}
-                    isSelected={selectedEntry?.type === 'continuous' && selectedEntry?.featureName === feature.featureName}
-                />
-            ))}
-            {data.categoricalFeatures?.map((feature, index) => (
-                <CategoricalChart
-                    key={`categorical-${index}`}
-                    feature={feature}
-                    missingEntriesText={getMissingEntriesChartText(feature.count, feature.missingValuesCount)}
-                    onClick={() => handleCategoricalClick(feature.featureName)}
-                    onDoubleClick={() => handleChartDoubleClick('categorical', feature)}
-                    isSelected={selectedEntry?.type === 'categorical' && selectedEntry?.featureName === feature.featureName}
-                />
-            ))}
-            {data.dateFeatures?.map((feature, index) => (
-                <DateChart
-                    key={`date-${index}`}
-                    dateData={feature}
-                    dateDataKey={feature.featureName}
-                    showOutliers={showOutliers}
-                    missingEntriesText={getMissingEntriesChartText(feature.count, feature.missingValuesCount)}
-                    onClick={() => handleDateClick(feature.featureName)}
-                    onDoubleClick={() => handleChartDoubleClick('date', feature)}
-                    isSelected={selectedEntry?.type === 'continuous' && selectedEntry?.featureName === feature.featureName}
-                />
-            ))}
+            {sortedContinuousFeatures.map((feature, index) => (
+                    <ContinuousChart
+                        key={`continuous-${index}`}
+                        feature={feature}
+                        showOutliers={showOutliers}
+                        onClick={() => setSelectedEntry({ type: 'continuous', featureName: feature.featureName })}
+                        onDoubleClick={() => handleChartDoubleClick('continuous', feature)}
+                        isSelected={selectedEntry?.type === 'continuous' && selectedEntry?.featureName === feature.featureName}
+                    />
+                ))}
+                {sortedCategoricalFeatures.map((feature, index) => (
+                    <CategoricalChart
+                        key={`categorical-${index}`}
+                        feature={feature}
+                        onClick={() => setSelectedEntry({ type: 'categorical', featureName: feature.featureName })}
+                        onDoubleClick={() => handleChartDoubleClick('categorical', feature)}
+                        isSelected={selectedEntry?.type === 'categorical' && selectedEntry?.featureName === feature.featureName}
+                    />
+                ))}
+                {sortedDateFeatures.map((feature, index) => (
+                    <DateChart
+                        key={`date-${index}`}
+                        dateData={feature}
+                        dateDataKey={feature.featureName}
+                        showOutliers={showOutliers}
+                        onClick={() => setSelectedEntry({ type: 'continuous', featureName: feature.featureName })}
+                        onDoubleClick={() => handleChartDoubleClick('date', feature)}
+                        isSelected={selectedEntry?.type === 'continuous' && selectedEntry?.featureName === feature.featureName}
+                    />
+                ))}
         </div>
     );
-});
+})
 
 export default StatisticsDisplay;
