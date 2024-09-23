@@ -1,0 +1,20 @@
+.chartFlexContainer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 1.5vh;
+    padding: 1.5vh;
+}
+
+.tablesContainer {
+    display: flex;
+    justify-content: center;
+    gap: 1.5vh;
+    width: calc(100% - 1.5vh);
+}
+
+.entrySearchWrapper {
+    min-width: 50%;
+    max-height: 60vh ;
+}

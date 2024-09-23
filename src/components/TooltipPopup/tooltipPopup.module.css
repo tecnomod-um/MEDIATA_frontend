@@ -1,0 +1,38 @@
+.popup {
+    position: fixed;
+    z-index: 1050;
+    padding: 16px;
+    padding-bottom: 36px;
+    background-color: rgba(50, 50, 50, 0.9);
+    backdrop-filter: blur(3px);
+    color: white;
+    font-size: 14px;
+    text-align: center;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.fadeEnter {
+    opacity: 0;
+}
+
+.fadeEnterActive {
+    opacity: 1;
+    transition: opacity 150ms ease-in;
+}
+
+.fadeExit {
+    opacity: 1;
+}
+
+.fadeExitActive {
+    opacity: 0;
+    transition: opacity 150ms ease-out;
+}
+
+@media (max-width: 600px) {
+    .popup {
+        font-size: 12px;
+    }
+}

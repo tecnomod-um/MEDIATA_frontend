@@ -1,0 +1,39 @@
+@keyframes fadeInUp {
+    from {
+        transform: translate3d(0, 20px, 0);
+        opacity: 0;
+    }
+
+    to {
+        transform: translate3d(0, 0, 0);
+        opacity: 1;
+    }
+}
+
+.introSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    text-align: center;
+
+    color: #fff;
+    padding: 20px;
+    position: relative;
+}
+
+.introSection h1 {
+    margin-bottom: 15px;
+    font-size: 40px;
+    color: #fff;
+    animation: fadeInUp 1s ease-out forwards;
+}
+
+.introSection p {
+    font-size: 20px;
+    line-height: 1.6;
+    max-width: 600px;
+    color: #ccc;
+    animation: fadeInUp 1.2s ease-out forwards;
+}
