@@ -10,6 +10,10 @@
     "@react-spring/three": "^9.7.3",
     "@react-three/drei": "^9.107.0",
     "@react-three/fiber": "^8.16.8",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-node-resolve": "^15.3.0",
+    "@rollup/plugin-replace": "^6.0.1",
+    "@rollup/pluginutils": "^5.1.2",
     "@svgr/webpack": "^8.1.0",
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.2.1",
@@ -18,11 +22,12 @@
     "chart.js": "^4.4.1",
     "chartjs-adapter-moment": "^1.0.1",
     "chroma-js": "^2.4.2",
+    "css-loader": "^7.1.2",
     "css-select": "^5.1.0",
     "distinct-colors": "^3.0.0",
     "jwt-decode": "^4.0.0",
-    "nth-check": "^2.1.1",
-    "postcss": "^8.4.35",
+    "nth-check": "^2.0.1",
+    "postcss": "^8.4.47",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",
     "react-datepicker": "^6.9.0",
@@ -38,6 +43,7 @@
     "react-transition-group": "^4.4.5",
     "react-window": "^1.8.10",
     "resolve-url-loader": "^5.0.0",
+    "rollup": "^4.22.4",
     "sass": "^1.77.6",
     "svgo": "^3.2.0",
     "three": "^0.161.0",
@@ -68,7 +74,6 @@
     ]
   },
   "devDependencies": {
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "react-app-rewired": "^2.2.1"
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11"
   }
 }
