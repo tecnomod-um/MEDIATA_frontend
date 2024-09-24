@@ -54,7 +54,9 @@
         "@rollup/plugin-babel": "^6.0.4",
         "@rollup/plugin-node-resolve": "^15.3.0",
         "@rollup/plugin-replace": "^6.0.1",
-        "@rollup/pluginutils": "^5.1.2"
+        "@rollup/pluginutils": "^5.1.2",
+        "css-select": "^5.1.0",
+        "resolve-url-loader": "^5.0.0"
     },
     "scripts": {
         "start": "react-scripts start",
