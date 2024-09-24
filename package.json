@@ -43,7 +43,6 @@
         "react-transition-group": "^4.4.5",
         "react-window": "^1.8.10",
         "resolve-url-loader": "^5.0.0",
-        "rollup": "^3.29.5",
         "sass": "^1.77.6",
         "svgo": "^3.2.0",
         "three": "^0.161.0",
@@ -83,6 +82,7 @@
         ]
     },
     "devDependencies": {
-        "@babel/plugin-proposal-private-property-in-object": "^7.21.11"
+        "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+        "rollup": "^3.29.5"
     }
 }
