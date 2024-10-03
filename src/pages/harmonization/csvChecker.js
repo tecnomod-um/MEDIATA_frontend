@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
-import CsvCheckerStyles from "./csvChecker.module.css";
-import DataUploadButton from "../components/DataUploadButton/dataUploadButton";
-import StatisticsDisplay from "../components/StatisticsDisplay/statisticsDisplay";
-import ToolTray from "../components/ToolTray/toolTray";
-import AggregateDisplay from '../components/AggregatesDisplay/aggregateDisplay';
-import DragAndDropOverlay from "../components/DragAndDropOverlay/dragAndDropOverlay";
-import FilterModal from "../components/FilterModal/filterModal";
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
-import { uploadFile, logError } from "../util/petitionHandler";
-import { useNode } from '../context/nodeContext';
+import CsvCheckerStyles from "./csvChecker.module.css";
+import DataUploadButton from "../../components/DataUploadButton/dataUploadButton";
+import StatisticsDisplay from "../../components/StatisticsDisplay/statisticsDisplay";
+import ToolTray from "../../components/ToolTray/toolTray";
+import AggregateDisplay from '../../components/AggregatesDisplay/aggregateDisplay';
+import DragAndDropOverlay from "../../components/DragAndDropOverlay/dragAndDropOverlay";
+import FilterModal from "../../components/FilterModal/filterModal";
+import { uploadFile, logError } from "../../util/petitionHandler";
+import { useNode } from '../../context/nodeContext';
 
 function CsvChecker() {
     const [file, setFile] = useState(null);
