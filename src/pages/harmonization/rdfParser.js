@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { CSSTransition } from 'react-transition-group';
 import RdfParserStyles from "./rdfParser.module.css";
-import DataUploadButton from "../components/DataUploadButton/dataUploadButton";
-import DragAndDropOverlay from "../components/DragAndDropOverlay/dragAndDropOverlay";
-import ColumnMapping from "../components/ColumnMapping/columnMapping";
+import DataUploadButton from "../../components/DataUploadButton/dataUploadButton";
+import DragAndDropOverlay from "../../components/DragAndDropOverlay/dragAndDropOverlay";
+import ColumnMapping from "../../components/ColumnMapping/columnMapping";
 
 function RdfParser() {
     const location = useLocation();

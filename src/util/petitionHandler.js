@@ -128,7 +128,7 @@ export const recalculateFeature = async (file, featureName, featureType) => {
 }
 
 // Changes which rows of the current file are taken into account and shown
-export const filterData = async (file, filters, serviceUrl) => {
+export const filterData = async (file, filters) => {
 
     const formData = new FormData();
     formData.append('file', file);
@@ -137,6 +137,24 @@ export const filterData = async (file, filters, serviceUrl) => {
     console.log(JSON.stringify(filters));
     try {
         const response = await nodeAxiosInstance.post(`/taniwha/api/data/filter`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
+// Makes the node save a mock file for the federated model to consume
+export const saveMockFile = async (file) => {
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await nodeAxiosInstance.post(`/taniwha/api/harmonization/mock`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },

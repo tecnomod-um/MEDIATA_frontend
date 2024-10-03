@@ -54,6 +54,9 @@ export default function Navbar() {
                                 <li className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem}`}>
                                     <CustomLink to="/rdfparser" onClick={toggleMenu} noToggle>RDF Parser</CustomLink>
                                 </li>
+                                <li className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem}`}>
+                                    <CustomLink to="/rdfbuilder" onClick={toggleMenu} noToggle>RDF Builder</CustomLink>
+                                </li>
                             </div>
                         </CSSTransition>
                     )}
