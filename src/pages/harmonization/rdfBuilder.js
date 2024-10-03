@@ -12,7 +12,6 @@ function RdfBuilder() {
             const fileBlob = await response.blob();
             const file = new File([fileBlob], "mock.csv", { type: "text/csv" });
             const mockResult = await saveMockFile(file);
-
             setResult(mockResult);
         } catch (error) {
             console.error('Error generating mock file:', error);
