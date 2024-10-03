@@ -7,10 +7,11 @@ import Navbar from './components/Navbar/navbar';
 import ProtectedRoute from './components/ProtectedRoute/protectedRoute';
 import Main from './pages/main';
 import Login from './pages/login';
-import CsvChecker from './pages/csvChecker';
 import About from './pages/about';
 import Nodes from './pages/nodes';
-import RdfParser from './pages/rdfParser';
+import CsvChecker from './pages/harmonization/csvChecker';
+import RdfParser from './pages/harmonization/rdfParser';
+import RdfBuilder from'./pages/harmonization/rdfBuilder';
 
 import { AuthProvider, useAuth } from './context/authContext';
 import { NodeProvider } from './context/nodeContext';
@@ -38,6 +39,9 @@ const App = () => {
                 </Route>
                 <Route element={<ProtectedRoute nodeRequired={true} />}>
                     <Route path="/rdfparser" element={<RdfParser />} />
+                </Route>
+                <Route element={<ProtectedRoute nodeRequired={true} />}>
+                    <Route path="/rdfbuilder" element={<RdfBuilder />} />
                 </Route>
             </Routes>
         </>

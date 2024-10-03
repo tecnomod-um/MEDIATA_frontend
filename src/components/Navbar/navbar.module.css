@@ -136,7 +136,7 @@ label[for="menuToggle"] {
     transition: opacity 300ms;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 820px) {
     .menu {
         display: block;
         position: absolute;

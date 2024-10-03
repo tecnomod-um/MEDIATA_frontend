@@ -24,7 +24,7 @@
         "chroma-js": "^2.4.2",
         "css-loader": "^7.1.2",
         "css-select": "^5.1.0",
-        "distinct-colors": "^3.0.0",
+        "distinct-colors": "^2.0.0",
         "jwt-decode": "^4.0.0",
         "nth-check": "^2.0.1",
         "postcss": "^8.4.47",

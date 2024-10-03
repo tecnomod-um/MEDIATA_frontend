@@ -7,6 +7,8 @@ import { Chart as ChartJS, registerables } from 'chart.js';
 
 ChartJS.register(...registerables);
 
+console.log(distinctColors)
+console.log(chroma)
 const generateColorList = (statistics) => {
     const colorCount = statistics ? Object.keys(statistics).length : 0;
     return distinctColors({
@@ -95,7 +97,7 @@ const CategoricalChart = ({ feature, onClick, isSelected, onDoubleClick }) => {
 
     return (
         <div
-            className={`${categoricalChartStyles.chartContainer} ${chartSizeClass} ${isSelected ? selectedClass: ''}`}
+            className={`${categoricalChartStyles.chartContainer} ${chartSizeClass} ${isSelected ? selectedClass : ''}`}
             onClick={onClick}
             onDoubleClick={onDoubleClick}
         >
