@@ -41,24 +41,6 @@
     height: 90vh;
 }
 
-.scrollableContainer {
-    overflow-y: auto;
-    max-height: 100%;
-}
-
-.columnItem {
-    padding: 10px;
-    margin: 5px 0;
-    background-color: #ddd;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.columnItem:hover {
-    background-color: #ccc;
-}
-
 .resultingSection {
     flex: 1;
     max-width: 30%;
@@ -106,7 +88,8 @@
     background-color: #0056b3;
 }
 
-.defaultEntry, .customEntry {
+.defaultEntry,
+.customEntry {
     margin-bottom: 15px;
     padding: 15px;
     border-radius: 8px;
@@ -209,15 +192,18 @@
     transform: translateX(-100%);
     opacity: 0;
 }
+
 .columnsSectionEnterActive {
     transform: translateX(0);
     opacity: 1;
     transition: transform 500ms ease, opacity 500ms ease;
 }
+
 .columnsSectionExit {
     transform: translateX(0);
     opacity: 1;
 }
+
 .columnsSectionExitActive {
     transform: translateX(-100%);
     opacity: 0;
@@ -228,15 +214,18 @@
     transform: translateY(100%);
     opacity: 0;
 }
+
 .columnMappingEnterActive {
     transform: translateY(0);
     opacity: 1;
     transition: transform 500ms ease, opacity 500ms ease;
 }
+
 .columnMappingExit {
     transform: translateY(0);
     opacity: 1;
 }
+
 .columnMappingExitActive {
     transform: translateY(100%);
     opacity: 0;
@@ -253,10 +242,12 @@
     opacity: 1;
     transition: transform 500ms ease, opacity 500ms ease;
 }
+
 .resultingSectionExit {
     transform: translateX(0);
     opacity: 1;
 }
+
 .resultingSectionExitActive {
     transform: translateX(100%);
     opacity: 0;
