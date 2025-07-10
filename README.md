@@ -1,13 +1,14 @@
-# MEDIATA Node Service
+# MEDIATA Front-End
 
-This component is deployed on-premise at each clinical site. It hosts and processes sensitive datasets locally and responds only to authenticated users holding valid Kerberos tickets.
+This is the single-page web client of the MEDIATA platform. It provides a responsive, secure, and user-friendly interface for interacting with federated clinical nodes through the central orchestrator.
 
 ## Features
 
-- Secure Kerberos ticket validation
-- Local dataset analysis (univariate + bivariate stats)
-- Lightweight preprocessing and integration pipeline
-- Dataset and DCAT metadata exposure
-- Exportable mapped files and RDF resources
+- Kerberos-based login and session management (via TGTs and STs)
+- Remote multi-node discovery and metadata exploration
+- Statistical profiling, integration, and semantic mapping workflows
+- Ontology term suggestions (SNOMED CT, FHIR)
+- Semi-automated FHIR mapping and export
+- Fully responsive UI with keyboard shortcuts and accessibility support
 
 This project is developed under the [MIT License](LICENSE.md).
