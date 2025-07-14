@@ -1,0 +1,107 @@
+@import '../../../variables.css';
+
+.detailPanel {
+  display: flex;
+  flex-direction: column;
+  background-color: #fafafa;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  padding: 0;
+  overflow: hidden;
+  height: 100%;
+}
+
+.headerRow {
+  background: var(--tooltray-background-color-light);
+  padding: 12px 16px;
+  position: relative;
+  min-height: 52px;
+}
+
+.detailTitle {
+  margin: 0;
+  font-size: 1.4em;
+  color: #fff;
+  text-align: center;
+  width: calc(100% - 140px);
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.formBody {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: auto;
+}
+
+.buildClassBtn {
+  background-color: var(--button-add-value-color);
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+}
+
+.formField:nth-of-type(2) {
+  flex: 1;
+  min-height: 0;
+}
+
+.formField:nth-of-type(3) textarea {
+  min-height: 100px;
+  max-height: 100px;
+}
+
+.formField label {
+  background-color: var(--tooltray-background-color-light);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 8px 8px 0 0;
+  border: 1px solid #ccc;
+  border-bottom: none;
+  user-select: none;
+  font-size: 0.95em;
+}
+
+.formField input,
+.formField textarea {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 0 0 8px 8px;
+  font-size: 0.95em;
+  resize: none;
+}
+
+.formField:nth-of-type(2) textarea {
+  height: 100%;
+  min-height: 80px;
+}
+
+.typeSelect {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 0 0 8px 8px;
+  font-size: 0.95em;
+  background-color: #e8e8e8;
+  appearance: none;
+}
+
+.buildClassBtn:hover {
+  background-color: var(--button-add-value-hover-color);
+}

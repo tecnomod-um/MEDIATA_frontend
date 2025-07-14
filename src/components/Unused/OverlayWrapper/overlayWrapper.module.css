@@ -1,0 +1,73 @@
+.fadeEnter {
+    opacity: 0;
+    transform: translate(-50%, -100%);
+}
+
+.fadeEnterActive {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.fadeExit {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+}
+
+.fadeExitActive {
+    opacity: 0;
+    transform: translate(-50%, -100%);
+    transition: opacity 0.1s ease-out, transform 0.1s ease-out;
+}
+
+* {
+    scrollbar-width: auto;
+}
+
+.darkBG {
+    background-color: var(--darkened-background-color);
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    z-index: 999;
+}
+
+.closeBtn {
+    align-self: flex-end;
+    border: none;
+    background: transparent;
+    border-radius: 20px;
+    color: black;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 500;
+    margin-right: 2px;
+    margin-top: 2px;
+    padding: 4px 4px;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    z-index: 1000;
+}
+
+.modal {
+    background: white;
+    min-width: 50VW;
+    max-width: 80vw;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px 0 rgba(0, 0, 0, 0.04);
+    position: relative;
+    z-index: 1000; 
+    text-align: center;
+    border: 1px solid white;
+}

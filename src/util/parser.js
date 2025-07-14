@@ -15,4 +15,4 @@ export const jsonToCSV = (jsonArray) => {
   });
 
   return csvRows.join("\n");
-};
+}

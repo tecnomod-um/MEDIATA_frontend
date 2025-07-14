@@ -1,0 +1,202 @@
+@import '../../../variables.css';
+
+.resultingSection {
+  flex: 1;
+  max-width: 30%;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  background-color: #f4f4f4;
+  padding: 10px;
+  border-radius: 8px;
+  height: 90vh;
+  position: relative;
+}
+
+.scrollableContainer {
+  overflow-y: auto;
+  max-height: calc(100% - 120px);
+  position: relative;
+  padding-right: 10px;
+  scrollbar-width: thin;
+}
+
+.undoContainer {
+  position: sticky;
+  top: 0;
+  left: 0;
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 5px 10px;
+  font-size: 0.9em;
+  cursor: pointer;
+  z-index: 2;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.undoContainer:hover {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+/* Bottom area for both buttons */
+.bottomActions {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 10px;
+}
+
+/* =============== */
+/* Upload Mappings */
+/* =============== */
+.uploadMappingsContainer {
+  display: flex;
+  width: 100%;
+  height: 54px;
+  border-radius: 8px;
+  overflow: hidden;
+  /* ensures corners are shared with no gap */
+}
+
+/* 
+     Use the SAME base color as "Process Mappings" 
+     but no gradient or animation. 
+     "Process Mappings" has a gradient from #0f3e48 to #08242c,
+     so let's pick #0f3e48 for consistency.
+  */
+.uploadMappingsButton {
+  flex: 1;
+  background-image: var(--button-gradient-light);
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.uploadMappingsButton:hover {
+  background-position: 100% 0;
+  background-color: var(--button-color-hover-light);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.uploadArrowButton {
+  width: 64px;
+  background-color: #27ae60;
+  color: var(--text-color-on-darkbg-light);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.uploadArrowButton:hover {
+  background-color: #229a54;
+}
+
+/* =========================== */
+/* Process Mappings (animated) */
+/* =========================== */
+.processMappingsButton {
+  min-height: 54px;
+  width: 100%;
+  user-select: none;
+  font-size: 16px;
+  /* same as Upload Mappings */
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  text-align: center;
+  border: none;
+  border-radius: 8px;
+  background-size: 300% 300%;
+  background-image: var(--button-gradient-light);
+  box-shadow: 0 5px 15px rgba(8, 36, 44, 0.4);
+  position: relative;
+  overflow: hidden;
+  transition: background-position 0.5s ease-in-out;
+}
+
+.processMappingsButton::before,
+.processMappingsButton::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  transform: rotate(40deg);
+  border-radius: 8px;
+  transition: left 0s;
+}
+
+.processMappingsButton::before {
+  background: linear-gradient(to right,
+      rgba(255, 255, 255, 0.2),
+      rgba(255, 255, 255, 0.1));
+  transition-delay: 0.1s;
+}
+
+.processMappingsButton::after {
+  background: linear-gradient(to right,
+      rgba(255, 255, 255, 0.1),
+      rgba(255, 255, 255, 0));
+  transition-delay: 0.3s;
+}
+
+.processMappingsButton:hover::before,
+.processMappingsButton:hover::after {
+  left: 100%;
+  transition: left 0.7s ease-in-out;
+}
+
+.processMappingsButton:hover {
+  background-position: 100% 0;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.processMappingsButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Spinner for "Processing..." */
+.loader {
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid #fff;
+  border-radius: 50%;
+  width: 1.2em;
+  height: 1.2em;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+  margin-top: -2px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .resultingSection {
+    max-width: 100%;
+    max-height: 30vh;
+    overflow-y: hidden;
+  }
+}

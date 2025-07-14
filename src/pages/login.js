@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState , useRef} from "react";
 import { useNavigate } from "react-router-dom";
 import LoginStyles from "./login.module.css";
 import { loginUser } from "../util/petitionHandler";
@@ -10,7 +10,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-
+  const formRef = useRef(null); 
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -38,8 +38,9 @@ const Login = () => {
         appear={true}
         timeout={500}
         classNames={LoginStyles}
+        nodeRef={formRef}
       >
-        <form className={LoginStyles.form} onSubmit={handleLogin}>
+        <form ref={formRef} className={LoginStyles.form} onSubmit={handleLogin}>
           <h2 className={LoginStyles.title}>Login</h2>
           <input
             type="text"

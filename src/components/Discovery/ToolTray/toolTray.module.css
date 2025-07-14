@@ -1,0 +1,420 @@
+@import '../../../variables.css';
+
+.container {
+  background-color: #333;
+  color: #fff;
+  left: 0;
+  top: 55px;
+  bottom: 0;
+  width: 250px;
+  position: fixed;
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  z-index: 10;
+}
+
+.open {
+  transform: translateX(0);
+}
+
+.closed {
+  transform: translateX(-100%);
+}
+
+@media (max-width: 768px) {
+  .container {
+    transform: translateX(-100%);
+    z-index: 12;
+  }
+  .open {
+    transform: translateX(0);
+  }
+  .closed {
+    transform: translateX(-100%);
+  }
+  .toggleButton {
+    display: flex !important;
+  }
+}
+
+.toggleButton {
+  position: absolute;
+  right: -30px;
+  top: 0px;
+  width: 30px;
+  height: 55px;
+  background-color: var(--button-color-light);
+  color: var(--text-color-on-darkbg-light);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 0 0 15px 0;
+}
+
+.toggleButton:hover {
+  background-color: var(--button-color-hover-light);
+}
+
+.multiFileSelector {
+  background-color: #444;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  max-height: 40%;
+}
+
+.multiFileSelector p {
+  margin: 0 0 8px 0;
+  font-weight: bold;
+  font-size: 0.95rem;
+}
+
+.filesRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 100px;
+  justify-content: flex-start;
+}
+
+.fileToggle {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  background-color: #555;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 5px 8px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.fileToggleActive {
+  background-color: var(--button-color-light);
+  font-weight: normal;
+  position: relative;
+  overflow: hidden;
+}
+
+.fileToggle:hover {
+  background-color: #666;
+}
+
+.fileToggleActive:hover {
+  background-color: var(--button-color-hover-light);
+}
+
+/* New ripple element style */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  animation: rippleEffect 0.6s linear;
+  background: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+}
+
+/* Keyframes for ripple effect */
+@keyframes rippleEffect {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Hide the default checkbox visually */
+.fileToggle input[type="checkbox"] {
+  cursor: pointer;
+  margin-right: 5px;
+}
+
+/* Ellipsis container for text */
+.fileNameEllipsis {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Scrollbar styling for file list */
+.filesRow::-webkit-scrollbar {
+  width: 6px;
+}
+
+.filesRow::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.filesRow::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.filesRow::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* The top section for "Entry: X" or "No entry selected" + toggle button */
+.topSection {
+  background-color: #444;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.topSection h3 {
+  font-weight: bold;
+  font-size: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toggleFeatureTypeButton {
+  background-color: #555;
+  color: var(--text-color-on-darkbg-light);
+  padding: 8px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 12px;
+  width: 100%;
+  margin-top: 5px;
+  height: 36px;
+  transition: background-color 0.3s;
+  box-sizing: border-box;
+}
+
+.toggleFeatureTypeButton:hover {
+  background-color: #666;
+}
+
+.toggleFeatureTypeButton:disabled {
+  background-color: #333;
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+.iconSpin {
+  font-size: 16px;
+}
+
+/* Reverse spin the icon on hover */
+.toggleFeatureTypeButton:hover .iconSpin {
+  animation: spinReverse 1s linear infinite;
+}
+
+@keyframes spinReverse {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(-360deg);
+  }
+}
+
+.spinner {
+  width: 17px;
+  height: 17px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid #fff;
+  border-radius: 50%;
+  animation: spinReverse 1s linear infinite;
+}
+
+.featuresList {
+  background-color: #3a3a3a;
+  padding: 10px;
+  overflow-y: auto;
+  max-height: 300px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  flex-grow: 1;
+  font-size: 14px;
+  border-radius: 5px;
+  min-height: 40px;
+}
+
+.featuresList ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.featuresList li {
+  padding: 5px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.featuresList label {
+  flex-grow: 1;
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.featuresList::-webkit-scrollbar {
+  width: 5px;
+}
+
+.featuresList::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.featuresList::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+.featuresList::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.outliersToggleSection {
+  background-color: #444;
+  padding: 10px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-color-on-darkbg-light);
+  border-radius: 5px;
+}
+
+.outliersLabel {
+  background-color: #555;
+  color: var(--text-color-on-darkbg-light);
+  padding: 8px 12px;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 12px;
+  width: 100%;
+  height: 36px;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  user-select: none;
+}
+
+.outliersLabel:hover {
+  background-color: #666;
+}
+
+.buttonContainer {
+  margin-bottom: 10px;
+  display: flex;
+  width: 100%;
+}
+
+.buttonContainer button {
+  cursor: pointer;
+  background-color: #444;
+  border: none;
+  color: var(--text-color-on-darkbg-light);
+  padding: 10px 15px;
+  border-radius: 5px;
+  width: 100%;
+  font-size: 14px;
+  transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.buttonContainer button:hover {
+  background-color: #555;
+}
+
+.nodeGroup {
+  margin-bottom: 10px;
+}
+
+.nodeGroupTitle {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #ccc;
+}
+
+
+
+
+.searchContainer {
+  margin-top: 2px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  border-radius: 5px;
+}
+
+.searchContainer {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 2px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.searchInput {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: none;
+  background-color: #555;
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: #bbb;
+}
+
+.toggleAllButton {
+  min-width: 70px;
+  flex-shrink: 0;
+  background-color: #555;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.8em;
+  height: 100%;
+  padding: 0 2px 0 2px;
+  line-height: normal;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.3s;
+}
+
+.toggleAllButton:hover {
+  background-color: #666;
+}

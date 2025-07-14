@@ -1,0 +1,252 @@
+@import '../../../variables.css';
+
+.entryContainer {
+  position: relative;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow-x: hidden;
+}
+
+.entryContainer:last {
+  margin-bottom: 0px;
+}
+
+.deleteIcon {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  font-size: 1.5em;
+  color: #ff0000;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.entryContainer:hover .deleteIcon {
+  opacity: 1;
+}
+
+.entryContainer.editing .deleteIcon {
+  display: none;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.entryContainer h4 {
+  margin: 0;
+  font-size: 1.1em;
+  color: #333;
+  word-break: break-word;
+}
+
+.fileName {
+  font-size: 0.85em;
+  color: #888;
+  font-style: italic;
+  margin-top: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+.groupContainer {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+
+.valueContainer {
+  margin-bottom: 8px;
+}
+
+.valueContainer:last-child {
+  margin-bottom: 0;
+}
+
+.valueBox {
+  background-color: #fff;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  word-wrap: break-word;
+  overflow-x: hidden;
+}
+
+.valueName {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding: 4px 0;
+  flex-wrap: nowrap;
+  word-break: break-word;
+}
+
+.mappings {
+  padding-left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mappingItem {
+  font-size: 0.9em;
+  color: #555;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  line-height: 1.2;
+}
+
+.mappingColumn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  overflow-wrap: break-word;
+}
+
+.mappingColumn span {
+  word-break: break-word;
+  white-space: normal;
+}
+
+.arrowIcon {
+  font-size: 0.9em;
+  color: #555;
+  flex-shrink: 0;
+}
+
+.entryIndicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-left: 6px;
+}
+
+.inlineEditWrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.inlineInput {
+  padding: 3px 6px;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  font-size: 0.9em;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.checkIcon {
+  cursor: pointer;
+  color: green;
+  flex-shrink: 0;
+}
+
+.editingValueWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.editingInputGroup {
+  flex-grow: 1;
+  display: flex;
+}
+
+.editingControls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.editableHover {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 1;
+  max-width: 100%;
+}
+
+.editableHover span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  flex-grow: 1;
+}
+
+.editIcon {
+  opacity: 0;
+  font-size: 1em;
+  color: #888;
+  transition: opacity 0.2s ease;
+  flex-shrink: 0;
+}
+
+.editableHover:hover .editIcon {
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .entryContainer {
+    padding: 8px;
+  }
+
+  .valueBox {
+    padding: 8px;
+  }
+
+  .valueName {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .mappingItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .mappingColumn {
+    flex-wrap: wrap;
+    word-break: break-word;
+  }
+}
+
+.editing {
+  /* Allows us to disable delete button */
+}
+
+.entryContainer.editing .deleteIcon {
+  display: none;
+}

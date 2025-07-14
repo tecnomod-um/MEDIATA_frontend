@@ -1,0 +1,150 @@
+@import '../../variables.css';
+
+.pageContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: calc(100vh - 55px);
+  background-color: #ecebeb;
+  transition: background-color 0.2s ease;
+  width: 100%;
+  overflow: hidden;
+}
+
+.mappingContainer {
+  display: flex;
+  flex-direction: row;
+  padding: 0 1vh;
+  width: 100%;
+  gap: 1vh;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.columnsSection {
+  flex: 1;
+  max-width: 30%;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  background-color: #f4f4f4;
+  padding: 5px;
+  border-radius: 8px;
+  height: 90vh;
+}
+
+.resultingSectionEnter {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.resultingSectionEnterActive {
+  transform: translateX(0);
+  opacity: 1;
+  transition: transform 500ms ease, opacity 500ms ease;
+}
+
+.resultingSectionExit {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.resultingSectionExitActive {
+  transform: translateX(100%);
+  opacity: 0;
+  transition: transform 500ms ease, opacity 500ms ease;
+}
+
+.columnMappingEnter {
+  transform: translateY(100%);
+  opacity: 0;
+}
+
+.columnMappingEnterActive {
+  transform: translateY(0);
+  opacity: 1;
+  transition: transform 500ms ease, opacity 500ms ease;
+}
+
+.columnMappingExit {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.columnMappingExitActive {
+  transform: translateY(100%);
+  opacity: 0;
+  transition: transform 500ms ease, opacity 500ms ease;
+}
+
+.columnsSectionEnter {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+
+.columnsSectionEnterActive {
+  transform: translateX(0);
+  opacity: 1;
+  transition: transform 500ms ease, opacity 500ms ease;
+}
+
+.columnsSectionExit {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.columnsSectionExitActive {
+  transform: translateX(-100%);
+  opacity: 0;
+  transition: transform 500ms ease, opacity 500ms ease;
+}
+
+.toast {
+  top: 55px;
+  background-color: var(--translucent-background-color) !important;
+  color: #fff !important;
+  min-height: 40px !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+.loader {
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid #fff;
+  border-radius: 50%;
+  width: 1.3em;
+  height: 1.3em;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .pageContainer {
+    height: auto;
+    max-height: calc(100vh - 55px);
+  }
+
+  .mappingContainer {
+    flex-direction: column;
+    padding: 1rem;
+    gap: 1rem;
+    justify-content: flex-start;
+  }
+
+  .columnsSection {
+    max-width: 100%;
+    max-height: 15vh;
+    overflow: hidden;
+  }
+}

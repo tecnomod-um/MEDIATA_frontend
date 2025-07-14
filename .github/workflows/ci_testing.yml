@@ -1,0 +1,68 @@
+name: MEDIATA FRONTEND CI
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Install & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js 18
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+  update-parent:
+    name: Bump MEDIATA_frontend in parent
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout MEDIATA_project (@main)
+        uses: actions/checkout@v3
+        with:
+          repository: tecnomod-um/MEDIATA_project
+          token: ${{ secrets.PARENT_REPO_TOKEN }}
+          ref: main
+          path: monorepo
+          fetch-depth: 0
+          submodules: recursive
+          persist-credentials: true
+
+      - name: Bump MEDIATA_frontend pointer
+        working-directory: monorepo
+        run: |
+          # Configure Git author
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Point the submodule at exactly the commit that triggered this run
+          git -C MEDIATA_frontend fetch origin "${{ github.sha }}"
+          git -C MEDIATA_frontend checkout "${{ github.sha }}"
+
+          # Stage, commit, and push if changed
+          git add MEDIATA_frontend
+          if ! git diff --cached --quiet; then
+            git commit -m "ci: bump MEDIATA_frontend to ${{ github.sha }}"
+            git push origin main
+          else
+            echo "No changes to MEDIATA_frontend submodule"
+          fi

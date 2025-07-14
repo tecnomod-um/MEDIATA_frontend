@@ -1,0 +1,10 @@
+@import '../../../variables.css';
+
+.chartContainer {
+  display: flex;
+  width: 80vw;
+  height: 80vh;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+}

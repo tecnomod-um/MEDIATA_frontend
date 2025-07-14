@@ -1,0 +1,232 @@
+@import '../../../variables.css';
+
+.modalBackground {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--darkened-background-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.modalContainer {
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 30px 40px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  max-height: 80%;
+}
+
+.uploadModalContainer {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 30px 40px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  max-height: 80%;
+  overflow-y: auto;
+}
+
+.modalTitle {
+  margin-bottom: 0.5em;
+  flex-shrink: 0;
+}
+
+.modalContent {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  margin: 1em 0;
+}
+
+.fadeModalEnter .modalBackground {
+  opacity: 0;
+}
+
+.fadeModalEnterActive .modalBackground {
+  opacity: 1;
+  transition: opacity var(--transition-duration) var(--transition-ease);
+}
+
+.fadeModalExit .modalBackground {
+  opacity: 1;
+}
+
+.fadeModalExitActive .modalBackground {
+  opacity: 0;
+  transition: opacity var(--transition-duration) var(--transition-ease);
+}
+
+.fadeModalEnter .modalContainer,
+.fadeModalEnter .uploadModalContainer {
+  opacity: 0;
+}
+
+.fadeModalEnterActive .modalContainer,
+.fadeModalEnterActive .uploadModalContainer {
+  opacity: 1;
+  transition: opacity var(--transition-duration) var(--transition-ease);
+}
+
+.fadeModalExit .modalContainer,
+.fadeModalExit .uploadModalContainer {
+  opacity: 1;
+}
+
+.fadeModalExitActive .modalContainer,
+.fadeModalExitActive .uploadModalContainer {
+  opacity: 0;
+  transition: opacity var(--transition-duration) var(--transition-ease);
+}
+
+.fileListWrapperExpanded {
+  min-height: 0;
+}
+
+.nodeSection {
+  margin-bottom: 20px;
+}
+
+.nodeTitle {
+  color: #333;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.fileList {
+  list-style: none;
+  padding: 0;
+  border: 1px solid var(--background-color-1-light);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.fileItem {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--background-color-1-light);
+  cursor: pointer;
+  transition: background-color 0.3s ease, border-left-color 0.3s ease;
+}
+
+.fileItem:first-child {
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
+.fileItem:last-child {
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.fileItem:not(.selected):hover {
+  background-color: var(--background-color-2-light);
+}
+
+.fileItem:last-child {
+  border-bottom: none;
+}
+
+.selected {
+  background-color: var(--file-selected-bg-light);
+  border-left: 4px solid var(--file-selected-border-light) !important;
+  border-right: 4px solid var(--file-selected-border-light) !important;
+}
+
+.disabledFile {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.uploadItem {
+  padding: 0.75rem 1rem;
+  margin: 1.5rem auto 1rem auto;
+  border: 1px solid var(--background-color-1-light);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, border-left-color 0.3s ease;
+}
+
+.uploadItem:hover:not(.selected):not(.disabledFile) {
+  background-color: var(--background-color-2-light);
+}
+
+.hiddenFileInput {
+  display: none;
+}
+
+.confirmButton {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 3rem;
+  min-height: 3rem;
+  width: 100%;
+  padding: 0 20px;
+  color: var(--text-color-on-darkbg-light);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 20px;
+  background-size: 300% 100%;
+  background-image: var(--button-gradient-light);
+  box-shadow: var(--button-color-shadow-light);
+  transition: background-position 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+  box-sizing: border-box;
+}
+
+.confirmButton:hover:not(:disabled) {
+  background-position: 100% 0;
+  background-color: var(--button-color-hover-light);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.confirmButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.buttonSpinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.spinnerIcon {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fff;
+  border-top: 2px solid #AECCE4;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.noFiles {
+  font-style: italic;
+  color: grey;
+  text-align: center;
+}

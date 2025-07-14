@@ -2,7 +2,6 @@ import axiosInstance from "./axiosSetup";
 import nodeAxiosInstance, { updateNodeAxiosBaseURL } from "./nodeAxiosSetup";
 
 /* System petitions */
-
 // Fetch the list of nodes
 export const getNodeList = async () => {
   try {
@@ -26,14 +25,31 @@ export const getNodeInfo = async (nodeId) => {
   }
 };
 
+// Fetch node dataset descriptions
+export const getNodeMetadata = async (nodeId) => {
+  try {
+    const response = await axiosInstance.get(`/nodes/connect/metadata/${nodeId}`);
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.status === 404)
+      return { metadata: null };
+    else {
+      console.error("Error fetching node metadata:", error);
+      if (error.response && error.response.data && error.response.data.error)
+        throw new Error(error.response.data.error);
+      else
+        throw error;
+    }
+  }
+};
+
 // Logs an error to the server
 export const logError = (error, info) => {
-  axiosInstance
-    .post(`/api/error`, {
-      error: error.toString(),
-      info,
-      timestamp: new Date().toISOString(),
-    })
+  axiosInstance.post(`/api/error`, {
+    error: error.toString(),
+    info,
+    timestamp: new Date().toISOString(),
+  })
     .then((response) => {
       if (response.status === 200)
         console.log("Error logged to server successfully.");
@@ -44,6 +60,123 @@ export const logError = (error, info) => {
         );
     })
     .catch((err) => console.error("Error logging to server:", err));
+};
+
+// Save the schema to the backend.
+export const saveSchemaToBackend = async (schema) => {
+  try {
+    const response = await axiosInstance.post('/nodes/schema', { schema });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Fetch the schema from the backend.
+export const fetchSchemaFromBackend = async () => {
+  try {
+    const response = await axiosInstance.get('/nodes/schema');
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Remove the schema from the backend.
+export const removeSchemaFromBackend = async () => {
+  try {
+    const response = await axiosInstance.delete('/nodes/schema');
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Fetch ontlology classes
+export const fetchClasses = async () => {
+  try {
+    const response = await axiosInstance.get(`/rdf/class`);
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error fetching types`,
+      error
+    );
+    throw error;
+  }
+};
+
+// Fetch autocomplete suggestions for RDF building
+export const fetchClassFields = async (type) => {
+  try {
+    const response = await axiosInstance.get(`/rdf/class/${encodeURIComponent(type)}`);
+    console.log("response: ", response)
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error fetching ${type} fields`,
+      error
+    );
+    throw error;
+  }
+};
+
+// Fetch autocomplete suggestions for RDF building of a specific type
+export const fetchSuggestions = async (query, type) => {
+  try {
+    const endpoint =
+      type === "snomed"
+        ? `/rdf/snomed`
+        : `/rdf/class/suggestions/${type}`;
+    const response = await axiosInstance.get(endpoint, {
+      params: { query },
+    });
+    console.log(response.data)
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error fetching ${type} suggestions for query: ${query}`,
+      error
+    );
+    throw error;
+  }
+};
+
+export const uploadSemanticMappingCsv = async (csvText) => {
+  try {
+    const response = await axiosInstance.post(
+      "/rdf/semanticalignment",
+      csvText,
+      {
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error uploading mapping CSV:", error);
+    throw error;
+  }
+};
+
+// Fetch initial cluster response
+export const createInitialClusters = async (jsonText) => {
+  try {
+    const response = await axiosInstance.post(
+      '/fhir/clusters',
+      jsonText,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error calling createClusters endpoint:", error);
+    throw error;
+  }
 };
 
 // User login
@@ -72,19 +205,32 @@ export const loginUser = async (username, password) => {
 };
 
 /* Data driven petitions */
-
 // Node verification
 export const nodeAuth = async (serviceUrl, kerberosToken) => {
   console.log(`Authenticating node with serviceUrl: ${serviceUrl}`);
-  localStorage.removeItem("jwtNodeToken");
   updateNodeAxiosBaseURL(serviceUrl);
 
   try {
-    const response = await nodeAxiosInstance.post(`/taniwha/node/validate`, {
-      kerberosToken,
-    });
+    const response = await nodeAxiosInstance.post(
+      `/taniwha/node/validate`,
+      { kerberosToken }
+    );
     if (response.status === 200) {
-      localStorage.setItem("jwtNodeToken", response.data.jwtNodeToken);
+      if (response.data.jwtNodeToken === "Unauthorized") {
+        localStorage.removeItem("jwtToken");
+
+        // Also remove any token mapping for this serviceUrl
+        const tokensMapping = JSON.parse(localStorage.getItem("jwtNodeTokens") || "{}");
+        if (tokensMapping[serviceUrl]) {
+          delete tokensMapping[serviceUrl];
+          localStorage.setItem("jwtNodeTokens", JSON.stringify(tokensMapping));
+        }
+        throw new Error("Received an Unauthorized jwtNodeToken. JWT has been removed.");
+      }
+      // Otherwise, store the token as usual
+      const tokensMapping = JSON.parse(localStorage.getItem("jwtNodeTokens") || "{}");
+      tokensMapping[serviceUrl] = response.data.jwtNodeToken;
+      localStorage.setItem("jwtNodeTokens", JSON.stringify(tokensMapping));
       return response.data;
     } else {
       throw new Error("Node auth failed");
@@ -117,21 +263,19 @@ export const uploadFile = async (file, onUploadProgress) => {
 };
 
 // Recalcs a feature of the current shown data file
-export const recalculateFeature = async (file, featureName, featureType) => {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("featureName", featureName);
-  formData.append("featureType", featureType);
+export const recalculateFeature = async (fileName, featureName, featureType) => {
+  // Build URL query parameters
+  const params = new URLSearchParams();
+  params.append("fileName", fileName);
+  params.append("featureName", featureName);
+  params.append("featureType", featureType);
 
   try {
+    // Send a POST with a null body; the parameters are appended to the URL.
     const response = await nodeAxiosInstance.post(
-      `/taniwha/api/data/reprocess`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
+      `/taniwha/api/data/reprocessList`,
+      null,
+      { params }
     );
     return response.data;
   } catch (error) {
@@ -139,23 +283,20 @@ export const recalculateFeature = async (file, featureName, featureType) => {
   }
 };
 
-// Changes which rows of the current file are taken into account and shown
-export const filterData = async (file, filters) => {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("filters", JSON.stringify(filters));
-
-  console.log(JSON.stringify(filters));
+export const filterMultipleFiles = async (payload) => {
+  // payload = { multipleFileFilters: [ {fileName, filters}, ... ] }
   try {
+    // We send JSON directly, not FormData
     const response = await nodeAxiosInstance.post(
-      `/taniwha/api/data/filter`,
-      formData,
+      `/taniwha/api/data/filterByNameList`,
+      payload,
       {
         headers: {
-          "Content-Type": "multipart/form-data",
+          "Content-Type": "application/json",
         },
       }
     );
+    // Expect an array of AnalyticsResponseDTO
     return response.data;
   } catch (error) {
     throw error;
@@ -179,6 +320,100 @@ export const saveMockFile = async (file) => {
     );
     return response.data;
   } catch (error) {
+    throw error;
+  }
+};
+
+export const setParseConfigs = async (payload) => {
+  try {
+    const response = await nodeAxiosInstance.post(
+      `/taniwha/api/harmonization/parse`,
+      payload,
+      { headers: { "Content-Type": "application/json", }, }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error occurred during config submission:", error);
+    throw error;
+  }
+};
+
+export const getNodeDatasets = async () => {
+  try {
+    const response = await nodeAxiosInstance.get(`/taniwha/api/files/datasets`);
+    return response.data;
+  } catch (error) {
+    console.error("Error occurred while fetching datasets:", error);
+    throw error;
+  }
+};
+
+export const processSelectedDatasets = async (fileNames) => {
+  try {
+    const response = await nodeAxiosInstance.post(
+      `/taniwha/api/data/processList`,
+      { fileNames }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error processing selected datasets:", error);
+    throw error;
+  }
+};
+
+export const getNodeMappedDatasets = async () => {
+  try {
+    const response = await nodeAxiosInstance.get(`/taniwha/api/files/mapped_datasets`);
+    return response.data;
+  } catch (error) {
+    console.error("Error occurred while fetching datasets:", error);
+    throw error;
+  }
+};
+
+export const getNodeFHIR = async () => {
+  try {
+    const response = await nodeAxiosInstance.get(`/taniwha/api/files/fhir_mappings`);
+    return response.data;
+  } catch (error) {
+    console.error("Error occurred while fetching datasets:", error);
+    throw error;
+  }
+};
+
+export const getNodeElements = async () => {
+  try {
+    const response = await nodeAxiosInstance.get(`/taniwha/api/files/dataset_elements`);
+    return response.data;
+  } catch (error) {
+    console.error("Error occurred while fetching datasets:", error);
+    throw error;
+  }
+};
+
+export const saveDatasetElements = async (fileName, csvData) => {
+  try {
+    const response = await nodeAxiosInstance.post(`/taniwha/api/files/save_dataset_elements`, csvData,
+      {
+        params: { fileName },
+        headers: {
+          "Content-Type": "text/plain",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error saving dataset elements:", error);
+    throw error;
+  }
+};
+
+export const fetchElementFile = async (fileName) => {
+  try {
+    const response = await nodeAxiosInstance.get(`/taniwha/api/files/dataset_elements/${encodeURIComponent(fileName)}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching element file: ${fileName}`, error);
     throw error;
   }
 };

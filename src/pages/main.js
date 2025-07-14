@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import MainStyles from "./main.module.css";
-import LandingIntroduction from "../components/LandingIntroduction/landingIntroduction";
+import LandingIntroduction from "../components/Landing/LandingIntroduction/landingIntroduction";
 
 // Landing page for the app
 function Main() {
@@ -19,6 +19,10 @@ function Main() {
     };
   }, []);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, []);
+  
   useEffect(() => {
     const handleScrollIndicator = () => {
       const windowHeight = window.innerHeight;
@@ -63,14 +67,14 @@ function Main() {
             <div className={MainStyles.textContainer}>
               <h2 className={MainStyles.centeredHeading}>Introduction</h2>
               <p className={MainStyles.introText}>
-                TANIWHA is an innovative web tool suite designed to streamline
+                Mediata is an innovative tool suite on the web, designed to streamline
                 the management of clinical patient data. With a focus on
-                efficiency and ease of use, TANIWHA offers a data viewing
+                efficiency and ease of use, Mediata offers a data viewing
                 utility that ingests CSV files, presenting a comprehensive
                 overview through relevant statistics and visual graphs. This
                 tool not only allows for a detailed analysis of patient data but
                 also facilitates the exportation of these insights.
-                Complementing this, TANIWHA's parsing tool adeptly transforms
+                Complementing this, Mediata's parsing tool adeptly transforms
                 diverse clinical patient CSV formats into a standardized
                 ontology model, ensuring seamless data integration and
                 accessibility.
@@ -80,7 +84,7 @@ function Main() {
                 optimize patient data management through technological
                 innovation. Whether you're looking to analyze data trends,
                 streamline data formatting, or simply enhance your data's
-                accessibility, TANIWHA provides the tools necessary to transform
+                accessibility, Mediata provides the tools necessary to transform
                 your data into actionable insights.
               </span>
             </div>
@@ -92,11 +96,11 @@ function Main() {
             <div className={MainStyles.textContainer}>
               <h2 className={MainStyles.centeredHeading}>Design</h2>
               <span className={MainStyles.introText}>
-                "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-                enim ad minim veniam, quis nostrud exercitation ullamco laboris
-                nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
-                in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+                "This landing page is still incomplete. Lorem ipsum dolor sit amet,
+                consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
+                et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
+                ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
+                dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat
                 nulla pariatur. Excepteur sint occaecat cupidatat non proident,
                 sunt in culpa qui officia deserunt mollit anim id est laborum."
               </span>
@@ -105,7 +109,7 @@ function Main() {
         </div>
         {/* Get Started Button */}
         <div className={MainStyles.buttonContainer}>
-          <Link to={"/csvchecker"}>
+          <Link to={"/discovery"}>
             <button className={MainStyles.big_button}>Get Started</button>
           </Link>
         </div>

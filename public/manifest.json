@@ -1,9 +1,9 @@
 {
-  "short_name": "Taniwha",
+  "short_name": "Mediata",
   "name": "Tool for Analyzing aNd Interpreting Whole Healthcare Annotations",
   "icons": [
     {
-      "src": "favicon.ico",
+      "src": "favicon.svg",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/x-icon"
     },

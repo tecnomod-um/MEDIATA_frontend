@@ -1,3 +1,5 @@
+@import '../variables.css';
+
 * {
     margin: 0;
     padding: 0;
@@ -13,7 +15,7 @@
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    background-color: #ecebeb;
+    background-color: var(--background-color-1-light);
     padding: 10px;
     margin: auto;
 }
@@ -90,24 +92,57 @@
 }
 
 .big_button {
-    width: 200px;
-    font-size: 16px;
+    min-height: 80px;
+    width: 100%;
+    min-width: 250px;
+    user-select: none;
+    font-size: 18px;
     font-weight: 600;
     color: #fff;
     cursor: pointer;
-    margin: 20px;
-    height: 55px;
     text-align: center;
     border: none;
-    background-size: 300% 100%;
+    background-size: 300% 300%;
     border-radius: 15px;
-    transition: all 0.5s ease-in-out;
-    background-image: linear-gradient(to right, #c22535, #eb3941, #e14e53, #e2373f);
-    box-shadow: 0 5px 15px rgba(242, 97, 103, 0.4);
+    background-image: var(--button-gradient-light);
+    box-shadow: 0 5px 15px rgba(8, 36, 44, 0.4);
+    position: relative;
+    overflow: hidden;
+    transition: background-position 0.5s ease-in-out;
+}
+
+.big_button::before,
+.big_button::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    transform: rotate(40deg);
+    border-radius: 15px;
+    transition: left 0s;
+}
+
+.big_button::before {
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+    transition-delay: 0.1s;
+}
+
+.big_button::after {
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+    transition-delay: 0.3s;
+}
+
+.big_button:hover::before,
+.big_button:hover::after {
+    left: 100%;
+    transition: left 0.7s ease-in-out;
 }
 
 .big_button:hover {
     background-position: 100% 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .big_button:focus {
@@ -124,7 +159,7 @@
     align-items: center;
     width: 40px;
     height: 40px;
-    background-color: #c22535;
+    background-color: var(--background-nav-and-headers-background-color-light);
     border-radius: 50%;
     opacity: 0.7;
     cursor: pointer;
@@ -180,43 +215,6 @@
 .linkListItem:hover {
     background-color: #e9e9e9;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.linkItem {
-    text-decoration: none;
-    color: inherit;
-    cursor: pointer;
-    transition: color 0.3s ease;
-    font-weight: bold;
-    display: block;
-}
-
-.linkListItem:hover .linkItem1 {
-    color: #ff6347;
-}
-
-.linkListItem:hover .linkItem2 {
-    color: #4682b4;
-}
-
-.linkListItem:hover .linkItem3 {
-    color: #32cd32;
-}
-
-.linkListItem:hover .linkItem4 {
-    color: #ffa500;
-}
-
-.linkListItem:hover .linkItem5 {
-    color: #6a5acd;
-}
-
-.linkListItem:hover .linkItem6 {
-    color: #ff1493;
-}
-
-.linkListItem:hover .linkItem7 {
-    color: #00ced1;
 }
 
 .hoverSquare {
@@ -353,6 +351,7 @@
     .big_button {
         width: 150px;
         font-size: 14px;
+        min-height: 55px;
     }
 
     .linkList {

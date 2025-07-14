@@ -1,0 +1,195 @@
+.pageContainer {
+  background-color: #ecebeb;
+  display: flex;
+  height: calc(100vh - 55px);
+  overflow: hidden;
+  transition: background-color 0.2s ease;
+  width: 100vw;
+}
+
+.mainContent {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.leftPanel {
+  /* fixed width on left */
+  flex: 0 0 20vw;
+}
+
+.middlePanel {
+  /* flex to occupy remaining space when right panel is hidden */
+  flex: 1 1 auto;
+  border-right: 1px solid #ddd;
+  padding: 10px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* rightPanel grows/shrinks its width via flex-basis */
+.rightPanel {
+  flex: 0 0 0;
+  position: relative;
+  background: #ffffff;
+  overflow: hidden;
+  transition: flex-basis 300ms ease;
+}
+
+.rightPanel.open {
+  flex: 0 0 30vw;
+}
+
+/* inner wrapper for CSSTransition sliding */
+.rightInner {
+  width: 100%;
+  height: 100%;
+}
+
+/* full‐screen dark overlay during drag */
+.globalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* existing utility styles */
+.panelHeader {
+  margin-bottom: 15px;
+  font-size: 1.3rem;
+}
+
+.elementList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.elementItem {
+  padding: 10px;
+  border-bottom: 1px solid #444;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.elementItem:hover {
+  background-color: #555;
+}
+
+.detailHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.backButton {
+  background: none;
+  border: none;
+  color: #007bff;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.clusterHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.clusterButton {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.clusterButton:hover {
+  background-color: #005bb5;
+}
+
+.clusterList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.clusterItem {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.clusterItem:hover {
+  background-color: #f2f2f2;
+}
+
+.highlighted {
+  background-color: #e0e0e0;
+  font-weight: bold;
+}
+
+.instructions {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 10px;
+}
+
+/* slide in from left for the middle panel */
+.middleEnter {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.middleEnterActive {
+  opacity: 1;
+  transform: translateX(0);
+  transition: transform 300ms ease, opacity 300ms ease;
+}
+
+.middleExit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.middleExitActive {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: transform 300ms ease, opacity 300ms ease;
+}
+
+/* slide in/out for the rightInner content */
+.rightInnerEnter {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+.rightInnerEnterActive {
+  opacity: 1;
+  transform: translateX(0);
+  transition: transform 300ms ease, opacity 300ms ease;
+}
+
+.rightInnerExit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.rightInnerExitActive {
+  opacity: 0;
+  transform: translateX(100%);
+  transition: transform 300ms ease, opacity 300ms ease;
+}

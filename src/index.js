@@ -2,17 +2,17 @@ import React, { useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import "./index.css";
-import ErrorBoundary from "./components/ErrorBoundary/errorBoundary";
-import Navbar from "./components/Navbar/navbar";
-import ProtectedRoute from "./components/ProtectedRoute/protectedRoute";
+import ErrorBoundary from "./components/Navigation/ErrorBoundary/errorBoundary";
+import Navbar from "./components/Navigation/Navbar/navbar";
+import ProtectedRoute from "./components/Navigation/ProtectedRoute/protectedRoute";
 import Main from "./pages/main";
 import Login from "./pages/login";
 import About from "./pages/about";
 import Nodes from "./pages/nodes";
-import CsvChecker from "./pages/harmonization/csvChecker";
-import RdfParser from "./pages/harmonization/rdfParser";
-import RdfBuilder from "./pages/harmonization/rdfBuilder";
-
+import Discovery from "./pages/harmonization/discovery";
+import Integration from "./pages/harmonization/integration";
+import SemanticAlignment from "./pages/harmonization/semanticAlignment";
+import HL7FHIR from "./pages/harmonization/hl7FHIR";
 import { AuthProvider, useAuth } from "./context/authContext";
 import { NodeProvider } from "./context/nodeContext";
 import { setupAxiosInterceptors } from "./util/axiosSetup";
@@ -26,6 +26,7 @@ const App = () => {
 
   return (
     <>
+      <div id="overlay"></div>
       <Navbar />
       <Routes>
         <Route path="/" element={<Main />} />
@@ -35,13 +36,16 @@ const App = () => {
           <Route path="/nodes" element={<Nodes />} />
         </Route>
         <Route element={<ProtectedRoute nodeRequired={true} />}>
-          <Route path="/csvchecker" element={<CsvChecker />} />
+          <Route path="/discovery" element={<Discovery />} />
         </Route>
         <Route element={<ProtectedRoute nodeRequired={true} />}>
-          <Route path="/rdfparser" element={<RdfParser />} />
+          <Route path="/integration" element={<Integration />} />
         </Route>
         <Route element={<ProtectedRoute nodeRequired={true} />}>
-          <Route path="/rdfbuilder" element={<RdfBuilder />} />
+          <Route path="/semanticalignment" element={<SemanticAlignment />} />
+        </Route>
+        <Route element={<ProtectedRoute nodeRequired={true} />}>
+          <Route path="/hl7fhir" element={<HL7FHIR />} />
         </Route>
       </Routes>
     </>

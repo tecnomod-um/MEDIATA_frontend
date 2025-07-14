@@ -1,0 +1,169 @@
+@import '../../../variables.css';
+
+.sidebarContainer {
+  box-sizing: border-box;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.search {
+  position: relative;
+}
+
+.searchInput {
+  padding: 1em;
+  width: 100%;
+  height: 38px;
+  display: inline-block;
+  outline: none;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  margin-left: 5px;
+  margin-top: 5px;
+}
+
+.fileInputContainer {
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.elementsListWrapper {
+  flex: 1;
+
+  /* only scroll vertically, let things overflow horizontally */
+  overflow-y: auto;
+  overflow-x: visible;
+  position: relative;
+  direction: rtl;
+  border-right: 1px solid #ccc;
+  box-sizing: border-box;
+
+  scrollbar-width: thin;
+  scrollbar-color: #aaa transparent;
+}
+
+
+.elementsListWrapper::-webkit-scrollbar {
+  width: 6px;
+}
+
+.elementsListWrapper::-webkit-scrollbar-thumb {
+  background-color: #aaa;
+  border-radius: 3px;
+}
+
+.elementsListWrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.elementsList {
+  direction: ltr;
+  display: flex;
+  flex-direction: column;
+}
+
+.elementButton {
+  padding: 6px 10px;
+  background-color: #f5f5f5;
+  border: 1px solid #ccc;
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+  text-align: left;
+  transition: background-color 0.3s ease;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.elementButton:hover {
+  background-color: #eaeaea;
+}
+
+.active {
+  background-color: #fff;
+  border: 1px solid #011224;
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+  font-weight: bold;
+  margin-right: -1px;
+}
+
+.active:hover {
+  background-color: #eee;
+}
+
+.elementContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.categoriesContainer {
+  display: flex;
+  flex-direction: column;
+  margin-left: 10px;
+
+}
+
+.categoryButton {
+  text-align: left;
+  padding: 4px 8px;
+  background-color: #e0e0e0;
+  border: 1px solid #ccc;
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.categoryButton:hover {
+  background-color: #dcdcdc;
+}
+
+.activeCategory {
+  background-color: #fff;
+  border: 1px solid #011224;
+  border-right: none;
+  font-weight: bold;
+}
+
+.activeCategory:hover {
+  background-color: #eee;
+}
+
+.uploadItem {
+  padding: 0.5rem 0.75rem;
+  margin: 0 auto 0.5rem auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  text-align: center;
+  transition: background-color 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.uploadItem:hover {
+  background-color: #f0f0f0;
+}
+
+.selected {
+  background-color: #dfefff;
+  border: 1px solid #011a35;
+  border-right: none;
+}
+
+.hiddenFileInput {
+  display: none;
+}
+
+.built {
+  background-color: var(--button-add-value-color);
+  color: #fff;
+}
+
+.built:hover {
+  background-color: var(--button-add-value-hover-color);
+}

@@ -1,0 +1,55 @@
+@import '../../../variables.css';
+
+.rangePicker {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.rangeDisplayWrapper {
+    position: absolute;
+    top: -25px;
+    right: 0px;
+    text-align: right;
+    pointer-events: none;
+  }
+  
+  .rangeDisplay {
+    font-size: 0.95em;
+    font-weight: 600;
+    font-style: oblique;
+    color: #333;
+    padding: 4px 8px;
+    border-radius: 4px; 
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e1e4e8; 
+  }
+  
+.controlsContainer {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.sliderContainer {
+  flex: 1;
+}
+
+.mappingButton {
+  background-color: #6c757d;
+  color: var(--text-color-on-darkbg-light);
+  border: none;
+  padding: 8px 15px;
+  font-size: 0.9em;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.mappingButton:hover {
+  background-color: #5a6268;
+}

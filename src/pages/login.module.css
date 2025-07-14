@@ -1,3 +1,5 @@
+@import '../variables.css';
+
 .container {
     display: flex;
     justify-content: center;
@@ -21,7 +23,7 @@
 .title {
     font-size: 24px;
     margin-bottom: 20px;
-    color: #c22535;
+    color: var(--button-color-light);
 }
 
 .input {
@@ -38,8 +40,8 @@
     padding: 10px;
     border: none;
     border-radius: 5px;
-    background-color: #c22535;
-    color: white;
+    background-color: var(--button-color-light);
+    color: var(--text-color-on-darkbg-light);
     font-size: 16px;
     cursor: pointer;
     transition: background-color 0.3s ease;
@@ -51,7 +53,7 @@
 }
 
 .button:hover:enabled {
-    background-color: #a61e2b;
+    background-color: var(--button-color-hover-light);
 }
 
 .error {

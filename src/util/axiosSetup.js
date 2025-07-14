@@ -3,6 +3,7 @@ import config from "../config";
 
 const axiosInstance = axios.create({
   baseURL: config.backendUrl,
+  timeout: 300000,
   headers: {
     "Content-Type": "application/json",
   },
