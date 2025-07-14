@@ -1,0 +1,204 @@
+@import '../../../variables.css';
+
+.modalContent {
+  width: 100%;
+  background-color: var(--background-color-2-light);
+  border-radius: 8px;
+  margin: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.header {
+  position: relative;
+  background-color: var(--background-nav-and-headers-background-color-light);
+  padding: 15px 20px;
+  color: var(--text-color-on-darkbg-light);
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.35rem;
+}
+
+.closeBtn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  border: none;
+  background: transparent;
+  color: var(--text-color-on-darkbg-light);
+  cursor: pointer;
+  font-size: 1.25rem;
+  border-radius: 50%;
+  padding: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.closeBtn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.body {
+  /* Center the list container within the modal */
+  padding: 15px 20px;
+  max-height: 65vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+}
+
+.nodeList {
+  /* Limit width so the cards are nicely centered and not too wide */
+  width: 100%;
+  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 auto;
+}
+
+.nodeCard {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 12px 16px;
+  width: 100%;
+}
+
+/* Node header: name & desc on left, toggle button on right */
+.nodeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.nodeInfo {
+  flex: 1;
+}
+
+.nodeName {
+  margin: 0 0 4px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.nodeDesc {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.collapsibleWrapper {
+  overflow-x: auto;
+  overflow-y: hidden;
+  transition: max-height 0.3s ease;
+  max-height: 0;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.collapsibleContent {
+  padding: 8px 0;
+}
+
+.toggleButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 120px;
+  padding: 6px 12px;
+  background-color: #eee;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  height: fit-content;
+}
+
+.smallSpinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #999;
+  border-top: 2px solid #555;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Loading spinner container for the main dataset area */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #ddd;
+  border-top: 3px solid #666;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 8px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.muted {
+  color: #777;
+  font-style: italic;
+  margin: 0.5rem 0;
+}
+
+.footer {
+  padding: 15px 20px;
+  border-top: 1px solid #ddd;
+  text-align: center;
+}
+
+.accessButton {
+  /* Add all the shared properties from MetadataDisplay */
+  padding: 10px 20px;
+  font-size: 1rem;
+  color: #fff; /* Use explicit color instead of variable for parity */
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 200px;
+  max-width: 80%;
+  height: 55px;
+  font-weight: 600;
+  margin: 20px;
+  background-size: 300% 100%;
+  background-image: var(--button-gradient-light);
+  box-shadow: var(--button-color-shadow-light);
+}
+
+.accessButton:hover {
+  background-position: 100% 0;
+  background-color: var(--button-color-hover-light);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}

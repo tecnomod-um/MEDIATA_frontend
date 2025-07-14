@@ -1,0 +1,332 @@
+@import '../../variables.css';
+
+.container {
+  display: flex;
+  width: 100vw;
+  height: calc(100vh - 55px);
+  overflow: hidden;
+  background-color: #ecebeb;
+  transition: background-color 0.2s ease;
+}
+
+.mainContent {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.leftPanel {
+  width: 20vw;
+}
+
+.middlePanel {
+  width: 50vw;
+  border-right: 1px solid #ddd;
+  padding: 10px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.rightPanel {
+  width: 30vw;
+  position: relative;
+  background-color: #ffffff;
+  overflow: hidden;
+}
+
+.workspaceContent {
+  position: relative;
+  transform-origin: 0 0;
+  overflow: visible;
+  width: 100%;
+  height: 100%;
+}
+
+.fadeEnter {
+  opacity: 0;
+}
+
+.fadeEnterActive {
+  opacity: 1;
+  transition: opacity 300ms ease-in;
+}
+
+.fadeExit {
+  opacity: 1;
+}
+
+.fadeExitActive {
+  opacity: 0;
+  transition: opacity 300ms ease-out;
+}
+
+.resizer {
+  height: 100%;
+  width: 8px;
+  background: #ccc;
+  cursor: col-resize;
+  transition: background 0.2s;
+}
+
+.resizer:hover {
+  background: #999;
+}
+
+.connectionMessage {
+  position: absolute;
+  top: 2.5%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--translucent-background-color);
+  color: var(--text-color-on-darkbg-light);
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  z-index: 2;
+  backdrop-filter: blur(2px);
+}
+
+.controls {
+  container-type: inline-size;
+  container-name: controls-container;
+  position: absolute;
+  bottom: 20px;
+  left: 15px;
+  right: 15px;
+  display: flex;
+  background: none;
+  padding: 0;
+  box-shadow: none;
+  transition: all 0.3s ease;
+}
+
+.controlsTop {
+  position: fixed;
+  bottom: 80px;
+  left: 20px;
+  background: rgba(40, 40, 40, 0.95);
+  color: var(--text-color-on-darkbg-light);
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 0.9em;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: none;
+  z-index: 100;
+}
+
+.controlsTop.active {
+  display: block;
+}
+
+.controlsBottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 5px;
+  background-color: var(--tooltray-background-color-light-transparent);
+  max-width: 100%;
+}
+
+.controlBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  color: #fff;
+  background: var(--button-color-light);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: none;
+}
+
+.controlBtn:hover {
+  background: var(--button-color-hover-light);
+  box-shadow: var(--button-color-shadow-light);
+}
+
+.controlBtn:active {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+@container controls-container (max-width: 2200px) {
+  .controlBtn {
+    padding: 8px 12px;
+    font-size: 0.85em;
+    border-color: none;
+  }
+}
+
+@container controls-container (max-width: 600px) {
+  .controlsBottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr 0.5fr;
+    grid-template-rows: 2rem 2rem;
+    gap: 0.75rem;
+  }
+
+  .controlBtn {
+    flex: none;
+    border-color: transparent !important;
+    height: 2rem;
+  }
+
+  .controlBtn:last-child {
+    grid-row: 1 / 3;
+    grid-column: 3 / 4;
+    width: calc((2 * 2rem) + 0.75rem);
+    height: calc((2 * 2rem) + 0.75rem);
+  }
+}
+
+@container controls-container (max-width: 380px) {
+  .controlsBottom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .controlBtn:last-child {
+    grid-row: auto;
+    grid-column: auto;
+    aspect-ratio: unset;
+    width: auto;
+    height: auto;
+  }
+
+  .controlsBottom {
+    justify-content: center;
+  }
+
+  .controlBtn {
+    flex: 1 1 45%;
+    border-color: none !important;
+  }
+}
+
+@container controls-container (max-width: 250px) {
+  .controlBtn {
+    flex: 1 1 100%;
+    max-width: none;
+    border-color: none;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .mainContent {
+    display: none;
+  }
+
+  .container {
+    flex-direction: column !important;
+    width: 100vw !important;
+  }
+
+  .mobileLayout {
+    display: flex;
+    flex-direction: column;
+    max-width: 100vw;
+    height: calc(100vh - 55px);
+    overflow: hidden;
+  }
+
+  .mobileSidebar {
+    position: relative;
+    width: 100%;
+    height: 30%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background-color: #fff;
+    border-bottom: 2px solid #ccc;
+  }
+
+  .mobileTabs {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    background-color: #f0f0f0;
+    padding: 0.5rem 0;
+  }
+
+  .mobileTabs button {
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    background: #ddd;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  .activeTab {
+    background: #fff;
+    border-bottom: 2px solid #333;
+  }
+
+  .mobileContent {
+    width: 100%;
+    height: 70%;
+    position: relative;
+    overflow: hidden;
+    background-color: #fafafa;
+  }
+
+  .mobileWorkspace {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: auto;
+  }
+
+  .mobileToggleBtn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 10;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    width: 100px;
+    background-color: #333;
+    color: #fff;
+    border: 1px solid #222;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .mobileDetailWrapper {
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  .resizer {
+    display: none !important;
+  }
+
+  .controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: none;
+    box-shadow: none;
+  }
+}
+
+.toast {
+  top: 55px;
+  background-color: var(--translucent-background-color) !important;
+  color: #fff !important;
+  min-height: 40px !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}

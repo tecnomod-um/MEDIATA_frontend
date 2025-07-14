@@ -1,0 +1,57 @@
+@import '../../../variables.css';
+
+.introSection {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem;
+    box-sizing: border-box;
+}
+
+.titleContainer {
+    margin-bottom: 1.5rem;
+    margin-top: 8vh;
+    text-align: center;
+}
+
+.logo {
+    width: 100%;
+    max-width: 65%;
+    display: inline-block;
+    object-fit: contain;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+}
+
+.paragraphContainer {
+    margin-top: 25vh;
+    max-width: 40vw;
+}
+
+.paragraphContainer p {
+    color: #747474;
+    line-height: 1.5;
+    font-size: 1.2em;
+    text-align: justify;
+    margin: 0;
+    user-select: none;
+}
+
+
+@media screen and (max-width: 768px) {
+
+  .logo {
+    margin-top: 6vh;
+    max-width: 90%;
+  }
+
+  .paragraphContainer {
+    display: none;
+}
+
+}

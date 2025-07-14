@@ -1,0 +1,774 @@
+@import '../../../variables.css';
+
+.autocompleteWrapper {
+  position: relative;
+  display: flex;
+  flex: 1;
+}
+
+.autocompleteList {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  z-index: 100;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.autocompleteListItem {
+  padding: 8px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+/* Original CSS */
+.mappingSection {
+  position: relative;
+  width: 60%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #ffffff;
+  padding: 1vw;
+  border-radius: 10px;
+  gap: 0.5vw;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  max-height: 90vh;
+}
+
+.dropArea {
+  width: 100%;
+  background-color: #f5f5f5;
+  border: 2px dashed #bbb;
+  border-radius: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0.5vw;
+  gap: 0.5vw;
+  transition: background-color 0.3s, border-color 0.3s;
+  overflow-y: auto;
+}
+
+.dropArea:hover {
+  background-color: #e0e0e0;
+  border-color: #aaa;
+}
+
+.droppedItem {
+  padding: 15px;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  position: relative;
+  width: 100%;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.droppedItem:hover {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.deleteIcon {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  font-size: 1.2em;
+  color: #ff5252;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.droppedItem:hover .deleteIcon {
+  opacity: 1;
+}
+
+/* NEW: The resizer (horizontal separator) between dropArea and createEntrySection */
+.resizer {
+  width: 100%;
+  height: 8px;
+  background: #ccc;
+  cursor: row-resize;
+  transition: background 0.2s;
+}
+
+.resizer:hover {
+  background: #999;
+}
+
+.createEntrySection {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  overflow: hidden;
+  border: 1px solid #e1e1e1;
+  border-radius: 10px;
+  padding: 10px;
+  background-color: #fafafa;
+  display: flex;
+  flex-direction: column;
+}
+
+.entryHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.unionInput {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #ddd;
+  font-size: 1em;
+  min-width: 200px;
+}
+
+.buttonsAndCheckbox {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.addValueButton {
+  background-color: var(--button-add-value-color);
+  color: var(--text-color-on-darkbg-light);
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  font-size: 1em;
+  border-radius: 0 0 0 0;
+  /* or however you want the corners */
+  transition: background-color 0.3s;
+}
+
+.addValueButton:hover {
+  background-color: var(--button-add-value-hover-color);
+}
+
+.saveButton {
+  background-color: var(--button-save-color);
+  color: var(--text-color-on-darkbg-light);
+  padding: 12px 15px;
+  cursor: pointer;
+  font-size: 1em;
+  border: 1px solid #ddd;
+  border-radius: 0 5px 5px 0;
+  /* example: right corners slightly rounded */
+  transition: background-color 0.3s;
+}
+
+.saveButton:hover {
+  background-color: var(--button-save-hover-color);
+}
+
+.removeCheckbox {
+  display: flex;
+  align-items: center;
+  padding: 11.5px 5px;
+  border-radius: 5px 0 0 5px;
+  background-color: #f5f5f5;
+  font-size: 0.9em;
+  border: 1px solid #ddd;
+  text-wrap: nowrap;
+  text-overflow: ellipsis;
+}
+
+.valueListContainer {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.valueMappingContainer {
+  background-color: #f9f9f9;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #e1e1e1;
+  margin: 5px;
+}
+
+.valueMappingContainer:last-child {
+  margin-bottom: 0px;
+}
+
+
+.valueMappingRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.valueNameInput {
+  padding: 12px 15px;
+  width: 70%;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1em;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.addMappingButton {
+  background-color: #868686;
+  padding: 12px 12px;
+  border: none;
+  color: var(--text-color-on-darkbg-light);
+  cursor: pointer;
+  font-size: 1em;
+  border-radius: 5px;
+  white-space: nowrap;
+  transition: background-color 0.3s;
+}
+
+.addMappingButton:hover {
+  background-color: #b6b6b6;
+}
+
+.mappingSummary {
+  font-size: 0.9em;
+  color: #6c757d;
+  text-align: right;
+  margin-left: auto;
+}
+
+.mappingTypeSelector {
+  display: flex;
+  align-items: center;
+  padding: 11.5px 15px;
+  border-radius: 0;
+  background-color: #f5f5f5;
+  font-size: 0.95em;
+  border: 1px solid #ddd;
+}
+
+.removeCheckboxInput {
+  margin: 0;
+  cursor: pointer;
+  width: 40px;
+  height: 20px;
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: #c6c6c6;
+  border-radius: 20px;
+  position: relative;
+  outline: none;
+  transition: background-color 0.3s;
+}
+
+.removeCheckboxInput:checked {
+  background-color: var(--button-color-light);
+  /* #08242c */
+}
+
+.removeCheckboxInput:before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border-radius: 50%;
+  transform: scale(1.1);
+  transition: left 0.3s;
+}
+
+.removeCheckboxInput:checked:before {
+  left: 20px;
+}
+
+.removeCheckbox label,
+.mappingTypeSelector label {
+  display: flex;
+  align-items: center;
+  font-size: 0.9em;
+}
+
+.slidingPane {
+  position: absolute;
+  top: 60px;
+  left: 0;
+  right: 0;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+  z-index: 10;
+  background-color: #fff;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  animation: hide-scroll 0.3s forwards;
+}
+
+.paneVisible {
+  max-height: 90%;
+  opacity: 1;
+  animation: none;
+}
+
+.selectMappingContainer {
+  flex: 1;
+  overflow-y: auto;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.selectMappingHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px;
+  background-color: #f8f9fa;
+  z-index: 10;
+  top: 0;
+  position: sticky;
+  width: 100%;
+  border-bottom: 1px solid #e1e1e1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.selectMappingHeader h5 {
+  margin: 0;
+  font-size: 0.8em;
+  color: #333;
+  font-weight: 600;
+}
+
+.mappingGroup {
+  padding: 10px;
+  width: 100%;
+  overflow-y: auto;
+}
+
+.mappingGroup:nth-child(odd) {
+  background-color: #f9f9f9;
+}
+
+.mappingGroup:nth-child(even) {
+  background-color: #f0f0f0;
+}
+
+.mappingGroup strong {
+  display: block;
+  font-size: 1.05em;
+  color: #007bff;
+  margin-bottom: 10px;
+}
+
+.mappingOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.mappingButton {
+  background-color: #6c757d;
+  color: var(--text-color-on-darkbg-light);
+  border: none;
+  padding: 8px 15px;
+  font-size: 0.9em;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.mappingButton:hover {
+  background-color: #5a6268;
+}
+
+.closeButton {
+  background-color: #ff5252;
+  color: var(--text-color-on-darkbg-light);
+  border: none;
+  padding: 6px 12px;
+  font-size: 0.9em;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.closeButton:hover {
+  background-color: #d80000;
+}
+
+.dropText {
+  width: 100%;
+  text-align: center;
+  color: #bbb;
+  font-size: 1.2em;
+  margin: auto;
+}
+
+.droppedItem {
+  padding: 15px;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  position: relative;
+  width: 100%;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.droppedItem:hover {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.groupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.groupType {
+  font-size: 0.9em;
+  color: #050505;
+  margin-right: 1vw;
+  font-weight: bold;
+}
+
+.groupContent {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.groupDetail {
+  margin: 0;
+  font-size: 0.95em;
+  color: #555;
+}
+
+.categoryList {
+  list-style-type: none;
+  padding-left: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.categoryItem {
+  background-color: #e2e6ea;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.enter {
+  opacity: 0;
+  transform: translateY(-20px);
+  height: 0;
+  margin-bottom: 0;
+}
+
+.enterActive {
+  opacity: 1;
+  transform: translateY(0);
+  height: auto;
+  margin-bottom: 10px;
+  transition: opacity 0.25s ease, transform 0.25s ease, height 0.25s ease,
+    margin-bottom 0.25s ease;
+}
+
+.exit {
+  opacity: 1;
+  transform: translateY(0);
+  height: auto;
+  margin-bottom: 10px;
+}
+
+.exitActive {
+  padding: 0;
+  opacity: 0;
+  transform: translateX(50px);
+  height: 0;
+  margin: 0;
+  border: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease, height 0.25s ease,
+    margin-bottom 0.25s ease;
+}
+
+.mappingSummary {
+  font-size: 0.9em;
+  color: #6c757d;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  margin-left: 10px;
+}
+
+.currentMappings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.mappedItem {
+  background-color: #e2e6ea;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 0.85em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  word-break: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 500px;
+}
+
+
+.closeIconButton {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 1em;
+  color: #888;
+  transition: color 0.3s;
+}
+
+.closeIconButton:hover {
+  color: #d80000;
+  transform: scale(1.1);
+}
+
+.closeIconButton svg {
+  font-size: 1.2em;
+  color: #888;
+}
+
+.closeIconButton:hover svg {
+  color: #d80000;
+}
+
+.columnTitle {
+  font-size: 1em;
+  font-weight: 600;
+  padding: 4px 0px;
+  display: inline-block;
+}
+
+.groupTypeFileWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.groupFile {
+  font-size: 0.8em;
+  color: #777;
+  margin-top: 2px;
+}
+
+.valueMappingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+}
+
+.valueNameInput {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 0.9em;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.addMappingButton {
+  background-color: #868686;
+  padding: 8px 12px;
+  color: var(--text-color-on-darkbg-light);
+  border: none;
+  font-size: 1em;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.addMappingButton:hover {
+  background-color: #b6b6b6;
+}
+
+.mappingSummary {
+  font-size: 0.9em;
+  color: #6c757d;
+  text-align: right;
+  margin-left: auto;
+}
+
+.mappingTypeSelector {
+  display: flex;
+  align-items: center;
+  padding: 11.5px 5px;
+  border-radius: 0;
+  background-color: #f5f5f5;
+  font-size: 0.95em;
+  border: 1px solid #ddd;
+}
+
+.removeCheckboxInput {
+  margin: 0;
+  cursor: pointer;
+  width: 40px;
+  height: 20px;
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: #c6c6c6;
+  border-radius: 20px;
+  position: relative;
+  outline: none;
+  transition: background-color 0.3s;
+}
+
+.removeCheckboxInput:checked {
+  background-color: #007bff;
+}
+
+.removeCheckboxInput:before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  background-color: var(--text-color-on-darkbg-light);
+  border-radius: 50%;
+  transform: scale(1.1);
+  transition: left 0.3s;
+}
+
+.removeCheckboxInput:checked:before {
+  left: 20px;
+}
+
+.removeCheckbox label,
+.mappingTypeSelector label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.mappedRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.mappedLabel {
+  font-weight: 600;
+  color: #333;
+}
+
+.mappedOperator {
+  font-style: italic;
+  color: #666;
+}
+
+.mappedValue {
+  color: #333;
+  font-weight: 500;
+}
+
+.iconWrapper {
+  margin: none;
+  padding: none;
+}
+
+@media (max-width: 900px) {
+  .switchLabel {
+    display: inline-block !important;
+  }
+
+  .buttonText {
+    display: inline-block !important;
+  }
+
+  .iconWrapper {
+    display: none !important;
+  }
+
+  .removeCheckbox, .mappingTypeSelector {
+    width: 50%;
+  }
+}
+
+@media (max-width: 768px) {
+  .dropArea {
+    max-height: 10vh;
+  }
+
+  .mappingSection {
+    width: 100%;
+    height: 42vh;
+    overflow-y: scroll;
+  }
+}
+
+.buttonText {
+  display: inline-block;
+}
+
+.iconWrapper {
+  display: none;
+}
+
+.buttonIcon {
+  margin: 0 auto;
+
+  font-size: 1em;
+  vertical-align: middle;
+
+}
+
+@media (max-width: 1195px) {
+
+  .switchLabel {
+    display: none;
+  }
+
+  .removeCheckbox label,
+  .mappingTypeSelector label {
+    justify-content: center;
+  }
+
+  .buttonText {
+    display: none;
+  }
+
+  .iconWrapper {
+    display: inline-block;
+  }
+}

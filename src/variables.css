@@ -1,0 +1,39 @@
+:root {
+  --background-color-1-light: #ecebeb;
+  --background-color-2-light: #f1f1f1;
+
+  --background-nav-and-headers-background-color-light: #08242c;
+  --background-nav-background-color-hover-light: #0c343f;
+  --background-nav-tool-background-color-light: #08181d;
+  --background-nav-tool-background-color-active-light: #3a6f7a;
+  --background-nav-tool-background-color-hover-light: #071418;
+
+  --text-color-on-darkbg-light: #fff;
+
+  --button-color-light: #08242c;
+  --button-color-shadow-light: 0 5px 15px rgba(3, 2, 43, 0.4);
+  --button-color-hover-light: #0f3e48;
+  --button-gradient-light: linear-gradient(to left, #0f3e48, #08242c 50%, #0f3e48);
+
+  --tooltray-background-color-light: #333;
+  --tooltray-background-color-light-transparent: rgba(51, 51, 51, 0.5);
+
+
+  --file-selected-bg-light: #dceeff;
+  --file-selected-border-light: var(--button-color-hover-light);
+
+  --button-add-value-color: #184a2b;
+  --button-add-value-hover-color: #20663a;
+
+  --button-delete-color: #4a1818;
+  --button-delete-hover-color: #652121;
+
+  --button-save-color: #1b3442;
+  --button-save-hover-color: #264656;
+
+  --transition-duration: 600ms;
+  --transition-ease: cubic-bezier(0.25, 0.8, 0.25, 1);
+
+  --darkened-background-color: rgba(0, 0, 0, 0.5);
+  --translucent-background-color: rgba(0, 0, 0, 0.7);
+}

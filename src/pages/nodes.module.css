@@ -1,6 +1,8 @@
+@import '../variables.css';
+
 .container {
     height: calc(100vh - 55px);
-    width: 100vw;
+    width: 100%;
     position: relative;
 }
 
@@ -16,6 +18,7 @@
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -25,6 +28,7 @@
     from {
         opacity: 1;
     }
+
     to {
         opacity: 0;
     }
@@ -41,6 +45,7 @@
     border: 1px solid #f5c6cb;
     border-radius: 5px;
     user-select: none;
+    z-index: 1100;
 }
 
 .noNodes {
@@ -48,11 +53,26 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
+    background-color: var(--translucent-background-color);
+    color: var(--text-color-on-darkbg-light);
     padding: 20px 40px;
     border-radius: 8px;
     font-size: 1.2em;
     user-select: none;
     text-align: center;
+}
+
+.toast {
+    top: 55px;
+    background-color: var(--translucent-background-color) !important;
+    color: #fff !important;
+    min-height: 40px !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+/* Prevent glitchy toast behavior in chrome with the canvas */
+:global(.Toastify__toast-container) {
+    position: fixed;
+    outline: 1px solid transparent !important;
 }

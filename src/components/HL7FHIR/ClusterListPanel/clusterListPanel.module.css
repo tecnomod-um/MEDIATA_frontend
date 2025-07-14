@@ -1,0 +1,188 @@
+@import '../../../variables.css';
+
+.wrapper {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  z-index: 20;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary-color);
+  margin: 0;
+}
+
+.regenBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.regenBtn:hover {
+  background: var(--button-secondary-hover);
+  transform: scale(1.05);
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* never show horizontal scroll */
+  flex: 1;
+
+  /* hide thumb by default… */
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.2s ease;
+}
+
+.list:hover {
+  /* …show just the thumb on hover */
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+/* WebKit custom scrollbar */
+.list::-webkit-scrollbar {
+  width: 6px;
+  background: transparent;
+}
+
+.list::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.list:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #ffffff !important;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  position: relative;
+  z-index: 20;
+  
+  /* subtle resting shadow so it’s not completely flat */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+/* alternating row shading for a bit of texture */
+.item:nth-child(odd) {
+  background: rgba(var(--surface-rgb), 0.95);
+}
+
+.item:last-child {
+  margin-bottom: 0;
+}
+
+.item:hover,
+.item:focus {
+  transform: translateX(4px);
+  background: var(--surface);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  outline: none;
+}
+
+/* focus ring accent for keyboard users */
+.item:focus-visible {
+  outline: 2px solid var(--accent-color);
+}
+
+.name {
+  font-weight: 500;
+  color: var(--text-primary-color);
+}
+
+.count {
+  background: var(--accent-color);
+  font-size: 0.85rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.instructions {
+  font-size: 0.85rem;
+  color: var(--text-secondary-color);
+  margin-top: 12px;
+  text-align: center;
+}
+
+.itemEnter {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.itemEnterActive {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 250ms ease, transform 250ms ease;
+}
+
+.itemExit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.itemExitActive {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 250ms ease, transform 250ms ease;
+}
+
+.dragOverlay {
+  position: relative;
+}
+
+.dragOverlay::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.wrapper :global(.item) {
+  position: relative;
+  z-index: 2;
+}

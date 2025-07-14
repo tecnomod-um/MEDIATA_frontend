@@ -1,0 +1,23 @@
+@import '../../../variables.css';
+
+.autocompleteWrapper {
+  position: relative;
+  display: flex;
+  flex: 1;
+}
+
+.autocompleteList {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  z-index: 100;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.autocompleteListItem {
+  padding: 8px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
