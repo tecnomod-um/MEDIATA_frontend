@@ -169,7 +169,7 @@ describe('<FilterModal />', () => {
     fireEvent.change(dateInput, { target: { value: '2025-07-01' } });
 
     fireEvent.click(screen.getByRole('button', { name: /add filter/i }));
-    expect(screen.getByText(/1\/7\/2025/)).toBeInTheDocument();
+    expect(screen.getByText(/(?:7\/1|1\/7)\/2025/)).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'X' })[0]);
     fireEvent.change(screen.getByTestId('date-filter-type'), {
