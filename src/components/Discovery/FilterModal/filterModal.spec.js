@@ -167,8 +167,10 @@ describe('<FilterModal />', () => {
     });
     const dateInput = screen.getByTestId('mock-datepicker');
     fireEvent.change(dateInput, { target: { value: '2025-07-01' } });
+
     fireEvent.click(screen.getByRole('button', { name: /add filter/i }));
     expect(screen.getByText(/1\/7\/2025/)).toBeInTheDocument();
+
     fireEvent.click(screen.getAllByRole('button', { name: 'X' })[0]);
     fireEvent.change(screen.getByTestId('date-filter-type'), {
       target: { value: 'between' },

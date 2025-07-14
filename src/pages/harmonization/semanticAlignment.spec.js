@@ -57,14 +57,17 @@ jest.mock(
 );
 jest.mock(
   '../../components/Common/FilePicker/uploadFilePicker',
-  () => ({ onFileUpload }) => (
-    <button
-      data-testid="file-picker"
-      onClick={() => onFileUpload(new File(['x,y'], 'test.csv'))}
-    >
-      PICK FILE
-    </button>
-  )
+  () => {
+    const FileCtor = globalThis.File;
+    return ({ onFileUpload }) => (
+      <button
+        data-testid="file-picker"
+        onClick={() => onFileUpload(new FileCtor(['x,y'], 'test.csv'))}
+      >
+        PICK FILE
+      </button>
+    );
+  }
 );
 jest.mock('../../util/colors', () => ({
   generateDistinctColors: jest.fn(),
