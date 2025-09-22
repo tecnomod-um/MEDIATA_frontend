@@ -1,3 +1,7 @@
+![CI](https://github.com/tecnomod-um/MEDIATA_frontend/actions/workflows/ci_testing.yml/badge.svg?branch=main)
+![coverage](./badges/coverage.svg)
+![Dependency Review](https://github.com/tecnomod-um/MEDIATA_frontend/actions/workflows/dependency-review.yml/badge.svg?branch=main)
+
 # MEDIATA Front-End
 
 This is the single-page web client of the MEDIATA platform. It provides a responsive, secure, and user-friendly interface for interacting with federated clinical nodes through the central orchestrator.
@@ -12,4 +16,4 @@ This is the single-page web client of the MEDIATA platform. It provides a respon
 - Fully responsive UI with keyboard shortcuts and accessibility support
 
 This project is developed under the [MIT License](LICENSE.md).
-![CI](https://github.com/tecnomod-um/MEDIATA_frontend/actions/workflows/ci_testing.yml/badge.svg?branch=main)
+
