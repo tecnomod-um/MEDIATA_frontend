@@ -1,5 +1,5 @@
 ![CI](https://github.com/tecnomod-um/MEDIATA_frontend/actions/workflows/ci_testing.yml/badge.svg?branch=main)
-![coverage](badges/coverage.svg)
+![coverage](./badges/coverage.svg)
 ![Dependency Review](https://github.com/tecnomod-um/MEDIATA_frontend/actions/workflows/dependency-review.yml/badge.svg)
 
 # MEDIATA Front-End
