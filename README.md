@@ -12,3 +12,4 @@ This is the single-page web client of the MEDIATA platform. It provides a respon
 - Fully responsive UI with keyboard shortcuts and accessibility support
 
 This project is developed under the [MIT License](LICENSE.md).
+![CI](https://github.com/tecnomod-um/MEDIATA_frontend/actions/workflows/ci_testing.yml/badge.svg?branch=main)

@@ -111,6 +111,7 @@ const ElementDetailPanel = ({ activeElement, currentSelection, onSelectOption, a
 
   const isBuilt = useMemo(() => builtClasses && builtClasses[itemKey], [builtClasses, itemKey]);
 
+  /*
   const canBuild = useMemo(() => {
     return formFields.every(({ name, optional, type }) => {
       if (optional) return true;
@@ -127,7 +128,7 @@ const ElementDetailPanel = ({ activeElement, currentSelection, onSelectOption, a
       return v != null && v !== "";
     });
   }, [formFields, currentValues]);
-
+*/
   const elementCategories = useMemo(() => activeElement.categories || [], [activeElement.categories]);
 
   useEffect(() => {

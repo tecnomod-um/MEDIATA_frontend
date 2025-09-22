@@ -37,7 +37,7 @@ function Discovery() {
   const toggleToolTray = () => setIsToolTrayOpen(!isToolTrayOpen);
 
   useEffect(() => {
-    if (      location.state?.elementFiles?.length &&      !hasProcessedMappingState    ) {
+    if (location.state?.elementFiles?.length && !hasProcessedMappingState) {
       const elementFiles = location.state.elementFiles;
       const nodeMapping = {};
       elementFiles.forEach(({ nodeId, fileName }) => {
@@ -389,6 +389,7 @@ function Discovery() {
       <ToastContainer
         autoClose={2000}
         hideProgressBar={true}
+        className={DiscoveryStyles.toastContainer}
         toastClassName={DiscoveryStyles.toast}
       />
     </div>

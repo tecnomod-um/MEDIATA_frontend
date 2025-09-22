@@ -188,6 +188,9 @@ function EntryTable({ filteredLists, minCellWidth, maxRows = 1000, onRowSelect, 
               <span className={EntryTableStyles.resSpan}>{text}</span>
               <div
                 style={{ height: tableHeight }}
+                role="separator"
+                aria-label="Resize column"
+                aria-orientation="vertical"
                 onMouseDown={() => mouseDown(i)}
                 className={`${EntryTableStyles.resizeHandle} ${activeIndex === i ? EntryTableStyles.active : "idle"
                   }`}

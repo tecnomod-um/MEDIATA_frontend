@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, act, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import AggregateDisplay from './aggregateDisplay';
 
@@ -69,17 +69,15 @@ describe('AggregateDisplay', () => {
 
     const splitter =
       screen.queryByRole('separator') ||
-      document.querySelector('.splitter');
+      screen.getByRole('separator');
 
     expect(splitter).toBeTruthy();
 
-    const topPanel = document.querySelector('.topPanel');
+    const topPanel = screen.getByTestId('top-panel');
     const startHeight = parseInt(topPanel.style.height, 10) || 300;
 
     fireEvent.mouseDown(splitter, { clientY: 200 });
-    act(() => {
-      fireEvent.mouseMove(window, { clientY: 250 });
-    });
+    fireEvent.mouseMove(window, { clientY: 250 });
     fireEvent.mouseUp(window);
 
     const newHeight = parseInt(topPanel.style.height, 10);

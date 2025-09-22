@@ -17,8 +17,7 @@ jest.mock('@react-three/fiber', () => {
   };
   const mockGl = {
     domElement: mockEl,
-    setPixelRatio: jest.fn(),
-    domElement: mockEl
+    setPixelRatio: jest.fn()
   };
 
   return {

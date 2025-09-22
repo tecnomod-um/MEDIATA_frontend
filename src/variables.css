@@ -1,6 +1,7 @@
 :root {
   --background-color-1-light: #ecebeb;
   --background-color-2-light: #f1f1f1;
+  --background-color-card-light: #ffffff;
 
   --background-nav-and-headers-background-color-light: #08242c;
   --background-nav-background-color-hover-light: #0c343f;
@@ -36,4 +37,17 @@
 
   --darkened-background-color: rgba(0, 0, 0, 0.5);
   --translucent-background-color: rgba(0, 0, 0, 0.7);
+
+
+
+
+  --icon-background: #53a9ca;
+  --icon-stroke: #0f2433;
+  --icon-fill: #ffffff;
+  --icon-fold-fill: #d9eef7;
+  --icon-line-blue: #0056b3;
+  --icon-line-green: #008844;
+
+  --icon-shield-stroke: #ffffff;
+  --icon-shield-stroke-inner: #0f2433;
 }

@@ -54,9 +54,7 @@ describe('<Login />', () => {
 
     expect(screen.getByRole('button', { name: /Logging in.../i })).toBeDisabled();
 
-    await waitFor(() =>
-      expect(screen.getByText(/Login failed\. Please check your credentials\./i)).toBeInTheDocument()
-    );
+    await screen.findByText(/Login failed\. Please check your credentials\./i);
     expect(screen.getByRole('button', { name: /Login/i })).toBeEnabled();
   });
 

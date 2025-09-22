@@ -19,16 +19,14 @@ jest.mock('axios', () => {
 
 jest.mock('../config', () => ({ backendUrl: 'https://api.example.com' }));
 
-let axiosInstance: any;
-let setupAxiosInterceptors: (logout: () => void) => void;
-let mockReqUse: jest.Mock;
-let mockResUse: jest.Mock;
-let mockCreate: jest.Mock;
-let mockAxios: any;
+let axiosInstance;
+let setupAxiosInterceptors;
+let mockResUse;
+let mockAxios;
 
 beforeAll(() => {
   const axios = require('axios').default;
-  ({ mockReqUse, mockResUse, mockCreate, mockAxios } = axios.__m);
+  ({ mockResUse, mockAxios } = axios.__m);
 
   jest.isolateModules(() => {
     const mod = require('../util/axiosSetup.js');
@@ -48,8 +46,8 @@ describe('axiosSetup utility', () => {
   });
 
   describe('response interceptor', () => {
-    let errHandler: (e: any) => Promise<never>;
-    let logoutSpy: jest.Mock;
+    let errHandler;
+    let logoutSpy;
 
     beforeEach(() => {
       logoutSpy = jest.fn();
@@ -57,7 +55,7 @@ describe('axiosSetup utility', () => {
       errHandler = mockResUse.mock.calls.at(-1)[1];
     });
 
-    it.each([401, 403])('invokes logout on HTTP %p', async status => {
+    it.each([401, 403])('invokes logout on HTTP %p', async (status) => {
       const err = { response: { status } };
       await expect(errHandler(err)).rejects.toBe(err);
       expect(logoutSpy).toHaveBeenCalled();

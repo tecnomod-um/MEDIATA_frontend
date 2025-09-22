@@ -65,7 +65,7 @@ describe('<ClusterListPanel />', () => {
       />
     );
 
-    const clusterBItem = screen.getByText('Cluster B').closest('li');
+    const clusterBItem = screen.getByRole('listitem', { name: /Cluster B/i });
     const fakeData = JSON.stringify({ elementId: 42 });
     const dataTransfer = { getData: jest.fn().mockReturnValue(fakeData) };
 
@@ -74,7 +74,7 @@ describe('<ClusterListPanel />', () => {
   });
 
   it('applies dragOverlay class when isDragging is true', () => {
-    const { container } = render(
+    render(
       <ClusterListPanel
         clusters={clusters}
         onSelectCluster={onSelectCluster}
@@ -82,7 +82,7 @@ describe('<ClusterListPanel />', () => {
         isDragging={true}
       />
     );
-    const wrapperDiv = container.firstChild;
+    const wrapperDiv = screen.getByTestId('wrapper');
     expect(wrapperDiv).toHaveClass('wrapper');
     expect(wrapperDiv).toHaveClass('dragOverlay');
   });

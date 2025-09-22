@@ -5,9 +5,6 @@ import styles from "./joinedNodesDisplay.module.css";
 import DatasetCard from "../MetadataDisplay/datasetCard";
 import { getNodeMetadata } from "../../../util/petitionHandler";
 
-/** 
- * A single node card that can collapse/expand to show its datasets.
- */
 const JoinedNodeCard = ({ node }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [loadingMetadata, setLoadingMetadata] = useState(false);

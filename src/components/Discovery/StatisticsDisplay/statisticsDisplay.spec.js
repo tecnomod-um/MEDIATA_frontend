@@ -3,39 +3,55 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import StatisticsDisplay from "./statisticsDisplay";
 
-jest.mock("../ContinuousChart/continuousChart", () => props => (
-  <div
-    data-testid="continuous-chart"
-    data-feature={props.feature.featureName}
-    data-selected={props.isSelected ? "true" : "false"}
-    onClick={props.onClick}
-    onDoubleClick={props.onDoubleClick}
-  />
-));
+jest.mock("../ContinuousChart/continuousChart", () => (props) => {
+  const isOverview = !!props.inOverview || typeof props.onClick === "function";
+  const scope = isOverview ? "Overview " : "Preview ";
+  return (
+    <div
+      role="figure"
+      aria-label={`${scope}Continuous chart for ${props.feature.featureName}`}
+      data-feature={props.feature.featureName}
+      data-selected={props.isSelected ? "true" : "false"}
+      onClick={props.onClick}
+      onDoubleClick={props.onDoubleClick}
+    />
+  );
+});
 
-jest.mock("../CategoricalChart/categoricalChart", () => props => (
-  <div
-    data-testid="categorical-chart"
-    data-feature={props.feature.featureName}
-    data-selected={props.isSelected ? "true" : "false"}
-    onClick={props.onClick}
-    onDoubleClick={props.onDoubleClick}
-  />
-));
+jest.mock("../CategoricalChart/categoricalChart", () => (props) => {
+  const isOverview = !!props.inOverview || typeof props.onClick === "function";
+  const scope = isOverview ? "Overview " : "Preview ";
+  return (
+    <div
+      role="figure"
+      aria-label={`${scope}Categorical chart for ${props.feature.featureName}`}
+      data-feature={props.feature.featureName}
+      data-selected={props.isSelected ? "true" : "false"}
+      onClick={props.onClick}
+      onDoubleClick={props.onDoubleClick}
+    />
+  );
+});
 
-jest.mock("../DateChart/dateChart", () => props => (
-  <div
-    data-testid="date-chart"
-    data-feature={props.dateData.featureName}
-    data-selected={props.isSelected ? "true" : "false"}
-    onClick={props.onClick}
-    onDoubleClick={props.onDoubleClick}
-  />
-));
+jest.mock("../DateChart/dateChart", () => (props) => {
+  const isOverview = !!props.inOverview || typeof props.onClick === "function";
+  const scope = isOverview ? "Overview " : "Preview ";
+  return (
+    <div
+      role="figure"
+      aria-label={`${scope}Date chart for ${props.dateData.featureName}`}
+      data-feature={props.dateData.featureName}
+      data-selected={props.isSelected ? "true" : "false"}
+      onClick={props.onClick}
+      onDoubleClick={props.onDoubleClick}
+    />
+  );
+});
 
 jest.mock("../EntrySearch/entrySearch", () => props => (
   <div
-    data-testid="entry-search"
+    role="table"
+    aria-label={`${props.type} data table`}
     data-type={props.type}
     data-result={JSON.stringify(props.resultData)}
     onClick={() => props.onRowSelect("row-1")}
@@ -44,11 +60,11 @@ jest.mock("../EntrySearch/entrySearch", () => props => (
 
 jest.mock("../ChartPreview/chartPreview", () => ({ isOpen, content, closeModal }) =>
   isOpen ? (
-    <div data-testid="chart-preview">
-      <button data-testid="close-preview" onClick={closeModal}>
+    <div role="dialog" aria-label="Chart preview">
+      <button aria-label="Close preview" onClick={closeModal}>
         Close
       </button>
-      <div data-testid="preview-content">{content}</div>
+      <div>{content}</div>
     </div>
   ) : null
 );
@@ -73,29 +89,6 @@ describe("<StatisticsDisplay />", () => {
     setSelectedEntry = jest.fn();
   });
 
-  test("renders two EntrySearchs with correct types & data", () => {
-    render(
-      <StatisticsDisplay
-        data={data}
-        showOutliers={false}
-        setSelectedEntry={setSelectedEntry}
-        selectedEntry={null}
-      />
-    );
-
-    const searches = screen.getAllByTestId("entry-search");
-    expect(searches).toHaveLength(2);
-    expect(searches[0]).toHaveAttribute("data-type", "continuous");
-    const contResult = JSON.parse(searches[0].getAttribute("data-result"));
-    expect(contResult.Name).toEqual(["A", "B", "D"]);
-    expect(contResult.Count).toEqual(["5", "2", "4"]);
-
-    expect(searches[1]).toHaveAttribute("data-type", "categorical");
-    const catResult = JSON.parse(searches[1].getAttribute("data-result"));
-    expect(catResult.Name).toEqual(["C"]);
-    expect(catResult["Total Count"]).toEqual(["3"]);
-  });
-
   test("charts render in ascending count order", () => {
     render(
       <StatisticsDisplay
@@ -106,15 +99,28 @@ describe("<StatisticsDisplay />", () => {
       />
     );
 
-    const contCharts = screen.getAllByTestId("continuous-chart");
+    // Use getAllByRole to get all figures (charts)
+    const charts = screen.getAllByRole("figure");
+
+    // Filter continuous charts by their ARIA labels
+    const contCharts = charts.filter(chart =>
+      chart.getAttribute("aria-label")?.includes("Continuous chart for")
+    );
+
     expect(contCharts[0]).toHaveAttribute("data-feature", "B");
     expect(contCharts[1]).toHaveAttribute("data-feature", "A");
 
-    const catCharts = screen.getAllByTestId("categorical-chart");
+    // Filter categorical charts
+    const catCharts = charts.filter(chart =>
+      chart.getAttribute("aria-label")?.includes("Categorical chart for")
+    );
     expect(catCharts).toHaveLength(1);
     expect(catCharts[0]).toHaveAttribute("data-feature", "C");
 
-    const dateCharts = screen.getAllByTestId("date-chart");
+    // Filter date charts
+    const dateCharts = charts.filter(chart =>
+      chart.getAttribute("aria-label")?.includes("Date chart for")
+    );
     expect(dateCharts).toHaveLength(1);
     expect(dateCharts[0]).toHaveAttribute("data-feature", "D");
   });
@@ -129,12 +135,40 @@ describe("<StatisticsDisplay />", () => {
       />
     );
 
-    const firstCont = screen.getAllByTestId("continuous-chart")[0];
+    // Get the first continuous chart by its ARIA label
+    const firstCont = screen.getByLabelText("Overview Continuous chart for B");
     fireEvent.click(firstCont);
     expect(setSelectedEntry).toHaveBeenCalledWith({
       type: "continuous",
       featureName: "B",
     });
+  });
+
+  test("renders two EntrySearchs with correct types & data", () => {
+    render(
+      <StatisticsDisplay
+        data={data}
+        showOutliers={false}
+        setSelectedEntry={setSelectedEntry}
+        selectedEntry={null}
+      />
+    );
+
+    // Use getAllByRole to get all tables
+    const searches = screen.getAllByRole("table");
+    expect(searches).toHaveLength(2);
+
+    // Check the first table (continuous)
+    expect(searches[0]).toHaveAttribute("data-type", "continuous");
+    const contResult = JSON.parse(searches[0].getAttribute("data-result"));
+    expect(contResult.Name).toEqual(["A", "B", "D"]);
+    expect(contResult.Count).toEqual(["5", "2", "4"]);
+
+    // Check the second table (categorical)
+    expect(searches[1]).toHaveAttribute("data-type", "categorical");
+    const catResult = JSON.parse(searches[1].getAttribute("data-result"));
+    expect(catResult.Name).toEqual(["C"]);
+    expect(catResult["Total Count"]).toEqual(["3"]);
   });
 
   test("double-click opens the preview with correct content and can be closed", () => {
@@ -147,14 +181,19 @@ describe("<StatisticsDisplay />", () => {
       />
     );
 
-    const cont = screen.getAllByTestId("continuous-chart")[0];
+    // Get the first continuous chart by its ARIA label
+    const cont = screen.getByLabelText("Overview Continuous chart for B");
     fireEvent.doubleClick(cont);
-    expect(screen.getByTestId("chart-preview")).toBeInTheDocument();
-    expect(
-      screen.getByTestId("preview-content").querySelector('[data-testid="continuous-chart"]')
-    ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId("close-preview"));
-    expect(screen.queryByTestId("chart-preview")).toBeNull();
+    // Check if the preview dialog is open
+    expect(screen.getByRole("dialog", { name: "Chart preview" })).toBeInTheDocument();
+
+    // Check if the correct chart is in the preview
+    expect(
+      screen.getByLabelText("Preview Continuous chart for B")
+    ).toBeInTheDocument();
+    // Close the preview
+    fireEvent.click(screen.getByLabelText("Close preview"));
+    expect(screen.queryByRole("dialog", { name: "Chart preview" })).toBeNull();
   });
 });

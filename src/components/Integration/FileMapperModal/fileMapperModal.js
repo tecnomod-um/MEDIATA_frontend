@@ -58,8 +58,8 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
   // Fetch available datasets when opened
   useEffect(() => {
     if (!isOpen || nodes.length === 0) {
-      setDatasetFiles({});
-      setSelectedDatasets({});
+      setDatasetFiles(prev => (Object.keys(prev).length ? {} : prev));
+      setSelectedDatasets(prev => (Object.keys(prev).length ? {} : prev));
       return;
     }
 
@@ -70,8 +70,23 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
           updateNodeAxiosBaseURL(serviceUrl);
           results[nodeId] = (await getNodeDatasets()) || [];
         }
-        setDatasetFiles(results);
-        setSelectedDatasets({});
+        setDatasetFiles(prev => {
+          const a = prev || {};
+          const b = results || {};
+          if (a === b) return prev;
+
+          const ka = Object.keys(a);
+          const kb = Object.keys(b);
+          if (ka.length !== kb.length) return results;
+
+          for (let i = 0; i < ka.length; i++) {
+            const k = ka[i];
+            if (a[k] !== b[k]) return results;
+          }
+          return prev;
+        });
+
+        setSelectedDatasets(prev => (Object.keys(prev).length ? {} : prev));
       } catch (err) {
         console.error('Error fetching dataset files for nodes:', err);
       }
@@ -227,11 +242,13 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                     {dsFiles.map((ds) => {
                       const isSel = selected.includes(ds);
                       return (
-                        <div
+                        <button
+                          type="button"
                           key={ds}
-                          className={`${FileMapperModalStyles.fileItem} ${isSel ? FileMapperModalStyles.selected : ''
-                            }`}
+                          className={`${FileMapperModalStyles.fileItem} ${isSel ? FileMapperModalStyles.selected : ''}`}
                           onClick={() => toggleDataset(fileName, ds)}
+                          aria-pressed={isSel}
+                          aria-label={`Toggle dataset ${ds}`}
                         >
                           <span
                             className={`${FileMapperModalStyles.fileIcon} ${isSel ? FileMapperModalStyles.selectedIcon : ''
@@ -242,7 +259,7 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                           <span className={FileMapperModalStyles.fileName}>
                             {ds}
                           </span>
-                        </div>
+                        </button>
                       );
                     })}
                   </div>
@@ -257,6 +274,7 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
             <button
               className={FileMapperModalStyles.arrowButton}
               onClick={() => doSend(true)}
+              aria-label="Apply and open in Discovery"
               disabled={
                 isSending ||
                 Object.values(selectedDatasets).every((arr) => !arr.length)

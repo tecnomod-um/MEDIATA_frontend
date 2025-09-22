@@ -146,7 +146,7 @@ describe('<MappingsResult />', () => {
   });
 
   it('disables process button while processing and shows loader', () => {
-    const { container } = render(
+    render(
       <MappingsResult
         mappings={sampleMappings}
         columnsData={columnsData}
@@ -156,9 +156,9 @@ describe('<MappingsResult />', () => {
       />
     );
 
-    const btn = container.querySelector('button.processMappingsButton');
+    const btn = screen.getByRole('button', { name: /process mappings/i });
     expect(btn).toBeDisabled();
-    expect(btn.querySelector('.loader')).toBeInTheDocument();
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
 
   it('handles onUpdateMapping with key change', () => {

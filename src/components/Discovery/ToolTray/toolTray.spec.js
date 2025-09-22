@@ -116,7 +116,7 @@ describe('<ToolTray/>', () => {
     const props = getDefaultProps();
     render(<ToolTray {...props} />);
 
-    const sw = document.querySelector('#toggleOutliers');
+    const sw = screen.getByRole('checkbox', { name: /toggle outliers/i });
     fireEvent.click(sw);
 
     expect(props.setShowOutliers).toHaveBeenCalledWith(true);
@@ -206,7 +206,7 @@ describe('<ToolTray/>', () => {
       });
       const props = getDefaultProps();
       render(<ToolTray {...props} />);
-      const btn = screen.getByTestId('sync').closest('button');
+      const btn = screen.getByRole('button', { name: /toggle the selected feature's type between categorical and continuous/i });
       fireEvent.click(btn);
       await waitFor(() => expect(updateNodeAxiosBaseURL).toHaveBeenCalledWith('http://fake'));
       expect(recalculateFeature).toHaveBeenCalledWith('fileA.csv', 'Fruit', 'continuous');
@@ -221,7 +221,7 @@ describe('<ToolTray/>', () => {
         recalculateFeature.mockResolvedValue({ message: 'Cannot be converted to categorical' });
         const props = getDefaultProps();
         render(<ToolTray {...props} />);
-        const btn = screen.getByTestId('sync').closest('button');
+        const btn = screen.getByRole('button', { name: /Toggle the selected feature's type between categorical and continuous/i });
         fireEvent.click(btn);
 
         await waitFor(() =>
@@ -236,7 +236,7 @@ describe('<ToolTray/>', () => {
         const props = getDefaultProps();
         render(<ToolTray {...props} />);
 
-        const btn = screen.getByTestId('sync').closest('button');
+        const btn = screen.getByRole('button', { name: /Toggle the selected feature's type between categorical and continuous/i });
         fireEvent.click(btn);
 
         await waitFor(() =>

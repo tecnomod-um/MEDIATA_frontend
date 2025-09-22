@@ -87,7 +87,7 @@ describe('<DateChart />', () => {
         onDoubleClick={handleDouble}
       />
     );
-    const wrapper = container.firstElementChild;
+    const wrapper = screen.getByTestId('mock-line');
     fireEvent.click(wrapper);
     fireEvent.doubleClick(wrapper);
     expect(handleClick).toHaveBeenCalled();

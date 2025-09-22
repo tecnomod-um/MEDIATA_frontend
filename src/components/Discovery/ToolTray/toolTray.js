@@ -333,7 +333,15 @@ function ToolTray({
         }`}
     >
       {/* Toggle arrow */}
-      <div className={ToolTrayStyles.toggleButton} onClick={toggleToolTray}>
+
+
+     <div
+        className={ToolTrayStyles.toggleButton}
+        onClick={toggleToolTray}
+        role="button"
+        tabIndex={0}
+        aria-label={isToolTrayOpen ? 'Close tool tray' : 'Open tool tray'}
+      >
         {isToolTrayOpen ? <MdChevronLeft /> : <MdChevronRight />}
       </div>
 
@@ -346,7 +354,9 @@ function ToolTray({
               className={`${ToolTrayStyles.toggleFeatureTypeButton} ${isLoading ? ToolTrayStyles.loading : ""
                 }`}
               onClick={toggleFeatureType}
+              type="button"
               disabled={isLoading}
+              aria-label="Toggle the selected feature's type between categorical and continuous"
             >
               {isLoading ? (
                 <div className={ToolTrayStyles.spinner}></div>
@@ -355,7 +365,7 @@ function ToolTray({
                   <span className={ToolTrayStyles.entryType}>
                     {(selectedEntry?.type || "").toUpperCase()}
                   </span>
-                  <MdSync className={ToolTrayStyles.iconSpin} />
+                  <MdSync className={ToolTrayStyles.iconSpin} aria-hidden="true"/>
                 </>
               )}
             </button>
@@ -409,6 +419,7 @@ function ToolTray({
             <li key={entry.featureName} className={ToolTrayStyles.featureItem}>
               <label title={entry.featureName}>
                 <Switch
+                  aria-label={entry.featureName}
                   checked={isFeatureChecked(entry.featureName, entry.type)}
                   onChange={() =>
                     setFilteredData((prev) => {
@@ -464,6 +475,7 @@ function ToolTray({
             checked={showOutliers}
             onChange={setShowOutliers}
             id="toggleOutliers"
+            aria-label="Toggle outliers"
             height={20}
             width={40}
             handleDiameter={16}

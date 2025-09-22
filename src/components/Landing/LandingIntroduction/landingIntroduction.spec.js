@@ -17,10 +17,8 @@ jest.mock(
 
 describe('IntroductionSection', () => {
   it('applies the introSection class to the section element', () => {
-    const { container } = render(<IntroductionSection />);
-    const section = container.querySelector(
-      `.${LandingIntroStyles.introSection}`
-    );
+    render(<IntroductionSection />);
+    const section = screen.getByRole('region', { name: /introduction section/i });
     expect(section).toBeInTheDocument();
   });
 
@@ -46,7 +44,7 @@ describe('IntroductionSection', () => {
     render(<IntroductionSection />);
     expect(
       screen.getByText(
-        /Mediata is your comprehensive solution for managing clinical patient data with precision/i
+        /MEDIATA is your comprehensive solution for managing clinical patient data/i
       )
     ).toBeInTheDocument();
   });

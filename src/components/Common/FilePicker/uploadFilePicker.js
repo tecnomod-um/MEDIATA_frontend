@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
-import styles from './filePicker.module.css';
+import FilePickerStyles from './filePicker.module.css';
 
 function UploadFilePicker({ onFileUpload, isProcessing = false, modalTitle }) {
   const [file, setFile] = useState(null);
@@ -8,15 +8,22 @@ function UploadFilePicker({ onFileUpload, isProcessing = false, modalTitle }) {
   const hiddenFileInput = useRef(null);
   const uploadModalRef = useRef(null);
 
-  const handleClick = () => {
-    if (!isProcessing && hiddenFileInput.current) {
+  const handleOpenPicker = () => {
+    if (!isProcessing && hiddenFileInput.current)
       hiddenFileInput.current.click();
+  };
+
+  const handleKeyDown = (e) => {
+    if (isProcessing) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleOpenPicker();
     }
   };
 
   const handleFileChange = (e) => {
-    const uploadedFile = e.target.files[0];
-    setFile(uploadedFile || null);
+    const uploadedFile = e.target.files?.[0] ?? null;
+    setFile(uploadedFile);
   };
 
   const handleProcess = () => {
@@ -33,46 +40,50 @@ function UploadFilePicker({ onFileUpload, isProcessing = false, modalTitle }) {
       appear
       nodeRef={uploadModalRef}
       classNames={{
-        enter: styles.fadeModalEnter,
-        enterActive: styles.fadeModalEnterActive,
-        exit: styles.fadeModalExit,
-        exitActive: styles.fadeModalExitActive,
+        enter: FilePickerStyles.fadeModalEnter,
+        enterActive: FilePickerStyles.fadeModalEnterActive,
+        exit: FilePickerStyles.fadeModalExit,
+        exitActive: FilePickerStyles.fadeModalExitActive,
       }}
       unmountOnExit
     >
-      <div ref={uploadModalRef} className={styles.modalBackground}>
-        <div className={styles.uploadModalContainer}>
+      <div ref={uploadModalRef} className={FilePickerStyles.modalBackground}>
+        <div className={FilePickerStyles.uploadModalContainer}>
           <h2>{modalTitle}</h2>
           <div
             className={`
-              ${styles.uploadItem} 
-              ${file ? styles.selected : ''} 
-              ${isProcessing ? styles.disabledFile : ''}
+              ${FilePickerStyles.uploadItem}
+              ${file ? FilePickerStyles.selected : ''}
+              ${isProcessing ? FilePickerStyles.disabledFile : ''}
             `}
-            onClick={handleClick}
+            onClick={handleOpenPicker}
+            role="button"
+            tabIndex={isProcessing ? -1 : 0}
+            aria-disabled={isProcessing || undefined}
+            aria-label="File selector"
+            onKeyDown={handleKeyDown}
           >
-            {file ? file.name : "Click to select file..."}
+            {file ? file.name : 'Click to select file...'}
           </div>
           <input
             type="file"
             ref={hiddenFileInput}
             onChange={handleFileChange}
-            className={styles.hiddenFileInput}
+            className={FilePickerStyles.hiddenFileInput}
             disabled={isProcessing}
+            aria-label="Select file"
           />
           <button
-            className={styles.confirmButton}
+            className={FilePickerStyles.confirmButton}
             onClick={handleProcess}
             disabled={isProcessing || !file}
           >
             {isProcessing ? (
-              <div className={styles.buttonSpinner}>
-                <span className={styles.spinnerIcon}></span>
+              <div className={FilePickerStyles.buttonSpinner}>
+                <span className={FilePickerStyles.spinnerIcon} />
                 <span>Processing...</span>
               </div>
-            ) : (
-              'Upload File'
-            )}
+            ) : ('Upload File')}
           </button>
         </div>
       </div>

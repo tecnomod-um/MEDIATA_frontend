@@ -28,7 +28,7 @@ jest.mock('react-switch', () => {
 
 jest.mock('react-transition-group', () => ({ CSSTransition: ({ children }) => <>{children}</> }));
 jest.mock('react-toastify', () => ({ toast: { error: jest.fn() } }));
-jest.mock('../../Unused/OverlayWrapper/overlayWrapper', () => ({ isOpen, closeModal, children }) =>
+jest.mock('../../Unused/OverlayWrapper/overlayWrapper', () => ({ isOpen, children }) =>
   isOpen ? <div data-testid="overlay">{children}</div> : null
 );
 
@@ -55,39 +55,36 @@ describe('FileMapperModal', () => {
   });
 
   it('renders overlay and header', () => {
-    render(<FileMapperModal {...defaultProps} />);
+    render(<FileMapperModal {...defaultProps} nodes={[]} />);
     expect(screen.getByTestId('overlay')).toBeInTheDocument();
     expect(screen.getByText(/Select datasets to change/i)).toBeInTheDocument();
   });
 
   it('shows empty-state when no processed files', () => {
-    render(<FileMapperModal {...defaultProps} columnsData={[]} />);
+    render(<FileMapperModal {...defaultProps} columnsData={[]} nodes={[]} />);
     expect(screen.getByText(/No processed element files found/i)).toBeInTheDocument();
   });
 
   it('fetches datasets on open', async () => {
     render(<FileMapperModal {...defaultProps} />);
-    await waitFor(() => {
-      expect(updateNodeAxiosBaseURL).toHaveBeenCalledTimes(2);
-      expect(getNodeDatasets).toHaveBeenCalledTimes(2);
-    });
+    await waitFor(() => expect(updateNodeAxiosBaseURL).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(getNodeDatasets).toHaveBeenCalledTimes(2));
   });
 
   it('toggles a dataset on and off', async () => {
     render(<FileMapperModal {...defaultProps} />);
-    await waitFor(() => expect(screen.getAllByText('ds1.csv').length).toBeGreaterThan(0));
-    const dsItems = screen.getAllByText('ds1.csv');
-    const firstItem = dsItems[0];
-    fireEvent.click(firstItem);
-    expect(firstItem.closest('div')).toHaveClass('selected');
-    fireEvent.click(firstItem);
-    expect(firstItem.closest('div')).not.toHaveClass('selected');
+    const dsBtns = await screen.findAllByRole('button', { name: /toggle dataset ds1\.csv/i });
+    const dsBtn = dsBtns[0];
+    fireEvent.click(dsBtn);
+    expect(dsBtn).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(dsBtn);
+    expect(dsBtn).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('keeps Apply disabled when nothing is selected', () => {
+  it('keeps Apply disabled when nothing is selected', async () => {
     render(<FileMapperModal {...defaultProps} />);
-    const applyBtn = screen.getByRole('button', { name: /^Apply$/i });
-    expect(applyBtn).toBeDisabled();
+    await waitFor(() => expect(getNodeDatasets).toHaveBeenCalled());
+    expect(screen.getByRole('button', { name: /^Apply$/i })).toBeDisabled();
   });
 
   it('enables buttons once a dataset is selected, calls onSend, closeModal, and navigate', async () => {
@@ -95,7 +92,7 @@ describe('FileMapperModal', () => {
     useNavigate.mockReturnValue(mockNav);
 
     render(<FileMapperModal {...defaultProps} />);
-    await waitFor(() => expect(screen.getAllByText('ds1.csv').length).toBeGreaterThan(0));
+    await screen.findAllByText('ds1.csv');
     fireEvent.click(screen.getAllByText('ds1.csv')[0]);
 
     const applyBtn = screen.getByRole('button', { name: /^Apply$/i });
@@ -105,37 +102,39 @@ describe('FileMapperModal', () => {
     await waitFor(() => expect(defaultProps.onSend).toHaveBeenCalled());
     expect(defaultProps.closeModal).toHaveBeenCalled();
 
-    const backBtn = screen.getByTestId('ArrowBackIcon').closest('button');
+    const backBtn = screen.getByRole('button', { name: /apply and open in discovery/i });
     fireEvent.click(backBtn);
-    await waitFor(() => {
+    await waitFor(() =>
       expect(mockNav).toHaveBeenCalledWith(
         '/discovery',
         expect.objectContaining({ state: expect.any(Object) })
-      );
-    });
+      )
+    );
   });
 
   it('shows toast.error when onSend rejects', async () => {
-    defaultProps.onSend.mockRejectedValue(new Error('fail'));
+    const errSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+    defaultProps.onSend.mockRejectedValueOnce(new Error('fail'));
+
     render(<FileMapperModal {...defaultProps} />);
-    await waitFor(() => expect(screen.getAllByText('ds1.csv').length).toBeGreaterThan(0));
+    await screen.findAllByText('ds1.csv');
     fireEvent.click(screen.getAllByText('ds1.csv')[0]);
 
-    const applyBtn = screen.getByRole('button', { name: /^Apply$/i });
-    fireEvent.click(applyBtn);
+    fireEvent.click(screen.getByRole('button', { name: /^Apply$/i }));
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('fail'));
+
+    errSpy.mockRestore();
   });
 
   it('opens clean menu and applies/removes cleaning settings', async () => {
     render(<FileMapperModal {...defaultProps} />);
-    await waitFor(() => expect(screen.getAllByText('ds1.csv').length).toBeGreaterThan(0));
+    await screen.findAllByText('ds1.csv');
     fireEvent.click(screen.getAllByText('ds1.csv')[0]);
 
-    const cleanBtn = screen.getByText(/Data cleaning/i);
-    fireEvent.click(cleanBtn);
+    fireEvent.click(screen.getByText(/Data cleaning/i));
     const confirmBtn = screen.getByRole('button', { name: /^Confirm$/i });
-    expect(confirmBtn).toBeInTheDocument();
     const switchInput = screen.getAllByTestId('mock-switch')[0];
+
     fireEvent.click(switchInput);
     fireEvent.click(confirmBtn);
     expect(screen.getByRole('button', { name: /Remove Changes/i })).toBeInTheDocument();

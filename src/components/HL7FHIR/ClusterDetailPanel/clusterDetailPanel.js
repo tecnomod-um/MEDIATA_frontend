@@ -11,14 +11,13 @@ export default function ClusterDetailPanel({ cluster, allElements, onRemoveEleme
   return (
     <div className={styles.panel}>
       <header className={styles.header}>
-        <IconButton onClick={onBack} className={styles.backBtn} size="small">
+        <IconButton onClick={onBack} className={styles.backBtn} size="small" aria-label="back" >
           <ArrowBackIosIcon fontSize="small" style={{ color: '#fff' }} />
         </IconButton>
         <h2 className={styles.title}>{cluster.name}</h2>
       </header>
-
       <section className={styles.listSection}
-
+        aria-label="drop zone"
         onDragOver={e => e.preventDefault()}
         onDrop={e => {
           const { elementId } = JSON.parse(e.dataTransfer.getData('app/element'));

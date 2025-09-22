@@ -1,5 +1,5 @@
 import React from "react";
-import { render, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import EntryTable from "./entryTable";
 
@@ -26,11 +26,10 @@ describe("<EntryTable />", () => {
   };
   const type = "myType";
   const selectedEntry = { featureName: "foo", type };
-  let onRowSelect, container;
 
-  beforeEach(() => {
-    onRowSelect = jest.fn();
-    ({ container } = render(
+  it("renders exactly 2 data rows + 6 filler rows (8 total)", () => {
+    const onRowSelect = jest.fn();
+    render(
       <EntryTable
         filteredLists={filteredLists}
         minCellWidth={50}
@@ -38,43 +37,94 @@ describe("<EntryTable />", () => {
         selectedEntry={selectedEntry}
         type={type}
       />
-    ));
-  });
+    );
 
-  it("renders exactly 2 data rows + 6 filler rows (8 total)", () => {
-    const rows = Array.from(container.querySelectorAll("tbody tr"));
-    expect(rows).toHaveLength(8);
-    expect(rows[0].textContent).toMatch(/foo.*10/);
-    expect(rows[1].textContent).toMatch(/bar.*20/);
+    const table = screen.getByRole("table");
+    const [, tbody] = within(table).getAllByRole("rowgroup");
+    const bodyRows = within(tbody).getAllByRole("row");
+    expect(bodyRows).toHaveLength(8);
 
-    rows.slice(2).forEach((row) => {
+    let cells = within(bodyRows[0]).getAllByRole("cell");
+    expect(cells[0]).toHaveTextContent("foo");
+    expect(cells[1]).toHaveTextContent("10");
+
+    cells = within(bodyRows[1]).getAllByRole("cell");
+    expect(cells[0]).toHaveTextContent("bar");
+    expect(cells[1]).toHaveTextContent("20");
+
+    bodyRows.slice(2).forEach((row) => {
       expect(row).toHaveClass("resTr", "fillerRow");
-      row.querySelectorAll("td").forEach((td) => {
-        expect(td.textContent).toBe("\u00a0");
+      const rowCells = within(row).getAllByRole("cell");
+      rowCells.forEach((cell) => {
+        const raw = cell.textContent ?? "";
+        const normalized = raw.replace(/\u00a0/g, "").trim();
+        expect(normalized).toBe("");
       });
     });
   });
 
   it("calls onRowSelect with correct payload when clicking a data row", () => {
-    const rows = Array.from(container.querySelectorAll("tbody tr"));
-    fireEvent.click(rows[1]);
-    expect(onRowSelect).toHaveBeenCalledWith({
-      featureName: "bar",
-      type: "myType",
-    });
+    const onRowSelect = jest.fn();
+    render(
+      <EntryTable
+        filteredLists={filteredLists}
+        minCellWidth={50}
+        onRowSelect={onRowSelect}
+        selectedEntry={selectedEntry}
+        type={type}
+      />
+    );
+
+    const table = screen.getByRole("table");
+    const [, tbody] = within(table).getAllByRole("rowgroup");
+    const bodyRows = within(tbody).getAllByRole("row");
+    fireEvent.click(bodyRows[1]);
+
+    expect(onRowSelect).toHaveBeenCalledWith({ featureName: "bar", type: "myType" });
   });
 
   it("marks only the selected row with selectedRow class", () => {
-    const rows = Array.from(container.querySelectorAll("tbody tr"));
-    expect(rows[0]).toHaveClass("selectedRow");
-    expect(rows[1]).not.toHaveClass("selectedRow");
+    const onRowSelect = jest.fn();
+    render(
+      <EntryTable
+        filteredLists={filteredLists}
+        minCellWidth={50}
+        onRowSelect={onRowSelect}
+        selectedEntry={selectedEntry}
+        type={type}
+      />
+    );
+
+    const table = screen.getByRole("table");
+    const [, tbody] = within(table).getAllByRole("rowgroup");
+    const bodyRows = within(tbody).getAllByRole("row");
+
+    expect(bodyRows[0]).toHaveClass("selectedRow");
+    expect(bodyRows[1]).not.toHaveClass("selectedRow");
   });
 
-  it("renders one resizeHandle per column header", () => {
-    const handles = Array.from(container.querySelectorAll("thead th .resizeHandle"));
-    expect(handles).toHaveLength(2);
-    handles.forEach((h) => {
-      expect(h).toHaveClass("resizeHandle", "idle");
+  it("renders one resize handle per column header", () => {
+    const onRowSelect = jest.fn();
+    render(
+      <EntryTable
+        filteredLists={filteredLists}
+        minCellWidth={50}
+        onRowSelect={onRowSelect}
+        selectedEntry={selectedEntry}
+        type={type}
+      />
+    );
+
+    const table = screen.getByRole("table");
+    const [thead] = within(table).getAllByRole("rowgroup");
+    const headers = within(thead).getAllByRole("columnheader");
+
+    headers.forEach((th) => {
+      const handle = within(th).getByRole("separator", { name: /resize column/i });
+      expect(handle).toHaveClass("resizeHandle");
+      expect(handle).toHaveClass("idle");
+      expect(handle).toHaveAttribute("aria-orientation", "vertical");
     });
+    expect(headers).toHaveLength(2);
   });
 });

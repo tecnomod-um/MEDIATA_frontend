@@ -323,10 +323,18 @@
 }
 
 .toast {
-  top: 55px;
+  /*top: 55px;*/
   background-color: var(--translucent-background-color) !important;
   color: #fff !important;
   min-height: 40px !important;
   border-radius: 8px !important;
   box-shadow: none !important;
+  pointer-events: auto;
+}
+
+.toastContainer {
+  position: fixed;
+  top: 65px;
+  z-index: 9 !important;
+  pointer-events: none;
 }

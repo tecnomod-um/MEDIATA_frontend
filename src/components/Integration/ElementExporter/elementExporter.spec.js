@@ -70,16 +70,21 @@ describe('<ElementExporter />', () => {
 
     await waitFor(() => {
       expect(updateNodeAxiosBaseURL).toHaveBeenCalledWith('http://node1');
+    });
 
-      const expectedCSV =
-        [
-          'CatCol,A,B',
-          'ContCol,integer,min:0,max:10',
-          'DateCol,date,earliest:2020-01-01,latest:2020-01-05',
-          'OmitCol,Natural Language',
-        ].join('\n');
+    const expectedCSV =
+      [
+        'CatCol,A,B',
+        'ContCol,integer,min:0,max:10',
+        'DateCol,date,earliest:2020-01-01,latest:2020-01-05',
+        'OmitCol,Natural Language',
+      ].join('\n');
 
+    await waitFor(() => {
       expect(saveDatasetElements).toHaveBeenCalledWith('file.csv', expectedCSV);
+    });
+
+    await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith('file.csv saved on server.');
     });
   });
@@ -119,7 +124,13 @@ describe('<ElementExporter />', () => {
 
     await waitFor(() => {
       expect(saveDatasetElements).not.toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
       expect(toast.info).toHaveBeenCalledWith('No element files were selected or uploaded.');
+    });
+
+    await waitFor(() => {
       expect(mockNavigate).not.toHaveBeenCalled();
     });
   });

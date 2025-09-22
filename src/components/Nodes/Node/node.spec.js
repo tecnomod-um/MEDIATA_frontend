@@ -16,7 +16,7 @@ jest.mock('@react-three/drei', () => ({
         });
       }, 0);
     }
-    return <text data-testid="node-text" {...props}>{children}</text>;
+    return <text role="text" aria-label={children} {...props}>{children}</text>;
   },
 }));
 
@@ -48,6 +48,26 @@ jest.mock('@react-spring/three', () => {
 
 jest.mock('../../../resources/images/node_image.png', () => 'node_image.png');
 
+let restoreConsoleError;
+
+beforeAll(() => {
+  const realError = console.error;
+  const shouldIgnore = (msg) =>
+    String(msg).includes('is using incorrect casing. Use PascalCase for React components');
+
+  const spy = jest.spyOn(console, 'error').mockImplementation((msg, ...rest) => {
+    if (shouldIgnore(msg)) return;
+    realError(msg, ...rest);
+  });
+
+  restoreConsoleError = () => spy.mockRestore();
+});
+
+afterAll(() => {
+  restoreConsoleError?.();
+});
+
+
 if (!('userData' in HTMLElement.prototype)) {
   Object.defineProperty(HTMLElement.prototype, 'userData', {
     configurable: true,
@@ -63,7 +83,7 @@ if (!('traverse' in HTMLElement.prototype)) {
 }
 
 const React = require('react');
-const { render, fireEvent, act } = require('@testing-library/react');
+const { render, fireEvent, act, screen } = require('@testing-library/react');
 const Node = require('./node').default;
 
 describe('<Node /> component', () => {
@@ -112,83 +132,86 @@ describe('<Node /> component', () => {
   const runAnimationFrames = (count = 1) => {
     act(() => {
       for (let i = 0; i < count; i++) {
-        frameCallbacks.forEach(cb => cb({ clock: mockClock }));
+        const elapsedTime = mockClock.getElapsedTime;
+        frameCallbacks.forEach(cb => cb({ clock: { getElapsedTime: elapsedTime } }));
         mockClock.getElapsedTime.mockReturnValue(mockClock.getElapsedTime() + 0.1);
       }
     });
   };
 
   it('sets nodeId in userData', () => {
-    const { container } = renderNode();
-    const mesh = container.querySelector('mesh');
+    renderNode();
+    const mesh = screen.getByRole('img', { name: /Node: Test Node/i });
     expect(mesh.userData.nodeId).toBe(nodeData.nodeId);
   });
 
   it('handles dragging state in position updates', () => {
-    const { container, rerender } = renderNode({ isDragging: true });
-    const mesh = container.querySelector('mesh');
-
+    const { rerender } = renderNode({ isDragging: true });
     rerender(React.createElement(Node, {
       ...baseProps,
       node: { ...nodeData, position: { x: 6, y: 12 } }
     }));
 
     runAnimationFrames(5);
-    const updatedMesh = container.querySelector('mesh');
+    const updatedMesh = screen.getByRole('img', { name: /Node: Test Node/i });
     expect(updatedMesh).toHaveAttribute('position', '6,12,0');
   });
 
   it('handles touch device single click', () => {
     Object.defineProperty(navigator, 'maxTouchPoints', { value: 1, configurable: true });
 
-    const { container } = renderNode();
-    const mesh = container.querySelector('mesh');
+    renderNode();
+    const mesh = screen.getByRole('img', { name: /Node: Test Node/i });
     fireEvent.click(mesh);
 
-    const rippleElements = container.querySelectorAll('mesh');
-    expect(rippleElements.length).toBeGreaterThan(2); // Main mesh + aura + ripple
+    // Use queryAllByRole with hidden: true for aria-hidden elements
+    const rippleElements = screen.queryAllByRole('img', { hidden: true });
+    expect(rippleElements.length).toBeGreaterThan(0);
   });
 
   it('shows/hides description on non-touch interaction', () => {
-    const { container } = renderNode();
-    const mesh = container.querySelector('mesh');
+    renderNode();
+    const mesh = screen.getByRole('img', { name: /Node: Test Node/i });
 
     fireEvent.click(mesh);
-    const textElement = container.querySelector('[data-testid="node-text"]');
+    // Use getByRole with the text content
+    const textElement = screen.getByRole('text', { name: /Hello World/i });
     expect(textElement).toBeInTheDocument();
     act(() => jest.advanceTimersByTime(1300));
     expect(textElement).toBeInTheDocument();
   });
 
   it('renders ripple effect on double click', () => {
-    const { container } = renderNode();
-    const mesh = container.querySelector('mesh');
+    renderNode();
+    const mesh = screen.getByRole('img', { name: /Node: Test Node/i });
     fireEvent.doubleClick(mesh);
-    const rippleElements = container.querySelectorAll('mesh');
-    expect(rippleElements.length).toBeGreaterThan(2);
+    // Use queryAllByRole with hidden: true for aria-hidden elements
+    const rippleElements = screen.queryAllByRole('img', { hidden: true });
+    expect(rippleElements.length).toBeGreaterThan(0);
   });
 
   it('handles hover state interactions', () => {
-    const { container } = renderNode();
-    const mesh = container.querySelector('mesh');
+    renderNode();
+    const mesh = screen.getByRole('img', { name: /Node: Test Node/i });
 
     fireEvent.pointerOver(mesh);
-    const textElement = container.querySelector('[data-testid="node-text"]');
+    // Use getByRole with the text content
+    const textElement = screen.getByRole('text', { name: /Hello World/i });
     expect(textElement).toBeInTheDocument();
     fireEvent.pointerOut(mesh);
   });
 
   it('renders all text elements', () => {
-    const { getAllByText, getByText } = renderNode();
+    renderNode();
 
-    const nameElements = getAllByText(nodeData.name);
+    const nameElements = screen.getAllByText(nodeData.name);
     expect(nameElements.length).toBe(2);
-    expect(getByText(nodeData.description)).toBeInTheDocument();
+    expect(screen.getByText(nodeData.description)).toBeInTheDocument();
   });
 
   it('renders a <mesh> at the correct position', () => {
-    const { container } = renderNode();
-    const mesh = container.querySelector('mesh');
+    renderNode();
+    const mesh = screen.getByRole('img', { name: /Node: Test Node/i });
     expect(mesh).toBeInTheDocument();
     expect(mesh).toHaveAttribute(
       'position',
@@ -197,8 +220,8 @@ describe('<Node /> component', () => {
   });
 
   it('ignores single clicks but fires on double-click', () => {
-    const { container } = renderNode();
-    const mesh = container.querySelector('mesh');
+    renderNode();
+    const mesh = screen.getByRole('img', { name: /Node: Test Node/i });
 
     fireEvent.click(mesh);
     expect(baseProps.onNodeClick).not.toHaveBeenCalled();

@@ -1,143 +1,151 @@
 @import '../../variables.css';
 
 .dropContainer {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    justify-content: flex-start;
-    min-height: calc(100vh - 55px);
-    background-color: #ecebeb;
-    transition: background-color 0.2s ease;
-    width: 100%;
-    overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  min-height: calc(100vh - 55px);
+  background-color: #ecebeb;
+  transition: background-color 0.2s ease;
+  width: 100%;
+  overflow: hidden;
 }
 
 .statisticsContainer {
-    margin-left: 250px;
-    transition: margin-left 0.3s ease;
+  margin-left: 250px;
+  transition: margin-left 0.3s ease;
 }
 
 @media (max-width: 768px) {
-    .statisticsContainer {
-        margin-left: 0;
-    }
+  .statisticsContainer {
+    margin-left: 0;
+  }
 }
 
 .statisticsEnter {
-    transform: translateX(100%);
-    opacity: 0;
+  transform: translateX(100%);
+  opacity: 0;
 }
 
 .statisticsEnterActive {
-    transform: translateX(0);
-    opacity: 1;
-    transition: transform 500ms cubic-bezier(0.4, 0.0, 0.2, 1),
-        opacity 500ms cubic-bezier(0.4, 0.0, 0.2, 1);
+  transform: translateX(0);
+  opacity: 1;
+  transition: transform 500ms cubic-bezier(0.4, 0.0, 0.2, 1),
+    opacity 500ms cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 .statisticsExit {
-    transform: translateX(0);
-    opacity: 1;
+  transform: translateX(0);
+  opacity: 1;
 }
 
 .statisticsExitActive {
-    transform: translateX(100%);
-    opacity: 0;
-    transition: transform 500ms cubic-bezier(0.4, 0.0, 0.2, 1),
-        opacity 500ms cubic-bezier(0.4, 0.0, 0.2, 1);
+  transform: translateX(100%);
+  opacity: 0;
+  transition: transform 500ms cubic-bezier(0.4, 0.0, 0.2, 1),
+    opacity 500ms cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 .toolTrayEnter {
-    transform: translateX(100%);
-    opacity: 0;
+  transform: translateX(100%);
+  opacity: 0;
 }
 
 .toolTrayEnterActive {
-    transform: translateX(0);
-    opacity: 1;
-    transition: transform 500ms cubic-bezier(0.4, 0.0, 0.2, 1),
-        opacity 500ms cubic-bezier(0.4, 0.0, 0.2, 1);
+  transform: translateX(0);
+  opacity: 1;
+  transition: transform 500ms cubic-bezier(0.4, 0.0, 0.2, 1),
+    opacity 500ms cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 .toolTrayExit {
-    transform: translateX(0);
-    opacity: 1;
+  transform: translateX(0);
+  opacity: 1;
 }
 
 .toolTrayExitActive {
-    transform: translateX(100%);
-    opacity: 0;
-    transition: transform 500ms cubic-bezier(0.4, 0.0, 0.2, 1),
-        opacity 500ms cubic-bezier(0.4, 0.0, 0.2, 1);
+  transform: translateX(100%);
+  opacity: 0;
+  transition: transform 500ms cubic-bezier(0.4, 0.0, 0.2, 1),
+    opacity 500ms cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 .fullWidthContainer {
-    width: 100%;
+  width: 100%;
 }
 
 .fadeEnter {
-    opacity: 0;
+  opacity: 0;
 }
 
 .fadeEnterActive {
-    opacity: 1;
-    transition: opacity 200ms ease-in;
+  opacity: 1;
+  transition: opacity 200ms ease-in;
 }
 
 .fadeExit {
-    opacity: 1;
+  opacity: 1;
 }
 
 .fadeExitActive {
-    opacity: 0;
-    transition: opacity 200ms ease-in;
+  opacity: 0;
+  transition: opacity 200ms ease-in;
 }
 
 .loadingOverlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(240, 240, 240, 0.8);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(240, 240, 240, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
 }
 
 .spinner {
-    width: 64px;
-    height: 64px;
-    border: 8px solid #ddd;
-    border-top: 8px solid #AECCE4;
-    border-radius: 50%;
-    animation: spin 1.2s linear infinite;
-    margin-bottom: 1rem;
+  width: 64px;
+  height: 64px;
+  border: 8px solid #ddd;
+  border-top: 8px solid #AECCE4;
+  border-radius: 50%;
+  animation: spin 1.2s linear infinite;
+  margin-bottom: 1rem;
 }
 
 @keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
+  0% {
+    transform: rotate(0deg);
+  }
 
-    100% {
-        transform: rotate(360deg);
-    }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .loadingText {
-    font-size: 1.2rem;
-    font-weight: 500;
-    color: #444;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #444;
 }
 
 .toast {
-    top: 55px;
-    background-color: var(--translucent-background-color) !important;
-    color: #fff !important;
-    min-height: 40px !important;
-    border-radius: 8px !important;
-    box-shadow: none !important;
+  /*top: 55px;*/
+  background-color: var(--translucent-background-color) !important;
+  color: #fff !important;
+  min-height: 40px !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  pointer-events: auto;
+}
+
+.toastContainer {
+  position: fixed;
+  top: 65px;
+  z-index: 9 !important;
+  pointer-events: none;
 }

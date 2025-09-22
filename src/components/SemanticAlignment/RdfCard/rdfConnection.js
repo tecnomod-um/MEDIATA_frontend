@@ -64,6 +64,8 @@ const RdfConnection = ({ connections, cards }) => {
         height: maxY - minY + paddingY * 2,
         pointerEvents: "none"
       }}
+      role="img"
+      aria-label="RDF connections"
       viewBox={`${minX - paddingX} ${minY - paddingY} ${maxX - minX + paddingX * 2} ${maxY - minY + paddingY * 2}`}
     >
       <defs>
@@ -98,6 +100,7 @@ const RdfConnection = ({ connections, cards }) => {
               stroke="black"
               strokeWidth="2"
               markerEnd="url(#arrowhead)"
+              aria-label="RDF connection line"
             />
           </g>
         );

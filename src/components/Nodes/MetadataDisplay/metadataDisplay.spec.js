@@ -8,7 +8,7 @@ jest.mock(
   '../../Unused/OverlayWrapper/overlayWrapper',
   () => ({
     __esModule: true,
-    default: ({ isOpen, closeModal, children }) =>
+    default: ({ isOpen, children }) =>
       isOpen ? <div data-testid="overlay">{children}</div> : null,
   })
 );

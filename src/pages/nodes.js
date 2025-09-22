@@ -120,12 +120,12 @@ const Nodes = () => {
     try {
       const response = await getNodeInfo(selectedNode.nodeId);
       if (response.error) throw new Error(response.error);
-  
+
       const { token, nodeInfo } = response;
       // Call nodeAuth with the node's service URL and token.
       const validationResponse = await nodeAuth(nodeInfo.serviceUrl, token);
       if (validationResponse.error) throw new Error(validationResponse.error);
-  
+
       const { jwtNodeToken } = validationResponse;
       console.log("Got node JWT for node", selectedNode.nodeId, ":", jwtNodeToken);
       // The token is now stored (see nodeAuth below) in the mapping.
@@ -142,8 +142,8 @@ const Nodes = () => {
       setAccessingNode(false);
     }
   };
-  
-  
+
+
   const handleJoinNodesDoubleClick = (joinedNodeIds) => {
     const groupNodes = nodes.filter((n) => joinedNodeIds.includes(n.nodeId));
     setJoinedNodes(groupNodes);
@@ -174,7 +174,7 @@ const Nodes = () => {
       setAccessingNode(false);
     }
   };
-  
+
 
   return (
     <div className={NodesStyles.container}>
@@ -207,13 +207,13 @@ const Nodes = () => {
         closeModal={() => setShowMetadataModal(false)}
         onAccessNode={handleAccessNode}
       />
-<JoinedNodesDisplay
-  isOpen={showJoinedNodesModal}
-  joinedNodes={joinedNodes}
-  onClose={() => setShowJoinedNodesModal(false)}
-  onAccessJoinedNodes={handleAccessJoinedNodes}
-  accessingNode={accessingNode}
-/>
+      <JoinedNodesDisplay
+        isOpen={showJoinedNodesModal}
+        joinedNodes={joinedNodes}
+        onClose={() => setShowJoinedNodesModal(false)}
+        onAccessJoinedNodes={handleAccessJoinedNodes}
+        accessingNode={accessingNode}
+      />
       <SchemaTray
         error={error}
         setError={setError}
@@ -225,6 +225,7 @@ const Nodes = () => {
       <ToastContainer
         autoClose={2000}
         hideProgressBar={true}
+        className={NodesStyles.toastContainer}
         toastClassName={NodesStyles.toast}
       />
     </div>

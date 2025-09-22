@@ -526,6 +526,7 @@ function Integration() {
       <ToastContainer
         autoClose={2000}
         hideProgressBar={true}
+        className={IntegrationStyles.toastContainer}
         toastClassName={IntegrationStyles.toast}
       />
     </div>
