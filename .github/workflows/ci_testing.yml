@@ -44,24 +44,13 @@ jobs:
           echo "color=$COLOR" >> $GITHUB_OUTPUT
 
       - name: Generate coverage badge
-        run: |
-          set -e
-          mkdir -p badges
-          # choose the existing summary file
-          SUMMARY="coverage/coverage-summary.json"
-          if [ ! -f "$SUMMARY" ]; then
-            SUMMARY="coverage/lcov-report/coverage-summary.json"
-          fi
-          if [ ! -f "$SUMMARY" ]; then
-            echo "No coverage summary JSON found." >&2
-            ls -R coverage || true
-            exit 1
-          fi
-          COV_INT=$(jq -r '.total.lines.pct|floor' "$SUMMARY")
-          echo "{\"schemaVersion\":1,\"label\":\"coverage\",\"message\":\"${COV_INT}%\",\"color\":\"$( [ $COV_INT -ge 90 ] && echo success || ([ $COV_INT -ge 75 ] && echo yellow || echo critical) )\"}" \
-            > badges/coverage.json
-          npx @bitwarden/badge-maker@3.3.1 --format json --input badges/coverage.json --output badges/coverage.svg
-          
+        uses: emibcn/badge-action@v2
+        with:
+          label: coverage
+          status: '${{ steps.cov.outputs.pct }}%'
+          color: '${{ steps.cov.outputs.color }}'
+          path: badges/coverage.svg
+
       - name: Commit coverage badge (if changed)
         run: |
           git config user.name  "github-actions[bot]"

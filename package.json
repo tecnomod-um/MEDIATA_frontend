@@ -75,7 +75,8 @@
     "collectCoverageFrom": [
       "src/**/*.{js,jsx,ts,tsx}",
       "!src/components/Unused/**"
-    ]
+    ],
+    "coverageReporters": ["text", "lcov", "json-summary"]
   },
   "eslintConfig": {
     "extends": ["react-app", "react-app/jest"]
