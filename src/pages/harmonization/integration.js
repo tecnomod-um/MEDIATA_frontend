@@ -84,7 +84,6 @@ function Integration() {
     return mergedData;
   }, []);
 
-
   // Initialize mapping structure for each column in the newly loaded CSV file
   const initializeMappings = useCallback((data, fileName, nodeId) => {
     const newMapping = data.reduce((acc, column) => {

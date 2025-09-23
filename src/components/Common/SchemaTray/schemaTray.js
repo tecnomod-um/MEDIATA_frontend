@@ -45,17 +45,15 @@ const SchemaTray = ({ error, setError, nodesFetched, externalSchema = null, onRe
           ) {
             console.error("Failed fetching schema from backend:", err);
             setError("Failed fetching schema from backend");
-            setShowError(true);
           } else {
             console.error("Failed fetching schema from backend:", err);
             setError("Failed fetching schema from backend");
-            setShowError(true);
           }
         }
       })();
     }, 750);
     return () => clearTimeout(timer);
-  }, [nodesFetched, externalSchema, setError, setShowError]);
+  }, [nodesFetched, externalSchema, setError]);
 
   const toggleTray = () => {
     setIsOpen((prev) => {
@@ -78,13 +76,10 @@ const SchemaTray = ({ error, setError, nodesFetched, externalSchema = null, onRe
         setSchema(json);
         if (onSchemaChange)
           onSchemaChange(json);
-
         setError("");
-        setShowError(false);
         await saveSchemaToBackend(json);
       } catch (err) {
         setError("Invalid JSON file.");
-        setShowError(true);
       }
     };
     reader.readAsText(file);
@@ -94,7 +89,6 @@ const SchemaTray = ({ error, setError, nodesFetched, externalSchema = null, onRe
     if (!urlInput) return;
     setLoading(true);
     setError("");
-    setShowError(false);
     try {
       const response = await fetch(urlInput);
       if (!response.ok) throw new Error("Failed to fetch schema.");
@@ -106,7 +100,6 @@ const SchemaTray = ({ error, setError, nodesFetched, externalSchema = null, onRe
       await saveSchemaToBackend(json);
     } catch (err) {
       setError(err.message);
-      setShowError(true);
       setSchema(null);
       if (onSchemaChange)
         onSchemaChange(null);
@@ -129,7 +122,6 @@ const SchemaTray = ({ error, setError, nodesFetched, externalSchema = null, onRe
     } catch (err) {
       console.error("Failed to remove schema from backend:", err);
       setError("Failed to remove schema from server.");
-      setShowError(true);
     }
   };
 
