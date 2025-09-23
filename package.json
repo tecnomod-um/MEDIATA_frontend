@@ -1,5 +1,5 @@
 {
-  "name": "taniwha",
+  "name": "mediata",
   "version": "0.1.0",
   "homepage": "https://semantics.inf.um.es/mediata",
   "private": true,
@@ -50,6 +50,9 @@
   "overrides": {
     "rollup": "^3.29.5",
     "css-select": "^5.1.0",
+    "postcss": "^8.4.47",
+    "resolve-url-loader": "^5.0.0",
+    "webpack-dev-server": "^5.2.0",
     "nth-check": "^2.0.1"
   },
   "scripts": {
