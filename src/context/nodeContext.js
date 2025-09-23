@@ -1,22 +1,47 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 const NodeContext = createContext();
 
 export const NodeProvider = ({ children }) => {
-  const [selectedNodes, setSelectedNodes] = useState([]);
+  const [selectedNodes, setSelectedNodes] = useState(() => {
+    try {
+      const raw = localStorage.getItem("selectedNodes");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
 
-  const selectNode = node => {
-    // For single-node access, store as an array with one element.
-    setSelectedNodes([node]);
-  };
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === "selectedNodes") {
+        try {
+          setSelectedNodes(e.newValue ? JSON.parse(e.newValue) : []);
+        } catch {
+          setSelectedNodes([]);
+        }
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
-  const selectNodes = nodes => {
+  const persist = (nodes) => {
     setSelectedNodes(nodes);
+    try {
+      if (nodes?.length) {
+        localStorage.setItem("selectedNodes", JSON.stringify(nodes));
+      } else {
+        localStorage.removeItem("selectedNodes");
+      }
+    } catch {
+      // ignore quota / serialization issues
+    }
   };
 
-  const clearSelectedNodes = () => {
-    setSelectedNodes([]);
-  };
+  const selectNode = (node) => persist([node]);            // single-node mode
+  const selectNodes = (nodes) => persist(nodes);           // multi-node mode
+  const clearSelectedNodes = () => persist([]);
 
   return (
     <NodeContext.Provider

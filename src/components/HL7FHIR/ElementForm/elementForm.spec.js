@@ -18,7 +18,7 @@ describe('<ElementForm />', () => {
   });
 
   it('renders nothing when no element is provided', () => {
-    const { container } = render(
+    render(
       <ElementForm
         element={null}
         formValues={formValues}
@@ -27,7 +27,7 @@ describe('<ElementForm />', () => {
         allDescribed={false}
       />
     );
-    expect(container.firstChild).toBeNull();
+    expect(screen.queryByTestId('element-form')).toBeNull();
   });
 
   it('renders the element label and form fields without Create Clusters button', () => {

@@ -148,6 +148,8 @@ const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descr
   return (
     <a.mesh
       ref={ref}
+      role="img"
+      aria-label={`Node: ${node.name}`}
       position={[node.position.x, node.position.y, 0]}
       onDoubleClick={handleDoubleClick}
       onClick={handleSingleClick}
@@ -176,6 +178,8 @@ const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descr
           position={[0, 0, -0.04]}
           scale={rippleScale.to((s) => [s, s, s])}
           onPointerDown={(e) => e.stopPropagation()}
+          role="img"
+          aria-hidden="true"
         >
           <circleGeometry args={[nodeSize * 0.625, 32]} />
           <a.meshBasicMaterial

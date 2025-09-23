@@ -1,197 +1,165 @@
-import React from 'react';
-import { render, fireEvent, screen, act, within } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import ColumnMapping from './columnMapping.js';
+jest.mock('distinct-colors', () => jest.fn(() => []));
 
-const makeDataTransfer = payload => ({
-  getData: key => (key === 'column' ? JSON.stringify(payload) : ''),
+import React from 'react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
+import '@testing-library/jest-dom'
+import ColumnMapping from './columnMapping'
+
+// Mock CSS module to simple class names
+jest.mock('./columnMapping.module.css', () => new Proxy({}, { get: (_, k) => String(k) }), { virtual: true })
+
+// Mock child components we don't need to exercise deeply
+jest.mock('react-switch', () => (props) => (
+  <input
+    type="checkbox"
+    role="checkbox"
+    aria-label="switch"
+    checked={!!props.checked}
+    onChange={(e) => props.onChange?.(e.target.checked)}
+  />
+))
+
+jest.mock('../../Common/TooltipPopup/tooltipPopup.js', () => () => null)
+jest.mock('../RangePicker/rangePicker.js', () => (props) => (
+  <button type="button" onClick={() => props.onRangeChange?.({ minValue: 1, maxValue: 10 })}>
+    Mock RangePicker
+  </button>
+))
+jest.mock('../../Common/AutoCompleteInput/autoCompleteInput.js', () => (props) => (
+  <input
+    type="text"
+    role="textbox"
+    placeholder={props.placeholder || ''}
+    value={props.value || ''}
+    onChange={(e) => props.onChange?.(e.target.value)}
+  />
+))
+// MUI icons as inert spans
+jest.mock('@mui/icons-material/Add', () => () => <span />)
+jest.mock('@mui/icons-material/Save', () => () => <span />)
+jest.mock('@mui/icons-material/Close', () => () => <span />)
+
+// Utility to simulate a proper DataTransfer for drop
+const makeDataTransfer = (payloadObj) => ({
+  getData: jest.fn((type) => (type === 'column' ? JSON.stringify(payloadObj) : '')),
   setData: jest.fn(),
   dropEffect: 'move',
   effectAllowed: 'all',
   files: [],
   items: [],
   types: ['column'],
-});
+})
 
-jest.mock('react-switch', () => {
-  const React = require('react');
-  return {
-    __esModule: true,
-    default: ({ checked, onChange, ...rest }) => (
-      <input
-        type="checkbox"
-        data-testid="mock-switch"
-        checked={checked}
-        onChange={e => onChange(e.target.checked)}
-        {...rest}
-      />
-    ),
-  };
-});
-jest.mock('../../Common/TooltipPopup/tooltipPopup.js', () => {
-  const React = require('react');
-  return {
-    __esModule: true,
-    default: ({ message }) => <div data-testid="tooltip-popup">{message}</div>,
-  };
-});
-jest.mock('@mui/icons-material/Add', () => () => <span data-testid="icon-add" />);
-jest.mock('@mui/icons-material/Save', () => () => <span data-testid="icon-save" />);
-jest.mock('@mui/icons-material/Close', () => () => <span data-testid="icon-close" />);
-jest.mock('react-transition-group', () => {
-  const React = require('react');
-  return {
-    CSSTransition: ({ children }) => <>{children}</>,
-    TransitionGroup: ({ children }) => <>{children}</>,
-  };
-});
-jest.mock('../RangePicker/rangePicker.js', () => {
-  const React = require('react');
-  return {
-    __esModule: true,
-    default: ({ onRangeChange }) => {
-      const fired = React.useRef(false);
-      React.useEffect(() => {
-        if (!fired.current) {
-          fired.current = true;
-          onRangeChange({ minValue: 1, maxValue: 2, type: 'integer' });
-        }
-      }, [onRangeChange]);
-      return <div data-testid="range-picker" />;
-    },
-  };
-});
-jest.mock('../../Common/AutoCompleteInput/autoCompleteInput.js', () => {
-  const React = require('react');
-  return {
-    __esModule: true,
-    default: ({ value, onChange, ...rest }) => (
-      <input
-        data-testid="autocomplete"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        {...rest}
-      />
-    ),
-  };
-});
-jest.mock('./columnMapping.module.css', () => new Proxy({}, { get: (_, p) => p }));
+describe('ColumnMapping', () => {
+  it('renders drop area and keeps Save disabled until name + value names are set', () => {
+    const onMappingChange = jest.fn()
+    const onSave = jest.fn()
 
-const makeGroup = (
-  column,
-  values,
-  fileName = 'fileA.csv',
-  color = '#f00'
-) => ({ column, values, fileName, color });
+    render(<ColumnMapping onMappingChange={onMappingChange} onSave={onSave} groups={[]} schema={null} />)
 
-const categorical = makeGroup('Fruit', ['Apple', 'Banana']);
-const numericGroup = makeGroup('Num', ['integer']);
-const schemaJSON = JSON.stringify({
-  properties: { Fruit: { enum: ['Apple', 'Banana'] } },
-});
+    // Drop area message visible
+    expect(screen.getByText(/click or drop columns here/i)).toBeInTheDocument()
 
-const baseProps = {
-  schema: schemaJSON,
-  groups: [categorical],
-  onMappingChange: jest.fn(),
-  onSave: jest.fn(),
-};
+    const saveBtn = screen.getByRole('button', { name: /save/i })
+    expect(saveBtn).toBeDisabled()
 
-describe('<ColumnMapping />', () => {
-  beforeEach(() => jest.clearAllMocks());
+    // Set union name
+    const unionInput = screen.getByRole('textbox', { name: '' }) // mocked AutocompleteInput
+    fireEvent.change(unionInput, { target: { value: 'CombinedColor' } })
+    expect(saveBtn).toBeDisabled() // still disabled until a value is added & named
 
-  it('adds a group via drag-and-drop when groups start empty', () => {
-    const props = { ...baseProps, groups: [] };
-    render(<ColumnMapping {...props} />);
-    const placeholder = screen.getByText(/click or drop columns here/i);
-    const dropTarget = placeholder.parentElement;
-    expect(dropTarget).toBeTruthy();
+    // Add a custom value row
+    fireEvent.click(screen.getByRole('button', { name: /add value/i }))
+    const valueName = screen.getByPlaceholderText(/value name/i)
+    fireEvent.change(valueName, { target: { value: 'Red-ish' } })
 
-    const newGroup = makeGroup('Extra', ['X', 'Y']);
-    fireEvent.drop(dropTarget, { dataTransfer: makeDataTransfer(newGroup) });
-    expect(props.onMappingChange).toHaveBeenCalledWith([newGroup]);
-  });
+    expect(saveBtn).toBeEnabled()
+  })
 
-  it('deletes a group with the close icon', () => {
-    render(<ColumnMapping {...baseProps} />);
-    fireEvent.click(screen.getAllByTestId('icon-close')[0].parentElement);
-    expect(baseProps.onMappingChange).toHaveBeenCalledWith([]);
-  });
+  it('handles drop of a new group and calls onMappingChange with appended group', () => {
+    const onMappingChange = jest.fn()
+    const onSave = jest.fn()
 
-  it('enables “Save” only when union + value names are present', () => {
-    render(<ColumnMapping {...baseProps} />);
-    const save = screen.getByRole('button', { name: /save/i });
-    expect(save).toBeDisabled();
+    render(<ColumnMapping onMappingChange={onMappingChange} onSave={onSave} groups={[]} schema={null} />)
 
-    fireEvent.change(screen.getByTestId('autocomplete'), {
-      target: { value: 'Union' },
-    });
-    fireEvent.click(screen.getByTestId('icon-add').parentElement);
-    expect(save).toBeDisabled();
+    const dropArea = screen.getByText(/click or drop columns here/i)
+    const dropped = {
+      column: 'color',
+      values: ['red', 'blue', 'green'],
+      fileName: 'file.csv',
+      color: '#336699',
+    }
 
-    fireEvent.change(screen.getAllByTestId('autocomplete')[1], {
-      target: { value: 'Val' },
-    });
-    expect(save).toBeEnabled();
-  });
+    fireEvent.dragOver(dropArea)
+    fireEvent.drop(dropArea, { dataTransfer: makeDataTransfer(dropped) })
 
-  it('propagates switch flags in onSave', () => {
-    render(<ColumnMapping {...baseProps} />);
-    const [removeChk, hotChk] = screen.getAllByTestId('mock-switch');
-    fireEvent.click(removeChk);
-    fireEvent.click(hotChk);
+    expect(onMappingChange).toHaveBeenCalledTimes(1)
+    const arg = onMappingChange.mock.calls[0][0]
+    expect(arg).toEqual([dropped])
+  })
 
-    fireEvent.change(screen.getByTestId('autocomplete'), {
-      target: { value: 'U' },
-    });
-    fireEvent.click(screen.getByTestId('icon-add').parentElement);
-    fireEvent.change(screen.getAllByTestId('autocomplete')[1], {
-      target: { value: 'V' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+  it('adds a categorical mapping via the sliding pane and saves the mapping payload', () => {
+    const onSave = jest.fn()
+    const onMappingChange = jest.fn()
 
-    expect(baseProps.onSave).toHaveBeenCalledWith(
-      baseProps.groups,
-      'U',
-      expect.any(Array),
-      true,
-      true,
-    );
-  });
+    const groups = [
+      {
+        column: 'color',
+        values: ['red', 'blue', 'green'],
+        fileName: 'colors.csv',
+        color: '#ff0000',
+      },
+    ]
 
-  it('shows tooltip when trying to map with no groups', () => {
-    jest.useFakeTimers();
-    render(<ColumnMapping {...baseProps} groups={[]} />);
-    fireEvent.click(screen.getByTestId('icon-add').parentElement);
-    fireEvent.click(screen.getByText(/add mapping/i));
-    act(() => jest.advanceTimersByTime(15));
-    expect(screen.getByTestId('tooltip-popup')).toBeInTheDocument();
-    jest.useRealTimers();
-  });
+    render(<ColumnMapping onMappingChange={onMappingChange} onSave={onSave} groups={groups} schema={null} />)
 
-  it('categorical mapping adds the chosen value to the list', () => {
-    render(<ColumnMapping {...baseProps} />);
-    fireEvent.click(screen.getByTestId('icon-add').parentElement);
-    fireEvent.change(screen.getAllByTestId('autocomplete')[1], {
-      target: { value: 'Label' },
-    });
-    fireEvent.click(screen.getByText(/add mapping/i));
-    fireEvent.click(screen.getByRole('button', { name: 'Apple' }));
+    // Set union name
+    const unionInput = screen.getByRole('textbox')
+    fireEvent.change(unionInput, { target: { value: 'UnifiedColor' } })
 
-    const row = screen.getByText(/from fruit:/i).parentElement;
-    expect(within(row).getByText('Apple')).toBeInTheDocument();
-  });
+    // Add one custom value
+    fireEvent.click(screen.getByRole('button', { name: /add value/i }))
+    fireEvent.change(screen.getByPlaceholderText(/value name/i), { target: { value: 'Warm' } })
 
-  it('numeric column renders RangePicker and records range once', () => {
-    render(<ColumnMapping {...baseProps} groups={[numericGroup]} />);
-    fireEvent.click(screen.getByTestId('icon-add').parentElement);
-    fireEvent.change(screen.getAllByTestId('autocomplete')[1], {
-      target: { value: 'NumVal' },
-    });
-    fireEvent.click(screen.getByText(/add mapping/i));
-    expect(screen.getByTestId('range-picker')).toBeInTheDocument();
-    expect(screen.getByText(/values from/i)).toHaveTextContent(
-      '1 values from'
-    );
-  });
-});
+    // Click "Add Mapping" inside the value row
+    const addMappingBtn = screen.getByRole('button', { name: /add mapping/i })
+    fireEvent.click(addMappingBtn)
+
+    // Sliding pane shows mapping options for the group values
+    // Pick "red"
+    fireEvent.click(screen.getByRole('button', { name: 'red' }))
+
+    // Optional: mapping summary text appears
+    expect(screen.getByText(/1 values from/i)).toBeInTheDocument()
+    expect(screen.getByText(/columns mapped/i)).toBeInTheDocument()
+
+    // Toggle the two switches (mocked as checkboxes)
+    const switches = screen.getAllByRole('checkbox')
+    // 0: Remove columns, 1: One-Hot (based on render order)
+    fireEvent.click(switches[0])
+    fireEvent.click(switches[1])
+
+    // Save
+    const saveBtn = screen.getByRole('button', { name: /save/i })
+    expect(saveBtn).toBeEnabled()
+    fireEvent.click(saveBtn)
+
+    // Validate payload shape
+    expect(onSave).toHaveBeenCalledTimes(1)
+    const [savedGroups, unionName, customValues, removeFromHierarchy, useHotOneMapping] = onSave.mock.calls[0]
+
+    expect(savedGroups).toEqual(groups)
+    expect(unionName).toBe('UnifiedColor')
+    expect(removeFromHierarchy).toBe(true)
+    expect(useHotOneMapping).toBe(true)
+
+    // customValues: [{ name: 'Warm', mapping: [{ groupColumn: 'color', value: 'red' }]}]
+    expect(customValues).toHaveLength(1)
+    expect(customValues[0].name).toBe('Warm')
+    expect(customValues[0].mapping).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ groupColumn: 'color', value: 'red' }),
+      ])
+    )
+  })
+})

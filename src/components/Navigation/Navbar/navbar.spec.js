@@ -32,15 +32,16 @@ describe('CustomLink', () => {
 
   it('renders its children inside an <a> with correct href', () => {
     render(<CustomLink to="/foo">Bar</CustomLink>);
-    const a = screen.getByText('Bar').closest('a');
-    expect(a).toHaveAttribute('href', '/foo');
+    const link = screen.getByRole('link', { name: 'Bar' });
+    expect(link).toHaveAttribute('href', '/foo');
   });
 
-  it('adds active class when current path matches', () => {
+  it('adds aria-current when current path matches', () => {
     useResolvedPath.mockReturnValue({ pathname: '/foo' });
     useMatch.mockReturnValue(true);
-    const { container } = render(<CustomLink to="/foo">Active</CustomLink>);
-    expect(container.firstChild).toHaveClass('active');
+    render(<CustomLink to="/foo">Active</CustomLink>);
+    const link = screen.getByRole('link', { name: 'Active' });
+    expect(link).toHaveAttribute('aria-current', 'page');
   });
 
   it('calls onClick when clicked, unless noToggle is true', () => {
@@ -78,32 +79,34 @@ describe('Navbar', () => {
 
   it('shows Home, Login, About when unauthenticated', () => {
     render(<Navbar />);
-    expect(screen.getByText('Home')).toBeInTheDocument();
-    expect(screen.getByText('Login')).toBeInTheDocument();
-    expect(screen.getByText('About')).toBeInTheDocument();
-    expect(screen.queryByText('Nodes')).toBeNull();
-    expect(screen.queryByText('Discovery')).toBeNull();
+    expect(screen.getByRole('menuitem', { name: 'Home' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Login' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'About' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Nodes' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Discovery' })).toBeNull();
   });
 
-  it('toggles mobile menu animate class when checkbox clicked', () => {
+  it('toggles mobile menu when checkbox clicked', () => {
     render(<Navbar />);
-    const checkbox = screen.getByRole('checkbox');
-    const menu = document.querySelector(`.${require('./navbar.module.css').menu}`);
-    expect(menu).not.toHaveClass(require('./navbar.module.css').animate);
+    const checkbox = screen.getByRole('checkbox', { name: 'Toggle menu' });
+
+    expect(checkbox).toHaveAttribute('aria-expanded', 'false');
     fireEvent.click(checkbox);
-    expect(menu).toHaveClass(require('./navbar.module.css').animate);
+    expect(checkbox).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.click(checkbox);
+    expect(checkbox).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('renders extra nav items when authenticated and nodes selected', () => {
     useAuth.mockReturnValue({ isAuthenticated: true, logout: jest.fn() });
     useNode.mockReturnValue({ selectedNodes: ['abc'] });
     render(<Navbar />);
-    expect(screen.getByText('Discovery')).toBeInTheDocument();
-    expect(screen.getByText('Integration')).toBeInTheDocument();
-    expect(screen.getByText('Semantic-Alignment')).toBeInTheDocument();
-    expect(screen.getByText('HL7 FHIR')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('checkbox'));
-    expect(screen.getByText('Nodes')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Discovery' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Integration' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Semantic-Alignment' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'HL7 FHIR' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Toggle menu' }));
+    expect(screen.getByRole('menuitem', { name: 'Nodes' })).toBeInTheDocument();
   });
 
   it('calls logout + navigate on Logout click', () => {
@@ -111,8 +114,9 @@ describe('Navbar', () => {
     useAuth.mockReturnValue({ isAuthenticated: true, logout: logoutMock });
     useNode.mockReturnValue({ selectedNodes: ['n1'] });
     render(<Navbar />);
-    fireEvent.click(screen.getByRole('checkbox'));
-    fireEvent.click(screen.getByText('Logout'));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Toggle menu' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Logout' }));
+
     expect(logoutMock).toHaveBeenCalled();
     expect(navigateMock).toHaveBeenCalledWith('/');
   });

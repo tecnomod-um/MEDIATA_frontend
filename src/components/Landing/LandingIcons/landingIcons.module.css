@@ -1,0 +1,266 @@
+.magnifier {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.lens {
+  fill: var(--icon-fill);
+  stroke: var(--icon-stroke);
+  stroke-width: 4;
+}
+
+.handle {
+  stroke: var(--icon-stroke);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.glint {
+  fill: none;
+  stroke: var(--icon-stroke);
+  opacity: 0.2;
+}
+
+.iconSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 8rem;
+}
+
+.iconSvgLarger {
+  max-width: 9.5rem;
+}
+
+.iconSquare {
+  fill: var(--icon-background);
+}
+
+.docStroke {
+  stroke: var(--icon-stroke);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.docFill {
+  fill: var(--icon-fill);
+  stroke-width: 4;
+}
+
+.foldEdge {
+  stroke: var(--icon-stroke);
+  stroke-width: 4;
+  fill: var(--icon-fold-fill);
+}
+
+.docLine {
+  stroke: var(--icon-stroke);
+  stroke-width: 3;
+  opacity: 0.45;
+  stroke-linecap: round;
+}
+
+.docFillCentral {
+  stroke-width: 4;
+  fill: var(--icon-fold-fill);
+}
+
+.lineBlue {
+  stroke: var(--icon-line-blue);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.lineGreen {
+  stroke: var(--icon-line-green);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+/* bars */
+.barLeft1 {
+  animation: leftBar1 4s ease-in-out infinite;
+}
+
+@keyframes leftBar1 {
+  0% {
+    transform: translateX(0) scaleX(1);
+  }
+
+  40% {
+    transform: translateX(19px) scaleX(1.8);
+  }
+
+  50% {
+    transform: translateX(19px) translateY(-4px) scaleX(1.8);
+  }
+
+  85% {
+    transform: translateX(19px) translateY(-4px) scaleX(1.8);
+  }
+
+  100% {
+    transform: translateX(0) scaleX(1);
+  }
+}
+
+.barLeft2 {
+  animation: leftBar2 4s ease-in-out infinite;
+}
+
+@keyframes leftBar2 {
+  0% {
+    transform: translateX(0) scaleX(1);
+  }
+
+  40% {
+    transform: translateX(19px) scaleX(1.8);
+  }
+
+  50% {
+    transform: translateX(19px) translateY(0px) scaleX(1.8);
+  }
+
+  85% {
+    transform: translateX(19px) translateY(0px) scaleX(1.8);
+  }
+
+  100% {
+    transform: translateX(0) scaleX(1);
+  }
+}
+
+.barRight1 {
+  animation: rightBar1 4s ease-in-out infinite;
+}
+
+@keyframes rightBar1 {
+  0% {
+    transform: translateX(0) scaleX(1);
+  }
+
+  40% {
+    transform: translateX(-122px) scaleX(1.8);
+  }
+
+  50% {
+    transform: translateX(-122px) translateY(4px) scaleX(1.8);
+  }
+
+  85% {
+    transform: translateX(-122px) translateY(4px) scaleX(1.8);
+  }
+
+  100% {
+    transform: translateX(0) scaleX(1);
+  }
+}
+
+.barRight2 {
+  animation: rightBar2 4s ease-in-out infinite;
+}
+
+@keyframes rightBar2 {
+  0% {
+    transform: translateX(0) scaleX(1);
+  }
+
+  40% {
+    transform: translateX(-122px) scaleX(1.8);
+  }
+
+  50% {
+    transform: translateX(-122px) translateY(8px) scaleX(1.8);
+  }
+
+  85% {
+    transform: translateX(-122px) translateY(8px) scaleX(1.8);
+  }
+
+  100% {
+    transform: translateX(0) scaleX(1);
+  }
+}
+
+/* puzzle */
+.puzzlePiece {
+  fill: var(--icon-fill);
+  stroke: var(--icon-stroke);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.puzzleMover {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: puzzleFit 14s ease-in-out infinite;
+}
+
+@keyframes puzzleFit {
+  0% {
+    transform: translate(12px, -14px) rotate(-8deg);
+  }
+
+  40% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+
+  88% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+
+  100% {
+    transform: translate(12px, -14px) rotate(-8deg);
+  }
+}
+
+/* shield */
+.shieldArcGroup {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: shieldPulseScale 2.8s ease-in-out infinite;
+}
+
+@keyframes shieldPulseScale {
+  0%, 100% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.06);
+  }
+}
+
+.shieldArc {
+  fill: none;
+  stroke: var(--icon-shield-stroke);
+  stroke-width: 6;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.shieldArcInner {
+  fill: none;
+  stroke: var(--icon-stroke);
+  stroke-width: 4;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+/* arrows */
+.arrow {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.arrowGlyph line {
+  stroke: var(--icon-stroke);
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}

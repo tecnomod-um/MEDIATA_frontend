@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 jest.mock('axios', () => {
   const mockReqUse = jest.fn();
   const mockResUse = jest.fn();
-  
+
   const mockAxiosInstance = {
     interceptors: {
       request: { use: mockReqUse },
@@ -13,18 +13,17 @@ jest.mock('axios', () => {
   };
 
   const mockCreate = jest.fn(() => mockAxiosInstance);
-  const def = { 
+  const def = {
     create: mockCreate,
-    __m: { mockReqUse, mockResUse, mockCreate, mockAxiosInstance } 
+    __m: { mockReqUse, mockResUse, mockCreate, mockAxiosInstance }
   };
-  
+
   return {
     __esModule: true,
     default: def
   };
 });
 
-// Mock localStorage
 const localStorageMock = (() => {
   let store = {};
 
@@ -52,7 +51,6 @@ let updateNodeAxiosBaseURL;
 let mockReqUse;
 let mockResUse;
 let requestInterceptor;
-let responseInterceptor;
 
 beforeAll(() => {
   // Get axios mocks before requiring the module
@@ -82,7 +80,7 @@ describe('nodeAxiosSetup', () => {
     it('leaves headers unchanged when no tokens available', () => {
       const config = { baseURL: 'https://no-token-api', headers: {} };
       requestInterceptor(config);
-      
+
       expect(config.headers.Authorization).toBeUndefined();
     });
   });
@@ -95,7 +93,7 @@ describe('nodeAxiosSetup', () => {
     beforeEach(() => {
       logoutMock = jest.fn();
       setupNodeAxiosInterceptors(logoutMock);
-      
+
       // Get the most recent interceptor setup
       const lastCallIndex = mockResUse.mock.calls.length - 1;
       successHandler = mockResUse.mock.calls[lastCallIndex][0];
@@ -104,9 +102,9 @@ describe('nodeAxiosSetup', () => {
 
     it('handles Unauthorized response in success interceptor', () => {
       const response = { data: { jwtNodeToken: 'Unauthorized' } };
-      
+
       successHandler(response);
-      
+
       expect(localStorage.removeItem).toHaveBeenCalledWith('jwtToken');
       expect(localStorage.removeItem).toHaveBeenCalledWith('kerberosTGT');
       expect(localStorage.removeItem).toHaveBeenCalledWith('jwtNodeTokens');
@@ -124,12 +122,14 @@ describe('nodeAxiosSetup', () => {
         isAxiosError: true
       };
 
+      let caughtError;
       try {
         await errorHandler(error);
       } catch (e) {
-        expect(e).toBe(error);
+        caughtError = e;
       }
-      
+      expect(caughtError).toBe(error);
+
       expect(localStorage.removeItem).toHaveBeenCalledWith('jwtToken');
       expect(localStorage.removeItem).toHaveBeenCalledWith('kerberosTGT');
       expect(localStorage.removeItem).toHaveBeenCalledWith('jwtNodeTokens');
@@ -142,12 +142,14 @@ describe('nodeAxiosSetup', () => {
         isAxiosError: true
       };
 
+      let caughtError;
       try {
         await errorHandler(error);
       } catch (e) {
-        expect(e).toBe(error);
+        caughtError = e;
       }
-      
+      expect(caughtError).toBe(error);
+
       expect(logoutMock).not.toHaveBeenCalled();
       expect(localStorage.removeItem).not.toHaveBeenCalled();
     });
@@ -157,7 +159,7 @@ describe('nodeAxiosSetup', () => {
     it('updates baseURL correctly', () => {
       const newUrl = 'https://new-node-api';
       updateNodeAxiosBaseURL(newUrl);
-      
+
       expect(nodeAxiosInstance.defaults.baseURL).toBe(newUrl);
     });
   });

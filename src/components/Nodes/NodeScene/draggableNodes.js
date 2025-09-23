@@ -10,7 +10,6 @@ const DraggableNodes = ({ nodes, onNodeClick, onJoinNodesDoubleClick }) => {
   const groupRef = useRef();
   const [draggedNodeId, setDraggedNodeId] = useState(null);
   const [globalIsDragging, setGlobalIsDragging] = useState(false);
-  const [showConnections, setShowConnections] = useState(false);
   const nodePositionsRef = useRef({});
   const [nodePositions, setNodePositions] = useState({});
   const targetPositionsRef = useRef({});
@@ -57,9 +56,6 @@ const DraggableNodes = ({ nodes, onNodeClick, onJoinNodesDoubleClick }) => {
     setNodePositions(newPositions);
     nodePositionsRef.current = newPositions;
     targetPositionsRef.current = { ...newPositions };
-    setShowConnections(true);
-    const timer = setTimeout(() => setShowConnections(false), 1500);
-    return () => clearTimeout(timer);
   }, [nodes, viewport]);
 
   const detectCollision = (node1, node2) => {
@@ -69,11 +65,11 @@ const DraggableNodes = ({ nodes, onNodeClick, onJoinNodesDoubleClick }) => {
     return distance < nodeSize;
   };
 
-  const memoizedNodes = useMemo(() => 
+  const memoizedNodes = useMemo(() =>
     nodes.map(node => ({
       ...node,
       position: nodePositions[node.nodeId] || node.position,
-      _meta: Object.freeze({ 
+      _meta: Object.freeze({
         adjustedNodeSize,
         descriptionSize,
         adjustedFontSize,
@@ -161,7 +157,6 @@ const DraggableNodes = ({ nodes, onNodeClick, onJoinNodesDoubleClick }) => {
   useEffect(() => {
     const handlePointerMove = (event) => {
       if (!draggedNodeId) return;
-      setShowConnections(true);
 
       const isTouch = event.type === "touchmove";
       const clientX = isTouch ? event.touches[0].clientX : event.clientX;
@@ -192,7 +187,6 @@ const DraggableNodes = ({ nodes, onNodeClick, onJoinNodesDoubleClick }) => {
       if (draggedNodeId) {
         setDraggedNodeId(null);
         setGlobalIsDragging(false);
-        setTimeout(() => setShowConnections(false), 1500);
       }
     };
 
@@ -224,7 +218,6 @@ const DraggableNodes = ({ nodes, onNodeClick, onJoinNodesDoubleClick }) => {
         const nodeId = event.object.userData.nodeId;
         setDraggedNodeId(nodeId);
         setGlobalIsDragging(true);
-        setShowConnections(true);
       });
 
       controls.current.addEventListener("dragend", () => {
@@ -246,7 +239,6 @@ const DraggableNodes = ({ nodes, onNodeClick, onJoinNodesDoubleClick }) => {
 
           setDraggedNodeId(null);
           setGlobalIsDragging(false);
-          setTimeout(() => setShowConnections(false), 1500);
         }
       });
 
@@ -262,7 +254,7 @@ const DraggableNodes = ({ nodes, onNodeClick, onJoinNodesDoubleClick }) => {
     return () => { if (controls.current) controls.current.dispose() };
   }, [camera, gl, nodes, constrainPosition, draggedNodeId]);
 
-return (
+  return (
     <>
       <group ref={groupRef}>
         {memoizedNodes.map((node) => (

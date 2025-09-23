@@ -5,7 +5,6 @@ import { ToastContainer, toast } from "react-toastify";
 import { getNodeElements, fetchElementFile, setParseConfigs, fetchSchemaFromBackend } from "../../util/petitionHandler";
 import { updateNodeAxiosBaseURL } from "../../util/nodeAxiosSetup";
 import { useNode } from "../../context/nodeContext";
-
 import IntegrationStyles from "./integration.module.css";
 import ColumnMapping from "../../components/Integration/ColumnMapping/columnMapping";
 import ColumnSearch from "../../components/Integration/ColumnSearch/columnSearch";
@@ -18,20 +17,15 @@ import { generateDistinctColors } from "../../util/colors";
 function Integration() {
   const location = useLocation();
   const { selectedNodes } = useNode();
-
   const [elementFileList, setElementFileList] = useState([]);
   const [columnsData, setColumnsData] = useState([]);
-  const [uploadStatus, setUploadStatus] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
   const [processingStatus, setProcessingStatus] = useState("idle");
   const [mappings, setMappings] = useState([]);
   const [temporaryGroups, setTemporaryGroups] = useState([]);
   const [deletedItems, setDeletedItems] = useState([]);
   const [isFileMapperOpen, setIsFileMapperOpen] = useState(false);
-
   const [schema, setSchema] = useState(null);
   const [schemaError, setSchemaError] = useState("");
-  const [showSchemaError, setShowSchemaError] = useState(false);
   const [hasProcessedElementFiles, setHasProcessedElementFiles] = useState(false);
 
   useEffect(() => {
@@ -81,10 +75,7 @@ function Integration() {
         (item) => item.column === row.column && item.fileName === row.fileName
       );
       if (existingColumn) {
-        existingColumn.values = Array.from(
-          new Set([...existingColumn.values, ...row.values])
-        );
-        // Ensure nodeId is preserved
+        existingColumn.values = Array.from(new Set([...existingColumn.values, ...row.values]));
         existingColumn.nodeId = row.nodeId;
       } else {
         mergedData.push(row);
@@ -93,24 +84,20 @@ function Integration() {
     return mergedData;
   }, []);
 
-
   // Initialize mapping structure for each column in the newly loaded CSV file
   const initializeMappings = useCallback((data, fileName, nodeId) => {
     const newMapping = data.reduce((acc, column) => {
       const filteredValues = column.values.filter((value) => {
-        // Exclude min:/max: or earliest:/latest: lines from numeric/date columns
-        if (column.values.includes("integer") || column.values.includes("double")) {
+        if (column.values.includes("integer") || column.values.includes("double"))
           return !value.startsWith("min:") && !value.startsWith("max:");
-        }
-        if (column.values.includes("date")) {
+        if (column.values.includes("date"))
           return !value.startsWith("earliest:") && !value.startsWith("latest:");
-        }
         return true;
       });
 
       acc[column.column] = {
         fileName,
-        nodeId,  // Added nodeId to the mapping
+        nodeId,
         columns: [column.column],
         groups: [
           {
@@ -135,8 +122,6 @@ function Integration() {
   // ------------------------------
   const handleProcessSelectedElements = useCallback(
     async (selectedFilenamesMapping) => {
-      setUploadStatus("Processing selected element files...");
-      setErrorMessage("");
       setProcessingStatus("processing");
 
       try {
@@ -188,12 +173,9 @@ function Integration() {
         );
 
         setColumnsData(mergedCols);
-        setUploadStatus("Processing complete");
         setProcessingStatus("idle");
       } catch (error) {
         console.error("Error processing element files:", error);
-        setUploadStatus("Error during processing");
-        setErrorMessage(error.message || "Failed to process selected files");
         setProcessingStatus("error");
       }
     },
@@ -270,7 +252,6 @@ function Integration() {
       const newMappings = {};
       customValues.forEach((cv) => {
         const columnName = `${unionName}_${cv.name}`;
-        // Single group with "1" and "0" values
         newMappings[columnName] = {
           mappingType: "one-hot",
           fileName: "custom_mapping",
@@ -516,7 +497,6 @@ function Integration() {
           reduced={true}
           error={schemaError}
           setError={setSchemaError}
-          setShowError={setShowSchemaError}
           externalSchema={schema}
           onSchemaChange={(newSchema) => setSchema(newSchema)}
           onRemoveExternalSchema={handleRemoveExternalSchema}
@@ -526,6 +506,7 @@ function Integration() {
       <ToastContainer
         autoClose={2000}
         hideProgressBar={true}
+        className={IntegrationStyles.toastContainer}
         toastClassName={IntegrationStyles.toast}
       />
     </div>

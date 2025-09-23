@@ -49,17 +49,24 @@ describe('<Main />', () => {
 
   const renderWithRouter = () =>
     render(
-      <MemoryRouter>
+      <MemoryRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true
+        }}
+      >
         <Main />
       </MemoryRouter>
     );
 
-  it('renders intro, header, content and Get Started button, and scrolls to top on mount', () => {
+  it('renders intro, header, content and buttons, and scrolls to top on mount', () => {
     renderWithRouter();
     expect(screen.getByTestId('landing-intro')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 2, name: /Introduction/i })).toBeInTheDocument();
-    expect(screen.getByText(/Mediata is an innovative tool suite/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Get Started/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Access your data securely/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /User accessible/i })).toBeInTheDocument();
+    expect(screen.getByText(/The MEDIATA platform aims to provide a unified/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Check the tutorial/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Explore your datasets/i })).toBeInTheDocument();
     expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, left: 0, behavior: 'auto' });
   });
 
@@ -68,14 +75,24 @@ describe('<Main />', () => {
     window.scrollY = 600;
     fireEvent.scroll(window);
     rerender(
-      <MemoryRouter>
+      <MemoryRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true
+        }}
+      >
         <Main />
       </MemoryRouter>
     );
     Object.defineProperty(document.documentElement, 'scrollHeight', { value: 1000, configurable: true });
     fireEvent.scroll(window);
     rerender(
-      <MemoryRouter>
+      <MemoryRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true
+        }}
+      >
         <Main />
       </MemoryRouter>
     );

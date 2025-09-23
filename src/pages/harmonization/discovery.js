@@ -9,7 +9,6 @@ import ToolTray from "../../components/Discovery/ToolTray/toolTray";
 import AggregateDisplay from "../../components/Discovery/AggregatesDisplay/aggregateDisplay";
 import FilterModal from "../../components/Discovery/FilterModal/filterModal";
 import { ToastContainer, toast } from "react-toastify";
-
 import { getNodeDatasets, processSelectedDatasets } from "../../util/petitionHandler";
 import { updateNodeAxiosBaseURL } from "../../util/nodeAxiosSetup";
 import { useNode } from "../../context/nodeContext";
@@ -21,8 +20,6 @@ function Discovery() {
   const [filteredDataStatistics, setFilteredDataStatistics] = useState(null);
 
   const [showIndividualView, toggleShownView] = useState(true);
-  const [uploadStatus, setUploadStatus] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [showOutliers, setShowOutliers] = useState(false);
   const [isToolTrayOpen, setIsToolTrayOpen] = useState(true);
@@ -37,7 +34,7 @@ function Discovery() {
   const toggleToolTray = () => setIsToolTrayOpen(!isToolTrayOpen);
 
   useEffect(() => {
-    if (      location.state?.elementFiles?.length &&      !hasProcessedMappingState    ) {
+    if (location.state?.elementFiles?.length && !hasProcessedMappingState) {
       const elementFiles = location.state.elementFiles;
       const nodeMapping = {};
       elementFiles.forEach(({ nodeId, fileName }) => {
@@ -184,8 +181,6 @@ function Discovery() {
 
   const handleProcessSelectedDatasets = async (selectedFilenamesMapping) => {
     setIsProcessing(true);
-    setUploadStatus("Processing selected files...");
-    setErrorMessage("");
 
     try {
       const allResults = [];
@@ -219,11 +214,8 @@ function Discovery() {
       setDataResults(allResults);
       const toggles = allResults.map((_, idx) => idx === 0);
       setActiveFileIndices(toggles);
-      setUploadStatus("Processing complete");
       setIsProcessing(false);
     } catch (error) {
-      setUploadStatus("Error during processing");
-      setErrorMessage(error.message || "Failed to process selected files");
       setIsProcessing(false);
     }
   };
@@ -389,6 +381,7 @@ function Discovery() {
       <ToastContainer
         autoClose={2000}
         hideProgressBar={true}
+        className={DiscoveryStyles.toastContainer}
         toastClassName={DiscoveryStyles.toast}
       />
     </div>

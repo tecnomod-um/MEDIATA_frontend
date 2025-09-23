@@ -1,7 +1,10 @@
-import { generateDistinctColors, generateColorList, darkenColor, lightenColor } from './colors.js';
-import distinctColors from 'distinct-colors';
+// eslint-disable-next-line import/no-commonjs
+jest.mock('distinct-colors', () => jest.fn());
+// eslint-disable-next-line import/no-commonjs
+const distinctColors = require('distinct-colors');
+// eslint-disable-next-line import/no-commonjs
+const { generateDistinctColors, darkenColor, lightenColor } = require('./colors.js');
 
-jest.mock('distinct-colors');
 
 describe('generateDistinctColors', () => {
   it('should call distinctColors with correct parameters', () => {

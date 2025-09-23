@@ -1,14 +1,11 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render as mount, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 import RdfCard from "./rdfCard";
 import RdfConnection from "./rdfConnection";
 
-jest.mock("../rdf.module.css", () => new Proxy({}, {
-  get: (_, key) => key
-}));
-
+jest.mock("../rdf.module.css", () => new Proxy({}, { get: (_, key) => key }));
 jest.mock("@mui/icons-material/Close", () => () => <span data-testid="icon-close" />);
 
 describe("RdfCard", () => {
@@ -18,8 +15,9 @@ describe("RdfCard", () => {
     optionLabel: "My Option",
     x: 42,
     y: 84,
-    optionColor: "#123456"
+    optionColor: "#123456",
   };
+
   let handlers;
 
   beforeEach(() => {
@@ -29,45 +27,41 @@ describe("RdfCard", () => {
       onCardClick: jest.fn(),
       onRemoveCard: jest.fn(),
     };
-    render(
-      <RdfCard
-        card={CARD}
-        {...handlers}
-      />
-    );
+
+    mount(<RdfCard card={CARD} {...handlers} />);
   });
 
   it("renders title and subtitle", () => {
-    expect(screen.getByText("My Element")).toBeInTheDocument();
-    expect(screen.getByText("My Option")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "My Element" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "My Option", level: 4 })).toBeInTheDocument();
   });
 
-  it("applies backgroundColor from card.optionColor", () => {
-    const header = screen.getByText("My Element").parentElement;
-    expect(header).toHaveStyle({ backgroundColor: "#123456" });
+  it("applies backgroundColor from card.optionColor (no parent traversal)", () => {
+    const header = screen.getByLabelText("Card header: My Element");
+    expect(header).toHaveStyle({ backgroundColor: "rgb(18, 52, 86)" });
   });
 
   it("calls onMouseDown with (event, id)", () => {
-    const card = screen.getByText("My Element").closest("div");
-    fireEvent.mouseDown(card, { button: 0 });
+    const cardButton = screen.getByRole("button", { name: "My Element" });
+    fireEvent.mouseDown(cardButton, { button: 0 });
     expect(handlers.onMouseDown).toHaveBeenCalledWith(expect.any(Object), "c1");
   });
 
   it("calls onTouchStart with (event, id)", () => {
-    const card = screen.getByText("My Element").closest("div");
-    fireEvent.touchStart(card);
+    const cardButton = screen.getByRole("button", { name: "My Element" });
+    fireEvent.touchStart(cardButton);
     expect(handlers.onTouchStart).toHaveBeenCalledWith(expect.any(Object), "c1");
   });
 
   it("calls onCardClick and stops propagation", () => {
-    const card = screen.getByText("My Element").closest("div");
+    const cardButton = screen.getByRole("button", { name: "My Element" });
     const evt = { stopPropagation: jest.fn() };
-    fireEvent.click(card, evt);
+    fireEvent.click(cardButton, evt);
     expect(handlers.onCardClick).toHaveBeenCalledWith("c1");
   });
 
-  it("calls onRemoveCard when Close button clicked and stops propagation", () => {
-    const closeBtn = screen.getByTestId("icon-close").parentElement;
+  it("calls onRemoveCard when Close is clicked", () => {
+    const closeBtn = screen.getByRole("button", { name: /close/i });
     const evt = { stopPropagation: jest.fn() };
     fireEvent.click(closeBtn, evt);
     expect(handlers.onRemoveCard).toHaveBeenCalledWith("c1");
@@ -76,14 +70,13 @@ describe("RdfCard", () => {
 
 describe("RdfConnection", () => {
   beforeAll(() => {
+    // Ensure CSS vars resolve to empty so defaults (220x100) apply
     window.getComputedStyle = () => ({ getPropertyValue: () => "" });
   });
 
   it("renders nothing when no cards", () => {
-    const { container } = render(
-      <RdfConnection connections={[]} cards={[]} />
-    );
-    expect(container.firstChild).toBeNull();
+    mount(<RdfConnection connections={[]} cards={[]} />);
+    expect(screen.queryByRole("img", { name: /rdf connections/i })).toBeNull();
   });
 
   it("renders an SVG with a single line between two cards", () => {
@@ -91,13 +84,14 @@ describe("RdfConnection", () => {
       { id: "c1", x: 0, y: 0 },
       { id: "c2", x: 220, y: 0 },
     ];
-    const connections = [
-      { id: "e1", from: "c1", to: "c2" }
-    ];
-    render(<RdfConnection connections={connections} cards={cards} />);
-    const svg = document.querySelector("svg");
+    const connections = [{ id: "e1", from: "c1", to: "c2" }];
+
+    mount(<RdfConnection connections={connections} cards={cards} />);
+
+    const svg = screen.getByRole("img", { name: /rdf connections/i });
     expect(svg).toBeInTheDocument();
-    const line = svg.querySelector("line");
+
+    const line = screen.getByLabelText("RDF connection line");
     expect(line).toBeInTheDocument();
     expect(line).toHaveAttribute("x1", "110");
     expect(line).toHaveAttribute("y1", "50");

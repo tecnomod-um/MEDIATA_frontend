@@ -10,6 +10,9 @@ const RdfCard = ({ card, onMouseDown, onTouchStart, onCardClick, onRemoveCard })
     <div
       className={RdfCardStyles.card}
       style={{ left: card.x, top: card.y }}
+      role="button"
+      aria-label={title}
+      tabIndex={0}
       onMouseDown={(e) => onMouseDown(e, card.id)}
       onTouchStart={(e) => onTouchStart(e, card.id)}
       onClick={(e) => {
@@ -19,6 +22,8 @@ const RdfCard = ({ card, onMouseDown, onTouchStart, onCardClick, onRemoveCard })
     >
       <div
         className={RdfCardStyles.cardClose}
+        role="button"
+        aria-label="Close"
         onClick={(e) => {
           e.stopPropagation();
           onRemoveCard(card.id);
@@ -28,6 +33,7 @@ const RdfCard = ({ card, onMouseDown, onTouchStart, onCardClick, onRemoveCard })
       </div>
       <div
         className={RdfCardStyles.cardHeader}
+        aria-label={`Card header: ${title}`}
         style={{ backgroundColor: card.optionColor || "#007bff" }}
       >
         <h3 className={RdfCardStyles.cardTitle} title={title}>

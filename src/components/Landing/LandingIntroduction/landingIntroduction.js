@@ -4,7 +4,7 @@ import LandingBackground from "../LandingBackground/landingBackground";
 
 const IntroductionSection = () => {
   return (
-    <section className={LandingIntroStyles.introSection}>
+    <section className={LandingIntroStyles.introSection} aria-label="Introduction Section">
       <div className={LandingIntroStyles.titleContainer}>
         <img
           className={LandingIntroStyles.logo}
@@ -17,9 +17,9 @@ const IntroductionSection = () => {
       <LandingBackground />
       <div className={LandingIntroStyles.paragraphContainer}>
         <p>
-          Mediata is your comprehensive solution for managing clinical patient
-          data with precision. Experience the power of streamlined data viewing
-          and parsing tools designed for healthcare professionals.
+          MEDIATA is your comprehensive solution for managing clinical patient
+          data. Experience the power of an iterative, streamlined all-in-one data pipeline
+          that guarantees security and is designed for healthcare professionals.
         </p>
       </div>
     </section>

@@ -61,8 +61,8 @@ describe('<MappingHierarchy />', () => {
 
   it('invokes onDeleteMapping when the close icon is clicked', () => {
     const props = makeProps();
-    const { container } = render(<MappingHierarchy {...props} />);
-    const closeSvg = container.querySelector('[data-testid="CloseIcon"]');
+    render(<MappingHierarchy {...props} />);
+    const closeSvg = screen.getByTestId('CloseIcon');
     fireEvent.click(closeSvg);
 
     expect(props.onDeleteMapping).toHaveBeenCalledWith(

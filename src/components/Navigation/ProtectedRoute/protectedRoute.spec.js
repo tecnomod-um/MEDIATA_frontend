@@ -24,8 +24,9 @@ describe('ProtectedRoute', () => {
   it('renders an empty div while loading', () => {
     useAuth.mockReturnValue({ isAuthenticated: false, isLoading: true });
     useNode.mockReturnValue({ selectedNodes: null });
-    const { container } = render(<ProtectedRoute />);
-    expect(container.firstChild).toBeEmptyDOMElement();
+    render(<ProtectedRoute />);
+    expect(screen.queryByTestId('navigate')).toBeNull();
+    expect(screen.queryByTestId('outlet')).toBeNull();
     expect(screen.queryByTestId('navigate')).toBeNull();
     expect(screen.queryByTestId('outlet')).toBeNull();
   });

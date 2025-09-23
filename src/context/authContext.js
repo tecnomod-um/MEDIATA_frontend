@@ -16,6 +16,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("jwtToken");
     localStorage.removeItem("kerberosTGT");
     localStorage.removeItem("jwtNodeTokens");
+    localStorage.removeItem("selectedNodes");
     setIsAuthenticated(false);
     clearSelectedNodes();
     navigate("/login");

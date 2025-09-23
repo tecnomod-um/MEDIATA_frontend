@@ -53,7 +53,8 @@ describe('<CategoricalChart />', () => {
         onDoubleClick={onDbl}
       />
     );
-    const container = screen.getByTestId('mock-bar').parentElement;
+
+    const container = screen.getByRole('button', { name: /Chart for FeatureX/i });
     fireEvent.click(container);
     fireEvent.doubleClick(container);
     expect(onClick).toHaveBeenCalled();

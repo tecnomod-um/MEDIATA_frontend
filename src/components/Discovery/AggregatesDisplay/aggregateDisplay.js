@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import AggregateDisplayStyles from "./aggregateDisplay.module.css";
 
-const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearmanCorrelations = {}, chiSquareTest = [], omittedFeatures = [] }) => {
+const AggregateDisplay = ({
+  covariances = {},
+  pearsonCorrelations = {},
+  spearmanCorrelations = {},
+  chiSquareTest = [],
+  omittedFeatures = [],
+}) => {
   const [activeTab, setActiveTab] = useState("covariance");
   const [topHeight, setTopHeight] = useState(300);
 
@@ -21,7 +27,6 @@ const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearman
     setTopHeight(Math.max(newHeight, 50));
   }, []);
 
-  // Stop dragging on mouse up
   const onMouseUp = useCallback(() => {
     draggingRef.current = false;
   }, []);
@@ -89,9 +94,7 @@ const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearman
                 return (
                   <td
                     key={columnKey}
-                    className={`${AggregateDisplayStyles.matrixCell} ${rowKey === columnKey
-                      ? AggregateDisplayStyles.diagonal
-                      : ""
+                    className={`${AggregateDisplayStyles.matrixCell} ${rowKey === columnKey ? AggregateDisplayStyles.diagonal : ""
                       }`}
                   >
                     {value !== null ? value.toFixed(2) : "N/A"}
@@ -170,6 +173,7 @@ const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearman
     <div className={AggregateDisplayStyles.statsContainer}>
       <div
         className={AggregateDisplayStyles.topPanel}
+        data-testid="top-panel"
         style={{ height: `${topHeight}px` }}
       >
         <div className={AggregateDisplayStyles.statsBlock}>
@@ -188,10 +192,15 @@ const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearman
           {tabContent[activeTab]}
         </div>
       </div>
+
       <div
         className={AggregateDisplayStyles.splitter}
+        role="separator"
+        aria-orientation="horizontal"
+        aria-label="Resize panels"
         onMouseDown={onMouseDown}
       />
+
       <div className={AggregateDisplayStyles.bottomPanel}>
         <div className={AggregateDisplayStyles.omittedChiContainer}>
           <div className={AggregateDisplayStyles.chiSquaredResults}>

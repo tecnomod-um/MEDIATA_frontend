@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
-import styles from './filePicker.module.css';
+import FilePickerStyles from './filePicker.module.css';
 
 function FilePicker({ files = [], onFilesSelected, isProcessing = false, modalTitle, preSelectedFiles = {}, autoProcess = false }) {
   const [selectedFiles, setSelectedFiles] = useState({});
@@ -61,16 +61,16 @@ function FilePicker({ files = [], onFilesSelected, isProcessing = false, modalTi
       appear
       nodeRef={modalRef}
       classNames={{
-        enter: styles.fadeModalEnter,
-        enterActive: styles.fadeModalEnterActive,
-        exit: styles.fadeModalExit,
-        exitActive: styles.fadeModalExitActive,
+        enter: FilePickerStyles.fadeModalEnter,
+        enterActive: FilePickerStyles.fadeModalEnterActive,
+        exit: FilePickerStyles.fadeModalExit,
+        exitActive: FilePickerStyles.fadeModalExitActive,
       }}
       unmountOnExit
     >
-      <div ref={modalRef} className={styles.modalBackground}>
-        <div className={styles.modalContainer}>
-          <h2 className={styles.modalTitle}>
+      <div ref={modalRef} className={FilePickerStyles.modalBackground}>
+        <div className={FilePickerStyles.modalContainer}>
+          <h2 className={FilePickerStyles.modalTitle}>
             {modalTitle || "Select Files to Process"}
           </h2>
           <CSSTransition
@@ -98,7 +98,7 @@ function FilePicker({ files = [], onFilesSelected, isProcessing = false, modalTi
           >
             <div
               ref={fileListRef}
-              className={`${styles.fileListWrapperExpanded} ${styles.scrollable}`}
+              className={`${FilePickerStyles.fileListWrapperExpanded} ${FilePickerStyles.scrollable}`}
               style={{
                 height: height,
                 overflow: height === 'auto' ? 'auto' : 'hidden',
@@ -106,20 +106,20 @@ function FilePicker({ files = [], onFilesSelected, isProcessing = false, modalTi
               }}
             >
               {(files.length === 0 || files.every(node => !node.files || node.files.length === 0)) ? (
-                <div className={styles.noFiles}>No files available</div>
+                <div className={FilePickerStyles.noFiles}>No files available</div>
               ) : (
                 files.map(node => (
-                  <div key={node.nodeId} className={styles.nodeSection}>
+                  <div key={node.nodeId} className={FilePickerStyles.nodeSection}>
                     {files.length > 1 && (
-                      <h3 className={styles.nodeTitle}>{node.nodeName}</h3>
+                      <h3 className={FilePickerStyles.nodeTitle}>{node.nodeName}</h3>
                     )}
-                    <ul className={styles.fileList}>
+                    <ul className={FilePickerStyles.fileList}>
                       {node.files.map((file, index) => {
                         const isSelected = (selectedFiles[node.nodeId] || []).includes(file);
                         return (
                           <li
                             key={index}
-                            className={`${styles.fileItem} ${isSelected ? styles.selected : ''} ${isProcessing ? styles.disabledFile : ''}`}
+                            className={`${FilePickerStyles.fileItem} ${isSelected ? FilePickerStyles.selected : ''} ${isProcessing ? FilePickerStyles.disabledFile : ''}`}
                             onClick={() => handleToggle(node.nodeId, file)}
                           >
                             {file}
@@ -134,13 +134,13 @@ function FilePicker({ files = [], onFilesSelected, isProcessing = false, modalTi
           </CSSTransition>
 
           <button
-            className={styles.confirmButton}
+            className={FilePickerStyles.confirmButton}
             onClick={handleProcess}
             disabled={isProcessing || !Object.values(selectedFiles).some(arr => arr.length > 0)}
           >
             {isProcessing ? (
-              <div className={styles.buttonSpinner}>
-                <span className={styles.spinnerIcon}></span>
+              <div className={FilePickerStyles.buttonSpinner}>
+                <span className={FilePickerStyles.spinnerIcon}></span>
                 <span>Processing...</span>
               </div>
             ) : (

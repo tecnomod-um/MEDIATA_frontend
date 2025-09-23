@@ -90,11 +90,19 @@ const ContinuousChart = React.memo(
 
     return (
       <div
-        className={`${ContinuousChartStyles.chartContainer} ${
-          inOverview ? ContinuousChartStyles.overview : ""
-        } ${isSelected ? ContinuousChartStyles.selected : ""}`}
+        className={`${ContinuousChartStyles.chartContainer} ${inOverview ? ContinuousChartStyles.overview : ""
+          } ${isSelected ? ContinuousChartStyles.selected : ""}`}
         onClick={onClick}
         onDoubleClick={onDoubleClick}
+        role="button"
+        tabIndex={0}
+        aria-label={`Chart for ${feature.featureName}`}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick && onClick(e);
+          }
+        }}
       >
         <Bar ref={chartRef} data={chartData} options={chartOptions} />
       </div>

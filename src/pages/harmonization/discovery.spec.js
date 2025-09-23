@@ -3,6 +3,8 @@ import { render, screen, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Discovery from './discovery';
 
+let mockFilePickerProps;
+
 jest.mock('react-transition-group', () => {
   const React = require('react');
   return {
@@ -18,9 +20,12 @@ jest.mock('react-toastify', () => ({
 
 jest.mock(
   '../../components/Common/FilePicker/filePicker',
-  () => (props: any) => {
-    globalThis.__filePickerProps = props;
-    return <div data-testid="picker">FilePicker</div>;
+  () => {
+    const React = require('react');
+    return function MockFilePicker(props) {
+      mockFilePickerProps = props;
+      return <div data-testid="picker">FilePicker</div>;
+    };
   },
 );
 
@@ -49,8 +54,8 @@ const mockProcessSelectedDatasets = jest.fn();
 jest.mock(
   '../../util/petitionHandler',
   () => ({
-    getNodeDatasets: (...a: any[]) => mockGetNodeDatasets(...a),
-    processSelectedDatasets: (...a: any[]) => mockProcessSelectedDatasets(...a),
+    getNodeDatasets: (...a) => mockGetNodeDatasets(...a),
+    processSelectedDatasets: (...a) => mockProcessSelectedDatasets(...a),
   }),
 );
 jest.mock('../../util/nodeAxiosSetup', () => ({
@@ -62,7 +67,7 @@ const mockSelectedNodes = [
 ];
 jest.mock('../../context/nodeContext', () => ({
   useNode: () => ({ selectedNodes: mockSelectedNodes }),
-  NodeProvider: ({ children }: any) => <>{children}</>,
+  NodeProvider: ({ children }) => <>{children}</>,
 }));
 
 jest.mock('react-router-dom', () => {
@@ -85,7 +90,7 @@ const PROCESSED_RESULT = [{
 
 beforeEach(() => {
   jest.clearAllMocks();
-  globalThis.__filePickerProps = undefined;
+  mockFilePickerProps = undefined;
 });
 
 test('initially fetches datasets and renders <FilePicker>', async () => {
@@ -93,11 +98,14 @@ test('initially fetches datasets and renders <FilePicker>', async () => {
 
   render(<Discovery />);
 
-  await waitFor(() => {
+  await waitFor(async () => {
     expect(screen.getByTestId('picker')).toBeInTheDocument();
-    expect(globalThis.__filePickerProps?.files?.[0]?.files).toEqual(
-      DATASETS_FIXTURE,
-    );
+    await waitFor(async () => {
+      expect(mockFilePickerProps).toBeDefined();
+    });
+    await waitFor(async () => {
+      expect(mockFilePickerProps.files?.[0]?.files).toEqual(DATASETS_FIXTURE);
+    });
   });
 });
 
@@ -106,13 +114,16 @@ test('after onFilesSelected resolves, statistics view is shown', async () => {
   mockProcessSelectedDatasets.mockResolvedValue(PROCESSED_RESULT);
 
   render(<Discovery />);
-  await waitFor(() => expect(globalThis.__filePickerProps).toBeDefined());
+  await waitFor(() => expect(mockFilePickerProps).toBeDefined());
   await act(async () => {
-    await globalThis.__filePickerProps.onFilesSelected({ 1: DATASETS_FIXTURE });
+    await mockFilePickerProps.onFilesSelected({ 1: DATASETS_FIXTURE });
   });
 
   await waitFor(() => {
     expect(screen.getByTestId('tray')).toBeInTheDocument();
+  });
+
+  await waitFor(() => {
     expect(screen.getByTestId('stats')).toBeInTheDocument();
   });
   expect(screen.queryByTestId('picker')).toBeNull();

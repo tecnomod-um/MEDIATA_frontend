@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, act, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { NodeProvider, useNode } from './nodeContext.js';
 import { AuthProvider, useAuth } from './authContext.js';
@@ -86,16 +86,13 @@ describe('AuthProvider & useAuth', () => {
     localStorage.setItem('jwtToken', 'dummy');
     localStorage.setItem('kerberosTGT', 'tgt');
 
-    await act(async () => {
-      render(
-        <NodeProvider>
-          <AuthProvider>
-            <AuthTester />
-          </AuthProvider>
-        </NodeProvider>
-      );
-    });
-
+    render(
+      <NodeProvider>
+        <AuthProvider>
+          <AuthTester />
+        </AuthProvider>
+      </NodeProvider>
+    );
     expect(setupNodeAxiosInterceptors).toHaveBeenCalled();
     expect(screen.getByTestId('loading')).toHaveTextContent('false');
     expect(screen.getByTestId('auth')).toHaveTextContent('true');
@@ -121,16 +118,13 @@ describe('AuthProvider & useAuth', () => {
     localStorage.setItem('jwtToken', 'x');
     localStorage.setItem('kerberosTGT', 'y');
 
-    await act(async () => {
-      render(
-        <NodeProvider>
-          <AuthProvider>
-            <AuthTester />
-          </AuthProvider>
-        </NodeProvider>
-      );
-    });
-
+    render(
+      <NodeProvider>
+        <AuthProvider>
+          <AuthTester />
+        </AuthProvider>
+      </NodeProvider>
+    );
     fireEvent.click(screen.getByText('login'));
     expect(screen.getByTestId('auth')).toHaveTextContent('true');
     fireEvent.click(screen.getByText('add-node'));

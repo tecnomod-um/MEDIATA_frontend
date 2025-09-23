@@ -208,11 +208,11 @@ function SemanticAlignment() {
     }
 
     console.log(result)
-    if (result.csvSaved) 
+    if (result.csvSaved)
       toast.success(result.csvMessage);
-    else 
+    else
       toast.error(result.csvMessage);
-    
+
     // 2) RDF feedback
     if (result.rdfGenerated) {
       let msg;
@@ -222,9 +222,9 @@ function SemanticAlignment() {
         msg = result.rdfMessage;
       }
       toast.success(msg);
-    } else 
+    } else
       toast.error(result.rdfMessage);
-    
+
 
     if (result.csvSaved) {
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -802,12 +802,12 @@ function SemanticAlignment() {
     );
   };
 
-  // ---- RENDER ----
   return (
     <div className={SemanticAlignmentStyles.container}>
       <ToastContainer
         autoClose={2000}
         hideProgressBar={true}
+        className={SemanticAlignmentStyles.toastContainer}
         toastClassName={SemanticAlignmentStyles.toast}
       />
       {!elements && (

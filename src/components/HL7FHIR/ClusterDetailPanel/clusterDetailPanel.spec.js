@@ -2,8 +2,8 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import ClusterDetailPanel from './clusterDetailPanel';
 
-jest.mock('@mui/material/IconButton', () => ({ children, onClick }) => (
-  <button onClick={onClick}>{children}</button>
+jest.mock('@mui/material/IconButton', () => ({ children, onClick, ...props }) => (
+  <button onClick={onClick} {...props}>{children}</button>
 ));
 jest.mock('react-transition-group', () => {
   return {
@@ -62,8 +62,8 @@ describe('<ClusterDetailPanel />', () => {
   });
 
   it('calls onBack when the back button is clicked', () => {
-    const { container } = setup();
-    const backBtn = container.querySelector('header button');
+    setup();
+    const backBtn = screen.getByRole('button', { name: /back/i });
     fireEvent.click(backBtn);
     expect(onBack).toHaveBeenCalledTimes(1);
   });
@@ -105,8 +105,8 @@ describe('<ClusterDetailPanel />', () => {
   });
 
   it('handles drop by calling onAddElement and onDragEnd', () => {
-    const { container } = setup();
-    const dropZone = container.querySelector('section');
+    setup();
+    const dropZone = screen.getByRole('region');
     const dataTransfer = {
       data: { 'app/element': JSON.stringify({ elementId: 3 }) },
       setData(format, val) { this.data[format] = val },

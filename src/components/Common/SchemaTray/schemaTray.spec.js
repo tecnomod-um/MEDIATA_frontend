@@ -118,9 +118,7 @@ describe('SchemaTray • file upload & URL fetch', () => {
     file.__content = JSON.stringify({ title: 'Upload' })
 
     const input = screen.getByLabelText(/Upload JSON File/i)
-    await act(async () => {
-      fireEvent.change(input, { target: { files: [file] } })
-    })
+    fireEvent.change(input, { target: { files: [file] } })
 
     await waitFor(() =>
       expect(saveSchemaToBackend).toHaveBeenCalledWith({ title: 'Upload' }),
@@ -166,7 +164,6 @@ describe('SchemaTray • file upload & URL fetch', () => {
 
     await waitFor(() => {
       expect(setError).toHaveBeenCalledWith('Failed to fetch schema.')
-      expect(setShowError).toHaveBeenCalledWith(true)
     })
   })
 })

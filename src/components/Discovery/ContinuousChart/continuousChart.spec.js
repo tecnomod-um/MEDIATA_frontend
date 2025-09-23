@@ -46,7 +46,7 @@ describe('<ContinuousChart />', () => {
       />
     );
 
-    const container = screen.getByTestId('mock-bar').parentElement;
+    const container = screen.getByRole('button', { name: /Chart for ValueDist/i });
     fireEvent.click(container);
     fireEvent.doubleClick(container);
     expect(onClick).toHaveBeenCalled();

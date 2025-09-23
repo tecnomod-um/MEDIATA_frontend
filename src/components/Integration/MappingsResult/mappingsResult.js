@@ -33,7 +33,7 @@ function MappingsResult({ mappings, columnsData, deletedItems, processingStatus,
                     if (newKey && newKey !== oldKey) {
                       delete newMappingObj[oldKey];
                       newMappingObj[newKey] = updatedMapping;
-                    } else
+                    } else 
                       newMappingObj[oldKey] = updatedMapping;
                     return newMappingObj;
                   })
@@ -45,16 +45,22 @@ function MappingsResult({ mappings, columnsData, deletedItems, processingStatus,
       </div>
 
       <div className={MappingsResultStyles.bottomActions}>
-        <MappingsExporter
-          mappings={mappings}
-        />
+        <MappingsExporter mappings={mappings} />
         <button
           className={MappingsResultStyles.processMappingsButton}
           onClick={onOpenFileMapper}
           disabled={processingStatus === "processing"}
+          type="button"
+          aria-label="Process mappings"
         >
           {processingStatus === "processing" ? (
-            <div className={MappingsResultStyles.loader}></div>
+            <div
+              className={MappingsResultStyles.loader}
+              role="status"
+              aria-live="polite"
+            >
+              Loading...
+            </div>
           ) : processingStatus === "success" ? (
             "Processing Successful"
           ) : processingStatus === "error" ? (

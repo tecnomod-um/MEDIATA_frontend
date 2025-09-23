@@ -98,7 +98,20 @@ const CategoricalChart = React.memo(
     );
 
     return (
-      <div className={containerClasses} onClick={onClick} onDoubleClick={onDoubleClick}>
+      <div
+        className={containerClasses}
+        onClick={onClick}
+        onDoubleClick={onDoubleClick}
+        role="button"
+        tabIndex={0}
+        aria-label={`Chart for ${feature.featureName}`}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick && onClick(e);
+          }
+        }}
+      >
         <Bar ref={chartRef} data={chartData} options={chartOptions} />
       </div>
     );

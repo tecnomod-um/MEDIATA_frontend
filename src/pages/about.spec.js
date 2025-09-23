@@ -12,10 +12,10 @@ describe('<About />', () => {
     ).toBeInTheDocument();
 
     expect(
-      screen.getByText(/Principal Investigator/i).nextSibling.textContent
+      screen.getByText(/Catalina Martinez Costa/i).textContent
     ).toMatch(/Catalina Martinez Costa/i);
     expect(
-      screen.getByText(/Lead Developer/i).nextSibling.textContent
+      screen.getByText(/Daniel Ibáñez Molero/i).textContent
     ).toMatch(/Daniel Ibáñez Molero/i);
   });
 

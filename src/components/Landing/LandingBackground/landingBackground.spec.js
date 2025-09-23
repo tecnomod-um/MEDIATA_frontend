@@ -1,20 +1,28 @@
 import React from 'react';
-import { render, fireEvent, act } from '@testing-library/react';
+import { render, fireEvent, act, screen } from '@testing-library/react';
 import Scene from './scene';
+import * as r3f from '@react-three/fiber';
 import LandingBackground from './landingBackground';
 
 jest.mock('@react-three/fiber', () => {
   const React = require('react');
+  const __frameSubs = [];
+  const __advanceByTime = (ms = 16) => {
+    const frames = Math.max(1, Math.round((ms / 1000) * 60));
+    for (let i = 0; i < frames; i++) {
+      __frameSubs.forEach((cb) =>
+        cb({ clock: { getElapsedTime: () => i / 60 } }, 1 / 60)
+      );
+    }
+  };
+
   return {
-    Canvas: React.forwardRef(({ children, ...props }, ref) =>
-      React.createElement(
-        'canvas',
-        { 'data-testid': 'r3f-canvas', ref, ...props },
-        children,
-      )
+    Canvas: React.forwardRef(({ children, ...rest }, ref) =>
+      React.createElement('canvas', { 'data-testid': 'r3f-canvas', ref, ...rest })
     ),
     useThree: () => ({ viewport: { width: 2, height: 2 } }),
-    useFrame: jest.fn(),
+    useFrame: (cb) => { __frameSubs.push(cb); },
+    __advanceByTime,
   };
 });
 
@@ -32,22 +40,33 @@ jest.mock('three', () => {
   };
 });
 
-describe('<Scene /> rendering behavior', () => {
-  beforeEach(() => {
-    jest.useFakeTimers();
+let consoleErrorSpy;
+beforeAll(() => {
+  const realError = console.error;
+  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((msg, ...args) => {
+    const s = String(msg || '');
+    if (s.includes('is using incorrect casing. Use PascalCase for React components')) return;
+    realError(msg, ...args);
   });
-  afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
-  });
+});
+afterAll(() => {
+  consoleErrorSpy?.mockRestore();
+});
 
-  it('renders the expected 15 wavy lines and eventually spawns plus-signs', () => {
-    const { container } = render(<Scene />);
-    expect(container.querySelectorAll('line')).toHaveLength(15);
+describe('<Scene /> rendering behavior', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => { jest.runOnlyPendingTimers(); jest.useRealTimers(); });
+
+  it('renders 15 wavy lines and eventually spawns plus-signs', () => {
+    render(<Scene />);
+    expect(screen.getAllByLabelText(/wave-line/i)).toHaveLength(15);
+
     act(() => {
       jest.advanceTimersByTime(1000);
+      r3f.__advanceByTime(1000);
     });
-    expect(container.querySelectorAll('group').length).toBeGreaterThan(0);
+
+    expect(screen.getAllByLabelText(/plus-sign/i)).toHaveLength(1);
   });
 
   it('registers and handles mousedown events without throwing', () => {
@@ -58,42 +77,38 @@ describe('<Scene /> rendering behavior', () => {
   });
 
   it('renders lights and background plane', () => {
-    const { container } = render(<Scene />);
-    expect(container.querySelectorAll('ambientlight')).toHaveLength(1);
-    expect(container.querySelectorAll('directionallight')).toHaveLength(1);
-    expect(container.querySelectorAll('planegeometry')).toHaveLength(1);
-    expect(container.querySelectorAll('meshbasicmaterial')).toHaveLength(1);
+    render(<Scene />);
+    expect(screen.getAllByLabelText(/ambient-light/i)).toHaveLength(1);
+    expect(screen.getAllByLabelText(/directional-light/i)).toHaveLength(1);
+    expect(screen.getAllByLabelText(/plane-geometry/i)).toHaveLength(1);
+    expect(screen.getAllByLabelText(/mesh-basic-material/i)).toHaveLength(1);
   });
 
   it('creates one <bufferAttribute> per wavy line (15 total)', () => {
-    const { container } = render(<Scene />);
-    expect(container.querySelectorAll('bufferattribute')).toHaveLength(15);
+    render(<Scene />);
+    expect(screen.getAllByLabelText(/buffer-attribute/i)).toHaveLength(15);
   });
 });
 
 describe('<LandingBackground /> WebGL handling', () => {
   const createMockCanvas = ({ supportsWebGL = true } = {}) => {
     const canvas = document.createElement('canvas');
-    canvas.getContext = jest.fn((type) => {
-      if (!supportsWebGL) return null;
-      return { type };
-    });
+    canvas.getContext = jest.fn(type => (supportsWebGL ? { type } : null));
     return canvas;
   };
 
   beforeEach(() => {
     jest.spyOn(console, 'log').mockImplementation(() => { });
   });
-
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
   it('renders fallback message when WebGL is not supported', () => {
-    const ref = React.createRef();
     jest.spyOn(React, 'useRef').mockReturnValueOnce({ current: createMockCanvas({ supportsWebGL: false }) });
-
-    const { getByText } = render(<LandingBackground />);
-    expect(getByText(/your browser or device does not support webgl/i)).toBeInTheDocument();
+    render(<LandingBackground />);
+    expect(
+      screen.getByText(/your browser or device does not support webgl/i)
+    ).toBeInTheDocument();
   });
 });

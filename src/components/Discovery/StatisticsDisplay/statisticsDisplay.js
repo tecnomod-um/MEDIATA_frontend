@@ -144,7 +144,7 @@ const StatisticsDisplay = React.memo(
     );
 
     return (
-      <div className={StatisticsDisplayStyles.chartFlexContainer}>
+      <div className={StatisticsDisplayStyles.chartFlexContainer} role="region" aria-label="Statistics display">
         <ChartPreview
           isOpen={isPreviewOpen}
           content={previewContent}

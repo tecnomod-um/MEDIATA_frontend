@@ -42,7 +42,6 @@ describe('<CompareFilesModal />', () => {
     expect(tables).toHaveLength(2);
 
     const missingTable = tables[0];
-
     expect(within(missingTable).getByText('Missing Count')).toBeInTheDocument();
     expect(within(missingTable).getByText('Cont')).toBeInTheDocument();
     expect(within(missingTable).getByText('2')).toBeInTheDocument();

@@ -142,16 +142,14 @@ describe('UploadFilePicker', () => {
 
   it('allows file selection and invokes callback', async () => {
     const onFileUpload = jest.fn()
-    const { container } = render(
+    render(
       <UploadFilePicker onFileUpload={onFileUpload} isProcessing={false} />
     )
 
     fireEvent.click(screen.getByText('Click to select file...'))
 
-    const input = container.querySelector('input[type="file"]')
-    await act(async () =>
-      fireEvent.change(input, { target: { files: [fileObj] } })
-    )
+    const input = screen.getByLabelText(/select file/i)
+    fireEvent.change(input, { target: { files: [fileObj] } })
 
     expect(screen.getByText('hello.txt')).toBeInTheDocument()
 
@@ -164,12 +162,12 @@ describe('UploadFilePicker', () => {
 
   it('blocks selection and confirm while processing', () => {
     const onFileUpload = jest.fn()
-    const { container } = render(
+    render(
       <UploadFilePicker onFileUpload={onFileUpload} isProcessing={true} />
     )
 
     fireEvent.click(screen.getByText('Click to select file...'))
-    const input = container.querySelector('input[type="file"]')
+    const input = screen.getByLabelText(/select file/i)
     expect(input).toBeDisabled()
 
     expect(

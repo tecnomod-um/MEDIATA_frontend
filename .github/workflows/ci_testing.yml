@@ -2,9 +2,7 @@ name: MEDIATA FRONTEND CI
 
 on:
   push:
-    branches:
-      - dev
-      - main
+    branches: [dev, main]
 
 permissions:
   contents: write
@@ -15,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -27,8 +25,39 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm test
+      - name: Run tests with coverage
+        run: npm run test:cov
+
+      - name: Ensure badges folder
+        run: mkdir -p badges
+
+      - name: Read coverage percentage
+        id: cov
+        run: |
+          COV_INT=$(jq -r '.total.lines.pct|floor' coverage/coverage-summary.json)
+          if [ "$COV_INT" -ge 90 ]; then COLOR=brightgreen;
+          elif [ "$COV_INT" -ge 80 ]; then COLOR=green;
+          elif [ "$COV_INT" -ge 70 ]; then COLOR=yellowgreen;
+          elif [ "$COV_INT" -ge 60 ]; then COLOR=yellow;
+          else COLOR=orange; fi
+          echo "pct=$COV_INT" >> $GITHUB_OUTPUT
+          echo "color=$COLOR" >> $GITHUB_OUTPUT
+
+      - name: Generate coverage badge
+        uses: emibcn/badge-action@v2
+        with:
+          label: coverage
+          status: '${{ steps.cov.outputs.pct }}%'
+          color: '${{ steps.cov.outputs.color }}'
+          path: badges/coverage.svg
+
+      - name: Commit coverage badge (if changed)
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add badges/coverage.svg
+          git diff --cached --quiet || git commit -m "ci: update coverage badge"
+          git push
 
   update-parent:
     name: Bump MEDIATA_frontend in parent
@@ -50,15 +79,10 @@ jobs:
       - name: Bump MEDIATA_frontend pointer
         working-directory: monorepo
         run: |
-          # Configure Git author
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Point the submodule at exactly the commit that triggered this run
           git -C MEDIATA_frontend fetch origin "${{ github.sha }}"
           git -C MEDIATA_frontend checkout "${{ github.sha }}"
-
-          # Stage, commit, and push if changed
           git add MEDIATA_frontend
           if ! git diff --cached --quiet; then
             git commit -m "ci: bump MEDIATA_frontend to ${{ github.sha }}"
