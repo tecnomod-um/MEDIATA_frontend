@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import styles from "./schemaTray.module.css";
 import { saveSchemaToBackend, fetchSchemaFromBackend, removeSchemaFromBackend } from "../../../util/petitionHandler";
 
-const SchemaTray = ({ error, setError, setShowError, nodesFetched, externalSchema = null, onRemoveExternalSchema = null, onSchemaChange, reduced = false }) => {
+const SchemaTray = ({ error, setError, nodesFetched, externalSchema = null, onRemoveExternalSchema = null, onSchemaChange, reduced = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [schema, setSchema] = useState(externalSchema);

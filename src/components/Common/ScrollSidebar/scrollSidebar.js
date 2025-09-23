@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import styles from "./scrollSidebar.module.css";
 
 export default function ScrollSidebar({ sections = [], offset = 55, maxLines = 2, className, listClassName, itemClassName, activeClassName }) {
@@ -6,17 +6,15 @@ export default function ScrollSidebar({ sections = [], offset = 55, maxLines = 2
   const activeRef = useRef(active);
   const rafId = useRef(null);
 
-  // keep ref in sync so the scroll handler always sees the latest active id
   useEffect(() => {
     activeRef.current = active;
   }, [active]);
 
-  // if sections list changes, default to the first one
   useEffect(() => {
     if (sections.length) setActive(sections[0]);
   }, [sections]);
 
-  const updateActiveFromScroll = () => {
+  const updateActiveFromScroll = useCallback(() => {
     if (!sections.length) return;
 
     const anchorY = offset + 1;
@@ -25,16 +23,14 @@ export default function ScrollSidebar({ sections = [], offset = 55, maxLines = 2
     for (const id of sections) {
       const el = document.getElementById(id);
       if (!el) continue;
-      const top = el.getBoundingClientRect().top;
-      if (top - anchorY <= 0) current = id;
+      if (el.getBoundingClientRect().top - anchorY <= 0) current = id;
       else break;
     }
 
-    // compare against ref (latest), not the stale value closed over
     if (current && current !== activeRef.current) {
       setActive(current);
     }
-  };
+  }, [sections, offset]);
 
   useEffect(() => {
     updateActiveFromScroll();
@@ -60,8 +56,7 @@ export default function ScrollSidebar({ sections = [], offset = 55, maxLines = 2
       window.removeEventListener("resize", onScroll);
       window.removeEventListener("hashchange", onScroll);
     };
-    // deps intentionally omit `active` because we use `activeRef` instead
-  }, [sections, offset, updateActiveFromScroll]);
+  }, [updateActiveFromScroll]);
 
   const scrollToId = (id) => {
     const el = document.getElementById(id);
@@ -80,7 +75,7 @@ export default function ScrollSidebar({ sections = [], offset = 55, maxLines = 2
     <nav
       className={[styles.nav, className].filter(Boolean).join(" ")}
       aria-label="Section navigation"
-      style={{ ["--ssb-max-lines"]: maxLines }}
+      style={{ '--ssb-max-lines': maxLines }}
     >
       <ul className={[styles.list, listClassName].filter(Boolean).join(" ")}>
         {sections.map((id) => {

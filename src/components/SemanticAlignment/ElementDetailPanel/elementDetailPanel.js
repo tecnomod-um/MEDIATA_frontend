@@ -71,7 +71,7 @@ const ElementDetailPanel = ({ activeElement, currentSelection, onSelectOption, a
       }
     })();
     return () => { didCancel = true; };
-  }, [currentSelection?.iri]);
+  }, [currentSelection?.iri, currentSelection?.label]);
 
   const debouncedFetchSuggestions = useMemo(() => debounce((value, field) => {
     fetchSuggestions(value, "snomed").then((suggestions) => {
