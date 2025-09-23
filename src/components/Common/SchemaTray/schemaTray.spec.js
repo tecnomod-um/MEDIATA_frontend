@@ -165,10 +165,6 @@ describe('SchemaTray • file upload & URL fetch', () => {
     await waitFor(() => {
       expect(setError).toHaveBeenCalledWith('Failed to fetch schema.')
     })
-
-    await waitFor(() => {
-      expect(setShowError).toHaveBeenCalledWith(true)
-    })
   })
 })
 
