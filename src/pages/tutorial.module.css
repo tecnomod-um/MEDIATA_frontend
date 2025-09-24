@@ -134,6 +134,7 @@
 
 .centeredHeading {
   text-align: center;
+  font-size: 24px;
 }
 
 .variablesTable {
@@ -198,7 +199,7 @@
 
 .sidebar {
   z-index: 2;
-  font-size: 13pt;
+  font-size: 12pt;
   position: fixed;
   user-select: none;
   left: 0;
@@ -242,4 +243,15 @@
 /* Anchor scrolling: adjust for fixed navbar height */
 .contentContainer {
   scroll-margin-top: 70px;
+}
+
+.centeredHeading::after {
+  content: "";
+  display: block;
+  min-width: 200px;
+  width: 50%;
+  height: 3px;
+  margin: 0 auto 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--background-nav-and-headers-background-color-light) 40%, transparent);
 }

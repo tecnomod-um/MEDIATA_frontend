@@ -14,9 +14,27 @@ export default function LandingDiscovery({ size, title = "Search document" }) {
       focusable="false"
     >
       <defs data-testid="ld-defs">
-        <filter id="ld_shadow" x="-50%" y="-50%" width="200%" height="200%" data-testid="ld-shadow">
-          <feDropShadow dx="0" dy="2" stdDeviation="2" floodOpacity=".25" />
+        {/* Shadow filter: blur + offset (Firefox-friendly) */}
+        <filter
+          id="ld_shadow"
+          x="-60%" y="-60%" width="220%" height="220%"
+          filterUnits="userSpaceOnUse"
+          primitiveUnits="userSpaceOnUse"
+          colorInterpolationFilters="sRGB"
+          filterRes="256"
+          data-testid="ld-shadow"
+        >
+          <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur" />
+          <feOffset in="blur" dx="0" dy="2" result="offset" />
+          <feComponentTransfer>
+            <feFuncA type="linear" slope="0.25" />
+          </feComponentTransfer>
+          <feMerge>
+            <feMergeNode in="offset" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
         </filter>
+
         <path
           id="ld_scanPath"
           data-testid="ld-scanPath"
@@ -26,43 +44,35 @@ export default function LandingDiscovery({ size, title = "Search document" }) {
       </defs>
 
       <rect
-        x="8"
-        y="8"
-        width="112"
-        height="112"
-        rx="18"
-        ry="18"
+        x="8" y="8" width="112" height="112" rx="18" ry="18"
         className={`${LandingDiscoveryStyles.iconSquare} iconSquare`}
         data-testid="ld-iconSquare"
       />
-   <rect
-        x="8"
-        y="8"
-        width="112"
-        height="112"
-        rx="18"
-        ry="18"
-        className={LandingDiscoveryStyles.iconSquare}
-      />
+
       <g className={LandingDiscoveryStyles.docStroke}>
-        <path
-          d="M34,22 H86 L94,30 V106 H34 Z"
-          className={LandingDiscoveryStyles.docFill}
-        />
-        <path
-          d="M84,22 V32 H94"
-          className={LandingDiscoveryStyles.foldEdge}
-        />
+        <path d="M34,22 H86 L94,30 V106 H34 Z" className={LandingDiscoveryStyles.docFill} />
+        <path d="M84,22 V32 H94" className={LandingDiscoveryStyles.foldEdge} />
         <line x1="44" y1="54" x2="84" y2="54" className={LandingDiscoveryStyles.docLine} />
         <line x1="44" y1="66" x2="84" y2="66" className={LandingDiscoveryStyles.docLine} />
         <line x1="44" y1="78" x2="84" y2="78" className={LandingDiscoveryStyles.docLine} />
       </g>
-      <g filter="url(#ld_shadow)">
+
+      {/* Move a parent wrapper that contains shadow + magnifier */}
+      <g id="ld_mover">
+        {/* Shadow copy (same shapes) */}
+        <g filter="url(#ld_shadow)" aria-hidden="true">
+          <circle cx="0" cy="0" r="12" className={LandingDiscoveryStyles.lens} />
+          <line x1="8" y1="8" x2="22" y2="22" className={LandingDiscoveryStyles.handle} />
+          <circle cx="-4" cy="-4" r="5" className={LandingDiscoveryStyles.glint} />
+        </g>
+
+        {/* Actual magnifier (no filter) */}
         <g className={LandingDiscoveryStyles.magnifier} data-testid="ld-magnifier">
           <circle cx="0" cy="0" r="12" className={LandingDiscoveryStyles.lens} />
           <line x1="8" y1="8" x2="22" y2="22" className={LandingDiscoveryStyles.handle} />
           <circle cx="-4" cy="-4" r="5" className={LandingDiscoveryStyles.glint} />
         </g>
+
         <animateMotion
           dur="4.8s"
           repeatCount="indefinite"

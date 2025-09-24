@@ -1,19 +1,12 @@
-import React, { useLayoutEffect, useState, useContext, useMemo } from "react";
+import React, { useLayoutEffect, useState, useEffect, useMemo } from "react";
 import ScrollSidebar from "../components/Common/ScrollSidebar/scrollSidebar.js";
 import TutorialStyles from "./tutorial.module.css";
 import Slide from '../components/Common/Slide/slide.js';
+import LandingImage from "../components/Landing/LandingImage/landingImage.js";
 
 function Tutorial() {
   const [images, setImages] = useState([]);
-  const [unionslides, setUnionSlides] = useState([]);
-  const [slides, setSlides] = useState([]);
-  const [GeneNameSlides, setGeneNameSlides] = useState([]);
-  const [mutationCRMSlides, setMutationCRMSlides] = useState([]);
-  const [OptionalSlides, setOptionalSlides] = useState([]);
-  const [MultipleValuesSlides, setMultipleValuesSlides] = useState([]);
-  const [NewVariableSlides, setNewVariableSlides] = useState([]);
-  const [UseCaseSlides, setUseCaseSlides] = useState([]);
-
+  const [DiscoverySlides, setDiscoverySlides] = useState([]);
 
   useLayoutEffect(() => {
     if ("scrollRestoration" in window.history)
@@ -21,169 +14,35 @@ function Tutorial() {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, []);
 
-  /*
-  useEffect(() => {
-    const slideImages = [];
-    for (let i = 1; i <= 6; i++) {
-      const image = require(`../resources/images/tutorial/union${i}.png`);
-      slideImages.push(image);
-    }
-    setUnionSlides(slideImages);
-  }, []);
-
-  useEffect(() => {
-    const slideImages = [];
-    for (let i = 1; i <= 6; i++) {
-      const image = require(`../resources/images/tutorial/Slide${i}.png`);
-      slideImages.push(image);
-    }
-    setSlides(slideImages);
-  }, []);
-
-  useEffect(() => {
-    const slideImages = [];
-    for (let i = 1; i <= 3; i++) {
-      const image = require(`../resources/images/tutorial/Ex1.${i}.png`);
-      slideImages.push(image);
-    }
-    setGeneNameSlides(slideImages);
-  }, []);
-
+  
   useEffect(() => {
     const slideImages = [];
     for (let i = 1; i <= 4; i++) {
-      const image = require(`../resources/images/tutorial/Ex2.${i}.png`);
+      const image = require(`../resources/images/tutorial/slide1/${i}.jpg`);
       slideImages.push(image);
     }
-    setMutationCRMSlides(slideImages);
+    setDiscoverySlides(slideImages);
   }, []);
+
+  const DiscoverySteps = [
+    'Overall Discovery view.',
+    'Feature tables containing statistics.',
+    'Graph representations of each feature.',
+    'Side bar hosting most of the page controls.'
+  ];
 
   useEffect(() => {
-    const slideImages = [];
-    for (let i = 1; i <= 3; i++) {
-      const image = require(`../resources/images/tutorial/optional${i}.png`);
-      slideImages.push(image);
-    }
-    setOptionalSlides(slideImages);
+    const ctx = require.context("../resources/images/tutorial", false, /\.(png|jpe?g|svg|gif)$/);
+    const imgs = ctx.keys().sort().map(ctx);
+    setImages(imgs);
   }, []);
 
-  useEffect(() => {
-    const slideImages = [];
-    for (let i = 1; i <= 6; i++) {
-      const image = require(`../resources/images/tutorial/multiple_values${i}.png`);
-      slideImages.push(image);
-    }
-    setMultipleValuesSlides(slideImages);
-  }, []);
-
-  useEffect(() => {
-    const slideImages = [];
-    for (let i = 8; i <= 13; i++) {
-      const image = require(`../resources/images/tutorial/Figure${i}.png`);
-      slideImages.push(image);
-    }
-    setNewVariableSlides(slideImages);
-  }, []);
-
-  useEffect(() => {
-    const slideImages = [];
-    for (let i = 1; i <= 6; i++) {
-      const image = require(`../resources/images/tutorial/Q${i}.png`);
-      slideImages.push(image);
-    }
-    setUseCaseSlides(slideImages);
-  }, []);
-*/
-  const unionSteps = [
-    'We first create a new graph for each UNION block and add the relevant elements, in our case, OMIM.',
-    'We then configure the OMIM attributes in both graphs to display "has name" and "has synonym" as the attribute "label".',
-    'We add each of the created blocks as a node...',
-    '...And join them together using the special property "UNION".',
-    'From this point, we can use the configured "label" to define filters.',
-    'Selecting OMIM as an output yields the expected results.'
-  ];
-
-  const UseCaseSteps = [
-    'First, we insert the CRM node by clicking on the CRM variable ("Variable browser" section).',
-    'We link the CRM to the chromosome variable ("Add relations" button).',
-    'And modify the attributes of both variables to select only those CRMs that overlap with the mutation (chr16:52565276) ("Set attributes" button).',
-    'We link the CRM entity with its database and target genes. We also link the genes to their encoded proteins ("Add relations" button).',
-    'We include the OMIM node for phenotypes and the optional relation between CRM and OMIM (information that is included additionally and does not act as a filter) ("Add optional relations" button).',
-    'Select the output data of interest ("Select ouput") and run the query ("Query"). Save the results with "Export results" and "Export query".'
-  ];
-
-  const tutorialSteps = [
-    'Select the first entity (subject node), in this case, "Gene", in the "Variable browser".',
-    'Select the type of relation you want to use, in this case "encodes", in the "Pattern designer".',
-    'Select the second entity (object node), in this case, "Protein"',
-    'Select in "Select output" the data you want to show in the output (click on "+").',
-    'Click on "Query" to launch the query.',
-    'Click on "Export results" to download the data. Click on "Export query" to save the query.'
-  ];
-
-  const GeneNameSteps = [
-    'After creating the "Gene - encodes - Protein" relation, select the node with the attributes to be edited ("Gene"), and click on "Set attributes".',
-    'Enter the gene name in the corresponding attribute ("has name"), and click on "Set properties".',
-    'Select the output data in "Select output", and execute the query ("Query"). Click on "Export results" to download the data. Click on "Export query" to save the query.'
-  ];
-
-  const mutationCRMSteps = [
-    'Create the relations: "CRM - part of - Chromosome", and "CRM - involved in positive regulation of - Gene".',
-    'Add attributes to the CRM node (sequence coordinates) ...',
-    '... and to the Chromosome node (chromosome name).',
-    'Select the data output (Genes) and run the query'
-  ];
-
-  const OptionalSteps = [
-    'After creating the "Gene - encodes - Protein" relation, select the node "Protein", and click on "Add optional relations" to insert the optional relations of interest ("Protein - is orthologous of - Protein", and "Protein - molecularly interacts with - Protein").',
-    'Select the "Gene" node and click on "Set attributes" to enter the gene name and the human taxon ID.',
-    'Select the data output and run the query'
-  ];
-
-  const MultipleValuesSteps = [
-    'Include the entity "CRM" and click on "Add relations".',
-    'Select the "observed in" property and use the "Enter URI values" box.',
-    'Enter the first URI (http://purl.obolibrary.org/obo/UBERON_0000948) and click "+".',
-    'Enter the second URI (http://purl.obolibrary.org/obo/UBERON_0002107) and click "+".',
-    'Click “OK” to enter the entity batch.',
-    'Select the data output in "Select output" and click on "Query" to run the query.'
-  ];
-
-  const NewVariableSteps = [
-    'Generate the relation "CRM - involved in positive regulation of - Gene".',
-    'Assign the attributes corresponding to the gene (name TOX3, and human taxon ID).',
-    'Select the CRM attributes that we are going to use to generate the new variables.',
-    'Create the new variable in "Set bindings".',
-    'Filter in "Set filters" the new variable.',
-    'Select the data output in "Select output" and click on "Query" to run the query.'
-  ];
-  /*
-    useEffect(() => {
-      const importImages = async () => {
-        const imageArray = [];
-        for (let i = 1; i <= 11; i++) {
-          if (i === 6) {
-            const geneImage = await import(`../resources/images/tutorial/geneProps.png`);
-            imageArray.push(geneImage.default);
-          } else if (i === 7) {
-            const protImage = await import(`../resources/images/tutorial/protProps.png`);
-            imageArray.push(protImage.default);
-          } else {
-            const image = await import(`../resources/images/tutorial/Figure${i}.png`);
-            imageArray.push(image.default);
-          }
-        }
-        setImages(imageArray);
-      }
-      importImages();
-    }, []);
-  */
   const sections = useMemo(() => [
     'Introduction',
-    'Query-building',
-    'Data-filtering',
-    'Optional-relations',
-    'Multiple-Values',
+    'Navigating-the-tool',
+    'Selecting-files',
+    'Discovery:-individual-features',
+    'Discovery:-aggregate-features',
     'Unique-values',
     'Count-entities',
     'Creating-and-Filtering-variables',
@@ -197,97 +56,141 @@ function Tutorial() {
       <aside className={TutorialStyles.sidebar}>
         <ScrollSidebar sections={sections} offset={55} />
       </aside>
-
-      {/* Introduction Section */}
       <div id="Introduction" className={TutorialStyles.contentContainer}>
-        <div className={TutorialStyles.textImageContainer}>
+
           <div className={TutorialStyles.textContainer}>
             <h2 className={TutorialStyles.centeredHeading}>Introduction</h2>
-            <span className={TutorialStyles.introText}>
-              This tutorial is still incomplete. This section covers the main functionalities of INTUITION NOT MEDIATA with step-by-step guided examples
-              to introduce the user to the building of biological queries graphically.
-              These queries are executed in the BioGateway graph network.
-              More advanced features and other examples are included
-              in an <a href="https://github.com/juan-mulero/cisreg/blob/main/INTUITION_Tutorial.pdf" target="_blank" rel="noopener noreferrer">advanced tutorial</a>.
+            <div className={TutorialStyles.introText}>
+              <p>
+                The <em>MEDIATA</em> platform has been developed to prepare distributed
+                clinical tabular data for machine learning (ML) through discovery,
+                preprocessing and integration, semantic alignment to ontologies, and
+                HL7 FHIR standardization. The goal is to achieve harmonized, standardized
+                datasets and/or mappings ready for federated training.
+              </p>
+              <p>
+                This tutorial serves as a guide for users in an already established
+                and deployed project. To participate and use the tool within your project,
+                please contact the{" "}
+                <a
+                  href="https://semantics.inf.um.es/mediata/#/about"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  development team
+                </a>.
+              </p>
+            </div>
+
+        </div>
+      </div>
+      <div id="Navigating-the-tool" className={TutorialStyles.contentContainer}>
+        <div className={TutorialStyles.textImageContainer}>
+          <div className={TutorialStyles.textContainer}>
+            <h2 className={TutorialStyles.centeredHeading}>Navigating the tool</h2>
+            <div className={TutorialStyles.introText}>
+              <p>
+                Once the tool has been deployed in at least one participating institution,
+                its datasets will be available for use. To access the platform, log in with your credentials.
+                Click the <strong> Login</strong> button at the top-right, in the navigation bar, and
+                enter the credentials provided by the development team.
+              </p>
+              <p>
+                After logging in, you'll be redirected to the node view. Here, all
+                institutions participating in the harmonization pipeline are listed.
+                You can select an institution by double-clicking it. Alternatively,
+                you can choose to work with multiple institutions at the same time:
+                drag each node of interest next to the others and click the <em>Join nodes </em>
+                control that will show between them.
+              </p>
+              <LandingImage
+                imageSrc={require("../resources/images/tutorial/1_nodes.gif")}
+                maintainAspectRatio={true}
+                alt="Dragging nodes and joining them"
+              />
+              <p>
+                Clicking a node (or a group of nodes) displays the DCAT descriptions
+                configured to describe the datasets within it. If multiple nodes are opened
+                at once, each of them will have its own collapsible tab. Expanding it will display
+                these description for the corresponding node.
+              </p>
               <br />
-              <br />
-              In a graph, nodes represent different types of biological entities, such as genes, proteins or CRMs,
-              and edges (or properties) are used to specify different types of relations that exist between two nodes
-              (for example, {"<"}Gene{">"} {"<"}encoding{">"} {"<"}Protein{">"}).
-              Some properties are also used to add attributes to entities.
-            </span>
+              <p>
+                While DCAT descriptions are public, operating within a node (i.e., accessing
+                and acting within the institution it represents) requires the appropriate
+                site-specific permissions. If you don't have these permissions, please contact
+                the team that deployed the tool.
+              </p>
+            </div>
+            <div className={TutorialStyles.introText}>
+              <p>
+                Inside a node, you can access the tool's different functionalities. New options
+                will appear in the top menu bar. You can also return to the nodes tab to select
+                different institutions. A highlight indicates your current section. Clicking the
+                section you're already in will reload that page.
+              </p>
+              <LandingImage
+                imageSrc={require("../resources/images/tutorial/2_navbar.gif")}
+                maintainAspectRatio={true}
+                alt="Top navigation bar showing the available sections"
+              />
+            </div>
           </div>
         </div>
       </div>
-      {/* How to Build a Query Section */}
-      <div id="Query-building" className={TutorialStyles.contentContainer}>
-        <div className={TutorialStyles.textImageContainer}>
+      <div id="Selecting-files" className={TutorialStyles.contentContainer}>
+
           <div className={TutorialStyles.textContainer}>
-            <h2 className={TutorialStyles.centeredHeading}>Query building made easy in 6 steps</h2>
+            <h2 className={TutorialStyles.centeredHeading}>Selecting files</h2>
             <span className={TutorialStyles.introText}>
-              The query building process involves the creation of a search pattern by linking entities
-              to their attributes and/or other entities.
-              We take as an example the previous case, the query:<i> Which proteins do the different genes encode?</i>
-              ({"<"}Gene{">"} {"<"}encodes{">"} {"<"}Protein{">"}).
+              When accessing most of the sections of the tool, the user will be presented with a list of files.
+              These list change from between each section: as detailed on each views description here, the Discovery
+              view selects both the raw datasets and the integrated files generated in the Integration view. Integration
+              allows you to select the metadata files that detail the features presents in datasets in the nodes.
+              Semantic alignment allows you to upload a file describing the elements of interest to be aligned to ontologies.
+              The same happens in the HL7 FHIR view. In both of these, the file exported from the Integration view can be used
+              as an entrypoint.
+              Files may take some time to load, depending on their size and the number of files present in the institution.
+              <br />
+              <br />
+              <p>
+                <em>Note:</em> To return to file selection in any view, click its name in the
+                top menu bar or reload the page.
+              </p>
             </span>
-            <br />
-            <br />
-            <span className={TutorialStyles.introText}>
-              <i>Note</i>: Links between entities can also be established by first introducing the two nodes of interest
-              and then the relation between them. Following the previous example:
-            </span>
-          </div>
+
         </div>
       </div>
-      {/* Data filtering */}
-      <div id="Data-filtering" className={TutorialStyles.contentContainer}>
+      <div id="Discovery:-individual-features" className={TutorialStyles.contentContainer}>
         <div className={TutorialStyles.textImageContainer}>
           <div className={TutorialStyles.textContainer}>
-            <h2 className={TutorialStyles.centeredHeading}>Data filtering</h2>
+            <h2 className={TutorialStyles.centeredHeading}>Discovery: Individual metrics</h2>
             <span className={TutorialStyles.introText}>
-              Linking two biological entities (or variables) by their relation (properties) is the simplest way to create a search pattern.
-              A search pattern selects the desired information from the knowledge network.
-              However, any biological entity can also be selected by its characteristics or attributes.
-              For example, genes can be selected by their names.
+              <em>Discovery</em> is the section where you will be first redirected after accessing a node.
+              This section displays all the dataset related statistics, with the first view displaying insights
+              related to each feature from the selected datasets individually. Initially you can recognize three areas:
+              the feature tables, the graphs and the sidebar. This sidebar is also present in the aggregate view, and holds
+              most controls.
+
+              <Slide images={DiscoverySlides} steps={DiscoverySteps} />
               <br />
               <br />
-              Below we illustrate a use case that extends the previous query to: <i>Which proteins are encoded by the TOX3 gene?</i>
+              The view first displays two tables: one for the features detected to be continuous, and another for
+              categorical features. Each table displays a row for each feature. The continuous table contains count,
+              mean, standard deviation, minimum, maximum, first and third quartiles, median and the number of missing entries. 
+              The categorical table contains the count, mode, mode frequency, mode percentage, second mode, second mode frequency,
+              second mode percentage and the number of missing entries.
+              <br />
+              <br />
+              Each feature has a graphical representation of its distribution. For continuous features, 
+              a histogram is shown, and for categorical features, a bar chart is shown. Either clicking on the
+              feature name in the corresponding table or on the graph will select that feature. The graphs can
+              expand by double clicking them.
+
+
+
             </span>
-            <Slide images={GeneNameSlides} steps={GeneNameSteps} />
-            <span className={TutorialStyles.introText}>
-              <br />
-              By defining the desired characteristics of biological entities (by clicking on "Set attibutes")
-              we can select entities based on these characteristics (attributes).
-              If the character is defined as "string" composed of letters and/or numbers we can use the operator {"'='"}
-              to find only exact strings, or the operator {"'⊆'"} to find substrings contained in a larger string.
-              If the character is only numeric we can find results equal to, larger, or smaller than, by the use of
-              the operators {"'='"}, {"'>'"}, {"'≥'"}, {"'<'"}, {"'≤'"}.
-              <br />
-              <br />
-              For example, we can query: <i>Which genes are regulated by enhancers that overlap with the chr16:52565276 mutation? </i>
-              i.e. CRM sequences that positively regulate gene expression.
-            </span>
-            <Slide images={mutationCRMSlides} steps={mutationCRMSteps} />
-          </div>
-        </div>
-      </div>
-      {/* Optional relations */}
-      <div id="Optional-relations" className={TutorialStyles.contentContainer}>
-        <div className={TutorialStyles.textImageContainer}>
-          <div className={TutorialStyles.textContainer}>
-            <h2 className={TutorialStyles.centeredHeading}>Optional relations</h2>
-            <span className={TutorialStyles.introText}>
-              INTUITION also allows to include optional relations ("Add optional relations").
-              As this is an optional pattern, the information is added if it exists, so it does not work as a filter.
-              <br />
-              <br />
-              In this way, INTUITION allows queries like:
-              <i> What proteins are encoded by the human TOX3 gene?
-                Do these protein products interact with any other proteins?
-                Is there information on proteins orthologous to those encoded by the human TOX3 gene?
-              </i>
-            </span>
-            <Slide images={OptionalSlides} steps={OptionalSteps} />
+
           </div>
         </div>
       </div>
@@ -367,7 +270,7 @@ function Tutorial() {
               <br />
               Below we illustrate an example: <i>Which CRMs with a length less than or equal to 500 bp positively regulate the human TOX3 gene?</i>
             </span>
-            <Slide images={NewVariableSlides} steps={NewVariableSteps} />
+
           </div>
         </div>
       </div>
@@ -379,7 +282,6 @@ function Tutorial() {
             <span className={TutorialStyles.introText}>
               INTUITION also allows a user to construct a new query from queries that address related biological aspects, by merging them. We illustrate this through a use case. For example, we want to retrieve the OMIM entities that contain the string "breast cancer" as a name or synonym (<i>Which OMIM entities contain "breast cancer" in their preferred label or alternative label?</i>). To do that, the steps outlined below need to be followed:
             </span>
-            <Slide images={unionslides} steps={unionSteps} />
           </div>
         </div>
       </div>
@@ -429,7 +331,6 @@ function Tutorial() {
             <span className={TutorialStyles.introText}>
               A guided step-by-step guide to building Use Case 1.1 is shown below: <i>Is the rs4784227 mutation (chr16:52565276) located in any enhancer sequence linked to target genes in the network? What databases support the sequence and what are their target genes? Is the enhancer related to any disease? Which proteins are encoded by the genes?</i>
             </span>
-            <Slide images={UseCaseSlides} steps={UseCaseSteps} />
           </div>
         </div>
       </div>

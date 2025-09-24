@@ -264,3 +264,25 @@
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
 }
+
+
+.iconSvg {
+  shape-rendering: geometricPrecision;
+  text-rendering: optimizeLegibility;
+  color-interpolation: sRGB;
+}
+
+.iconSvg line,
+.iconSvg path,
+.iconSvg polyline,
+.iconSvg polygon {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Keep strokes consistent while moving */
+.magnifier .lens,
+.magnifier .handle,
+.magnifier .glint {
+  vector-effect: non-scaling-stroke;
+}

@@ -61,7 +61,6 @@
   text-align: right;
 }
 
-
 .textContainer,
 .overlappingImagesContainer {
   flex: 1;
@@ -107,10 +106,12 @@
   margin-top: 20px;
 }
 
+/* ---- CTA button (responsive width & centered) ---- */
 .big_button {
   min-height: 80px;
-  width: 100%;
-  min-width: 250px;
+  width: clamp(220px, 70vw, 320px);
+  margin-inline: auto;
+
   user-select: none;
   font-size: 18px;
   font-weight: 600;
@@ -126,11 +127,10 @@
   overflow: hidden;
   transition: background-position 0.5s ease-in-out;
 
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px; /* spacing between text and icon */
+  gap: 8px;
 }
 
 .big_button::before,
@@ -339,68 +339,6 @@
   margin-bottom: 10px;
 }
 
-@media (max-width: 768px) {
-  .textImageContainerUnion {
-    flex-direction: column;
-  }
-
-  .imageContainerUnion,
-  .textContainerUnion {
-    width: 100%;
-    max-width: none;
-  }
-
-  .imageContainerUnion {
-    order: -1;
-  }
-
-  .textContainerUnion {
-    font-size: 16px;
-  }
-
-  .contentContainer {
-    padding: 10px;
-  }
-
-  .textImageContainer {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .textContainer,
-  .sideHeading {
-    text-align: center;
-  }
-
-  .imageWrapper {
-    position: relative;
-    margin: 10px 0;
-  }
-
-  .big_button {
-    width: 150px;
-    font-size: 14px;
-    min-height: 55px;
-  }
-
-  .linkList {
-    flex-direction: column;
-  }
-
-  .linkListItem {
-    margin: 5px 0;
-  }
-
-  .overlappingImagesContainer {
-    width: 80vw;
-    height: 80vw;
-  }
-}
-
-
-
-
-
 /* === Features row === */
 .featuresSection {
   width: 100%;
@@ -485,4 +423,69 @@
 
 .onDark {
   color: var(--text-color-on-darkbg-light);
+}
+
+/* ---- Mobile tweaks ---- */
+@media (max-width: 768px) {
+  .textImageContainerUnion {
+    flex-direction: column;
+  }
+
+  .imageContainerUnion,
+  .textContainerUnion {
+    width: 100%;
+    max-width: none;
+  }
+
+  .imageContainerUnion {
+    order: -1;
+  }
+
+  .textContainerUnion {
+    font-size: 16px;
+  }
+
+  .contentContainer {
+    padding: 10px;
+  }
+
+  .textImageContainer {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .textContainer,
+  .sideHeading {
+    text-align: center;
+  }
+
+  .imageWrapper {
+    position: relative;
+    margin: 10px 0;
+  }
+
+  /* keep smaller text/height if you like, but no fixed width */
+  .big_button {
+    font-size: 14px;
+    min-height: 55px;
+  }
+
+  .linkList {
+    flex-direction: column;
+  }
+
+  .linkListItem {
+    margin: 5px 0;
+  }
+
+  .overlappingImagesContainer {
+    width: 80vw;
+    height: 80vw;
+  }
+
+  .buttonContainerRight {
+    justify-content: center;
+    margin-top: 12px;
+    margin-left: 0;
+  }
 }

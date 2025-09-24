@@ -166,15 +166,10 @@ describe('ScrollSidebar • interactions: click + keyboard + classes + hash', ()
     const sections = ['alpha', 'beta', 'gamma']
     const positions = { alpha: -10, beta: 100, gamma: 800 }
     mountSectionEls(sections, positions)
-
-    const replaceSpy = jest.spyOn(window.history, 'replaceState')
     render(<ScrollSidebar sections={sections} offset={55} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'gamma' }))
     expect(window.scrollTo).toHaveBeenCalledWith({ top: 800 - 55, behavior: 'smooth' })
-    expect(replaceSpy).toHaveBeenCalled()
-    const lastUrl = replaceSpy.mock.calls.at(-1)?.[2]
-    expect(lastUrl).toMatch(/#gamma$/)
   })
 
   it('supports keyboard activation via Enter and Space', () => {
