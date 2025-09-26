@@ -102,22 +102,22 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
         prev.map((cv, i) =>
           i === currentGroupIndex
             ? {
-                ...cv,
-                mapping: [
-                  ...cv.mapping,
-                  {
-                    groupColumn,
-                    value:
-                      typeof value === "object"
-                        ? {
-                            minValue: value.minValue,
-                            maxValue: value.maxValue,
-                            type: value.type,
-                          }
-                        : value,
-                  },
-                ],
-              }
+              ...cv,
+              mapping: [
+                ...cv.mapping,
+                {
+                  groupColumn,
+                  value:
+                    typeof value === "object"
+                      ? {
+                        minValue: value.minValue,
+                        maxValue: value.maxValue,
+                        type: value.type,
+                      }
+                      : value,
+                },
+              ],
+            }
             : cv
         )
       );
@@ -314,10 +314,10 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
                   {group.values.includes("integer")
                     ? "Integer"
                     : group.values.includes("double")
-                    ? "Double"
-                    : group.values.includes("date")
-                    ? "Date"
-                    : "Categorical"}
+                      ? "Double"
+                      : group.values.includes("date")
+                        ? "Date"
+                        : "Categorical"}
                 </span>
                 <em className={ColumnMappingStyles.groupFile}>
                   from {group.fileName}
@@ -326,7 +326,7 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
             </div>
             <div className={ColumnMappingStyles.groupContent}>
               {group.values.includes("integer") ||
-              group.values.includes("double") ? (
+                group.values.includes("double") ? (
                 <p className={ColumnMappingStyles.groupDetail}>
                   This column represents numerical data.
                 </p>
@@ -435,9 +435,8 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
 
         <div
           ref={paneRef}
-          className={`${ColumnMappingStyles.slidingPane} ${
-            isPaneVisible ? ColumnMappingStyles.paneVisible : ""
-          }`}
+          className={`${ColumnMappingStyles.slidingPane} ${isPaneVisible ? ColumnMappingStyles.paneVisible : ""
+            }`}
         >
           {currentGroupIndex !== null && (
             <div className={ColumnMappingStyles.selectMappingContainer}>
@@ -454,7 +453,7 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
                 </button>
               </div>
 
-              {groups.map((group, index) => {
+              {groups.map((group) => {
                 const darkenedColor = darkenColor(group.color, -30);
                 const firstValueType = group.values[0];
                 const { min, max } = extractMinMax(group.values, firstValueType);
@@ -463,7 +462,7 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
                 const allMapped = availableValues.length === 0;
 
                 return (
-                  <div key={index} className={ColumnMappingStyles.mappingGroup}>
+                  <div key={group.column} className={ColumnMappingStyles.mappingGroup}>
                     <div
                       className={ColumnMappingStyles.columnTitle}
                       style={{ color: darkenedColor }}
@@ -595,14 +594,14 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
                       const columnName = map.groupColumn;
                       const displayVal =
                         typeof map.value === "object" &&
-                        map.value.minValue !== undefined
+                          map.value.minValue !== undefined
                           ? `${formatValue(
-                              map.value.minValue,
-                              map.value.type
-                            )} - ${formatValue(
-                              map.value.maxValue,
-                              map.value.type
-                            )}`
+                            map.value.minValue,
+                            map.value.type
+                          )} - ${formatValue(
+                            map.value.maxValue,
+                            map.value.type
+                          )}`
                           : map.value;
 
                       return (

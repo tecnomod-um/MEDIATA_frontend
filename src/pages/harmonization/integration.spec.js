@@ -2,16 +2,19 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Integration from './integration';
+import { useNode } from '../../context/nodeContext';
+import { getNodeElements, fetchElementFile } from '../../util/petitionHandler';
+import { useLocation } from 'react-router-dom';
+import { updateNodeAxiosBaseURL } from '../../util/nodeAxiosSetup';
+import { generateDistinctColors } from '../../util/colors';
+import { toast } from 'react-toastify';
 
 jest.mock('react-router-dom', () => ({
   useLocation: jest.fn(),
 }));
-import { useLocation } from 'react-router-dom';
-
 jest.mock('../../context/nodeContext', () => ({
   useNode: jest.fn(),
 }));
-import { useNode } from '../../context/nodeContext';
 
 jest.mock('../../util/petitionHandler', () => ({
   getNodeElements: jest.fn(),
@@ -19,18 +22,20 @@ jest.mock('../../util/petitionHandler', () => ({
   setParseConfigs: jest.fn(() => Promise.resolve()),
   fetchSchemaFromBackend: jest.fn(() => Promise.resolve({ schema: { foo: 'bar' } })),
 }));
-import { getNodeElements, fetchElementFile } from '../../util/petitionHandler';
 
 jest.mock('../../util/nodeAxiosSetup', () => ({
   updateNodeAxiosBaseURL: jest.fn(),
 }));
-import { updateNodeAxiosBaseURL } from '../../util/nodeAxiosSetup';
+
 
 jest.mock('../../util/colors', () => ({
   generateDistinctColors: jest.fn(),
 }));
-import { generateDistinctColors } from '../../util/colors';
 
+jest.mock('react-transition-group', () => ({
+  CSSTransition: ({ in: inProp, children }) => (inProp ? <>{children}</> : null),
+  TransitionGroup: ({ children }) => <>{children}</>,
+}));
 
 jest.mock('./integration.module.css', () => ({}));
 jest.mock('../../components/Integration/ColumnMapping/columnMapping', () => () => <div data-testid="ColumnMapping" />);
@@ -55,7 +60,7 @@ jest.mock('react-toastify', () => ({
     error: jest.fn(),
   },
 }));
-import { toast } from 'react-toastify';
+
 
 describe('Integration Page', () => {
   beforeEach(() => {
@@ -84,6 +89,9 @@ describe('Integration Page', () => {
     render(<Integration />);
     await waitFor(() => {
       expect(updateNodeAxiosBaseURL).toHaveBeenCalledTimes(nodes.length);
+    });
+
+    await waitFor(() => {
       expect(getNodeElements).toHaveBeenCalledTimes(nodes.length);
     });
   });
@@ -97,10 +105,10 @@ describe('Integration Page', () => {
 
     render(<Integration />);
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalledWith('file.csv'));
-    expect(screen.getByTestId('ColumnSearch')).toBeInTheDocument();
-    expect(screen.getByTestId('ColumnMapping')).toBeInTheDocument();
-    expect(screen.getByTestId('MappingsResult')).toBeInTheDocument();
-    expect(screen.getByTestId('SchemaTray')).toBeInTheDocument();
+    expect(await screen.findByTestId('ColumnSearch')).toBeInTheDocument();
+    expect(await screen.findByTestId('ColumnMapping')).toBeInTheDocument();
+    expect(await screen.findByTestId('MappingsResult')).toBeInTheDocument();
+    expect(await screen.findByTestId('SchemaTray')).toBeInTheDocument();
   });
 
   test('shows error toast when file processing fails', async () => {

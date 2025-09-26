@@ -15,7 +15,6 @@ function SemanticAlignment() {
   const location = useLocation();
   const workspaceRef = useRef(null);
   const hiddenFileInput = useRef(null);
-
   const [cards, setCards] = useState([]);
   const [connections, setConnections] = useState([]);
   const [draggingCardId, setDraggingCardId] = useState(null);
@@ -31,7 +30,6 @@ function SemanticAlignment() {
   const [zoom, setZoom] = useState(1);
   const [middlePanelWidth, setMiddlePanelWidth] = useState(50);
   const [isResizing, setIsResizing] = useState(false);
-
   const [isMobile, setIsMobile] = useState(false);
   const [mobileView, setMobileView] = useState("detail");
 
@@ -513,7 +511,7 @@ function SemanticAlignment() {
         }}
         unmountOnExit
       >
-        <div className={SemanticAlignmentStyles.mainContent} ref={workspaceRef}>
+        <div className={SemanticAlignmentStyles.mainContent} ref={workspaceRef} data-testid="main-content">
           {/* LEFT PANEL: RdfSidebar */}
           <div className={SemanticAlignmentStyles.leftPanel}>
             {elements && (
@@ -531,6 +529,7 @@ function SemanticAlignment() {
           <div
             className={SemanticAlignmentStyles.middlePanel}
             style={{ width: `${middlePanelWidth}vw` }}
+            data-testid="middle-panel"
           >
             <ElementDetailPanel
               activeElement={activeItem}
@@ -563,18 +562,17 @@ function SemanticAlignment() {
               builtClasses={builtClasses}
             />
           </div>
-
-          {/* RESIZER */}
           <div
             className={SemanticAlignmentStyles.resizer}
+            role="separator"
+            aria-label="Resize middle panel"
+            data-testid="resizer"
             onMouseDown={handleResizerMouseDown}
             onTouchStart={(e) => {
               e.preventDefault();
               setIsResizing(true);
             }}
           />
-
-          {/* RIGHT PANEL: Workspace */}
           <div
             className={SemanticAlignmentStyles.rightPanel}
             style={{
@@ -613,7 +611,11 @@ function SemanticAlignment() {
               style={{ display: "none" }}
             />
             <div className={SemanticAlignmentStyles.controls}>
-              <div className={SemanticAlignmentStyles.controlsBottom}>
+              <div className={SemanticAlignmentStyles.controlsBottom}
+                data-testid="controls"
+                role="group"
+                aria-label="Workspace controls"
+              >
                 <button
                   onClick={() => {
                     setIsConnecting(true);
@@ -668,7 +670,6 @@ function SemanticAlignment() {
 
     return (
       <div className={SemanticAlignmentStyles.mobileLayout}>
-        {/* TOP 30%: RdfSidebar */}
         <div className={SemanticAlignmentStyles.mobileSidebar}>
           <RdfSidebar
             elements={elements}
@@ -677,8 +678,6 @@ function SemanticAlignment() {
             onSelectElement={handleSelectElement}
             builtClasses={builtClasses}
           />
-
-          {/* SINGLE TOGGLE BUTTON HOVERING OVER THE SIDEBAR */}
           <button
             className={SemanticAlignmentStyles.mobileToggleBtn}
             onClick={toggleMobileView}
@@ -686,8 +685,6 @@ function SemanticAlignment() {
             {mobileView === "detail" ? "Workspace" : "Details"}
           </button>
         </div>
-
-        {/* BOTTOM 70%: show either the detail panel or the workspace */}
         <div className={SemanticAlignmentStyles.mobileContent}>
           {mobileView === "detail" && (
             <div className={SemanticAlignmentStyles.mobileDetailWrapper}>
@@ -750,9 +747,12 @@ function SemanticAlignment() {
                 ))}
               </div>
 
-              {/* Controls at bottom in workspace view */}
               <div className={SemanticAlignmentStyles.controls}>
-                <div className={SemanticAlignmentStyles.controlsBottom}>
+                <div className={SemanticAlignmentStyles.controlsBottom}
+                  data-testid="controls"
+                  role="group"
+                  aria-label="Workspace controls"
+                >
                   <button
                     onClick={() => {
                       setIsConnecting(true);

@@ -55,14 +55,14 @@ describe('<HL7FHIR />', () => {
       pickerProps.onFileUpload(new File(['dummy'], 'format.csv'));
     });
 
-    await waitFor(() => expect(screen.getByTestId('list')).toBeInTheDocument());
+    await screen.findByTestId('list');
     expect(listProps.elements).toHaveLength(1);
     await act(async () => {
       screen.getByTestId('create-btn').click();
     });
 
     expect(mockCreateInitial).toHaveBeenCalledTimes(1);
-    await waitFor(() => expect(screen.getByTestId('cluster-list')).toBeInTheDocument());
+    await screen.findByTestId('cluster-list');
     expect(clusterProps.clusters).toHaveLength(1);
     expect(clusterProps.clusters[0].name).toBe('Cluster 1');
   });

@@ -1,5 +1,3 @@
-jest.mock('distinct-colors', () => jest.fn(() => []));
-
 import React from 'react'
 import { render, screen, fireEvent, within } from '@testing-library/react'
 import '@testing-library/jest-dom'
@@ -7,7 +5,7 @@ import ColumnMapping from './columnMapping'
 
 // Mock CSS module to simple class names
 jest.mock('./columnMapping.module.css', () => new Proxy({}, { get: (_, k) => String(k) }), { virtual: true })
-
+jest.mock('distinct-colors', () => jest.fn(() => []));
 // Mock child components we don't need to exercise deeply
 jest.mock('react-switch', () => (props) => (
   <input

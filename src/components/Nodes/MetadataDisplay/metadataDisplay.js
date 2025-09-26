@@ -17,7 +17,6 @@ const MetadataDisplay = ({ isOpen, metadata, loadingMetadata, accessingNode, hea
           <button
             className={MetadataDisplayStyles.closeBtn}
             onClick={closeModal}
-            aria-label="Close"
           >
             <IoMdClose />
           </button>
