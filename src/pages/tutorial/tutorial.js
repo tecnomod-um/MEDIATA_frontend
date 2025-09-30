@@ -46,9 +46,7 @@ function Tutorial() {
     'Integration',
     'Integration:-updating-files',
     'Semantic-alignment',
-    'Unions',
-    'Variables/Biological-entities',
-    'Guided-Use-case',
+    'HL7-FHIR'
   ], []);
 
   return (
@@ -356,28 +354,24 @@ function Tutorial() {
           <div className={TutorialStyles.textContainer}>
             <h2 className={TutorialStyles.centeredHeading}>Semantic Alignment</h2>
             <span className={TutorialStyles.introText}>
-              After declaring the correct mapping configuration, you can either download the resulting map by clicking the
-              'Download Mappings' button or apply it to datasets located in the node. Clicking the green arrow button will
-              directly redirect you to the semantic alignment view, selecting the file produced by applying the map. 
-              < br />
-              < br />
-              To apply the map to datasets located in the node, click the 'Process datasets' button. This will open a modal
-              where you can select the files to process, grouped by in which server they are located. Clicking any of the
-              file entries will toggle them for processing. The available data cleaning options are also available in this
-              modal. By clicking the 'Data cleaning' button, you are able to set duplicate deletion, removal of empty rows
-              and date standardization. Once the files are selected and the cleaning options are configured, click the 'Apply'
-              button at the bottom to process the files. By clicking the leftmost green arrow button, the Discovery view will
-              be opened, selecting the integrated files for exploration.
-              <PageImage
-                imageSrc={require("../../resources/images/tutorial/4_change_files_modal.png")}
-                maintainAspectRatio={true}
-                alt="Dragging nodes and joining them"
-              />
+             This section is still incomplete. 
+             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
             </span>
           </div>
         </div>
       </div>
 
+      <div id="HL7-FHIR" className={TutorialStyles.contentContainer}>
+        <div className={TutorialStyles.textImageContainer}>
+          <div className={TutorialStyles.textContainer}>
+            <h2 className={TutorialStyles.centeredHeading}>HL7 FHIR</h2>
+            <span className={TutorialStyles.introText}>
+             This section is still incomplete.
+             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            </span>
+          </div>
+        </div>
+      </div>
     </div >
   );
 }
