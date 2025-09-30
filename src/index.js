@@ -13,11 +13,11 @@ import Integration from "./pages/harmonization/integration";
 import SemanticAlignment from "./pages/harmonization/semanticAlignment";
 import HL7FHIR from "./pages/harmonization/hl7FHIR";
 
-const Main = lazy(() => import(/* webpackChunkName: "page-main" */ "./pages/main"));
-const Login = lazy(() => import(/* webpackChunkName: "page-login" */ "./pages/login"));
-const About = lazy(() => import(/* webpackChunkName: "page-about" */ "./pages/about"));
-const Tutorial = lazy(() => import(/* webpackChunkName: "page-tutorial" */ "./pages/tutorial"));
-const Nodes = lazy(() => import(/* webpackChunkName: "page-nodes" */ "./pages/nodes"));
+const Main = lazy(() => import(/* webpackChunkName: "page-main" */ "./pages/main/main"));
+const Login = lazy(() => import(/* webpackChunkName: "page-login" */ "./pages/login/login"));
+const About = lazy(() => import(/* webpackChunkName: "page-about" */ "./pages/about/about"));
+const Tutorial = lazy(() => import(/* webpackChunkName: "page-tutorial" */ "./pages/tutorial/tutorial"));
+const Nodes = lazy(() => import(/* webpackChunkName: "page-nodes" */ "./pages/nodes/nodes"));
 
 const App = () => {
   const { logout } = useAuth();

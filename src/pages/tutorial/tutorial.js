@@ -1,50 +1,18 @@
-import React, { useState, useEffect, useMemo, useLayoutEffect } from "react";
-import ScrollSidebar from "../components/Common/ScrollSidebar/scrollSidebar.js";
+import React, { useMemo, useLayoutEffect } from "react";
+import ScrollSidebar from "../../components/Common/ScrollSidebar/scrollSidebar.js";
 import TutorialStyles from "./tutorial.module.css";
-import Slide from '../components/Common/Slide/slide.js';
-import PageImage from "../components/Common/PageImage/pageImage.js";
+import Slide from '../../components/Common/Slide/slide.js';
+import PageImage from "../../components/Common/PageImage/pageImage.js";
+import { DiscoverySlides, AggregateSlides, IntegrationSlides } from "./images";
 
 function Tutorial() {
-  const [images, setImages] = useState([]);
-  const [DiscoverySlides, setDiscoverySlides] = useState([]);
-  const [AggregateSlides, setAggregateSlides] = useState([]);
-  const [IntegrationSlides, setIntegrationSlides] = useState([]);
-
-  useLayoutEffect(() => {
-    if ("scrollRestoration" in window.history)
-      window.history.scrollRestoration = "manual";
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-  }, []);
-
-
-  useEffect(() => {
-    const slideImages = [];
-    for (let i = 1; i <= 4; i++) {
-      const image = require(`../resources/images/tutorial/slide1/${i}.jpg`);
-      slideImages.push(image);
-    }
-    setDiscoverySlides(slideImages);
-  }, []);
-
-
-  useEffect(() => {
-    const slideImages = [];
-    for (let i = 1; i <= 4; i++) {
-      const image = require(`../resources/images/tutorial/slide2/${i}.jpg`);
-      slideImages.push(image);
-    }
-    setAggregateSlides(slideImages);
-  }, []);
-
-  useEffect(() => {
-    const slideImages = [];
-    for (let i = 1; i <= 4; i++) {
-      const image = require(`../resources/images/tutorial/slide2/${i}.jpg`);
-      slideImages.push(image);
-    }
-    setIntegrationSlides(slideImages);
-  }, []);
-
+  /*
+    useLayoutEffect(() => {
+      if ("scrollRestoration" in window.history)
+        window.history.scrollRestoration = "manual";
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }, []);
+  */
   const DiscoverySteps = [
     'Overall Discovery view.',
     'Feature tables containing statistics.',
@@ -61,18 +29,12 @@ function Tutorial() {
   ];
 
   const IntegrationSteps = [
-    'Aggregate statistics display',
-    'Aggregate statistics table',
-    'Chi-Squared test results.',
-    'List of ommited features in the calculations.',
-    'Side bar hosting most of the page controls.'
+    'Integration display',
+    'Feature column, containing all the features present in the selected metadata files.',
+    'Features selected to map.',
+    'Map building controls.',
+    'Resulting map to be applied.'
   ];
-
-  useEffect(() => {
-    const ctx = require.context("../resources/images/tutorial", false, /\.(png|jpe?g|svg|gif)$/);
-    const imgs = ctx.keys().sort().map(ctx);
-    setImages(imgs);
-  }, []);
 
   const sections = useMemo(() => [
     'Introduction',
@@ -83,12 +45,12 @@ function Tutorial() {
     'Discovery:-aggregate-metrics',
     'Integration',
     'Integration:-updating-files',
-    'Creating-and-Filtering-variables',
+    'Semantic-alignment',
     'Unions',
     'Variables/Biological-entities',
     'Guided-Use-case',
   ], []);
-  const [selectedRange, setSelectedRange] = useState();
+
   return (
     <div className={TutorialStyles.pageContainer}>
       <aside className={TutorialStyles.sidebar}>
@@ -141,7 +103,7 @@ function Tutorial() {
                 control that will show between them.
               </p>
               <PageImage
-                imageSrc={require("../resources/images/tutorial/1_nodes.gif")}
+                imageSrc={require("../../resources/images/tutorial/1_nodes.gif")}
                 maintainAspectRatio={true}
                 alt="Dragging nodes and joining them"
               />
@@ -167,7 +129,7 @@ function Tutorial() {
                 section you're already in will reload that page.
               </p>
               <PageImage
-                imageSrc={require("../resources/images/tutorial/2_navbar.gif")}
+                imageSrc={require("../../resources/images/tutorial/2_navbar.gif")}
                 maintainAspectRatio={true}
                 alt="Top navigation bar showing the available sections"
               />
@@ -187,9 +149,7 @@ function Tutorial() {
             The same happens in the HL7 FHIR view. In both of these, the file exported from the Integration view can be used
             as an entrypoint.
             Files may take some time to load, depending on their size and the number of files present in the institution.
-            <br />
-            <br />
-            <p>
+            <p className={TutorialStyles.lesserText}>
               <em>Note:</em> To return to file selection in any view, click its name in the
               top menu bar or reload the page.
             </p>
@@ -329,11 +289,36 @@ function Tutorial() {
             <span className={TutorialStyles.introText}>
               The <em>Integration</em> view allows you to either structurally or semantically align the features present
               in the datasets of the selected institution(s). To do so, you must first select one or more metadata files
-              to select the pile of features to work with. Once a file is selected, the view will load the view, which
-              features present in it.
-              The output table shows the biological entities that meet the biological selection criteria.
-              Since a user can design complex query patterns and has the freedom to choose
-              which entities they want to include in the output ("Select output" button), duplicate entities might appear in the result.
+              to select the pile of features to work with.
+              <Slide images={IntegrationSlides} steps={IntegrationSteps} />
+              At the left, the feature column lists the names of the feature columns present in the datasets. Either clicking
+              them or dragging them onto the selection area will add them to the list of features to map. Once a feature
+              is added, it's range of values are able to be selected in the control panel. Hovering over selected elements
+              will reveal a delete button to remove them from the selection.
+              <br />
+              <br />
+              The space between the selected features and the control panel is resizable. To do so, drag the grey element
+              between them to adjust the space as needed. Previously to defining the mappings, a user can load a JSON schema
+              describing the mapping structure to make the platform give suggestions and ease the mapping process. To start
+              defining mappings, input a name for the resulting column and then add each value that column will have. In each
+              value, you need to define it's content and what values from the selected features it will map. In this selection,
+              continuous features will allow you to select ranges of values, while categorical features will allow you to
+              select individual values. Once the mapping is defined, click the "Add mapping" button to add it to the resulting map.
+              <p className={TutorialStyles.lesserText}>
+                <em>Note:</em> You can Also configure the mapping to automatically substitute the features it maps or
+                set it to one-hot encode the resulting column by using the controls at the left of the name input.
+              </p>
+              <PageImage
+                imageSrc={require("../../resources/images/tutorial/3_integration_usage.gif")}
+                maintainAspectRatio={true}
+                alt="Dragging nodes and joining them"
+              />
+              Once a mapping is added, it will appear in the resulting map area. This area lists all the features that will
+              be present when applied to a file. On each mapping, you can see it's name, where it is from and a summary of
+              the values it maps. At first, this list will display the features already present in the files: As you declare
+              new custom ones and remove other features, this list will result in the shape of the final file.
+              Each mapping can be deleted by clicking the upper right cross that appears on hover. Double clicking either
+              the feature name or one of the values allows you to edit it.
             </span>
           </div>
         </div>
@@ -343,27 +328,56 @@ function Tutorial() {
           <div className={TutorialStyles.textContainer}>
             <h2 className={TutorialStyles.centeredHeading}>Integration: Updating files</h2>
             <span className={TutorialStyles.introText}>
-              This tutorial is still in development. The output table shows the biological entities that meet the biological selection criteria.
-              Since a user can design complex query patterns and has the freedom to choose
-              which entities they want to include in the output ("Select output" button), duplicate entities might appear in the result.
-              <br />
-
-              <p className={TutorialStyles.lesserText}>
-                The properties are detailed with examples and their domains <a href="https://github.com/juan-mulero/cisreg/blob/main/BGW_graphs.xlsx" target="_blank" rel="noopener noreferrer">here</a>.
-              </p>
-
-
-              <br />
-              For example, in the previous query (<i>Which CRMs have been identified in heart (UBERON_0000948) and liver (UBERON_0002107)?</i>)
-              we can select the CRM sequences and tissues in the output ("Select output").
-              But we can also select only the CRM sequences, or only the tissues.
-              Since a CRM can be found in both the heart and the liver, those CRMs found in both tissues would appear duplicated
-              if we only chose CRMs in the output. This is because the CRM fits the search pattern in both cases.
-              For this reason, the "Distinct" button is activated for automatic filtering.
+              After declaring the correct mapping configuration, you can either download the resulting map by clicking the
+              'Download Mappings' button or apply it to datasets located in the node. Clicking the green arrow button will
+              directly redirect you to the semantic alignment view, selecting the file produced by applying the map. 
+              < br />
+              < br />
+              To apply the map to datasets located in the node, click the 'Process datasets' button. This will open a modal
+              where you can select the files to process, grouped by in which server they are located. Clicking any of the
+              file entries will toggle them for processing. The available data cleaning options are also available in this
+              modal. By clicking the 'Data cleaning' button, you are able to set duplicate deletion, removal of empty rows
+              and date standardization. Once the files are selected and the cleaning options are configured, click the 'Apply'
+              button at the bottom to process the files. By clicking the leftmost green arrow button, the Discovery view will
+              be opened, selecting the integrated files for exploration.
+              <PageImage
+                imageSrc={require("../../resources/images/tutorial/4_change_files_modal.png")}
+                maintainAspectRatio={true}
+                alt="Dragging nodes and joining them"
+              />
             </span>
           </div>
         </div>
       </div>
+
+
+      <div id="Semantic-alignment" className={TutorialStyles.contentContainer}>
+        <div className={TutorialStyles.textImageContainer}>
+          <div className={TutorialStyles.textContainer}>
+            <h2 className={TutorialStyles.centeredHeading}>Semantic Alignment</h2>
+            <span className={TutorialStyles.introText}>
+              After declaring the correct mapping configuration, you can either download the resulting map by clicking the
+              'Download Mappings' button or apply it to datasets located in the node. Clicking the green arrow button will
+              directly redirect you to the semantic alignment view, selecting the file produced by applying the map. 
+              < br />
+              < br />
+              To apply the map to datasets located in the node, click the 'Process datasets' button. This will open a modal
+              where you can select the files to process, grouped by in which server they are located. Clicking any of the
+              file entries will toggle them for processing. The available data cleaning options are also available in this
+              modal. By clicking the 'Data cleaning' button, you are able to set duplicate deletion, removal of empty rows
+              and date standardization. Once the files are selected and the cleaning options are configured, click the 'Apply'
+              button at the bottom to process the files. By clicking the leftmost green arrow button, the Discovery view will
+              be opened, selecting the integrated files for exploration.
+              <PageImage
+                imageSrc={require("../../resources/images/tutorial/4_change_files_modal.png")}
+                maintainAspectRatio={true}
+                alt="Dragging nodes and joining them"
+              />
+            </span>
+          </div>
+        </div>
+      </div>
+
     </div >
   );
 }

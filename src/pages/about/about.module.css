@@ -1,4 +1,4 @@
-@import '../variables.css';
+@import '../../variables.css';
 
 .pageContainer {
     min-height: calc(100vh - 55px);

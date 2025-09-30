@@ -7,7 +7,7 @@
   text-align: left;
   color: inherit;
   font: inherit;
-  line-height: 1.35;
+  line-height: 20px;
   cursor: pointer;
 
   white-space: normal;
@@ -20,6 +20,16 @@
   word-break: normal;
   overflow-wrap: anywhere;
   hyphens: none;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  margin: 0;
 }
 
 .kicker {

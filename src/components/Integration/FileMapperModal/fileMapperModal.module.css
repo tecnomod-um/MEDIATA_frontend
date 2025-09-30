@@ -73,7 +73,6 @@
   padding: 15px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
   width: 25vw;
   min-width: 250px;
   text-align: center;
@@ -216,9 +215,22 @@
   font-size: 1em;
   max-width: 100%;
   overflow: hidden;
+  quotes: "“""”";
+}
+
+.fileTitle {
+  display: block;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  quotes: "“""”";
+}
+
+/* Put the node on its own line */
+.nodeSubtitle {
+  display: block;
+  font-size: 0.85em;
+  color: #666;
+  margin-top: 2px;
 }
 
 .modalFooter {

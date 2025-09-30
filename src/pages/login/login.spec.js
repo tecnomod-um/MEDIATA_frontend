@@ -12,12 +12,12 @@ jest.mock('./login.module.css', () => ({
 }));
 
 const mockLoginUser = jest.fn();
-jest.mock('../util/petitionHandler', () => ({
+jest.mock('../../util/petitionHandler', () => ({
   loginUser: (...args) => mockLoginUser(...args),
 }));
 
 const mockLogin = jest.fn();
-jest.mock('../context/authContext', () => ({
+jest.mock('../../context/authContext', () => ({
   useAuth: () => ({ login: mockLogin }),
 }));
 

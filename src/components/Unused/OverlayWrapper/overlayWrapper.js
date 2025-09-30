@@ -15,15 +15,13 @@ function OverlayWrapper({ isOpen, children, closeModal, maxWidth }) {
     }
   }, [isOpen]);
 
-  const handleBackdropMouseDown = () => {
-    setMouseDownOnBackdrop(true);
+  const handleBackdropMouseDown = (e) => {
+    if (e.target === e.currentTarget) setMouseDownOnBackdrop(true);
   };
-
-  const handleBackdropMouseUp = () => {
-    if (mouseDownOnBackdrop) closeModal();
+  const handleBackdropMouseUp = (e) => {
+    if (mouseDownOnBackdrop && e.target === e.currentTarget) closeModal();
     setMouseDownOnBackdrop(false);
   };
-
   return createPortal(
     <CSSTransition
       in={isOpen}
@@ -37,18 +35,17 @@ function OverlayWrapper({ isOpen, children, closeModal, maxWidth }) {
       nodeRef={modalRef}
       unmountOnExit
     >
-<div className={OverlayWrapperStyles.darkBG}
-  onMouseDown={handleBackdropMouseDown}
-  onMouseUp={handleBackdropMouseUp}
-  ref={modalRef}>
-  <div className={OverlayWrapperStyles.modal}
-    style={{ maxWidth: maxWidth }}
-    onClick={(e) => e.stopPropagation()}
-    onMouseDown={(e) => e.stopPropagation()}
-    onMouseUp={(e) => e.stopPropagation()}>
-    {children}
-  </div>
-</div>
+      <div className={OverlayWrapperStyles.darkBG}
+        onMouseDown={handleBackdropMouseDown}
+        onMouseUp={handleBackdropMouseUp}
+        ref={modalRef}>
+        <div className={OverlayWrapperStyles.modal}
+          style={{ maxWidth: maxWidth }}
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}>
+          {children}
+        </div>
+      </div>
 
     </CSSTransition>,
     document.getElementById("overlay")

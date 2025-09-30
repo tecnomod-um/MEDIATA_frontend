@@ -1,3 +1,5 @@
+@import '../../variables.css';
+
 * {
   margin: 0;
   padding: 0;
@@ -7,7 +9,7 @@
   position: relative;
   overflow: auto;
   scrollbar-width: auto;
-  font-size: 16pt;
+  font-size: 1.25rem;
 }
 
 .mainContainer {
@@ -117,25 +119,10 @@
   justify-content: space-between;
 }
 
-.linkListItem {
-  cursor: pointer;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  background-color: #f8f8f8;
-  padding: 10px 15px;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  flex: 1;
-  text-align: center;
-  margin: 0 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .centeredHeading {
   color: var(--button-color-light);
   text-align: center;
-  font-size: 24px;
+  font-size: 1.5rem;
 }
 
 .variablesTable {
@@ -146,10 +133,10 @@
 
 .variablesTable th,
 .variablesTable td {
-  border: 1px solid #8c8c8c;
-  padding: 8px;
+  border: 1px solid var(--tooltray-background-color-light);
+  padding: 5px;
   text-align: left;
-  font-size: 18px;
+  font-size: 1.1rem;
 }
 
 .variablesTable th {
@@ -215,7 +202,7 @@
 }
 
 .railStyle {
-background-color: "#ddd";
+  background-color: "#ddd";
 }
 
 @media (max-width: 768px) {
@@ -227,22 +214,24 @@ background-color: "#ddd";
 @media (min-width: 769px) {
   .pageContainer {
     margin-left: 200px;
-    /* Matches sidebar min-width */
   }
 }
 
-
-/* Mobile: sidebar hidden, content full-width */
 @media (max-width: 768px) {
-  .sidebar {
-    display: none;
-  }
-
   .pageContainer {
     margin-left: 0;
-    padding-top: 70px;
-    /* Still leave space for top navbar */
+    font-size: 0.975rem;
   }
+
+  .centeredHeading {
+    font-size: 1.375rem;
+  }
+
+  .variablesTable th,
+  .variablesTable td {
+    font-size: 0.9375rem;
+  }
+
 }
 
 /* Anchor scrolling: adjust for fixed navbar height */

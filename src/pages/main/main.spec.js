@@ -20,7 +20,7 @@ jest.mock('./main.module.css', () => ({
 }));
 
 jest.mock(
-  '../components/Landing/LandingIntroduction/landingIntroduction',
+  '../../components/Landing/LandingIntroduction/landingIntroduction',
   () => () => <div data-testid="landing-intro">Intro</div>
 );
 

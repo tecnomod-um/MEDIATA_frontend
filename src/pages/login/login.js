@@ -1,8 +1,8 @@
 import React, { useState , useRef} from "react";
 import { useNavigate } from "react-router-dom";
 import LoginStyles from "./login.module.css";
-import { loginUser } from "../util/petitionHandler";
-import { useAuth } from "../context/authContext";
+import { loginUser } from "../../util/petitionHandler";
+import { useAuth } from "../../context/authContext";
 import { CSSTransition } from "react-transition-group";
 
 const Login = () => {

@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { getNodeList, getNodeInfo, getNodeMetadata, nodeAuth } from "../util/petitionHandler";
-import NodeScene from "../components/Nodes/NodeScene/nodeScene";
+import { getNodeList, getNodeInfo, getNodeMetadata, nodeAuth } from "../../util/petitionHandler";
+import NodeScene from "../../components/Nodes/NodeScene/nodeScene";
 import NodesStyles from "./nodes.module.css";
-import { useNode } from "../context/nodeContext";
-import config from "../config";
+import { useNode } from "../../context/nodeContext";
+import config from "../../config";
 import { toast, ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import MetadataDisplay from "../components/Nodes/MetadataDisplay/metadataDisplay";
-import JoinedNodesDisplay from "../components/Nodes/JoinedNodesDisplay/joinedNodesDisplay";
-import SchemaTray from "../components/Common/SchemaTray/schemaTray";
-import { lightenColor } from "../util/colors";
+import MetadataDisplay from "../../components/Nodes/MetadataDisplay/metadataDisplay";
+import JoinedNodesDisplay from "../../components/Nodes/JoinedNodesDisplay/joinedNodesDisplay";
+import SchemaTray from "../../components/Common/SchemaTray/schemaTray";
+import { lightenColor } from "../../util/colors";
 
 const Nodes = () => {
   const [nodes, setNodes] = useState([]);

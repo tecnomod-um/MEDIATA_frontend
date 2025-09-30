@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import MainStyles from "./main.module.css";
-import LandingIntroduction from "../components/Landing/LandingIntroduction/landingIntroduction";
-import LandingDiscovery from "../components/Landing/LandingIcons/landingDiscovery";
-import LandingIntegration from "../components/Landing/LandingIcons/landingIntegrations";
-import LandingStandards from "../components/Landing/LandingIcons/landingStandards";
-import LandingSecurity from "../components/Landing/LandingIcons/landingSecurity";
+import LandingIntroduction from "../../components/Landing/LandingIntroduction/landingIntroduction";
+import LandingDiscovery from "../../components/Landing/LandingIcons/landingDiscovery";
+import LandingIntegration from "../../components/Landing/LandingIcons/landingIntegrations";
+import LandingStandards from "../../components/Landing/LandingIcons/landingStandards";
+import LandingSecurity from "../../components/Landing/LandingIcons/landingSecurity";
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 function Main() {

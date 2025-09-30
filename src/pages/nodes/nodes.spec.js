@@ -10,15 +10,15 @@ const mockGetNodeMetadata = jest.fn();
 const mockGetNodeInfo = jest.fn();
 const mockNodeAuth = jest.fn();
 
-jest.mock('../util/petitionHandler', () => ({
+jest.mock('../../util/petitionHandler', () => ({
   getNodeList: (...args) => mockGetNodeList(...args),
   getNodeMetadata: (...args) => mockGetNodeMetadata(...args),
   getNodeInfo: (...args) => mockGetNodeInfo(...args),
   nodeAuth: (...args) => mockNodeAuth(...args),
 }));
 
-jest.mock('../config', () => ({ pollingInterval: 999999 }));
-jest.mock('../util/colors', () => ({
+jest.mock('../../config', () => ({ pollingInterval: 999999 }));
+jest.mock('../../util/colors', () => ({
   lightenColor: (c, amt) => `${c}-light-${amt}`,
 }));
 jest.mock('./nodes.module.css', () => ({
@@ -40,14 +40,14 @@ jest.mock('react-router-dom', () => ({
 }));
 const mockSelectNode = jest.fn();
 const mockSelectNodes = jest.fn();
-jest.mock('../context/nodeContext', () => ({
+jest.mock('../../context/nodeContext', () => ({
   useNode: () => ({
     selectNode: mockSelectNode,
     selectNodes: mockSelectNodes,
   }),
 }));
 jest.mock(
-  '../components/Nodes/NodeScene/nodeScene',
+  '../../components/Nodes/NodeScene/nodeScene',
   () =>
     ({ nodes, onNodeClick, onJoinNodesDoubleClick }) =>
       nodes.length > 0 ? (
@@ -69,7 +69,7 @@ jest.mock(
 );
 
 jest.mock(
-  '../components/Nodes/MetadataDisplay/metadataDisplay',
+  '../../components/Nodes/MetadataDisplay/metadataDisplay',
   () =>
     ({ isOpen, loadingMetadata, metadata, onAccessNode }) =>
       isOpen ? (
@@ -86,7 +86,7 @@ jest.mock(
 );
 
 jest.mock(
-  '../components/Nodes/JoinedNodesDisplay/joinedNodesDisplay',
+  '../../components/Nodes/JoinedNodesDisplay/joinedNodesDisplay',
   () =>
     ({ isOpen, joinedNodes, onAccessJoinedNodes }) =>
       isOpen ? (
@@ -102,7 +102,7 @@ jest.mock(
 );
 
 jest.mock(
-  '../components/Common/SchemaTray/schemaTray',
+  '../../components/Common/SchemaTray/schemaTray',
   () => ({ externalSchema }) => (
     <div data-testid="schema-tray">{externalSchema ?? 'no-schema'}</div>
   )

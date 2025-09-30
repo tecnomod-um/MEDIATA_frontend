@@ -232,9 +232,14 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                   className={FileMapperModalStyles.mappingItem}
                   style={{ borderTop: `6px solid ${color}` }}
                 >
-                  <h4>
-                    {fileName}{' '}
-                    <span style={{ fontSize: '0.8em', color: '#666' }}>
+                  <h4
+                    title={`${fileName} (Node: ${nodeName})`}
+                    aria-label={`${fileName} (Node: ${nodeName})`}
+                  >
+                    <span className={FileMapperModalStyles.fileTitle}>
+                      {fileName}
+                    </span>
+                    <span className={FileMapperModalStyles.nodeSubtitle}>
                       (Node: {nodeName})
                     </span>
                   </h4>
@@ -268,7 +273,6 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
             })
           )}
         </section>
-
         <footer className={FileMapperModalStyles.modalFooter}>
           <div className={FileMapperModalStyles.buttonsContainer}>
             <button
@@ -282,7 +286,6 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
             >
               <ArrowBackwardsIcon sx={{ fontSize: 16 }} />
             </button>
-
             <button
               className={FileMapperModalStyles.sendButton}
               onClick={() => doSend(false)}
@@ -343,9 +346,7 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                   <label>
                     <Switch
                       checked={draftRemoveDuplicates}
-                      onChange={() =>
-                        setDraftRemoveDuplicates((v) => !v)
-                      }
+                      onChange={(checked) => setDraftRemoveDuplicates(checked)}
                       height={20}
                       width={40}
                       handleDiameter={16}
@@ -357,9 +358,7 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                   <label>
                     <Switch
                       checked={draftRemoveEmptyRows}
-                      onChange={() =>
-                        setDraftRemoveEmptyRows((v) => !v)
-                      }
+                      onChange={(checked) => setDraftRemoveEmptyRows(checked)}
                       height={20}
                       width={40}
                       handleDiameter={16}
@@ -372,9 +371,7 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                   <label>
                     <Switch
                       checked={draftStandardizeDates}
-                      onChange={() =>
-                        setDraftStandarizeDates((v) => !v)
-                      }
+                      onChange={(checked) => setDraftStandarizeDates(checked)}
                       height={20}
                       width={40}
                       handleDiameter={16}
