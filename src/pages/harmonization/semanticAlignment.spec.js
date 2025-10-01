@@ -45,24 +45,23 @@ jest.mock('../../components/SemanticAlignment/RdfCard/rdfConnection', () => () =
 ));
 
 jest.mock('../../components/Common/FilePicker/uploadFilePicker', () => {
-  const FileCtor =
-    (typeof File !== 'undefined' && File) ||
-    class File extends Blob {
-      constructor(parts, name, opts) {
-        super(parts, opts);
-        this.name = name;
-        this.lastModified = Date.now();
-        this.webkitRelativePath = '';
-        this.type = (opts && opts.type) || '';
-      }
-    };
+  class MockFile extends Blob {
+    constructor(parts, name, opts) {
+      super(parts, opts);
+      this.name = name;
+      this.lastModified = Date.now();
+      this.webkitRelativePath = '';
+    }
+  }
 
   return {
     __esModule: true,
     default: ({ onFileUpload }) => (
       <button
         data-testid="file-picker"
-        onClick={() => onFileUpload(new FileCtor(['x,y'], 'test.csv', { type: 'text/csv' }))}
+        onClick={() =>
+          onFileUpload(new MockFile(['x,y'], 'test.csv', { type: 'text/csv' }))
+        }
       >
         PICK FILE
       </button>
