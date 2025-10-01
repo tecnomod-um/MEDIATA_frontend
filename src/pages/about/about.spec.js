@@ -28,7 +28,7 @@ describe('<About />', () => {
     const link = screen.getByRole('link', { name: /GitHub page/i });
     expect(link).toHaveAttribute(
       'href',
-      'https://github.com/orgs/tecnomod-um/TODO'
+      'https://github.com/tecnomod-um/MEDIATA_project'
     );
   });
 });
