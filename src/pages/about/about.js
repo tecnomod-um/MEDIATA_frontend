@@ -42,7 +42,7 @@ function About() {
               For more information, user guides, or to contribute to the
               project, visit our{" "}
               <a
-                href="https://github.com/orgs/tecnomod-um/TODO"
+                href="https://github.com/tecnomod-um/MEDIATA_project"
                 className={AboutStyles.link}
               >
                 GitHub page

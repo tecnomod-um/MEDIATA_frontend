@@ -6,13 +6,13 @@ import PageImage from "../../components/Common/PageImage/pageImage.js";
 import { DiscoverySlides, AggregateSlides, IntegrationSlides } from "./images";
 
 function Tutorial() {
-  /*
-    useLayoutEffect(() => {
-      if ("scrollRestoration" in window.history)
-        window.history.scrollRestoration = "manual";
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    }, []);
-  */
+
+  useLayoutEffect(() => {
+    if ("scrollRestoration" in window.history)
+      window.history.scrollRestoration = "manual";
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, []);
+
   const DiscoverySteps = [
     'Overall Discovery view.',
     'Feature tables containing statistics.',
@@ -328,7 +328,7 @@ function Tutorial() {
             <span className={TutorialStyles.introText}>
               After declaring the correct mapping configuration, you can either download the resulting map by clicking the
               'Download Mappings' button or apply it to datasets located in the node. Clicking the green arrow button will
-              directly redirect you to the semantic alignment view, selecting the file produced by applying the map. 
+              directly redirect you to the semantic alignment view, selecting the file produced by applying the map.
               < br />
               < br />
               To apply the map to datasets located in the node, click the 'Process datasets' button. This will open a modal
@@ -354,8 +354,8 @@ function Tutorial() {
           <div className={TutorialStyles.textContainer}>
             <h2 className={TutorialStyles.centeredHeading}>Semantic Alignment</h2>
             <span className={TutorialStyles.introText}>
-             This section is still incomplete. 
-             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+              This section is still incomplete.
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
             </span>
           </div>
         </div>
@@ -366,8 +366,8 @@ function Tutorial() {
           <div className={TutorialStyles.textContainer}>
             <h2 className={TutorialStyles.centeredHeading}>HL7 FHIR</h2>
             <span className={TutorialStyles.introText}>
-             This section is still incomplete.
-             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+              This section is still incomplete.
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
             </span>
           </div>
         </div>
