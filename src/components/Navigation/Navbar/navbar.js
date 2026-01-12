@@ -7,6 +7,7 @@ import CustomLink from "./customLink";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 import { FaFileAlt, FaSearch, FaSitemap, FaCodeBranch } from "react-icons/fa";
 import { ReactComponent as FhirIcon } from "../../../resources/images/fhir.svg";
+import DarkSwitch from "../../Common/DarkSwitch";
 
 function FileSearchIcon() {
   return (
@@ -75,17 +76,20 @@ export default function Navbar() {
 
   return (
     <nav className={NavbarStyles.navbar} aria-label="Main navigation">
-      <Link to="/" className={`${NavbarStyles.logo} ${NavbarStyles.link}`}>
-        <img
-          className={NavbarStyles.logo}
-          src={`${process.env.PUBLIC_URL}/umu_coat.svg`}
-          width={40}
-          height={40}
-          alt="University of Murcia logo"
-          loading="eager"
-          fetchpriority="high"
-        />
-      </Link>
+      <div className={NavbarStyles.navLeft}>
+        <Link to="/" className={`${NavbarStyles.logo} ${NavbarStyles.link}`}>
+          <img
+            className={NavbarStyles.logo}
+            src={`${process.env.PUBLIC_URL}/umu_coat.svg`}
+            width={40}
+            height={40}
+            alt="University of Murcia logo"
+            loading="eager"
+            fetchpriority="high"
+          />
+        </Link>
+        <DarkSwitch />
+      </div>
       <ul className={NavbarStyles.navlinks}>
         <TransitionGroup component={null}>
           {isAuthenticated && selectedNodes && (
