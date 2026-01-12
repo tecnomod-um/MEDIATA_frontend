@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CSSTransition } from "react-transition-group";
-import Switch from "react-switch";
-import CloseIcon from "@mui/icons-material/Close";
-import IconButton from "@mui/material/IconButton";
-import RefreshIcon from "@mui/icons-material/Refresh";
 import Styles from "./fileExplorer.module.css";
 import { listExplorerFiles, renameExplorerFile, deleteExplorerFile, cleanExplorerFile } from "../../../util/petitionHandler";
+import Toolbar from "./FileExplorer/Toolbar";
+import FileTable from "./FileExplorer/FileTable";
+import CleanPanel from "./FileExplorer/CleanPanel";
+import DeleteConfirmation from "./FileExplorer/DeleteConfirmation";
 
 function FileExplorer({ category, isOpen = true, onClose, onOpenFile }) {
   const [files, setFiles] = useState([]);
@@ -412,45 +412,6 @@ function FileExplorer({ category, isOpen = true, onClose, onOpenFile }) {
     if (longPressTimer.current) clearTimeout(longPressTimer.current);
   };
 
-  const FileTypeIcon = ({ name }) => {
-    const ext = extOf(name);
-    const isXlsx = ext === "xlsx" || ext === "xls";
-    const label = isXlsx ? "XLSX" : "CSV";
-    const cls = isXlsx ? Styles.iconXlsx : Styles.iconCsv;
-
-    return (
-      <span className={`${Styles.fileIcon} ${cls}`} aria-hidden="true" title={label}>
-        <svg viewBox="0 0 24 24" width="18" height="18">
-          <path
-            d="M7 2h7l5 5v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"
-            fill="currentColor"
-            opacity="0.14"
-          />
-          <path
-            d="M14 2v5h5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            opacity="0.95"
-          />
-          <path
-            d="M8 13h8M8 16h8"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            opacity="0.9"
-          />
-          <text x="12" y="11.1" textAnchor="middle" fontSize="6" fontWeight="800" fill="currentColor">
-            {label}
-          </text>
-        </svg>
-      </span>
-    );
-  };
-
   const toolbarDisabled = busy || loading;
 
   return (
@@ -469,83 +430,22 @@ function FileExplorer({ category, isOpen = true, onClose, onOpenFile }) {
     >
       <div ref={modalNodeRef} className={Styles.modalBackground}>
         <div className={Styles.modalContainer}>
-          <div className={Styles.toolbar}>
-            {/* left: action buttons */}
-            <div className={Styles.toolbarGroup}>
-              <button
-                className={Styles.tbBtn}
-                onClick={doOpenSelected}
-                disabled={toolbarDisabled || !hasSelection || !onOpenFile || !!renamingName}
-                title="Open (Enter / double-click)"
-              >
-                Open
-              </button>
-
-              <button
-                className={Styles.tbBtn}
-                onClick={startRename}
-                disabled={toolbarDisabled || selected.size !== 1}
-                title="Rename (F2)"
-              >
-                Rename
-              </button>
-
-              <button
-                className={Styles.tbBtn}
-                onClick={openCleanPanel}
-                disabled={toolbarDisabled || !hasSelection}
-                title="Data cleaning"
-              >
-                Data cleaning
-              </button>
-
-              <button
-                className={`${Styles.tbBtn} ${Styles.tbDanger}`}
-                onClick={requestDelete}
-                disabled={toolbarDisabled || !hasSelection}
-                title="Delete (Del)"
-              >
-                Delete
-              </button>
-
-              <span className={Styles.toolbarMeta}>
-                <span className={Styles.selPill} title="Selected">
-                  {selected.size} selected
-                </span>
-                {multiMode ? (
-                  <button
-                    className={Styles.pillBtn}
-                    type="button"
-                    onClick={() => setMultiMode(false)}
-                    disabled={busy}
-                    title="Exit multi-select mode"
-                  >
-                    Multi
-                  </button>
-                ) : null}
-              </span>
-            </div>
-
-            {/* right: refresh icon + optional close */}
-            <div className={Styles.toolbarGroup}>
-              <IconButton
-                className={Styles.refreshIconBtn}
-                onClick={load}
-                disabled={toolbarDisabled}
-                aria-label="Refresh"
-                title="Refresh"
-                size="small"
-              >
-                <RefreshIcon fontSize="small" />
-              </IconButton>
-
-              {onClose ? (
-                <button className={Styles.tbBtn} onClick={onClose} disabled={busy} title="Close">
-                  Close
-                </button>
-              ) : null}
-            </div>
-          </div>
+          <Toolbar
+            toolbarDisabled={toolbarDisabled}
+            doOpenSelected={doOpenSelected}
+            hasSelection={hasSelection}
+            onOpenFile={onOpenFile}
+            renamingName={renamingName}
+            selectedCount={selected.size}
+            startRename={startRename}
+            openCleanPanel={openCleanPanel}
+            requestDelete={requestDelete}
+            multiMode={multiMode}
+            setMultiMode={setMultiMode}
+            busy={busy}
+            load={load}
+            onClose={onClose}
+          />
 
 
           <div className={Styles.contentShell}>
@@ -565,80 +465,26 @@ function FileExplorer({ category, isOpen = true, onClose, onOpenFile }) {
                 ) : sorted.length === 0 ? (
                   <div className={Styles.emptyState}>No files available</div>
                 ) : (
-                  <div className={Styles.table}>
-                    <div className={Styles.headerRow}>
-                      <div className={Styles.colName}>Name</div>
-                      <div className={Styles.colSize}>Size</div>
-                      <div className={Styles.colCreated}>Created</div>
-                      <div className={Styles.colModified}>Modified</div>
-                    </div>
-
-                    {sorted.map((f, idx) => {
-                      const isSelected = selected.has(f.name);
-
-                      return (
-                        <div
-                          key={f.name}
-                          className={`${Styles.row} ${isSelected ? Styles.rowSelected : ""} ${busy ? Styles.rowDisabled : ""
-                            }`}
-                          onMouseDown={() => onRowMouseDown(f.name, idx)}
-                          onMouseUp={onRowMouseUp}
-                          onMouseLeave={onRowMouseLeave}
-                          onClick={(e) => {
-                            // if long press already fired, avoid immediately flipping selection again
-                            if (longPressFired.current) return;
-                            onRowClick(e, f.name, idx);
-                          }}
-                          onDoubleClick={() => onRowDoubleClick(f.name)}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) => {
-                            // Enter while focused on row should open ONLY if not renaming
-                            if (e.key === "Enter" && !renamingName) onRowDoubleClick(f.name);
-                          }}
-                          title="Click to select • Long-click for multi • Ctrl/⌘ toggles • Shift range • Double-click opens"
-                        >
-                          <div className={Styles.colName}>
-                            <FileTypeIcon name={f.name} />
-
-                            {renamingName === f.name ? (
-                              <input
-                                ref={renameInputRef}
-                                className={Styles.renameInline}
-                                value={renameDraft}
-                                onChange={(e) => setRenameDraft(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    commitRename();
-                                  }
-                                  if (e.key === "Escape") {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    cancelRename();
-                                  }
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                                onDoubleClick={(e) => e.stopPropagation()}
-                                onBlur={() => commitRename()}
-                                disabled={busy}
-                              />
-                            ) : (
-                              <span className={Styles.nameText}>
-                                {f.name}
-                                {isNew(f) ? <span className={Styles.newMark}> *</span> : null}
-                              </span>
-                            )}
-                          </div>
-
-                          <div className={Styles.colSize}>{formatBytes(f.sizeBytes)}</div>
-                          <div className={Styles.colCreated}>{formatDateTime(f.createdAtMs)}</div>
-                          <div className={Styles.colModified}>{formatDateTime(f.lastModifiedAtMs)}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <FileTable
+                    sorted={sorted}
+                    selected={selected}
+                    busy={busy}
+                    onRowMouseDown={onRowMouseDown}
+                    onRowMouseUp={onRowMouseUp}
+                    onRowMouseLeave={onRowMouseLeave}
+                    longPressFired={longPressFired}
+                    onRowClick={onRowClick}
+                    onRowDoubleClick={onRowDoubleClick}
+                    renamingName={renamingName}
+                    renameInputRef={renameInputRef}
+                    renameDraft={renameDraft}
+                    setRenameDraft={setRenameDraft}
+                    commitRename={commitRename}
+                    cancelRename={cancelRename}
+                    formatBytes={formatBytes}
+                    formatDateTime={formatDateTime}
+                    isNew={isNew}
+                  />
                 )}
               </div>
             </CSSTransition>
@@ -654,155 +500,26 @@ function FileExplorer({ category, isOpen = true, onClose, onOpenFile }) {
               }}
               unmountOnExit
             >
-              <div
-                className={Styles.cleanOverlay}
-                onMouseDown={() => !busy && setShowCleanPanel(false)}
-                role="presentation"
-              >
-                <div
-                  className={Styles.cleanPanel}
-                  role="dialog"
-                  aria-label="Data cleaning"
-                  onMouseDown={(e) => e.stopPropagation()}
-                >
-                  <IconButton
-                    className={Styles.cleanCloseIcon}
-                    onClick={() => setShowCleanPanel(false)}
-                    disabled={busy}
-                    aria-label="Close"
-                    size="small"
-                  >
-                    <CloseIcon fontSize="small" />
-                  </IconButton>
-                  <div className={Styles.cleanBody}>
-                    <div className={Styles.cleanOption}>
-                      <Switch
-                        checked={removeDuplicates}
-                        onChange={(v) => setRemoveDuplicates(v)}
-                        height={20}
-                        width={40}
-                        handleDiameter={16}
-                        offColor="#888"
-                        onColor="#9ABDDC"
-                        disabled={busy}
-                      />
-                      <div className={Styles.cleanOptionText}>
-                        <div className={Styles.cleanLabel}>Remove duplicates</div>
-                        <div className={Styles.cleanDesc}>Drops duplicate rows.</div>
-                      </div>
-                    </div>
-
-                    <div className={Styles.cleanOption}>
-                      <Switch
-                        checked={removeEmptyRows}
-                        onChange={(v) => setRemoveEmptyRows(v)}
-                        height={20}
-                        width={40}
-                        handleDiameter={16}
-                        offColor="#888"
-                        onColor="#9ABDDC"
-                        disabled={busy}
-                      />
-                      <div className={Styles.cleanOptionText}>
-                        <div className={Styles.cleanLabel}>Remove empty rows</div>
-                        <div className={Styles.cleanDesc}>Removes rows where all values are empty.</div>
-                      </div>
-                    </div>
-
-                    <div className={Styles.cleanOptionStack}>
-                      <div className={Styles.cleanOption}>
-                        <Switch
-                          checked={standardizeDates}
-                          onChange={(v) => setStandardizeDates(v)}
-                          height={20}
-                          width={40}
-                          handleDiameter={16}
-                          offColor="#888"
-                          onColor="#9ABDDC"
-                          disabled={busy}
-                        />
-                        <div className={Styles.cleanOptionText}>
-                          <div className={Styles.cleanLabel}>Standardize dates</div>
-                          <div className={Styles.cleanDesc}>Normalize date fields to a chosen output format.</div>
-                        </div>
-                      </div>
-
-                      <div className={Styles.cleanInlineRow}>
-                        <span className={Styles.cleanInlineLabel}>Output format</span>
-                        <select
-                          className={Styles.select}
-                          value={selectedDateFormat}
-                          onChange={(e) => setSelectedDateFormat(e.target.value)}
-                          disabled={busy || !standardizeDates}
-                        >
-                          {dateFormats.map((d) => (
-                            <option key={d.value} value={d.value}>
-                              {d.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className={Styles.cleanOptionStack}>
-                      <div className={Styles.cleanOption}>
-                        <Switch
-                          checked={standardizeNumeric}
-                          onChange={(v) => setStandardizeNumeric(v)}
-                          height={20}
-                          width={40}
-                          handleDiameter={16}
-                          offColor="#888"
-                          onColor="#9ABDDC"
-                          disabled={busy}
-                        />
-                        <div className={Styles.cleanOptionText}>
-                          <div className={Styles.cleanLabel}>Standardize numeric fields</div>
-                          <div className={Styles.cleanDesc}>Convert numeric columns to a consistent type.</div>
-                        </div>
-                      </div>
-
-                      <div className={Styles.cleanInlineRow}>
-                        <span className={Styles.cleanInlineLabel}>Mode</span>
-                        <select
-                          className={Styles.select}
-                          value={numericMode}
-                          onChange={(e) => setNumericMode(e.target.value)}
-                          disabled={busy || !standardizeNumeric}
-                        >
-                          <option value="double">Convert to double</option>
-                          <option value="int_round">Convert to integer (round)</option>
-                          <option value="int_trunc">Convert to integer (truncate)</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className={Styles.cleanFooter}>
-                    <div className={Styles.cleanFooterLeft}>
-                      Applies to <b>{selected.size}</b>
-                    </div>
-
-                    <div className={Styles.cleanFooterRight}>
-                      <button
-                        className={Styles.cleanApply}
-                        onClick={applyClean}
-                        disabled={busy || selected.size === 0}
-                        title="Apply cleaning to selected files"
-                      >
-                        Apply
-                      </button>
-                      <button
-                        className={Styles.cleanCancel}
-                        onClick={() => setShowCleanPanel(false)}
-                        disabled={busy}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <CleanPanel
+                show={showCleanPanel}
+                onClose={() => setShowCleanPanel(false)}
+                busy={busy}
+                removeDuplicates={removeDuplicates}
+                setRemoveDuplicates={setRemoveDuplicates}
+                removeEmptyRows={removeEmptyRows}
+                setRemoveEmptyRows={setRemoveEmptyRows}
+                standardizeDates={standardizeDates}
+                setStandardizeDates={setStandardizeDates}
+                selectedDateFormat={selectedDateFormat}
+                setSelectedDateFormat={setSelectedDateFormat}
+                dateFormats={dateFormats}
+                standardizeNumeric={standardizeNumeric}
+                setStandardizeNumeric={setStandardizeNumeric}
+                numericMode={numericMode}
+                setNumericMode={setNumericMode}
+                selectedCount={selected.size}
+                applyClean={applyClean}
+              />
             </CSSTransition>
 
           </div>
@@ -819,54 +536,13 @@ function FileExplorer({ category, isOpen = true, onClose, onOpenFile }) {
               exitActive: Styles.confirmExitActive,
             }}
           >
-            <div
-              className={Styles.confirmOverlay}
-              onMouseDown={() => !busy && setShowDeleteConfirm(false)}
-              role="presentation"
-            >
-              <div
-                className={Styles.confirmCard}
-                onMouseDown={(e) => e.stopPropagation()}
-                role="dialog"
-                aria-label="Delete confirmation"
-              >
-                <IconButton
-                  className={Styles.confirmCloseIcon}
-                  onClick={() => setShowDeleteConfirm(false)}
-                  disabled={busy}
-                  aria-label="Close"
-                  size="small"
-                >
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-
-                <div className={Styles.confirmHeader}>
-                  <div className={Styles.confirmTitle}>Delete</div>
-                  <div className={Styles.confirmText}>
-                    Delete {selected.size} file{selected.size === 1 ? "" : "s"}?
-                  </div>
-                </div>
-
-                <div className={Styles.confirmActions}>
-                  <button
-                    className={Styles.confirmCancelBtn}
-                    onClick={() => setShowDeleteConfirm(false)}
-                    disabled={busy}
-                    type="button"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className={Styles.confirmDeleteBtn}
-                    onClick={doDeleteConfirmed}
-                    disabled={busy}
-                    type="button"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
+            <DeleteConfirmation
+              show={showDeleteConfirm}
+              selectedCount={selected.size}
+              onCancel={() => setShowDeleteConfirm(false)}
+              onConfirm={doDeleteConfirmed}
+              busy={busy}
+            />
           </CSSTransition>
         </div>
       </div>
