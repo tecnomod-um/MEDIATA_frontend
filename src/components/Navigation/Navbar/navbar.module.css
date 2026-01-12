@@ -38,6 +38,12 @@
   user-select: none;
 }
 
+.navLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .navlinks {
   display: flex;
   align-items: center;
