@@ -77,6 +77,10 @@
   min-width: 250px;
   text-align: center;
   position: relative;
+
+  overflow: hidden;
+  min-height: 0;
+  box-sizing: border-box;
 }
 
 .fileList {
@@ -84,6 +88,11 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
+
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .buttonsContainer {
@@ -216,6 +225,8 @@
   max-width: 100%;
   overflow: hidden;
   quotes: "“""”";
+
+  flex: 0 0 auto;
 }
 
 .fileTitle {
@@ -282,6 +293,8 @@
   z-index: 3;
   transform-origin: bottom right;
   transform: translateX(50px);
+
+  overflow: hidden;
 }
 
 .cleanPopover::after {
@@ -432,4 +445,56 @@
     font-size: 1.2em;
     vertical-align: middle;
   }
+}
+
+.cleanRow {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.numericBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 80%;
+}
+
+.numericList {
+  max-height: 80px;
+  /* exactly ~two items visible */
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 4px;
+  background: #fff;
+  max-width: 100%;
+}
+
+.numericBlock select,
+.numericList {
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.numericItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.numericItem span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.numericItemSelected {
+  background-color: var(--button-add-value-color);
+  color: white;
 }

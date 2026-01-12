@@ -145,7 +145,7 @@ describe('<MappingsResult />', () => {
     expect(defaultHandlers.onOpenFileMapper).toHaveBeenCalled();
   });
 
-  it('disables process button while processing and shows loader', () => {
+  it("disables process button while processing and shows loader", () => {
     render(
       <MappingsResult
         mappings={sampleMappings}
@@ -156,10 +156,14 @@ describe('<MappingsResult />', () => {
       />
     );
 
-    const btn = screen.getByRole('button', { name: /process mappings/i });
+    const btn = screen.getByRole("button", { name: /process mappings/i });
     expect(btn).toBeDisabled();
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+
+    // Loader is a status element, not text
+    const status = screen.getByRole("status");
+    expect(status).toBeInTheDocument();
   });
+
 
   it('handles onUpdateMapping with key change', () => {
     const setMappings = jest.fn((updater) => {

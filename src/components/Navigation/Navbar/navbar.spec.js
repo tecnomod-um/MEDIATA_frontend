@@ -82,7 +82,7 @@ describe('Navbar', () => {
     expect(screen.getByRole('menuitem', { name: 'Home' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Login' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'About' })).toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: 'Nodes' })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'Projects' })).toBeNull();
     expect(screen.queryByRole('link', { name: 'Discovery' })).toBeNull();
   });
 
@@ -101,12 +101,19 @@ describe('Navbar', () => {
     useAuth.mockReturnValue({ isAuthenticated: true, logout: jest.fn() });
     useNode.mockReturnValue({ selectedNodes: ['abc'] });
     render(<Navbar />);
+    
     expect(screen.getByRole('link', { name: 'Discovery' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Integration' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Semantic-Alignment' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'HL7 FHIR' })).toBeInTheDocument();
+
     fireEvent.click(screen.getByRole('checkbox', { name: 'Toggle menu' }));
-    expect(screen.getByRole('menuitem', { name: 'Nodes' })).toBeInTheDocument();
+    
+    expect(screen.getByRole('menuitem', { name: 'Home' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Projects' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Logout' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Tutorial' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'About' })).toBeInTheDocument();
   });
 
   it('calls logout + navigate on Logout click', () => {
@@ -136,5 +143,19 @@ describe('Navbar', () => {
     expect(
       screen.getByTitle('Dataset analysis and exploration')
     ).toBeInTheDocument();
+  });
+
+  it('does not render extra nav items when authenticated but no nodes selected', () => {
+    useAuth.mockReturnValue({ isAuthenticated: true, logout: jest.fn() });
+    useNode.mockReturnValue({ selectedNodes: null });
+    render(<Navbar />);
+    
+    expect(screen.queryByRole('link', { name: 'Discovery' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Integration' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Semantic-Alignment' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'HL7 FHIR' })).toBeNull();
+    
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Toggle menu' }));
+    expect(screen.getByRole('menuitem', { name: 'Projects' })).toBeInTheDocument();
   });
 });

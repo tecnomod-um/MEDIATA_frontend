@@ -1,5 +1,6 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback, useRef } from "react";
 import { useTransition, a } from "@react-spring/three";
+import { useFrame } from "@react-three/fiber";
 import JoinNodesDot from "./joinNodesDot";
 import AnimatedDashedSegment from "./animatedDashedSegment";
 
@@ -8,80 +9,92 @@ const Connections = ({ nodes, nodePositions, nodeSize, onJoinNodesDoubleClick })
   const threshold = 2 * nodeSize * auraFactor;
   const thresholdSquared = threshold * threshold;
 
-  // Compute connection graph only when necessary
+  const lines = useRef(new Set());
+
+  const registerLine = useCallback((line, remove = false) => {
+    if (!line) return;
+    if (remove) lines.current.delete(line);
+    else lines.current.add(line);
+  }, []);
+
+  useFrame((_, delta) => {
+    for (const line of lines.current) {
+      const mat = line?.material;
+      if (mat && typeof mat.dashOffset === "number") {
+        mat.dashOffset -= delta * 0.5;
+      }
+    }
+  });
+
   const connectionsData = useMemo(() => {
     const graph = {};
-    nodes.forEach((node) => {
-      graph[node.nodeId] = [];
-    });
+    for (const n of nodes) graph[n.nodeId] = [];
+
     for (let i = 0; i < nodes.length; i++) {
       for (let j = i + 1; j < nodes.length; j++) {
         const n1 = nodes[i];
         const n2 = nodes[j];
-        const pos1 = nodePositions[n1.nodeId];
-        const pos2 = nodePositions[n2.nodeId];
-        if (!pos1 || !pos2) continue;
-        const dx = pos1.x - pos2.x;
-        const dy = pos1.y - pos2.y;
+        const p1 = nodePositions[n1.nodeId];
+        const p2 = nodePositions[n2.nodeId];
+        if (!p1 || !p2) continue;
+
+        const dx = p1.x - p2.x;
+        const dy = p1.y - p2.y;
+
         if (dx * dx + dy * dy < thresholdSquared) {
           graph[n1.nodeId].push(n2.nodeId);
           graph[n2.nodeId].push(n1.nodeId);
         }
       }
     }
+
     const visited = new Set();
     const components = [];
-    const dfs = (nodeId, comp) => {
-      visited.add(nodeId);
-      comp.push(nodeId);
-      graph[nodeId].forEach((neighbor) => {
-        if (!visited.has(neighbor)) {
-          dfs(neighbor, comp);
-        }
-      });
+
+    const dfs = (id, comp) => {
+      visited.add(id);
+      comp.push(id);
+      for (const nb of graph[id]) if (!visited.has(nb)) dfs(nb, comp);
     };
-    nodes.forEach((node) => {
-      if (!visited.has(node.nodeId)) {
+
+    for (const n of nodes) {
+      if (!visited.has(n.nodeId)) {
         const comp = [];
-        dfs(node.nodeId, comp);
-        if (comp.length > 1) components.push(comp);
+        dfs(n.nodeId, comp);
+        if (comp.length > 1) {
+          const key = comp.slice().sort().join("-");
+          components.push({ key, nodes: comp });
+        }
       }
-    });
+    }
+
     return components;
   }, [nodes, nodePositions, thresholdSquared]);
 
   const transitions = useTransition(connectionsData, {
-    keys: (item) => item.slice().sort().join("-"),
+    keys: (item) => item.key,
     from: { opacity: 0 },
     enter: { opacity: 1 },
     leave: { opacity: 0 },
     config: { duration: 80 },
   });
 
-  return transitions((props, componentNodes, t, index) => {
-    const points = componentNodes
-      .map((id) => nodePositions[id])
-      .filter(Boolean);
-    if (points.length < 2) return null;
+  return transitions((props, item) => {
+    const componentNodes = item.nodes;
 
-    let center = { x: 0, y: 0 };
-    if (points.length === 2) {
-      center = {
-        x: (points[0].x + points[1].x) / 2,
-        y: (points[0].y + points[1].y) / 2,
-      };
+    const pts = componentNodes.map((id) => nodePositions[id]).filter(Boolean);
+    if (pts.length < 2) return null;
+
+    let center;
+    if (pts.length === 2) {
+      center = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
     } else {
-      const centroid = points.reduce(
-        (acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y }),
-        { x: 0, y: 0 }
-      );
-      centroid.x /= points.length;
-      centroid.y /= points.length;
-      center = centroid;
+      const sum = pts.reduce((acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y }), { x: 0, y: 0 });
+      center = { x: sum.x / pts.length, y: sum.y / pts.length };
     }
 
     return (
-      <a.group key={index}>
+      <a.group key={item.key}>
         {componentNodes.map((id) => {
           const pos = nodePositions[id];
           if (!pos) return null;
@@ -91,9 +104,11 @@ const Connections = ({ nodes, nodePositions, nodeSize, onJoinNodesDoubleClick })
               start={pos}
               end={center}
               opacity={props.opacity}
+              registerLine={registerLine}
             />
           );
         })}
+
         <JoinNodesDot
           position={center}
           nodesInGroup={componentNodes}

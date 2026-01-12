@@ -1,83 +1,92 @@
-import React from 'react';
-import { render, screen, waitFor, act } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import Discovery from './discovery';
+import React from "react";
+import { render, screen, waitFor, act } from "@testing-library/react";
+import "@testing-library/jest-dom";
+import Discovery from "./discovery";
 
-let mockFilePickerProps;
+let mockFileExplorerProps;
 
-jest.mock('react-transition-group', () => {
-  const React = require('react');
+jest.mock("react-transition-group", () => {
+  const React = require("react");
   return {
     CSSTransition: ({ children }) => <>{children}</>,
     TransitionGroup: ({ children }) => <>{children}</>,
   };
 });
 
-jest.mock('react-toastify', () => ({
+jest.mock("react-toastify", () => ({
   ToastContainer: () => <div data-testid="toast" />,
   toast: { error: jest.fn(), success: jest.fn() },
 }));
 
+jest.mock("../../components/Common/FilePicker/filePicker", () => () => (
+  <div data-testid="picker">FilePicker</div>
+));
+
+jest.mock("../../components/Common/FilePicker/fileExplorer", () => {
+  const React = require("react");
+  return function MockFileExplorer(props) {
+    mockFileExplorerProps = props;
+    return <div data-testid="explorer">FileExplorer</div>;
+  };
+});
+
 jest.mock(
-  '../../components/Common/FilePicker/filePicker',
-  () => {
-    const React = require('react');
-    return function MockFilePicker(props) {
-      mockFilePickerProps = props;
-      return <div data-testid="picker">FilePicker</div>;
-    };
-  },
+  "../../components/Discovery/ToolTray/toolTray",
+  () => () => <div data-testid="tray">ToolTray</div>
 );
 
 jest.mock(
-  '../../components/Discovery/ToolTray/toolTray',
-  () => () => <div data-testid="tray">ToolTray</div>,
+  "../../components/Discovery/StatisticsDisplay/statisticsDisplay",
+  () => () => <div data-testid="stats">StatsDisplay</div>
 );
 
 jest.mock(
-  '../../components/Discovery/StatisticsDisplay/statisticsDisplay',
-  () => () => <div data-testid="stats">StatsDisplay</div>,
+  "../../components/Discovery/AggregatesDisplay/aggregateDisplay",
+  () => () => <div data-testid="aggregate">AggregateDisplay</div>
 );
 
 jest.mock(
-  '../../components/Discovery/AggregatesDisplay/aggregateDisplay',
-  () => () => <div data-testid="aggregate">AggregateDisplay</div>,
-);
-
-jest.mock(
-  '../../components/Discovery/FilterModal/filterModal',
-  () => () => <div data-testid="filter">FilterModal</div>,
+  "../../components/Discovery/FilterModal/filterModal",
+  () => () => <div data-testid="filter">FilterModal</div>
 );
 
 const mockGetNodeDatasets = jest.fn();
 const mockProcessSelectedDatasets = jest.fn();
-jest.mock(
-  '../../util/petitionHandler',
-  () => ({
-    getNodeDatasets: (...a) => mockGetNodeDatasets(...a),
-    processSelectedDatasets: (...a) => mockProcessSelectedDatasets(...a),
-  }),
-);
-jest.mock('../../util/nodeAxiosSetup', () => ({
+const mockGetProcessSelectedDatasetsStatus = jest.fn();
+const mockGetProcessSelectedDatasetsResult = jest.fn();
+
+jest.mock("../../util/petitionHandler", () => ({
+  getNodeDatasets: (...a) => mockGetNodeDatasets(...a),
+  processSelectedDatasets: (...a) => mockProcessSelectedDatasets(...a),
+  getProcessSelectedDatasetsStatus: (...a) =>
+    mockGetProcessSelectedDatasetsStatus(...a),
+  getProcessSelectedDatasetsResult: (...a) =>
+    mockGetProcessSelectedDatasetsResult(...a),
+}));
+
+jest.mock("../../util/nodeAxiosSetup", () => ({
   updateNodeAxiosBaseURL: jest.fn(),
 }));
 
+
 const mockSelectedNodes = [
-  { nodeId: 1, name: 'Node-A', serviceUrl: 'http://nodeA' },
+  { nodeId: 1, name: "Node-A", serviceUrl: "http://nodeA" },
 ];
-jest.mock('../../context/nodeContext', () => ({
+
+jest.mock("../../context/nodeContext", () => ({
   useNode: () => ({ selectedNodes: mockSelectedNodes }),
   NodeProvider: ({ children }) => <>{children}</>,
 }));
 
-jest.mock('react-router-dom', () => {
-  const real = jest.requireActual('react-router-dom');
+jest.mock("react-router-dom", () => {
+  const real = jest.requireActual("react-router-dom");
   return { ...real, useLocation: () => ({ state: undefined }) };
 });
 
-const DATASETS_FIXTURE = ['file1.csv', 'file2.csv'];
-const PROCESSED_RESULT = [{
-  fileName: 'file1.csv',
+const DATASETS_FIXTURE = ["file1.csv", "file2.csv"];
+
+const PROCESSED_ITEM = {
+  fileName: "file1.csv",
   continuousFeatures: [],
   categoricalFeatures: [],
   dateFeatures: [],
@@ -85,46 +94,75 @@ const PROCESSED_RESULT = [{
   covariances: {},
   pearsonCorrelations: {},
   spearmanCorrelations: {},
-  omittedFeatures: [],
-}];
+  omittedFeatures: []
+};
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockFilePickerProps = undefined;
+  mockFileExplorerProps = undefined;
 });
 
-test('initially fetches datasets and renders <FilePicker>', async () => {
+test("initially fetches datasets and renders <FileExplorer>", async () => {
   mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
 
   render(<Discovery />);
 
-  await waitFor(async () => {
-    expect(screen.getByTestId('picker')).toBeInTheDocument();
-    await waitFor(async () => {
-      expect(mockFilePickerProps).toBeDefined();
-    });
-    await waitFor(async () => {
-      expect(mockFilePickerProps.files?.[0]?.files).toEqual(DATASETS_FIXTURE);
-    });
+  expect(await screen.findByTestId("explorer")).toBeInTheDocument();
+
+  await waitFor(() => expect(mockGetNodeDatasets).toHaveBeenCalled());
+});
+
+test("opening a file (sync) shows statistics view and hides explorer", async () => {
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  mockProcessSelectedDatasets.mockResolvedValue({
+    mode: "sync",
+    results: [PROCESSED_ITEM],
   });
-});
-
-test('after onFilesSelected resolves, statistics view is shown', async () => {
-  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
-  mockProcessSelectedDatasets.mockResolvedValue(PROCESSED_RESULT);
 
   render(<Discovery />);
-  await waitFor(() => expect(mockFilePickerProps).toBeDefined());
+
+  await waitFor(() => expect(mockFileExplorerProps).toBeDefined());
+
   await act(async () => {
-    await mockFilePickerProps.onFilesSelected({ 1: DATASETS_FIXTURE });
+    await mockFileExplorerProps.onOpenFile("file1.csv");
   });
 
-  await waitFor(() => {
-    expect(screen.getByTestId('tray')).toBeInTheDocument();
+  expect(await screen.findByTestId("tray")).toBeInTheDocument();
+  expect(await screen.findByTestId("stats")).toBeInTheDocument();
+  expect(screen.queryByTestId("explorer")).toBeNull();
+});
+
+test("opening a file (async) polls and then shows statistics view", async () => {
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+
+  mockProcessSelectedDatasets.mockResolvedValue({
+    mode: "async",
+    jobId: "job-123",
   });
 
-  await waitFor(() => {
-    expect(screen.getByTestId('stats')).toBeInTheDocument();
+  mockGetProcessSelectedDatasetsStatus
+    .mockResolvedValueOnce({ state: "RUNNING", percent: 25 })
+    .mockResolvedValueOnce({ state: "RUNNING", percent: 80 })
+    .mockResolvedValueOnce({ state: "DONE", percent: 100 });
+
+  mockGetProcessSelectedDatasetsResult.mockResolvedValue([PROCESSED_ITEM]);
+
+  render(<Discovery />);
+
+  await waitFor(() => expect(mockFileExplorerProps).toBeDefined());
+
+  await act(async () => {
+    await mockFileExplorerProps.onOpenFile("file1.csv");
   });
-  expect(screen.queryByTestId('picker')).toBeNull();
+
+  expect(await screen.findByTestId("tray")).toBeInTheDocument();
+  expect(await screen.findByTestId("stats")).toBeInTheDocument();
+
+  await waitFor(() =>
+    expect(mockGetProcessSelectedDatasetsStatus).toHaveBeenCalled()
+  );
+
+  await waitFor(() =>
+    expect(mockGetProcessSelectedDatasetsResult).toHaveBeenCalledWith("job-123")
+  );
 });

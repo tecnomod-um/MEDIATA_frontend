@@ -95,6 +95,8 @@ function Integration() {
         return true;
       });
 
+      const groupKey = `${nodeId}::${fileName}::${column.column}`;
+
       acc[column.column] = {
         fileName,
         nodeId,
@@ -104,17 +106,25 @@ function Integration() {
             column: column.column,
             values: filteredValues.map((val) => ({
               name: val,
-              mapping: [{ groupColumn: column.column, value: val }],
+              mapping: [
+                {
+                  groupKey,
+                  groupColumn: column.column,
+                  fileName,
+                  nodeId,
+                  value: val,
+                },
+              ],
             })),
           },
         ],
       };
+
       return acc;
     }, {});
 
     setMappings((prev) => [...prev, newMapping]);
   }, []);
-
 
   // ------------------------------
   // 2. Process each node’s selected files
@@ -229,6 +239,7 @@ function Integration() {
           configs: JSON.stringify(currentMappings),
           cleaningOptions: cleanOpts
         };
+        console.log("[handleProcessMappings] payload for node", node.nodeId, payload);
         await setParseConfigs(payload);
       }
 
@@ -293,7 +304,15 @@ function Integration() {
           : groups.flatMap((g) =>
             g.values.map((val) => ({
               name: val,
-              mapping: [{ groupColumn: g.column, value: val }],
+              mapping: [
+                {
+                  groupKey: `${g.nodeId}::${g.fileName}::${g.column}`,
+                  groupColumn: g.column,
+                  fileName: g.fileName,
+                  nodeId: g.nodeId,
+                  value: val,
+                },
+              ],
             }))
           );
 
@@ -436,10 +455,16 @@ function Integration() {
             <ColumnSearch
               columnsData={columnsData}
               handleColumnClick={(col) => {
-                if (!temporaryGroups.some((g) => g.column === col.column)) {
+                const alreadyExists = temporaryGroups.some(
+                  (g) =>
+                    g.column === col.column &&
+                    g.fileName === col.fileName &&
+                    g.nodeId === col.nodeId
+                );
+                if (!alreadyExists)
                   setTemporaryGroups([...temporaryGroups, col]);
-                }
               }}
+
               handleDragStart={(e, column) => {
                 e.dataTransfer.setData("column", JSON.stringify(column));
               }}

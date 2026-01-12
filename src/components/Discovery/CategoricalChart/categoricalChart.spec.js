@@ -1,16 +1,20 @@
-import React from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import CategoricalChart from './categoricalChart';
+import React from "react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
+import "@testing-library/jest-dom";
+import CategoricalChart from "./categoricalChart";
 
-jest.mock('react-chartjs-2', () => {
-  const ReactInside = require('react');
+jest.mock("react-chartjs-2", () => {
+  const ReactInside = require("react");
   return {
     Bar: ReactInside.forwardRef(({ data, options }, ref) => {
-      ReactInside.useImperativeHandle(ref, () => ({
-        update: jest.fn(),
-        resize: jest.fn(),
-      }), []);
+      ReactInside.useImperativeHandle(
+        ref,
+        () => ({
+          update: jest.fn(),
+          resize: jest.fn(),
+        }),
+        []
+      );
       return (
         <div
           data-testid="mock-bar"
@@ -22,28 +26,30 @@ jest.mock('react-chartjs-2', () => {
   };
 });
 
-jest.mock('chroma-js', () => () => ({
-  darken: () => ({ hex: () => '#000000' }),
+jest.mock("chroma-js", () => () => ({
+  darken: () => ({ hex: () => "#000000" }),
 }));
 
-jest.mock('../../../util/colors', () => ({
-  generateColorList: () => ['#AAA', '#BBB'],
+jest.mock("../../../util/colors", () => ({
+  generateColorList: () => ["#AAA", "#BBB"],
 }));
 
 const BASE_FEATURE = {
-  featureName: 'FeatureX',
+  featureName: "FeatureX",
   categoryCounts: { One: 10, Two: 20, MissingValues: 0 },
   missingValuesCount: 0,
 };
 
-describe('<CategoricalChart />', () => {
-  it('renders without crashing and outputs a <Bar>', () => {
+describe("<CategoricalChart />", () => {
+  it("renders without crashing and outputs a <Bar>", () => {
     render(<CategoricalChart feature={BASE_FEATURE} />);
-    expect(screen.getByTestId('mock-bar')).toBeInTheDocument();
+    expect(screen.getByTestId("mock-bar")).toBeInTheDocument();
   });
 
-  it('applies CSS classes and fires click events', () => {
-    const onClick = jest.fn(), onDbl = jest.fn();
+  it("applies CSS classes and fires click events", () => {
+    const onClick = jest.fn();
+    const onDbl = jest.fn();
+
     render(
       <CategoricalChart
         feature={BASE_FEATURE}
@@ -54,37 +60,50 @@ describe('<CategoricalChart />', () => {
       />
     );
 
-    const container = screen.getByRole('button', { name: /Chart for FeatureX/i });
+    const container = screen.getByRole("button", {
+      name: /Chart for FeatureX/i,
+    });
     fireEvent.click(container);
     fireEvent.doubleClick(container);
+
     expect(onClick).toHaveBeenCalled();
     expect(onDbl).toHaveBeenCalled();
   });
 
-  it('passes correct data when missingValuesCount = 0', () => {
+  it("passes correct data when missingValuesCount = 0 (sorted by count desc)", () => {
     render(<CategoricalChart feature={BASE_FEATURE} />);
-    const bar = screen.getByTestId('mock-bar');
-    const data = JSON.parse(bar.getAttribute('data-data'));
-    expect(data.labels).toEqual(['One', 'Two']);
-    expect(data.datasets[0].data).toEqual([10, 20]);
-    expect(data.datasets[0].backgroundColor).toEqual(['#AAA', '#BBB']);
+    const bar = screen.getByTestId("mock-bar");
+    const data = JSON.parse(bar.getAttribute("data-data"));
+    expect(data.labels).toEqual(["Two", "One"]);
+    expect(data.datasets[0].data).toEqual([20, 10]);
+    expect(data.datasets[0].backgroundColor).toEqual(["#BBB", "#AAA"]);
   });
 
-  it('adds "No data" slice when missingValuesCount > 0', () => {
+  it('adds "No data" slice when missingValuesCount > 0 (sorted by count desc)', () => {
     const feat = { ...BASE_FEATURE, missingValuesCount: 5 };
     render(<CategoricalChart feature={feat} />);
-    const data = JSON.parse(screen.getByTestId('mock-bar').getAttribute('data-data'));
-    expect(data.labels).toEqual(['One', 'Two', 'No data']);
-    expect(data.datasets[0].data).toEqual([10, 20, 5]);
-    expect(data.datasets[0].backgroundColor.slice(-1)[0]).toBe('#D3D3D3');
+
+    const data = JSON.parse(
+      screen.getByTestId("mock-bar").getAttribute("data-data")
+    );
+
+    expect(data.labels).toEqual(["Two", "One", "No data"]);
+    expect(data.datasets[0].data).toEqual([20, 10, 5]);
+    expect(data.datasets[0].backgroundColor.slice(-1)[0]).toBe("#D3D3D3");
   });
 
-  it('resizes and updates chart via effects without error', () => {
+  it("resizes and updates chart via effects without error", () => {
     const { rerender } = render(<CategoricalChart feature={BASE_FEATURE} />);
-    act(() => window.dispatchEvent(new Event('resize')));
-    rerender(<CategoricalChart feature={{
-      ...BASE_FEATURE,
-      categoryCounts: { One: 11, Two: 20, MissingValues: 0 }
-    }} />);
+
+    act(() => window.dispatchEvent(new Event("resize")));
+
+    rerender(
+      <CategoricalChart
+        feature={{
+          ...BASE_FEATURE,
+          categoryCounts: { One: 11, Two: 20, MissingValues: 0 },
+        }}
+      />
+    );
   });
 });

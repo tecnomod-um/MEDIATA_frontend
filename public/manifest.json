@@ -1,22 +1,9 @@
 {
   "short_name": "Mediata",
-  "name": "Tool for Analyzing aNd Interpreting Whole Healthcare Annotations",
+  "name": "MEDIATA: Clinical Data Harmonization",
   "icons": [
-    {
-      "src": "favicon.svg",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "logo192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "logo512.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    }
+    { "src": "web-app-manifest-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "web-app-manifest-512x512.png", "sizes": "512x512", "type": "image/png" }
   ],
   "start_url": ".",
   "display": "standalone",

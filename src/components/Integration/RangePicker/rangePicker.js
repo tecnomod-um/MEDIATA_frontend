@@ -1,43 +1,54 @@
 import React, { useState, useEffect, useCallback } from "react";
+import RangePickerStyles from "./rangePicker.module.css";
 import Slider from "rc-slider";
 import "rc-slider/assets/index.css";
-import RangePickerStyles from "./rangePicker.module.css";
 
 function RangePicker({ min, max, type, onRangeChange, unavailableRanges = [] }) {
   const [selectedRange, setSelectedRange] = useState([min, max]);
+  const [isEditingDisplay, setIsEditingDisplay] = useState(false);
+  const [accentColor, setAccentColor] = useState("#9ABDDC");
 
   const step = type === "date" ? 86400000 : 1;
 
-  const doesRangeOverlapUnavailableRanges = useCallback((start, end) => {
-    return unavailableRanges.some(([uStart, uEnd]) => start <= uEnd && end >= uStart);
-  }, [unavailableRanges]);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const root = window.getComputedStyle(document.documentElement);
+    const v = root.getPropertyValue("--button-color-light").trim();
+    if (v) setAccentColor(v);
+  }, []);
 
-  const isSelectionValid = useCallback((range) => {
-    if (!range || range.length !== 2) return false;
-    const [s, e] = range;
-    if (s < min || e > max || s > e) return false;
-    if (doesRangeOverlapUnavailableRanges(s, e)) return false;
-    return true;
-  }, [min, max, doesRangeOverlapUnavailableRanges]);
+  const doesRangeOverlapUnavailableRanges = useCallback(
+    (start, end) =>
+      unavailableRanges.some(([uStart, uEnd]) => start <= uEnd && end >= uStart),
+    [unavailableRanges]
+  );
+
+  const isSelectionValid = useCallback(
+    (range) => {
+      if (!range || range.length !== 2) return false;
+      const [s, e] = range;
+      if (s < min || e > max || s > e) return false;
+      if (doesRangeOverlapUnavailableRanges(s, e)) return false;
+      return true;
+    },
+    [min, max, doesRangeOverlapUnavailableRanges]
+  );
 
   const getNextAvailableRange = useCallback(() => {
-    const sortedUnavailableRanges = [...unavailableRanges].sort((a, b) => a[0] - b[0]);
+    const sortedUnavailableRanges = [...unavailableRanges].sort(
+      (a, b) => a[0] - b[0]
+    );
 
     const availableRanges = [];
     let currentStart = min;
 
     sortedUnavailableRanges.forEach(([uStart, uEnd]) => {
-      const potentialEnd = uStart - step >= currentStart ? uStart - step : currentStart - step;
-      if (currentStart <= potentialEnd) {
-        availableRanges.push([currentStart, potentialEnd]);
-      }
+      const potentialEnd =
+        uStart - step >= currentStart ? uStart - step : currentStart - step;
+      if (currentStart <= potentialEnd) availableRanges.push([currentStart, potentialEnd]);
       currentStart = Math.max(currentStart, uEnd + step);
     });
-
-    if (currentStart <= max) {
-      availableRanges.push([currentStart, max]);
-    }
-
+    if (currentStart <= max) availableRanges.push([currentStart, max]);
     const validAvailableRanges = availableRanges.filter(
       ([start, end]) => start <= end && start >= min && end <= max
     );
@@ -50,16 +61,14 @@ function RangePicker({ min, max, type, onRangeChange, unavailableRanges = [] }) 
 
     const next = getNextAvailableRange();
     const target = next ?? [min, min];
-
     const needsUpdate =
       !Array.isArray(selectedRange) ||
       selectedRange.length !== 2 ||
       selectedRange[0] !== target[0] ||
       selectedRange[1] !== target[1];
-    if (needsUpdate)
-      setSelectedRange(target);
-  }, [min, max, unavailableRanges, step, getNextAvailableRange, isSelectionValid, selectedRange]);
 
+    if (needsUpdate) setSelectedRange(target);
+  }, [min, max, unavailableRanges, step, getNextAvailableRange, isSelectionValid, selectedRange]);
 
   const adjustRangeToAvailable = (minValue, maxValue) => {
     let newMin = minValue;
@@ -75,10 +84,11 @@ function RangePicker({ min, max, type, onRangeChange, unavailableRanges = [] }) 
             if (newMax < newMin) newMax = newMin;
           } else if (newMin >= uStart && newMax <= uEnd) {
             const nextAvailableRange = getNextAvailableRange();
-            if (nextAvailableRange)
-              [newMin, newMax] = nextAvailableRange;
-            else
-              newMin = min; newMax = min;
+            if (nextAvailableRange) [newMin, newMax] = nextAvailableRange;
+            else {
+              newMin = min;
+              newMax = min;
+            }
             break;
           } else if (newMin < uStart && newMax <= uEnd) {
             newMax = uStart - step;
@@ -99,9 +109,34 @@ function RangePicker({ min, max, type, onRangeChange, unavailableRanges = [] }) 
     return [newMin, newMax];
   };
 
-  const handleRangeChange = (values) => setSelectedRange(values);
+  const handleInputChange = (index, rawValue) => {
+    let numeric;
 
-  const handleAfterChange = (values) => {
+    if (type === "date") {
+      const d = new Date(rawValue);
+      if (Number.isNaN(d.getTime())) return;
+      numeric = d.getTime();
+    } else {
+      const n = parseFloat(rawValue);
+      if (Number.isNaN(n)) return;
+      numeric = n;
+    }
+
+    const other = selectedRange[index === 0 ? 1 : 0];
+    let newMin = index === 0 ? numeric : Math.min(other, numeric);
+    let newMax = index === 1 ? numeric : Math.max(other, numeric);
+
+    [newMin, newMax] = adjustRangeToAvailable(newMin, newMax);
+    setSelectedRange([newMin, newMax]);
+  };
+
+  const handleRangeChange = (values) => {
+    const arr = Array.isArray(values) ? values : [values, values];
+    setSelectedRange(arr);
+  };
+
+  const handleChangeComplete = (value) => {
+    const values = Array.isArray(value) ? value : [value, value];
     const [newMin, newMax] = values;
     const [adjustedMin, adjustedMax] = adjustRangeToAvailable(newMin, newMax);
     setSelectedRange([adjustedMin, adjustedMax]);
@@ -112,17 +147,23 @@ function RangePicker({ min, max, type, onRangeChange, unavailableRanges = [] }) 
     const formattedMin = type === "date" ? new Date(minValue) : minValue;
     const formattedMax = type === "date" ? new Date(maxValue) : maxValue;
     onRangeChange({ minValue: formattedMin, maxValue: formattedMax });
+    setIsEditingDisplay(false);
   };
 
   const formatValue = (value) => {
     if (type === "date") {
       const date = new Date(value);
-      return date instanceof Date && !isNaN(date) ? date.toISOString().split("T")[0] : "";
+      return date instanceof Date && !isNaN(date)
+        ? date.toISOString().split("T")[0]
+        : "";
     }
     return value !== undefined && value !== null ? value.toString() : "";
   };
 
-  const noAvailableRanges = useCallback(() => getNextAvailableRange() === null, [getNextAvailableRange]);
+  const noAvailableRanges = useCallback(
+    () => getNextAvailableRange() === null,
+    [getNextAvailableRange]
+  );
 
   if (noAvailableRanges()) {
     return (
@@ -137,10 +178,45 @@ function RangePicker({ min, max, type, onRangeChange, unavailableRanges = [] }) 
   return (
     <div className={RangePickerStyles.rangePicker}>
       <div className={RangePickerStyles.rangeDisplayWrapper}>
-        <span className={RangePickerStyles.rangeDisplay}>
-          Selected Range: {formatValue(selectedRange[0])} - {formatValue(selectedRange[1])}
-        </span>
+        {!isEditingDisplay ? (
+          <span
+            className={`${RangePickerStyles.rangeText} ${RangePickerStyles.rangeTextEditable}`}
+            onDoubleClick={() => setIsEditingDisplay(true)}
+            title="Double-click to edit values"
+          >
+            Selected range: {formatValue(selectedRange[0])} –{" "}
+            {formatValue(selectedRange[1])}
+          </span>
+        ) : (
+          <>
+            <span className={RangePickerStyles.rangeLabel}>Selected range:</span>
+            <div className={RangePickerStyles.rangeInputs}>
+              <input
+                className={RangePickerStyles.rangeInput}
+                type={type === "date" ? "date" : "number"}
+                value={
+                  type === "date"
+                    ? formatValue(selectedRange[0])
+                    : selectedRange[0]
+                }
+                onChange={(e) => handleInputChange(0, e.target.value)}
+              />
+              <span className={RangePickerStyles.rangeSeparator}>–</span>
+              <input
+                className={RangePickerStyles.rangeInput}
+                type={type === "date" ? "date" : "number"}
+                value={
+                  type === "date"
+                    ? formatValue(selectedRange[1])
+                    : selectedRange[1]
+                }
+                onChange={(e) => handleInputChange(1, e.target.value)}
+              />
+            </div>
+          </>
+        )}
       </div>
+
       <div className={RangePickerStyles.controlsContainer}>
         <div className={RangePickerStyles.sliderContainer}>
           <Slider
@@ -149,18 +225,20 @@ function RangePicker({ min, max, type, onRangeChange, unavailableRanges = [] }) 
             max={max}
             value={selectedRange}
             onChange={handleRangeChange}
-            onAfterChange={handleAfterChange}
-            railStyle={{ backgroundColor: "#ddd" }}
-            trackStyle={{ backgroundColor: window.getComputedStyle(document.documentElement).getPropertyValue('--button-color-light') }}
-            handleStyle={[
-              { borderColor: window.getComputedStyle(document.documentElement).getPropertyValue('--button-color-light') },
-              { borderColor: window.getComputedStyle(document.documentElement).getPropertyValue('--button-color-light') },
-            ]}
+            onChangeComplete={handleChangeComplete}
             step={step}
             allowCross={false}
+            styles={{
+              rail: { backgroundColor: "#ddd" },
+              track: { backgroundColor: accentColor },
+              handle: { borderColor: accentColor },
+            }}
           />
         </div>
-        <button onClick={handleSetClick} className={RangePickerStyles.mappingButton}>
+        <button
+          onClick={handleSetClick}
+          className={RangePickerStyles.mappingButton}
+        >
           Set
         </button>
       </div>

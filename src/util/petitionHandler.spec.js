@@ -12,7 +12,11 @@ jest.mock('./axiosSetup', () => ({
 }));
 
 jest.mock('./nodeAxiosSetup', () => {
-  const instance = { get: jest.fn(), post: jest.fn() };
+  const instance = { 
+    get: jest.fn(), 
+    post: jest.fn(),
+    delete: jest.fn(),
+  };
   return {
     __esModule: true,
     default: instance,
@@ -184,6 +188,12 @@ describe('petitionHandler', () => {
       await expect(petitionHandler.loginUser('u', 'p'))
         .rejects.toThrow('Login failed');
     });
+
+    it('handles network errors', async () => {
+      axiosInstance.post.mockRejectedValue(new Error('Network error'));
+      await expect(petitionHandler.loginUser('u', 'p'))
+        .rejects.toThrow('Network error');
+    });
   });
 
   describe('nodeAuth', () => {
@@ -201,23 +211,35 @@ describe('petitionHandler', () => {
 
       await expect(
         petitionHandler.nodeAuth(svc, 'kt')
-      ).rejects.toThrow('Unauthorized');
+      ).rejects.toThrow('Received an Unauthorized jwtNodeToken. JWT has been removed.');
 
       expect(updateNodeAxiosBaseURL).toHaveBeenCalledWith(svc);
       expect(localStorage.getItem('jwtNodeTokens')).toBe('{}');
+      expect(localStorage.getItem('jwtToken')).toBeNull();
     });
 
     it('on success stores mapping and returns data', async () => {
       nodeAxiosInstance.post.mockResolvedValue({
         status: 200,
-        data: { jwtNodeToken: 'OK' }
+        data: { jwtNodeToken: 'OK', otherData: 'value' }
       });
       const result = await petitionHandler.nodeAuth(svc, 'kt');
       expect(updateNodeAxiosBaseURL).toHaveBeenCalledWith(svc);
-      expect(localStorage.getItem('jwtNodeTokens')).toContain(
-        '"http://node":"OK"'
-      );
-      expect(result).toEqual({ jwtNodeToken: 'OK' });
+      const tokens = JSON.parse(localStorage.getItem('jwtNodeTokens'));
+      expect(tokens[svc]).toBe('OK');
+      expect(result).toEqual({ jwtNodeToken: 'OK', otherData: 'value' });
+    });
+
+    it('throws error on non-200 status', async () => {
+      nodeAxiosInstance.post.mockResolvedValue({ status: 500 });
+      await expect(petitionHandler.nodeAuth(svc, 'kt'))
+        .rejects.toThrow('Node auth failed');
+    });
+
+    it('handles network errors', async () => {
+      nodeAxiosInstance.post.mockRejectedValue(new Error('Network error'));
+      await expect(petitionHandler.nodeAuth(svc, 'kt'))
+        .rejects.toThrow('Network error');
     });
   });
 
@@ -225,12 +247,14 @@ describe('petitionHandler', () => {
     it('uploadFile sends FormData and returns data', async () => {
       const fakeFile = new Blob(['x']);
       nodeAxiosInstance.post.mockResolvedValue({ data: { f: 5 } });
-      const out = await petitionHandler.uploadFile(fakeFile, () => { });
+      const progressCallback = jest.fn();
+      const out = await petitionHandler.uploadFile(fakeFile, progressCallback);
       expect(nodeAxiosInstance.post).toHaveBeenCalledWith(
         '/taniwha/api/data/process',
         expect.any(FormData),
         expect.objectContaining({
-          headers: { 'Content-Type': 'multipart/form-data' }
+          headers: { 'Content-Type': 'multipart/form-data' },
+          onUploadProgress: progressCallback
         })
       );
       expect(out).toEqual({ f: 5 });
@@ -270,40 +294,170 @@ describe('petitionHandler', () => {
   });
 
   describe('other endpoints', () => {
-    it('saveMockFile, setParseConfigs, getNodeDatasets etc. return data', async () => {
+    it('saveMockFile returns data', async () => {
       nodeAxiosInstance.post.mockResolvedValue({ data: 7 });
-      await expect(petitionHandler.saveMockFile(new Blob(['x'])))
+      const file = new Blob(['content']);
+      await expect(petitionHandler.saveMockFile(file))
         .resolves.toBe(7);
+      expect(nodeAxiosInstance.post).toHaveBeenCalledWith(
+        '/taniwha/api/harmonization/mock',
+        expect.any(FormData),
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+    });
 
+    it('setParseConfigs returns data', async () => {
       nodeAxiosInstance.post.mockResolvedValue({ data: 'cfg' });
-      await expect(petitionHandler.setParseConfigs({}))
+      await expect(petitionHandler.setParseConfigs({ config: 'test' }))
         .resolves.toBe('cfg');
+      expect(nodeAxiosInstance.post).toHaveBeenCalledWith(
+        '/taniwha/api/harmonization/parse',
+        { config: 'test' },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+    });
 
+    it('getNodeDatasets returns data', async () => {
       nodeAxiosInstance.get.mockResolvedValue({ data: [9] });
       await expect(petitionHandler.getNodeDatasets()).resolves.toEqual([9]);
-      await expect(petitionHandler.getNodeMappedDatasets()).resolves.toEqual([9]);
-      await expect(petitionHandler.getNodeFHIR()).resolves.toEqual([9]);
-      await expect(petitionHandler.getNodeElements()).resolves.toEqual([9]);
+      expect(nodeAxiosInstance.get).toHaveBeenCalledWith(
+        '/taniwha/api/files/datasets'
+      );
+    });
 
-      nodeAxiosInstance.post.mockResolvedValue({ data: 'p' });
-      await expect(petitionHandler.processSelectedDatasets(['a']))
-        .resolves.toBe('p');
+    it('getNodeMappedDatasets returns data', async () => {
+      nodeAxiosInstance.get.mockResolvedValue({ data: [10] });
+      await expect(petitionHandler.getNodeMappedDatasets()).resolves.toEqual([10]);
+    });
 
+    it('getNodeFHIR returns data', async () => {
+      nodeAxiosInstance.get.mockResolvedValue({ data: [11] });
+      await expect(petitionHandler.getNodeFHIR()).resolves.toEqual([11]);
+    });
+
+    it('getNodeElements returns data', async () => {
+      nodeAxiosInstance.get.mockResolvedValue({ data: [12] });
+      await expect(petitionHandler.getNodeElements()).resolves.toEqual([12]);
+    });
+
+    describe('processSelectedDatasets', () => {
+      it('returns sync object when status is 200 without jobId', async () => {
+        nodeAxiosInstance.post.mockResolvedValue({ data: 'p' });
+        const result = await petitionHandler.processSelectedDatasets(['a']);
+        expect(result).toEqual({ mode: "sync", results: 'p' });
+      });
+
+      it('returns async object when status is 202 with jobId', async () => {
+        nodeAxiosInstance.post.mockResolvedValue({ 
+          status: 202, 
+          data: { jobId: '123', progress: true } 
+        });
+        const result = await petitionHandler.processSelectedDatasets(['a']);
+        expect(result).toEqual({ 
+          mode: "async", 
+          jobId: '123', 
+          progress: true 
+        });
+      });
+
+      it('returns async object when data contains jobId regardless of status', async () => {
+        nodeAxiosInstance.post.mockResolvedValue({ 
+          data: { jobId: '456', progress: false } 
+        });
+        const result = await petitionHandler.processSelectedDatasets(['a']);
+        expect(result).toEqual({ 
+          mode: "async", 
+          jobId: '456', 
+          progress: false 
+        });
+      });
+    });
+
+    describe('processSelectedDatasets status and result', () => {
+      it('getProcessSelectedDatasetsStatus fetches status', async () => {
+        nodeAxiosInstance.get.mockResolvedValue({ data: { status: 'processing' } });
+        const result = await petitionHandler.getProcessSelectedDatasetsStatus('job123');
+        expect(result).toEqual({ status: 'processing' });
+        expect(nodeAxiosInstance.get).toHaveBeenCalledWith(
+          '/taniwha/api/data/processList/status/job123'
+        );
+      });
+
+      it('getProcessSelectedDatasetsResult fetches result', async () => {
+        nodeAxiosInstance.get.mockResolvedValue({ data: { result: 'data' } });
+        const result = await petitionHandler.getProcessSelectedDatasetsResult('job123');
+        expect(result).toEqual({ result: 'data' });
+        expect(nodeAxiosInstance.get).toHaveBeenCalledWith(
+          '/taniwha/api/data/processList/result/job123'
+        );
+      });
+    });
+
+    it('saveDatasetElements returns data', async () => {
       nodeAxiosInstance.post.mockResolvedValue({ data: 'ok' });
       const se = await petitionHandler.saveDatasetElements('f.csv', 'csv');
       expect(se).toBe('ok');
       expect(nodeAxiosInstance.post).toHaveBeenCalledWith(
         '/taniwha/api/files/save_dataset_elements',
         'csv',
-        { params: { fileName: 'f.csv' }, headers: { 'Content-Type': 'text/plain' } }
+        { 
+          params: { fileName: 'f.csv' }, 
+          headers: { 'Content-Type': 'text/plain' } 
+        }
       );
+    });
 
+    it('fetchElementFile encodes filename', async () => {
       nodeAxiosInstance.get.mockResolvedValue({ data: { e: 1 } });
       await expect(
         petitionHandler.fetchElementFile('na me.csv')
       ).resolves.toEqual({ e: 1 });
       expect(nodeAxiosInstance.get).toHaveBeenCalledWith(
         `/taniwha/api/files/dataset_elements/${encodeURIComponent('na me.csv')}`
+      );
+    });
+  });
+
+  describe('explorer endpoints', () => {
+    it('listExplorerFiles returns data with category param', async () => {
+      nodeAxiosInstance.get.mockResolvedValue({ data: ['file1', 'file2'] });
+      const result = await petitionHandler.listExplorerFiles('testCategory');
+      expect(result).toEqual(['file1', 'file2']);
+      expect(nodeAxiosInstance.get).toHaveBeenCalledWith(
+        '/taniwha/api/files',
+        { params: { category: 'testCategory' } }
+      );
+    });
+
+    it('renameExplorerFile sends rename request', async () => {
+      nodeAxiosInstance.post.mockResolvedValue({ data: 'renamed' });
+      const result = await petitionHandler.renameExplorerFile('cat', 'old', 'new');
+      expect(result).toBe('renamed');
+      expect(nodeAxiosInstance.post).toHaveBeenCalledWith(
+        '/taniwha/api/files/rename',
+        null,
+        { params: { category: 'cat', from: 'old', to: 'new' } }
+      );
+    });
+
+    it('deleteExplorerFile sends delete request', async () => {
+      nodeAxiosInstance.delete.mockResolvedValue({ data: 'deleted' });
+      const result = await petitionHandler.deleteExplorerFile('cat', 'file');
+      expect(result).toBe('deleted');
+      expect(nodeAxiosInstance.delete).toHaveBeenCalledWith(
+        '/taniwha/api/files',
+        { params: { category: 'cat', name: 'file' } }
+      );
+    });
+
+    it('cleanExplorerFile sends clean request', async () => {
+      nodeAxiosInstance.post.mockResolvedValue({ data: 'cleaned' });
+      const result = await petitionHandler.cleanExplorerFile('cat', 'file');
+      expect(result).toBe('cleaned');
+      expect(nodeAxiosInstance.post).toHaveBeenCalledWith(
+        '/taniwha/api/files/clean',
+        null,
+        { params: { category: 'cat', name: 'file' } }
       );
     });
   });
@@ -356,6 +510,21 @@ describe('petitionHandler', () => {
       await p.catch(() => { });
 
       expect(console.error).toHaveBeenCalledWith('Error logging to server:', netErr);
+    });
+  });
+
+  describe('error handling for all endpoints', () => {
+    it('propagates errors from axios calls', async () => {
+      const testError = new Error('Test error');
+
+      axiosInstance.get.mockRejectedValue(testError);
+      await expect(petitionHandler.getNodeList()).rejects.toThrow('Test error');
+      
+      nodeAxiosInstance.post.mockRejectedValue(testError);
+      await expect(petitionHandler.nodeAuth('url', 'token')).rejects.toThrow('Test error');
+
+      nodeAxiosInstance.post.mockRejectedValue(testError);
+      await expect(petitionHandler.uploadFile(new Blob())).rejects.toThrow('Test error');
     });
   });
 });

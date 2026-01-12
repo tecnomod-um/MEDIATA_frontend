@@ -8,8 +8,15 @@ import { updateNodeAxiosBaseURL } from "../../../util/nodeAxiosSetup";
 import { useNode } from "../../../context/nodeContext";
 
 const stripFileSuffix = (featureName) => {
-  const idx = featureName.indexOf(" (");
-  return idx >= 0 ? featureName.substring(0, idx) : featureName;
+  if (!featureName) return featureName;
+  const idx = featureName.lastIndexOf(" (");
+  if (idx < 0) return featureName;
+
+  const tail = featureName.slice(idx);
+  if (/\([^()]+\.[^()]+\)\s*$/.test(tail)) {
+    return featureName.slice(0, idx);
+  }
+  return featureName;
 };
 
 function ElementExporter({ dataResults = [], activeFileIndices = [], combinedData, filteredData }) {

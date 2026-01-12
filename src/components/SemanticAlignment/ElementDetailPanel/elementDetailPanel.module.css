@@ -189,7 +189,13 @@
   overflow-y: auto;
   min-height: 0;
   max-height: 80vh;
-  margin-bottom: 10px;
+
+  /* IMPORTANT: don't use margin-bottom inside an overflow:hidden parent */
+  margin-bottom: 0;
+
+  /* optional: space so last field isn’t flush, without affecting scrollbar visibility */
+  padding-bottom: 16px;
+  box-sizing: border-box;
 }
 
 .collapseWrapper {
@@ -208,7 +214,6 @@
   overflow: hidden;
 }
 
-/* make the inner collapse “content” also flex */
 .collapseInner {
   display: flex;
   flex-direction: column;
@@ -221,10 +226,6 @@
   display: flex;
   flex-direction: column;
   margin-bottom: 15px;
-}
-
-.formField:last-child {
-  margin-bottom: 20px;
 }
 
 .formField:first-child {

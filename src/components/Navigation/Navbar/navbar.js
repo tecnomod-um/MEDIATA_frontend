@@ -174,8 +174,8 @@ export default function Navbar() {
           </li>
           {isAuthenticated && (
             <li className={NavbarStyles.listItem} role="none">
-              <CustomLink to="/nodes" onClick={toggleMenu} role="menuitem">
-                Nodes
+              <CustomLink to="/projects" onClick={toggleMenu} role="menuitem">
+                Projects
               </CustomLink>
             </li>
           )}

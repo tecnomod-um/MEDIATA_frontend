@@ -176,10 +176,12 @@
 }
 
 .accessButton {
-  /* Add all the shared properties from MetadataDisplay */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
   padding: 10px 20px;
   font-size: 1rem;
-  color: #fff; /* Use explicit color instead of variable for parity */
+  color: #fff;
   border: none;
   border-radius: 5px;
   cursor: pointer;

@@ -1,4 +1,4 @@
-@import '../../../variables.css';
+@import "../../../variables.css";
 
 .rangePicker {
   position: relative;
@@ -10,24 +10,67 @@
 }
 
 .rangeDisplayWrapper {
-    position: absolute;
-    top: -25px;
-    right: 0px;
-    text-align: right;
-    pointer-events: none;
-  }
-  
-  .rangeDisplay {
-    font-size: 0.95em;
-    font-weight: 600;
-    font-style: oblique;
-    color: #333;
-    padding: 4px 8px;
-    border-radius: 4px; 
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e1e4e8; 
-  }
-  
+  position: absolute;
+  top: -22px;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.rangeText {
+  font-size: 0.8em;
+  font-weight: 600;
+  font-style: italic;
+  color: #333;
+}
+
+.rangeTextEditable {
+  cursor: pointer;
+}
+
+.rangeLabel {
+  font-size: 0.75em;
+  font-weight: 600;
+  color: #555;
+}
+
+.rangeInputs {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.rangeInput {
+  font-size: 0.75em;
+  padding: 1px 4px;
+  border-radius: 3px;
+  border: 1px solid #d0d4d9;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);
+  width: 52px; /* tiny numeric input */
+}
+
+.rangeInput[type="date"] {
+  width: 110px; /* still relatively small, but readable */
+}
+
+.rangeInput:focus {
+  outline: none;
+  border-color: var(--button-color-light);
+}
+
+.rangeSeparator {
+  font-size: 0.75em;
+  font-weight: 600;
+  color: #444;
+}
+
+.doneHint {
+  /* invisible clickable area, gives you a second double-click target */
+  width: 1px;
+  height: 1px;
+}
+
 .controlsContainer {
   display: flex;
   align-items: center;

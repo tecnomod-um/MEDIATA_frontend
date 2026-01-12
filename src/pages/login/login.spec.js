@@ -71,6 +71,6 @@ describe('<Login />', () => {
     fireEvent.click(screen.getByRole('button', { name: /Login/i }));
 
     await waitFor(() => expect(mockLogin).toHaveBeenCalledWith('T', 'G'));
-    expect(mockNavigate).toHaveBeenCalledWith('/nodes');
+    expect(mockNavigate).toHaveBeenCalledWith('/projects');
   });
 });

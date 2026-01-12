@@ -18,6 +18,8 @@ const Login = lazy(() => import(/* webpackChunkName: "page-login" */ "./pages/lo
 const About = lazy(() => import(/* webpackChunkName: "page-about" */ "./pages/about/about"));
 const Tutorial = lazy(() => import(/* webpackChunkName: "page-tutorial" */ "./pages/tutorial/tutorial"));
 const Nodes = lazy(() => import(/* webpackChunkName: "page-nodes" */ "./pages/nodes/nodes"));
+const Projects = lazy(() => import(/* webpackChunkName: "page-projects" */ "./pages/projects/projects"));
+
 
 const App = () => {
   const { logout } = useAuth();
@@ -34,6 +36,7 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/tutorial" element={<Tutorial />} />
           <Route element={<ProtectedRoute nodeRequired={false} />}>
+            <Route path="/projects" element={<Projects />} />
             <Route path="/nodes" element={<Nodes />} />
           </Route>
           <Route element={<ProtectedRoute nodeRequired={true} />}>

@@ -9,7 +9,6 @@ function MappingHierarchy({ mappingIndex, mappingKey, mapping, columnsData, onDe
   const [editing, setEditing] = useState({ type: null, groupIndex: null, valueIndex: null });
   const [editText, setEditText] = useState("");
   const editRef = useRef();
-
   const { mappingType, fileName, groups } = mapping;
 
   useEffect(() => {
@@ -17,8 +16,19 @@ function MappingHierarchy({ mappingIndex, mappingKey, mapping, columnsData, onDe
       editRef.current.focus();
   }, [editing]);
 
-  const getColumnColor = (colName) => {
-    return columnsData.find((col) => col.column === colName)?.color || "#ccc";
+  const getSourceColor = (map) => {
+    const col = columnsData.find(
+      (c) =>
+        c.column === map.groupColumn &&
+        c.fileName === map.fileName &&
+        c.nodeId === map.nodeId
+    );
+
+    return (
+      col?.color ||
+      columnsData.find((c) => c.column === map.groupColumn)?.color ||
+      "#ccc"
+    );
   };
 
   const handleEdit = (type, groupIndex, valueIndex, currentText = "") => {
@@ -87,11 +97,9 @@ function MappingHierarchy({ mappingIndex, mappingKey, mapping, columnsData, onDe
       <div key={gIndex} className={MappingHierarchyStyles.valueContainer}>
         {group.values.map((valueObj, valIndex) => {
           const fileColors = [
-            ...new Set(
-              columnsData
-                .filter((col) => valueObj.mapping.some((m) => m.groupColumn === col.column)).map((col) => col.color)
-            ),
+            ...new Set(valueObj.mapping.map((m) => getSourceColor(m))),
           ];
+
 
           const singleColor = fileColors.length === 1 ? fileColors[0] : null;
           const showPerColumnColor = fileColors.length > 1;
@@ -156,7 +164,7 @@ function MappingHierarchy({ mappingIndex, mappingKey, mapping, columnsData, onDe
               if (map.groupColumn === mappingKey && map.value === valueObj.name)
                 return null;
 
-              const columnColor = getColumnColor(map.groupColumn);
+              const columnColor = getSourceColor(map);
 
               return (
                 <div key={mapIndex} className={MappingHierarchyStyles.mappingItem}>

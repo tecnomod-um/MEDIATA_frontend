@@ -10,8 +10,8 @@
     color: var(--text-color-on-darkbg-light);
     font-size: 14px;
     text-align: center;
-    transform: translateX(-50%);
-    white-space: nowrap;
+    transform: none;
+    white-space: pre-line;
     pointer-events: none;
 }
 

@@ -248,7 +248,7 @@ const ElementDetailPanel = ({ activeElement, currentSelection, onSelectOption, a
                 message="Select an ontology class and configure its fields to build the element."
                 buttonRef={tooltipButtonRef}
                 onClose={() => setShowTooltip(false)}
-                offsetY={35}
+                offsetY={-10}
               />
             )}
           </div>

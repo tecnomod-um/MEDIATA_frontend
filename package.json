@@ -68,13 +68,24 @@
       "src/**/*.{js,jsx,ts,tsx}",
       "!src/components/Unused/**"
     ],
-    "coverageReporters": ["text", "lcov", "json-summary"]
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "json-summary"
+    ]
   },
   "eslintConfig": {
-    "extends": ["react-app", "react-app/jest"]
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
   },
   "browserslist": {
-    "production": [">0.2%", "not dead", "not op_mini all"],
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
     "development": [
       "last 1 chrome version",
       "last 1 firefox version",
@@ -86,6 +97,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@types/node": "^22.7.4",
+    "baseline-browser-mapping": "^2.9.7",
     "eslint": "^8.57.1",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.31.0",

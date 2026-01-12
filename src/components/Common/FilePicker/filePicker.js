@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { CSSTransition } from 'react-transition-group';
-import FilePickerStyles from './filePicker.module.css';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { CSSTransition } from "react-transition-group";
+import LinearProgress from "@mui/material/LinearProgress";
+import FilePickerStyles from "./filePicker.module.css";
 
-function FilePicker({ files = [], onFilesSelected, isProcessing = false, modalTitle, preSelectedFiles = {}, autoProcess = false }) {
+function FilePicker({ files = [], onFilesSelected, isProcessing = false, modalTitle, preSelectedFiles = {}, autoProcess = false, progressMode = "spinner", progressValue = 0 }) {
   const [selectedFiles, setSelectedFiles] = useState({});
   const [showModal] = useState(true);
   const [filesLoaded, setFilesLoaded] = useState(false);
@@ -12,14 +13,15 @@ function FilePicker({ files = [], onFilesSelected, isProcessing = false, modalTi
 
   useEffect(() => {
     const initialSelections = {};
-    files.forEach(node => {
-      initialSelections[node.nodeId] = (preSelectedFiles[node.nodeId] && preSelectedFiles[node.nodeId].length > 0)
-        ? [...preSelectedFiles[node.nodeId]] : [];
+    files.forEach((node) => {
+      initialSelections[node.nodeId] =
+        preSelectedFiles[node.nodeId] && preSelectedFiles[node.nodeId].length > 0
+          ? [...preSelectedFiles[node.nodeId]]
+          : [];
     });
-    const hasPreSelection = Object.values(initialSelections).some(arr => arr.length > 0);
-    const hasCurrent = Object.values(selectedFiles).some(arr => arr.length > 0);
-    if (hasPreSelection && !hasCurrent)
-      setSelectedFiles(initialSelections);
+    const hasPreSelection = Object.values(initialSelections).some((arr) => arr.length > 0);
+    const hasCurrent = Object.values(selectedFiles).some((arr) => arr.length > 0);
+    if (hasPreSelection && !hasCurrent) setSelectedFiles(initialSelections);
   }, [files, preSelectedFiles, selectedFiles]);
 
   useEffect(() => {
@@ -31,28 +33,34 @@ function FilePicker({ files = [], onFilesSelected, isProcessing = false, modalTi
 
   const handleToggle = (nodeId, fileName) => {
     if (isProcessing) return;
-    setSelectedFiles(prev => {
+    setSelectedFiles((prev) => {
       const nodeFiles = prev[nodeId] || [];
-      if (nodeFiles.includes(fileName))
-        return { ...prev, [nodeId]: nodeFiles.filter(f => f !== fileName) };
-      else
-        return { ...prev, [nodeId]: [...nodeFiles, fileName] };
+      if (nodeFiles.includes(fileName)) {
+        return { ...prev, [nodeId]: nodeFiles.filter((f) => f !== fileName) };
+      }
+      return { ...prev, [nodeId]: [...nodeFiles, fileName] };
     });
   };
 
   const handleProcess = useCallback(() => {
-    const hasSelection = Object.values(selectedFiles).some(arr => arr.length > 0);
+    const hasSelection = Object.values(selectedFiles).some((arr) => arr.length > 0);
     if (hasSelection) onFilesSelected(selectedFiles);
   }, [selectedFiles, onFilesSelected]);
 
   useEffect(() => {
-    if (autoProcess && filesLoaded && !isProcessing && Object.values(selectedFiles).some(arr => arr.length > 0)) {
-      const timer = setTimeout(() => {
-        handleProcess();
-      }, 500);
+    if (
+      autoProcess &&
+      filesLoaded &&
+      !isProcessing &&
+      Object.values(selectedFiles).some((arr) => arr.length > 0)
+    ) {
+      const timer = setTimeout(() => { handleProcess(); }, 500);
       return () => clearTimeout(timer);
     }
   }, [autoProcess, filesLoaded, isProcessing, selectedFiles, handleProcess]);
+
+  const isBar = isProcessing && progressMode === "bar";
+  const safeProgress = Math.max(0, Math.min(100, Number(progressValue) || 0));
 
   return (
     <CSSTransition
@@ -73,18 +81,19 @@ function FilePicker({ files = [], onFilesSelected, isProcessing = false, modalTi
           <h2 className={FilePickerStyles.modalTitle}>
             {modalTitle || "Select Files to Process"}
           </h2>
+
           <CSSTransition
             in={filesLoaded}
             nodeRef={fileListRef}
             timeout={300}
             onEnter={() => {
               if (fileListRef.current) {
-                fileListRef.current.style.height = '0px';
+                fileListRef.current.style.height = "0px";
                 const scrollHeight = fileListRef.current.scrollHeight;
                 setTimeout(() => setHeight(scrollHeight), 10);
               }
             }}
-            onEntered={() => setHeight('auto')}
+            onEntered={() => setHeight("auto")}
             onExit={() => {
               if (fileListRef.current) {
                 const scrollHeight = fileListRef.current.scrollHeight;
@@ -101,25 +110,24 @@ function FilePicker({ files = [], onFilesSelected, isProcessing = false, modalTi
               className={`${FilePickerStyles.fileListWrapperExpanded} ${FilePickerStyles.scrollable}`}
               style={{
                 height: height,
-                overflow: height === 'auto' ? 'auto' : 'hidden',
-                transition: 'height 300ms ease',
+                overflow: height === "auto" ? "auto" : "hidden",
+                transition: "height 300ms ease",
               }}
             >
-              {(files.length === 0 || files.every(node => !node.files || node.files.length === 0)) ? (
+              {files.length === 0 || files.every((node) => !node.files || node.files.length === 0) ? (
                 <div className={FilePickerStyles.noFiles}>No files available</div>
               ) : (
-                files.map(node => (
+                files.map((node) => (
                   <div key={node.nodeId} className={FilePickerStyles.nodeSection}>
-                    {files.length > 1 && (
-                      <h3 className={FilePickerStyles.nodeTitle}>{node.nodeName}</h3>
-                    )}
+                    {files.length > 1 && <h3 className={FilePickerStyles.nodeTitle}>{node.nodeName}</h3>}
                     <ul className={FilePickerStyles.fileList}>
                       {node.files.map((file, index) => {
                         const isSelected = (selectedFiles[node.nodeId] || []).includes(file);
                         return (
                           <li
                             key={index}
-                            className={`${FilePickerStyles.fileItem} ${isSelected ? FilePickerStyles.selected : ''} ${isProcessing ? FilePickerStyles.disabledFile : ''}`}
+                            className={`${FilePickerStyles.fileItem} ${isSelected ? FilePickerStyles.selected : ""
+                              } ${isProcessing ? FilePickerStyles.disabledFile : ""}`}
                             onClick={() => handleToggle(node.nodeId, file)}
                           >
                             {file}
@@ -136,15 +144,31 @@ function FilePicker({ files = [], onFilesSelected, isProcessing = false, modalTi
           <button
             className={FilePickerStyles.confirmButton}
             onClick={handleProcess}
-            disabled={isProcessing || !Object.values(selectedFiles).some(arr => arr.length > 0)}
+            disabled={isProcessing || !Object.values(selectedFiles).some((arr) => arr.length > 0)}
           >
             {isProcessing ? (
-              <div className={FilePickerStyles.buttonSpinner}>
-                <span className={FilePickerStyles.spinnerIcon}></span>
-                <span>Processing...</span>
-              </div>
+              isBar ? (
+                <div style={{ width: "100%" }}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={safeProgress}
+                    sx={{
+                      width: "100%",
+                      height: 12,
+                      borderRadius: 999,
+                      "& .MuiLinearProgress-bar": { borderRadius: 999 },
+                      backgroundColor: "rgba(255,255,255,0.25)",
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className={FilePickerStyles.buttonSpinner}>
+                  <span className={FilePickerStyles.spinnerIcon}></span>
+                  <span>Processing...</span>
+                </div>
+              )
             ) : (
-              'Process Selected Files'
+              "Process Selected Files"
             )}
           </button>
         </div>

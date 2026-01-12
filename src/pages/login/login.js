@@ -23,7 +23,7 @@ const Login = () => {
       const data = await loginUser(username, password);
       login(data.token, data.tgt);
       setIsLoggingIn(false);
-      navigate("/nodes");
+        navigate("/projects");
     } catch (error) {
       console.log(error);
       setErrorMessage("Login failed. Please check your credentials.");

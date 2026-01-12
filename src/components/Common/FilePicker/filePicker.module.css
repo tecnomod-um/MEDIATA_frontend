@@ -230,3 +230,329 @@
   color: grey;
   text-align: center;
 }
+
+/* project picker */
+/* ===== ProjectPicker additions (safe to append) ===== */
+
+.listWrapper {
+  border: 1px solid var(--background-color-1-light);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.projectRow {
+  width: 100%;
+  display: grid;
+  grid-template-columns: var(--project-thumb-size) 1fr 18px;
+  gap: 14px;
+  align-items: center;
+  padding: 12px;
+
+  border: none;
+  border-bottom: 1px solid var(--background-color-1-light);
+  background: var(--background-color-card-light);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.3s ease, border-left-color 0.3s ease;
+}
+
+.thumb {
+  width: var(--project-thumb-size);
+  height: var(--project-thumb-size);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--background-color-1-light);
+  background: var(--background-color-card-light);
+
+  display: grid;
+  place-items: center;
+}
+
+.thumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  padding: 0;
+
+  display: block;
+}
+
+.projectRow:hover {
+  background-color: var(--background-color-2-light);
+}
+
+.thumbFallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #2b2b2b;
+  background: linear-gradient(135deg, #e8eef5, #f5efe8);
+}
+
+.projectMain {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.projectTopLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.projectName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--background-nav-and-headers-background-color-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  text-transform: capitalize;
+}
+
+.badgeActive {
+  background-color: var(--project-status-active-bg);
+  color: var(--project-status-active-text);
+  border: 1px solid color-mix(in srgb, currentColor 0%, black 25%);
+}
+
+.badgeHiatus {
+  background-color: var(--project-status-hiatus-bg);
+  color: var(--project-status-hiatus-text);
+  border: 1px solid color-mix(in srgb, currentColor 0%, black 25%);
+}
+
+.badgeClosed {
+  background-color: var(--project-status-closed-bg);
+  color: var(--project-status-closed-text);
+  border: 1px solid color-mix(in srgb, currentColor 0%, black 25%);
+}
+
+.badgeDefault {
+  background-color: var(--project-status-default-bg);
+  color: var(--project-status-default-text);
+  border: 1px solid color-mix(in srgb, currentColor 0%, black 25%);
+}
+
+.projectMeta {
+  display: flex;
+  min-width: 0;
+}
+
+.projectId {
+  font-size: 0.82rem;
+  color: var(--background-nav-tool-background-color-active-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.statChip {
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--background-color-1-light);
+  background: var(--background-color-card-light);
+  color: var(--background-nav-and-headers-background-color-light);
+}
+
+.chev {
+  font-size: 22px;
+  line-height: 1;
+  color: var(--background-nav-tool-background-color-active-light);
+  justify-self: end;
+}
+
+.emptyState {
+  padding: 1rem;
+  font-style: italic;
+  color: grey;
+  text-align: center;
+}
+
+/* ProjectPicker uses these transition classnames; add them so it compiles */
+.fadeListEnter {
+  opacity: 0;
+}
+
+.fadeListEnterActive {
+  opacity: 1;
+  transition: opacity 200ms ease;
+}
+
+.fadeListExit {
+  opacity: 1;
+}
+
+.fadeListExitActive {
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.projectDescription {
+  font-size: 0.82rem;
+  color: #5a5a5a;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  /* 2-line preview */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.projectBottomRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lastAccess {
+  font-size: 0.78rem;
+  color: #6b6b6b;
+  white-space: nowrap;
+}
+
+.projectModal {
+  max-width: 1000px;
+}
+
+@media (max-width: 520px) {
+  .modalContainer {
+    width: 94%;
+    max-width: 520px;
+    padding: 18px 16px;
+    max-height: 88vh;
+  }
+
+  .modalTitle {
+    margin-bottom: 0.75em;
+    font-size: 1.25rem;
+    line-height: 1.15;
+  }
+
+  .projectRow {
+    grid-template-columns: 44px 1fr 14px;
+    gap: 10px;
+    padding: 10px 10px;
+    align-items: center;
+  }
+
+  .thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+  }
+
+  .projectMain {
+    gap: 6px;
+    padding-top: 1px;
+    min-width: 0;
+  }
+
+  .projectTopLine {
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .projectName {
+    font-size: 0.98rem;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .badge {
+    font-size: 0.72rem;
+    padding: 2px 9px;
+    line-height: 1.2;
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .projectDescription {
+    font-size: 0.84rem;
+    line-height: 1.25;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .projectBottomRow {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .statsRow {
+    flex-wrap: nowrap;
+    gap: 8px;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+
+    scrollbar-width: none;
+  }
+
+  .statsRow::-webkit-scrollbar {
+    display: none;
+  }
+
+  .statChip {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-size: 0.78rem;
+    padding: 4px 10px;
+  }
+
+  .lastAccess {
+    width: 100%;
+    white-space: normal;
+    font-size: 0.78rem;
+    line-height: 1.2;
+  }
+
+  .chev {
+    font-size: 20px;
+    line-height: 1;
+    color: var(--background-nav-tool-background-color-active-light);
+    justify-self: end;
+    align-self: center;
+    padding-top: 0;
+  }
+}

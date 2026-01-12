@@ -32,14 +32,17 @@
   --button-save-color: #1b3442;
   --button-save-hover-color: #264656;
 
+  --button-add-mapping-color: #868686;
+  --button-add-mapping-hover-color: #b6b6b6;
+
+  --button-description-color: #975019;
+  --button-description-hover-color: #b15f1f;
+
   --transition-duration: 600ms;
   --transition-ease: cubic-bezier(0.25, 0.8, 0.25, 1);
 
   --darkened-background-color: rgba(0, 0, 0, 0.5);
   --translucent-background-color: rgba(0, 0, 0, 0.7);
-
-
-
 
   --icon-background: #53a9ca;
   --icon-stroke: #0f2433;
@@ -50,4 +53,18 @@
 
   --icon-shield-stroke: #ffffff;
   --icon-shield-stroke-inner: #0f2433;
+
+  --project-thumb-size: 90px;
+  --project-status-active-bg: #e6f4ea;
+  --project-status-active-text: #1e7f43;
+  
+  --project-status-hiatus-bg: #eef3f8;
+  --project-status-hiatus-text: #3a5a78;
+  
+  --project-status-closed-bg: #fbeaea;
+  --project-status-closed-text: #8b1e1e;
+  
+  --project-status-default-bg: #eeeeee;
+  --project-status-default-text: #444444;
 }
+

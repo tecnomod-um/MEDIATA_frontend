@@ -1,16 +1,18 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 import DiscoveryStyles from "./discovery.module.css";
 import FilePicker from "../../components/Common/FilePicker/filePicker";
+import FileExplorer from "../../components/Common/FilePicker/fileExplorer"; 
 import StatisticsDisplay from "../../components/Discovery/StatisticsDisplay/statisticsDisplay";
 import ToolTray from "../../components/Discovery/ToolTray/toolTray";
 import AggregateDisplay from "../../components/Discovery/AggregatesDisplay/aggregateDisplay";
 import FilterModal from "../../components/Discovery/FilterModal/filterModal";
 import { ToastContainer, toast } from "react-toastify";
-import { getNodeDatasets, processSelectedDatasets } from "../../util/petitionHandler";
+import { getNodeDatasets, processSelectedDatasets, getProcessSelectedDatasetsStatus, getProcessSelectedDatasetsResult } from "../../util/petitionHandler";
 import { updateNodeAxiosBaseURL } from "../../util/nodeAxiosSetup";
+
 import { useNode } from "../../context/nodeContext";
 
 function Discovery() {
@@ -27,12 +29,34 @@ function Discovery() {
   const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
   const [isFiltersOpen, setIsFiltersopen] = useState(false);
   const [filters, setFilters] = useState([]);
+
+  const [progressMode, setProgressMode] = useState("spinner");
+  const [progressValue, setProgressValue] = useState(0);
+
   const [hasProcessedMappingState, setHasProcessedMappingState] = useState(false);
   const { selectedNodes } = useNode();
   const [datasets, setDatasets] = useState([]);
   const location = useLocation();
   const toggleToolTray = () => setIsToolTrayOpen(!isToolTrayOpen);
 
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  const pollDiscoveryJob = useCallback(async (jobId, onProgress) => {
+    while (true) {
+      const status = await getProcessSelectedDatasetsStatus(jobId);
+      if (typeof status?.percent === "number") onProgress(status.percent);
+  
+      const state = String(status?.state || "").toUpperCase();
+      if (state === "DONE") {
+        const results = await getProcessSelectedDatasetsResult(jobId);
+        return results || [];
+      }
+      if (state === "ERROR") throw new Error(status.message || "Discovery job failed");
+  
+      await sleep(500);
+    }
+  }, []);
+  
   useEffect(() => {
     if (location.state?.elementFiles?.length && !hasProcessedMappingState) {
       const elementFiles = location.state.elementFiles;
@@ -50,23 +74,36 @@ function Discovery() {
               if (filesForNode.length === 0) return;
               updateNodeAxiosBaseURL(node.serviceUrl);
               const result = await processSelectedDatasets(filesForNode);
-              if (Array.isArray(result)) {
+
+              if (result.mode === "sync") {
+                const arr = result.results || [];
                 allResults = allResults.concat(
-                  result.map((r) => ({
+                  arr.map((r) => ({
                     ...r,
                     fileName: r.fileName || "Unknown File",
                     nodeId: node.nodeId,
                     nodeName: node.name,
                   }))
                 );
-              } else {
-                allResults.push({
-                  ...result,
-                  fileName: result.fileName || "Unknown File",
-                  nodeId: node.nodeId,
-                  nodeName: node.name,
-                });
+                return;
               }
+              
+              if (result.mode === "async") {
+                setProgressMode("bar"); // optional
+                const arr = await pollDiscoveryJob(result.jobId, () => {}); // no progress needed here
+                allResults = allResults.concat(
+                  arr.map((r) => ({
+                    ...r,
+                    fileName: r.fileName || "Unknown File",
+                    nodeId: node.nodeId,
+                    nodeName: node.name,
+                  }))
+                );
+                return;
+              }
+              
+              throw new Error("Unexpected response from processList");
+              
             })
           );
           if (allResults.length === 0) {
@@ -81,7 +118,7 @@ function Discovery() {
       })();
       setHasProcessedMappingState(true);
     }
-  }, [location.state, selectedNodes, dataResults.length, hasProcessedMappingState]);
+  }, [location.state, selectedNodes, dataResults.length, hasProcessedMappingState, pollDiscoveryJob]);
 
   const combineSelectedData = (dataResultsArray, activeIndices) => {
     const combined = {
@@ -181,42 +218,75 @@ function Discovery() {
 
   const handleProcessSelectedDatasets = async (selectedFilenamesMapping) => {
     setIsProcessing(true);
-
+    setProgressMode("spinner");
+    setProgressValue(0);
+  
     try {
       const allResults = [];
-      if (selectedNodes && selectedNodes.length > 0) {
-        await Promise.all(
-          selectedNodes.map(async (node) => {
-            const filesForNode = selectedFilenamesMapping[node.nodeId] || [];
-            if (filesForNode.length === 0) return;
-
-            updateNodeAxiosBaseURL(node.serviceUrl);
-            const result = await processSelectedDatasets(filesForNode);
-            if (Array.isArray(result)) {
-              allResults.push(
-                ...result.map((r) => ({
-                  ...r,
-                  fileName: r.fileName || "Unknown File",
-                  nodeId: node.nodeId,
-                  nodeName: node.name,
-                }))
-              );
-            } else {
-              allResults.push({
-                ...result,
-                fileName: result.fileName || "Unknown File",
+      const perNodePercent = {};
+  
+      const updateOverallProgress = () => {
+        const vals = Object.values(perNodePercent);
+        const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+        setProgressValue(avg);
+      };
+  
+      await Promise.all(
+        selectedNodes.map(async (node) => {
+          const filesForNode = selectedFilenamesMapping[node.nodeId] || [];
+          if (!filesForNode.length) return;
+  
+          updateNodeAxiosBaseURL(node.serviceUrl);
+  
+          const result = await processSelectedDatasets(filesForNode);
+  
+          if (result.mode === "sync") {
+            const arr = result.results || [];
+            allResults.push(
+              ...arr.map((r) => ({
+                ...r,
+                fileName: r.fileName || "Unknown File",
                 nodeId: node.nodeId,
-              });
-            }
-          })
-        );
-      }
+                nodeName: node.name,
+              }))
+            );
+            return;
+          }
+  
+          if (result.mode === "async") {
+            setProgressMode("bar");
+            perNodePercent[node.nodeId] = 0;
+            updateOverallProgress();
+  
+            const arr = await pollDiscoveryJob(result.jobId, (p) => {
+              perNodePercent[node.nodeId] = p;
+              updateOverallProgress();
+            });
+  
+            allResults.push(
+              ...arr.map((r) => ({
+                ...r,
+                fileName: r.fileName || "Unknown File",
+                nodeId: node.nodeId,
+                nodeName: node.name,
+              }))
+            );
+            return;
+          }
+  
+          throw new Error("Unexpected response from processList");
+        })
+      );
+  
       setDataResults(allResults);
-      const toggles = allResults.map((_, idx) => idx === 0);
-      setActiveFileIndices(toggles);
-      setIsProcessing(false);
+      setActiveFileIndices(allResults.map((_, idx) => idx === 0));
     } catch (error) {
+      console.error(error);
+      toast.error(error.message || "Error processing datasets");
+    } finally {
       setIsProcessing(false);
+      setProgressMode("spinner");
+      setProgressValue(0);
     }
   };
 
@@ -262,7 +332,61 @@ function Discovery() {
       preSelected[nodeId].push(fileName);
     });
   }
+  const handleOpenFromExplorer = async (fileName) => {
+    if (!selectedNodes?.length) {
+      toast.error("No node selected.");
+      return;
+    }
 
+    // Basic version: use FIRST node only (predictable).
+    const node = selectedNodes[0];
+
+    setIsProcessing(true);
+    setProgressMode("spinner");
+    setProgressValue(0);
+
+    try {
+      updateNodeAxiosBaseURL(node.serviceUrl);
+
+      const result = await processSelectedDatasets([fileName]);
+
+      if (result.mode === "sync") {
+        const arr = result.results || [];
+        const allResults = arr.map((r) => ({
+          ...r,
+          fileName: r.fileName || fileName,
+          nodeId: node.nodeId,
+          nodeName: node.name,
+        }));
+        setDataResults(allResults);
+        setActiveFileIndices(allResults.map((_, idx) => idx === 0));
+        return;
+      }
+
+      if (result.mode === "async") {
+        setProgressMode("bar");
+        const arr = await pollDiscoveryJob(result.jobId, (p) => setProgressValue(p));
+        const allResults = (arr || []).map((r) => ({
+          ...r,
+          fileName: r.fileName || fileName,
+          nodeId: node.nodeId,
+          nodeName: node.name,
+        }));
+        setDataResults(allResults);
+        setActiveFileIndices(allResults.map((_, idx) => idx === 0));
+        return;
+      }
+
+      throw new Error("Unexpected response from processList");
+    } catch (e) {
+      console.error(e);
+      toast.error(e.message || "Error processing dataset");
+    } finally {
+      setIsProcessing(false);
+      setProgressMode("spinner");
+      setProgressValue(0);
+    }
+  };
   console.log(dataStatistics)
   return (
     <div className={DiscoveryStyles.dropContainer}>
@@ -279,7 +403,7 @@ function Discovery() {
         combineSelectedData={combineSelectedData}
         setDataStatistics={setDataStatistics}
       />
-      {!filteredDataStatistics && (
+      {/*!filteredDataStatistics && (
         <FilePicker
           files={datasets}
           onFilesSelected={handleProcessSelectedDatasets}
@@ -287,6 +411,22 @@ function Discovery() {
           modalTitle="Select dataset files to process"
           preSelectedFiles={preSelected}
           autoProcess={!!location.state?.elementFiles?.length}
+
+          progressMode={progressMode}
+          progressValue={progressValue}
+        />
+      )*/}
+            {/* Show explorer when we have not loaded data yet */}
+            {!filteredDataStatistics && (
+        <FileExplorer
+          category="DATASETS"
+          isOpen={true}
+          modalTitle={
+            isProcessing
+              ? (progressMode === "bar" ? `Processing… ${Math.round(progressValue)}%` : "Processing…")
+              : "Browse datasets (double-click to open)"
+          }
+          onOpenFile={handleOpenFromExplorer}
         />
       )}
       <CSSTransition
