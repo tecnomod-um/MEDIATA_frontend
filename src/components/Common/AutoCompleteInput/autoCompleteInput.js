@@ -8,7 +8,8 @@ function AutocompleteInput({  value,  onChange,  placeholder,  className,  sugge
   const [listStyles, setListStyles] = useState({});
   const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef(null);
-  const inputId = id || `autocomplete-${useRef(Math.random().toString(36).substr(2, 9)).current}`;
+  const randomIdRef = useRef(Math.random().toString(36).substr(2, 9));
+  const inputId = id || `autocomplete-${randomIdRef.current}`;
   const listId = `${inputId}-listbox`;
 
   useEffect(() => {
