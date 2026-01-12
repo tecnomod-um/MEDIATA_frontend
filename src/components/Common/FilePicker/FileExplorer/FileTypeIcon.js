@@ -1,17 +1,13 @@
 import React from "react";
 import Styles from "../fileExplorer.module.css";
+import { getFileExtension } from "./fileUtils";
 
 /**
  * FileTypeIcon - Displays an icon representing the file type (CSV or XLSX)
  * @param {string} name - The filename to determine the icon type
  */
 function FileTypeIcon({ name }) {
-  const extOf = (fileName) => {
-    const m = String(fileName || "").toLowerCase().match(/\.([a-z0-9]+)$/);
-    return m ? m[1] : "";
-  };
-
-  const ext = extOf(name);
+  const ext = getFileExtension(name);
   const isXlsx = ext === "xlsx" || ext === "xls";
   const label = isXlsx ? "XLSX" : "CSV";
   const cls = isXlsx ? Styles.iconXlsx : Styles.iconCsv;
