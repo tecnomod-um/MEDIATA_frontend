@@ -1,14 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CSSTransition } from "react-transition-group";
 import Styles from "./fileExplorer.module.css";
-import { listExplorerFiles, renameExplorerFile, deleteExplorerFile, cleanExplorerFile } from "../../../util/petitionHandler";
+import { listExplorerFiles, renameExplorerFile, deleteExplorerFile, cleanExplorerFile, processSelectedDatasets, getProcessSelectedDatasetsStatus, getProcessSelectedDatasetsResult } from "../../../util/petitionHandler";
+import { updateNodeAxiosBaseURL } from "../../../util/nodeAxiosSetup";
 import Toolbar from "./FileExplorer/Toolbar";
 import FileTable from "./FileExplorer/FileTable";
 import CleanPanel from "./FileExplorer/CleanPanel";
 import DeleteConfirmation from "./FileExplorer/DeleteConfirmation";
 import { formatBytes, formatDateTime, isFileNew } from "./FileExplorer/fileUtils";
 
-function FileExplorer({ category, isOpen = true, onClose, onOpenFile }) {
+function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile, onFilesOpened }) {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -16,6 +17,10 @@ function FileExplorer({ category, isOpen = true, onClose, onOpenFile }) {
 
   // Track files currently being processed (for showing loaders)
   const [processingFiles, setProcessingFiles] = useState(() => new Set());
+  
+  // Progress tracking for async operations (large files)
+  const [progressMode, setProgressMode] = useState("spinner"); // "spinner" or "bar"
+  const [progressValue, setProgressValue] = useState(0); // 0-100 for bar mode
 
   // selection (multi)
   const [selected, setSelected] = useState(() => new Set());
@@ -317,31 +322,86 @@ function FileExplorer({ category, isOpen = true, onClose, onOpenFile }) {
     }
   };
 
-  const doOpen = (name) => {
-    if (busy) return;
-    if (!onOpenFile) return;
-    
-    // Show loading indicator for the file being opened
-    setProcessingFiles(prev => new Set([...prev, name]));
-    setBusy(true);
-    
-    // Call the callback - file will be loaded by parent
-    onOpenFile(name);
-    
-    // Clear processing state after a delay to allow file to load
-    setTimeout(() => {
-      setProcessingFiles(prev => {
-        const next = new Set(prev);
-        next.delete(name);
-        return next;
-      });
-      setBusy(false);
-    }, 1500);
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  const pollFileOpenJob = async (jobId, onProgress) => {
+    while (true) {
+      const status = await getProcessSelectedDatasetsStatus(jobId);
+      if (typeof status?.percent === "number") {
+        onProgress(status.percent);
+      }
+
+      const state = String(status?.state || "").toUpperCase();
+      if (state === "DONE") {
+        const results = await getProcessSelectedDatasetsResult(jobId);
+        return results || [];
+      }
+      if (state === "ERROR") {
+        throw new Error(status.message || "File processing failed");
+      }
+
+      await sleep(500);
+    }
   };
 
-  const doOpenSelected = () => {
+  const doOpen = async (name) => {
     if (busy) return;
-    if (!onOpenFile) return;
+    
+    // If old callback exists and no new one, use legacy mode
+    if (onOpenFile && !onFilesOpened) {
+      setProcessingFiles(prev => new Set([...prev, name]));
+      setBusy(true);
+      onOpenFile(name);
+      setTimeout(() => {
+        setProcessingFiles(prev => {
+          const next = new Set(prev);
+          next.delete(name);
+          return next;
+        });
+        setBusy(false);
+      }, 1500);
+      return;
+    }
+
+    // New async mode with progress tracking
+    if (!onFilesOpened) return;
+
+    setBusy(true);
+    setError(null);
+    setProcessingFiles(new Set([name]));
+    setProgressMode("spinner");
+    setProgressValue(0);
+
+    try {
+      // Call backend API to process file
+      const result = await processSelectedDatasets([name]);
+
+      if (result.mode === "sync") {
+        // Small file - quick processing
+        const results = result.results || [];
+        if (onFilesOpened) onFilesOpened(results);
+      } else if (result.mode === "async") {
+        // Large file - show progress bar
+        setProgressMode("bar");
+        
+        const results = await pollFileOpenJob(result.jobId, (percent) => {
+          setProgressValue(percent);
+        });
+        
+        if (onFilesOpened) onFilesOpened(results);
+      }
+    } catch (e) {
+      setError(e?.message || "Failed to open file");
+    } finally {
+      setProcessingFiles(new Set());
+      setBusy(false);
+      setProgressMode("spinner");
+      setProgressValue(0);
+    }
+  };
+
+  const doOpenSelected = async () => {
+    if (busy) return;
     if (selected.size === 0) return;
 
     // open "primary" selection: lastIndex if included, else first selected
@@ -351,18 +411,23 @@ function FileExplorer({ category, isOpen = true, onClose, onOpenFile }) {
     } else {
       target = Array.from(selected)[0];
     }
-    if (target) {
-      // Show loading indicator for the file being opened
+    
+    if (!target) return;
+
+    // If old callback exists and no new one, use legacy mode
+    if (onOpenFile && !onFilesOpened) {
       setProcessingFiles(new Set([target]));
       setBusy(true);
-      
       onOpenFile(target);
-      
-      // Clear processing state after a delay
       setTimeout(() => {
         setProcessingFiles(new Set());
         setBusy(false);
       }, 1500);
+      return;
+    }
+
+    // New async mode
+    await doOpen(target);
     }
   };
 
@@ -496,6 +561,8 @@ function FileExplorer({ category, isOpen = true, onClose, onOpenFile }) {
                     selected={selected}
                     busy={busy}
                     processingFiles={processingFiles}
+                    progressMode={progressMode}
+                    progressValue={progressValue}
                     onRowMouseDown={onRowMouseDown}
                     onRowMouseUp={onRowMouseUp}
                     onRowMouseLeave={onRowMouseLeave}

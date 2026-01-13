@@ -31,6 +31,8 @@ function FileTable({
   selected,
   busy,
   processingFiles = new Set(),
+  progressMode = "spinner",
+  progressValue = 0,
   onRowMouseDown,
   onRowMouseUp,
   onRowMouseLeave,
@@ -116,10 +118,16 @@ function FileTable({
                   onBlur={() => commitRename()}
                   disabled={busy}
                 />
-              ) : isProcessing ? (
-                /* Show progress bar in place of name when processing */
+              ) : isProcessing && progressMode === "bar" ? (
+                /* Show determinate progress bar with percentage for async operations */
                 <div className={Styles.processingProgress}>
-                  <LinearProgress />
+                  <LinearProgress variant="determinate" value={progressValue} />
+                  <span className={Styles.progressText}>{Math.round(progressValue)}%</span>
+                </div>
+              ) : isProcessing && progressMode === "spinner" ? (
+                /* Show indeterminate progress bar for sync operations */
+                <div className={Styles.processingProgress}>
+                  <LinearProgress variant="indeterminate" />
                 </div>
               ) : (
                 <span className={Styles.nameText}>
