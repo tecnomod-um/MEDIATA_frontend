@@ -269,9 +269,23 @@
   overflow-x: hidden;
   position: relative;
   padding-left: 20px;
-
   padding-right: 8px; 
   padding-bottom: 50px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.valueListContainer::-webkit-scrollbar {
+  width: 8px;
+}
+
+.valueListContainer::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 10px;
+}
+
+.valueListContainer::-webkit-scrollbar-track {
+  background-color: var(--scrollbar-track);
 }
 
 .valueMappingContainer {

@@ -18,6 +18,20 @@
   position: relative;
   padding-right: 10px;
   scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.scrollableContainer::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollableContainer::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 10px;
+}
+
+.scrollableContainer::-webkit-scrollbar-track {
+  background-color: var(--scrollbar-track);
 }
 
 .undoContainer {
@@ -203,7 +217,7 @@
   position: sticky;
   top: 0;
   z-index: 3;
-  background: #f4f4f4;
+  background: var(--background-color-3);
 }
 
 .searchInput {
