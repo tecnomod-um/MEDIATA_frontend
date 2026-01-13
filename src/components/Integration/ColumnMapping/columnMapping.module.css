@@ -125,19 +125,25 @@
   flex: 1;
   padding: 12px;
   border: 1px solid var(--border-color-secondary);
+  background-color: var(--background-color-card);
+  color: var(--text-color-primary);
   font-size: 1em;
   min-width: 200px;
   border-radius: 5px 0 0 5px;
+  outline: none;
 }
 
 .snomedInput {
   flex: 1;
   padding: 12px;
   border: 1px solid var(--border-color-secondary);
+  background-color: var(--background-color-card);
+  color: var(--text-color-primary);
   border-left: 0;
   font-size: 1em;
   min-width: 120px;
   border-radius: 0;
+  outline: none;
 }
 
 
