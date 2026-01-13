@@ -40,6 +40,9 @@ function EntrySearch({ resultData, onRowSelect, selectedEntry, type }) {
               : "No elements to display"
           }
           onChange={handleChange}
+          aria-label="Search entries"
+          aria-describedby="entry-search-count"
+          role="searchbox"
         />
       </div>
       <div className={EntrySearchStyles.dataContainer}>
@@ -50,7 +53,15 @@ function EntrySearch({ resultData, onRowSelect, selectedEntry, type }) {
           selectedEntry={selectedEntry}
           type={type}
         />
-        <span className={EntrySearchStyles.resultCount}>{rowCount}</span>
+        <span 
+          className={EntrySearchStyles.resultCount}
+          id="entry-search-count"
+          role="status"
+          aria-live="polite"
+          aria-label={`${rowCount} result${rowCount !== 1 ? 's' : ''} found`}
+        >
+          {rowCount}
+        </span>
       </div>
     </div>
   );

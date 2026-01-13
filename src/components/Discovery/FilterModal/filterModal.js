@@ -461,13 +461,13 @@ const FilterModal = ({
 
   return (
     <OverlayWrapper isOpen={isOpen} closeModal={closeModal}>
-      <div className={FilterModalStyles.filterModal}>
+      <div className={FilterModalStyles.filterModal} role="dialog" aria-modal="true" aria-labelledby="filter-modal-title">
         <div className={FilterModalStyles.modalHeader}>
-          <h3>Filter displayed data</h3>
+          <h3 id="filter-modal-title">Filter displayed data</h3>
           <button
             className={FilterModalStyles.closeBtn}
             onClick={closeModal}
-            aria-label="Close"
+            aria-label="Close filter modal"
             disabled={isLoading}
           >
             <IoMdClose />
@@ -488,6 +488,9 @@ const FilterModal = ({
                 (o) => o.value === selectedFeature
               )}
               isDisabled={isLoading}
+              aria-label="Select feature to filter"
+              inputId="feature-select"
+            />
             />
             {hasAtLeastTwoFilters() && (
               <div className={FilterModalStyles.globalLogicalOperatorContainer}>
@@ -500,6 +503,7 @@ const FilterModal = ({
                     )
                   }
                   disabled={isLoading}
+                  aria-label={`Global logical operator: ${globalLogicalOperator}. Click to toggle.`}
                 >
                   {globalLogicalOperator}
                 </button>

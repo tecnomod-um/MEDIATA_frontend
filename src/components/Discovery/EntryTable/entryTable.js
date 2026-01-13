@@ -25,12 +25,25 @@ const Row = React.memo(
             type: type,
           })
         }
+        role="row"
+        aria-selected={isRowSelected}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onRowClick({
+              featureName: filteredLists["Name"][rowIndex],
+              type: type,
+            });
+          }
+        }}
       >
         {Object.keys(filteredLists).map((key) => (
           <td
             key={`${key}-${rowIndex}`}
             className={`${EntryTableStyles.resTd} ${isRowSelected ? EntryTableStyles.selectedEntry : ""
               }`}
+            role="cell"
           >
             <span className={EntryTableStyles.resSpan}>
               {filteredLists[key][rowIndex]}
@@ -180,11 +193,13 @@ function EntryTable({ filteredLists, minCellWidth, maxRows = 1000, onRowSelect, 
       className={EntryTableStyles.resTable}
       style={{ gridTemplateColumns }}
       ref={tableElement}
+      role="table"
+      aria-label="Data statistics table"
     >
       <thead className={EntryTableStyles.resThead}>
-        <tr className={EntryTableStyles.resTr}>
+        <tr className={EntryTableStyles.resTr} role="row">
           {columns.map(({ ref, text }, i) => (
-            <th className={EntryTableStyles.resTh} ref={ref} key={text}>
+            <th className={EntryTableStyles.resTh} ref={ref} key={text} role="columnheader">
               <span className={EntryTableStyles.resSpan}>{text}</span>
               <div
                 style={{ height: tableHeight }}

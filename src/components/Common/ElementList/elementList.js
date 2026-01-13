@@ -33,23 +33,28 @@ const ElementList = ({
           className={ElementListStyles.searchInput}
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
+          aria-label={searchPlaceholder}
+          role="searchbox"
+          id="element-list-search"
         />
       </div>
       <div className={ElementListStyles.elementsListWrapper}>
-        <div className={ElementListStyles.elementsList}>
+        <div className={ElementListStyles.elementsList} role="list" aria-label="Elements">
           {filteredItems.map(({ item, index }) => {
             const isItemActive = activeIndex === index && activeCategoryIndex == null;
             const itemBuilt = builtClasses[index];
             return (
-              <div key={item.id ?? index} className={ElementListStyles.elementContainer}>
+              <div key={item.id ?? index} className={ElementListStyles.elementContainer} role="listitem">
                 <button
                   className={`${ElementListStyles.elementButton}
                              ${isItemActive ? ElementListStyles.active : ''}
                              ${itemBuilt ? ElementListStyles.built : ''}`}
                   onClick={() => handleItemClick(index)}
-
+                  aria-label={`${item.label}${itemBuilt ? ' (built)' : ''}`}
+                  aria-current={isItemActive ? 'true' : undefined}
                   // NEW: make draggable if enabled
                   draggable={draggableItems}
+                  aria-grabbed={draggableItems ? 'false' : undefined}
                   onDragStart={e => {
                     if (!draggableItems) return;
                     onDragStart?.();
@@ -66,7 +71,7 @@ const ElementList = ({
                   {item.label}
                 </button>
                 {showCategories && item.categories && item.categories.length > 0 && (
-                  <div className={ElementListStyles.categoriesContainer}>
+                  <div className={ElementListStyles.categoriesContainer} role="list" aria-label={`${item.label} categories`}>
                     {item.categories.map((cat, catIdx) => {
                       const key = `${index}-cat-${catIdx}`;
                       const isCatActive = activeIndex === index && activeCategoryIndex === catIdx;
@@ -76,6 +81,9 @@ const ElementList = ({
                           key={key}
                           className={`${ElementListStyles.categoryButton} ${isCatActive ? ElementListStyles.activeCategory : ''} ${catBuilt ? ElementListStyles.built : ''}`}
                           onClick={() => handleCategoryClick(index, catIdx)}
+                          role="listitem"
+                          aria-label={`Category: ${cat}${catBuilt ? ' (built)' : ''}`}
+                          aria-current={isCatActive ? 'true' : undefined}
                         >
                           {cat}
                         </button>

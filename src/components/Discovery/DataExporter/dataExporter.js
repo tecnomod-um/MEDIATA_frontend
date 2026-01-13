@@ -72,7 +72,7 @@ function DataExporter({ data, filteredData }) {
     document.body.removeChild(link);
   };
 
-  return <button onClick={exportData}>Export Data</button>;
+  return <button onClick={exportData} aria-label="Export statistics data to CSV files">Export Data</button>;
 }
 
 export default DataExporter;

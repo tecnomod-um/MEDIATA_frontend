@@ -73,43 +73,42 @@ function ColumnSearch({ columnsData, handleColumnClick, handleDragStart }) {
     type="search"
     placeholder="Search columns"
     onChange={handleChange}
+    aria-label="Search columns by name"
+    role="searchbox"
   />
 
 <div className={ColumnSearchStyles.groupActionsInline}>
   <button
     type="button"
-    className={ColumnSearchStyles.iconBtn}
     onClick={openAll}
-    title="Expand all"
-    aria-label="Expand all"
+    className={ColumnSearchStyles.expandCollapseBtn}
+    aria-label="Expand all column groups"
   >
-    <UnfoldMoreIcon fontSize="small" />
+    <UnfoldMoreIcon />
   </button>
-
   <button
     type="button"
-    className={ColumnSearchStyles.iconBtn}
     onClick={collapseAll}
-    title="Collapse all"
-    aria-label="Collapse all"
+    className={ColumnSearchStyles.expandCollapseBtn}
+    aria-label="Collapse all column groups"
   >
-    <UnfoldLessIcon fontSize="small" />
+    <UnfoldLessIcon />
   </button>
 </div>
-
 </div>
 
-
-      <div className={ColumnSearchStyles.scrollableContainer}>
+      <div className={ColumnSearchStyles.scrollableContainer} role="list" aria-label="Column groups">
         {grouped.map((group) => {
           const isCollapsed = !!collapsed[group.groupKey];
           return (
-            <div key={group.groupKey} className={ColumnSearchStyles.fileGroup}>
+            <div key={group.groupKey} className={ColumnSearchStyles.fileGroup} role="listitem">
               <button
                 type="button"
                 className={ColumnSearchStyles.fileHeader}
                 onClick={() => toggleGroup(group.groupKey)}
                 aria-expanded={!isCollapsed}
+                aria-label={`${group.fileName} - ${group.items.length} column${group.items.length !== 1 ? 's' : ''}`}
+                aria-controls={`column-group-${group.groupKey}`}
               >
                 <span
                   className={ColumnSearchStyles.fileColorPill}
@@ -128,7 +127,12 @@ function ColumnSearch({ columnsData, handleColumnClick, handleDragStart }) {
               </button>
 
               {!isCollapsed && (
-                <div className={ColumnSearchStyles.fileItems}>
+                <div 
+                  className={ColumnSearchStyles.fileItems}
+                  id={`column-group-${group.groupKey}`}
+                  role="list"
+                  aria-label={`Columns in ${group.fileName}`}
+                >
                   {group.items.map((column) => {
                     const itemKey = `${group.groupKey}::${column.column}`;
                     return (
@@ -140,6 +144,15 @@ function ColumnSearch({ columnsData, handleColumnClick, handleDragStart }) {
                         onDragStart={(e) => handleDragStart(e, column)}
                         onClick={() => handleColumnClick(column)}
                         title={`${group.fileName} • ${column.column}`}
+                        role="listitem"
+                        aria-label={`Column: ${column.column}`}
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleColumnClick(column);
+                          }
+                        }}
                       >
                         {column.column}
                       </div>
@@ -152,7 +165,7 @@ function ColumnSearch({ columnsData, handleColumnClick, handleDragStart }) {
         })}
 
         {grouped.length === 0 && (
-          <div className={ColumnSearchStyles.emptyState}>No columns found.</div>
+          <div className={ColumnSearchStyles.emptyState} role="status">No columns found.</div>
         )}
       </div>
     </div>
