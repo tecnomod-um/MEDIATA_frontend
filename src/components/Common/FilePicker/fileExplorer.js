@@ -175,6 +175,7 @@ function FileExplorer({ category, isOpen = true, onClose, onOpenFile }) {
 
     document.addEventListener("keydown", onKeyDown, true);
     return () => document.removeEventListener("keydown", onKeyDown, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, busy, selected, renamingName]);
 
   const setSingle = (name, idx) => {

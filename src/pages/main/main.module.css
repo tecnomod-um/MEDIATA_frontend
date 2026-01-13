@@ -6,6 +6,7 @@
 
 .pageContainer {
   position: relative;
+  background-color: var(--background-color-1);
 }
 
 .mainContainer {
@@ -231,7 +232,7 @@
 
 .centeredHeading {
   text-align: center;
-  color: var(--button-color);
+  color: var(--heading-color);
 }
 
 .linkListItem:hover {

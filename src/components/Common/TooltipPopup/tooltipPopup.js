@@ -100,6 +100,7 @@ const TooltipPopup = ({ message, buttonRef, onClose, offsetY = 0, autoHideMs = 3
         clipPath: computeClipPath(placement, arrowX),
       });
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buttonRef, offsetY, viewportMargin, arrowWidth, arrowHeight]);
 
   useLayoutEffect(() => {

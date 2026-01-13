@@ -1,8 +1,8 @@
-
 import React, { useState, useCallback, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 import DiscoveryStyles from "./discovery.module.css";
+// eslint-disable-next-line no-unused-vars
 import FilePicker from "../../components/Common/FilePicker/filePicker";
 import FileExplorer from "../../components/Common/FilePicker/fileExplorer"; 
 import StatisticsDisplay from "../../components/Discovery/StatisticsDisplay/statisticsDisplay";
@@ -35,6 +35,7 @@ function Discovery() {
 
   const [hasProcessedMappingState, setHasProcessedMappingState] = useState(false);
   const { selectedNodes } = useNode();
+  // eslint-disable-next-line no-unused-vars
   const [datasets, setDatasets] = useState([]);
   const location = useLocation();
   const toggleToolTray = () => setIsToolTrayOpen(!isToolTrayOpen);
@@ -216,6 +217,7 @@ function Discovery() {
     });
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleProcessSelectedDatasets = async (selectedFilenamesMapping) => {
     setIsProcessing(true);
     setProgressMode("spinner");

@@ -106,15 +106,12 @@ function ProjectPicker({ projects = [], onSelectProject, modalTitle }) {
                   No projects available
                 </div>
               ) : (
-                <ul 
-                  role="list"
-                  aria-label="Available projects"
-                >
+                <ul aria-label="Available projects">
                 {projects.map((p) => {
                   const showImg = !!p.imageUrl && !brokenImages[p.id];
 
                   return (
-                    <li key={p.id} role="listitem">
+                    <li key={p.id}>
                       <button
                         type="button"
                         className={ProjectPickerStyles.projectRow}
