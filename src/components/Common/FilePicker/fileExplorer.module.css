@@ -189,6 +189,23 @@
   font-size: 0.86rem;
 }
 
+/* Node header (for multi-node display) */
+.nodeHeader {
+  padding: 8px 14px;
+  background: var(--background-nav-and-headers-background-color);
+  color: var(--text-color-on-darkbg);
+  font-weight: 700;
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--border-color);
+  margin-top: 4px;
+}
+
+.nodeHeaderText {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .row {
   display: grid;
   grid-template-columns: 1.7fr 0.55fr 0.9fr 0.9fr;

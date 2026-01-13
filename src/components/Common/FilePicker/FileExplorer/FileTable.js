@@ -10,6 +10,7 @@ import Styles from "../fileExplorer.module.css";
  * @param {Set} selected - Set of selected file names
  * @param {boolean} busy - Whether an operation is in progress
  * @param {Set} processingFiles - Set of file names currently being processed
+ * @param {array} nodes - Array of node objects (for multi-node display)
  * @param {function} onRowMouseDown - Handler for row mouse down (long press)
  * @param {function} onRowMouseUp - Handler for row mouse up
  * @param {function} onRowMouseLeave - Handler for row mouse leave
@@ -33,6 +34,7 @@ function FileTable({
   processingFiles = new Set(),
   progressMode = "spinner",
   progressValue = 0,
+  nodes = [],
   onRowMouseDown,
   onRowMouseUp,
   onRowMouseLeave,
@@ -49,6 +51,119 @@ function FileTable({
   formatDateTime,
   isNew,
 }) {
+  // Group files by node when multiple nodes present
+  const filesByNode = React.useMemo(() => {
+    if (!nodes || nodes.length <= 1) {
+      console.log('[FileTable] Single node mode - no grouping');
+      return null;
+    }
+    
+    const groups = {};
+    sorted.forEach(f => {
+      const nid = f.nodeId || 'default';
+      if (!groups[nid]) {
+        groups[nid] = {
+          nodeName: f.nodeName || 'Unknown Node',
+          files: []
+        };
+      }
+      groups[nid].files.push(f);
+    });
+    
+    console.log('[FileTable] Multi-node mode - grouped files:', Object.keys(groups).map(nid => ({
+      nodeId: nid,
+      nodeName: groups[nid].nodeName,
+      fileCount: groups[nid].files.length
+    })));
+    
+    return groups;
+  }, [sorted, nodes]);
+
+  const renderFileRow = (f, idx) => {
+    const isSelected = selected.has(f.name);
+    const isProcessing = processingFiles.has(f.name);
+
+    return (
+      <div
+        key={f.name}
+        className={`${Styles.row} ${isSelected ? Styles.rowSelected : ""} ${
+          busy ? Styles.rowDisabled : ""
+        } ${isProcessing ? Styles.rowProcessing : ""}`}
+        onMouseDown={() => onRowMouseDown(f.name, idx)}
+        onMouseUp={onRowMouseUp}
+        onMouseLeave={onRowMouseLeave}
+        onClick={(e) => {
+          // if long press already fired, avoid immediately flipping selection again
+          if (longPressFired.current) return;
+          onRowClick(e, f.name, idx);
+        }}
+        onDoubleClick={() => onRowDoubleClick(f.name)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          // Enter while focused on row should open ONLY if not renaming
+          if (e.key === "Enter" && !renamingName) onRowDoubleClick(f.name);
+        }}
+        title="Click to select • Long-click for multi • Ctrl/⌘ toggles • Shift range • Double-click opens"
+      >
+        <div className={Styles.colName}>
+          {/* Show spinner in place of icon when processing */}
+          {isProcessing ? (
+            <span className={Styles.processingSpinner} title="Processing..." aria-label="Processing file">
+              <CircularProgress size={22} thickness={4} />
+            </span>
+          ) : (
+            <FileTypeIcon name={f.name} />
+          )}
+
+          {renamingName === f.name ? (
+            <input
+              ref={renameInputRef}
+              className={Styles.renameInline}
+              value={renameDraft}
+              onChange={(e) => setRenameDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  commitRename();
+                }
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  cancelRename();
+                }
+              }}
+              onClick={(e) => e.stopPropagation()}
+              onDoubleClick={(e) => e.stopPropagation()}
+              onBlur={() => commitRename()}
+              disabled={busy}
+            />
+          ) : isProcessing && progressMode === "bar" ? (
+            /* Show determinate progress bar with percentage for async operations */
+            <div className={Styles.processingProgress}>
+              <LinearProgress variant="determinate" value={progressValue} />
+              <span className={Styles.progressText}>{Math.round(progressValue)}%</span>
+            </div>
+          ) : isProcessing && progressMode === "spinner" ? (
+            /* Show indeterminate progress bar for sync operations */
+            <div className={Styles.processingProgress}>
+              <LinearProgress variant="indeterminate" />
+            </div>
+          ) : (
+            <span className={Styles.nameText}>
+              {f.name}
+              {isNew(f) ? <span className={Styles.newMark}> *</span> : null}
+            </span>
+          )}
+        </div>
+
+        <div className={Styles.colSize}>{formatBytes(f.sizeBytes)}</div>
+        <div className={Styles.colCreated}>{formatDateTime(f.createdAtMs)}</div>
+        <div className={Styles.colModified}>{formatDateTime(f.lastModifiedAtMs)}</div>
+      </div>
+    );
+  };
   return (
     <div className={Styles.table}>
       <div className={Styles.headerRow}>
@@ -58,91 +173,20 @@ function FileTable({
         <div className={Styles.colModified}>Modified</div>
       </div>
 
-      {sorted.map((f, idx) => {
-        const isSelected = selected.has(f.name);
-        const isProcessing = processingFiles.has(f.name);
-
-        return (
-          <div
-            key={f.name}
-            className={`${Styles.row} ${isSelected ? Styles.rowSelected : ""} ${
-              busy ? Styles.rowDisabled : ""
-            } ${isProcessing ? Styles.rowProcessing : ""}`}
-            onMouseDown={() => onRowMouseDown(f.name, idx)}
-            onMouseUp={onRowMouseUp}
-            onMouseLeave={onRowMouseLeave}
-            onClick={(e) => {
-              // if long press already fired, avoid immediately flipping selection again
-              if (longPressFired.current) return;
-              onRowClick(e, f.name, idx);
-            }}
-            onDoubleClick={() => onRowDoubleClick(f.name)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              // Enter while focused on row should open ONLY if not renaming
-              if (e.key === "Enter" && !renamingName) onRowDoubleClick(f.name);
-            }}
-            title="Click to select • Long-click for multi • Ctrl/⌘ toggles • Shift range • Double-click opens"
-          >
-            <div className={Styles.colName}>
-              {/* Show spinner in place of icon when processing */}
-              {isProcessing ? (
-                <span className={Styles.processingSpinner} title="Processing..." aria-label="Processing file">
-                  <CircularProgress size={22} thickness={4} />
-                </span>
-              ) : (
-                <FileTypeIcon name={f.name} />
-              )}
-
-              {renamingName === f.name ? (
-                <input
-                  ref={renameInputRef}
-                  className={Styles.renameInline}
-                  value={renameDraft}
-                  onChange={(e) => setRenameDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      commitRename();
-                    }
-                    if (e.key === "Escape") {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      cancelRename();
-                    }
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  onDoubleClick={(e) => e.stopPropagation()}
-                  onBlur={() => commitRename()}
-                  disabled={busy}
-                />
-              ) : isProcessing && progressMode === "bar" ? (
-                /* Show determinate progress bar with percentage for async operations */
-                <div className={Styles.processingProgress}>
-                  <LinearProgress variant="determinate" value={progressValue} />
-                  <span className={Styles.progressText}>{Math.round(progressValue)}%</span>
-                </div>
-              ) : isProcessing && progressMode === "spinner" ? (
-                /* Show indeterminate progress bar for sync operations */
-                <div className={Styles.processingProgress}>
-                  <LinearProgress variant="indeterminate" />
-                </div>
-              ) : (
-                <span className={Styles.nameText}>
-                  {f.name}
-                  {isNew(f) ? <span className={Styles.newMark}> *</span> : null}
-                </span>
-              )}
+      {filesByNode ? (
+        /* Multi-node mode: group files by node with headers */
+        Object.entries(filesByNode).map(([nodeId, group]) => (
+          <React.Fragment key={nodeId}>
+            <div className={Styles.nodeHeader}>
+              <div className={Styles.nodeHeaderText}>Node: {group.nodeName}</div>
             </div>
-
-            <div className={Styles.colSize}>{formatBytes(f.sizeBytes)}</div>
-            <div className={Styles.colCreated}>{formatDateTime(f.createdAtMs)}</div>
-            <div className={Styles.colModified}>{formatDateTime(f.lastModifiedAtMs)}</div>
-          </div>
-        );
-      })}
+            {group.files.map((f, idx) => renderFileRow(f, idx))}
+          </React.Fragment>
+        ))
+      ) : (
+        /* Single node mode: flat list */
+        sorted.map((f, idx) => renderFileRow(f, idx))
+      )}
     </div>
   );
 }

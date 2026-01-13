@@ -109,12 +109,15 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
       
       if (nodes && nodes.length > 0) {
         // Multi-node mode: load from all nodes
+        console.log(`[FileExplorer] Loading files from ${nodes.length} nodes:`, nodes.map(n => n.nodeName || n.name));
         for (const node of nodes) {
           if (node.serviceUrl) {
             updateNodeAxiosBaseURL(node.serviceUrl);
           }
+          console.log(`[FileExplorer] Loading files from node: ${node.nodeName || node.name} (${node.nodeId})`);
           const data = await listExplorerFiles(category, node.nodeId);
           const list = Array.isArray(data) ? data : [];
+          console.log(`[FileExplorer] Loaded ${list.length} files from node ${node.nodeName || node.name}`);
           // Tag each file with node info
           list.forEach(f => {
             f.nodeId = node.nodeId;
@@ -122,10 +125,13 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
           });
           allFiles.push(...list);
         }
+        console.log(`[FileExplorer] Total files loaded from all nodes: ${allFiles.length}`);
       } else {
         // Single category mode (backward compatible)
+        console.log(`[FileExplorer] Loading files in single-category mode for category: ${category}`);
         const data = await listExplorerFiles(category);
         const list = Array.isArray(data) ? data : [];
+        console.log(`[FileExplorer] Loaded ${list.length} files`);
         allFiles = list;
       }
       
@@ -626,6 +632,7 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
                     processingFiles={processingFiles}
                     progressMode={progressMode}
                     progressValue={progressValue}
+                    nodes={nodes}
                     onRowMouseDown={onRowMouseDown}
                     onRowMouseUp={onRowMouseUp}
                     onRowMouseLeave={onRowMouseLeave}
