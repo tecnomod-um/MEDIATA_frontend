@@ -8,7 +8,7 @@
 
 .link {
   text-decoration: none;
-  color: #fff;
+  color: var(--text-color-on-darkbg);
 }
 
 .listItem {
@@ -23,7 +23,7 @@
   justify-content: space-between;
   padding: 5px;
   background-color: var(--background-nav-and-headers-background-color);
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   position: fixed;
   top: 0;
   width: 100%;

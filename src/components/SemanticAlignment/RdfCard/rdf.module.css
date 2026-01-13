@@ -22,7 +22,7 @@
   position: absolute;
   top: 8px;
   right: 8px;
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   background-color: var(--darkened-background-color);
   border-radius: 50%;
   width: 20px;
@@ -44,7 +44,7 @@
 .cardHeader {
   padding: 10px;
   text-align: center;
-  color: #fff;
+  color: var(--text-color-on-darkbg);
 }
 
 .cardTitle {

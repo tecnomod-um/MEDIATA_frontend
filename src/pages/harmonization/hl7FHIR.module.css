@@ -108,7 +108,7 @@
 
 .clusterButton {
   background-color: #007bff;
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   border: none;
   padding: 6px 12px;
   border-radius: 4px;
@@ -134,7 +134,7 @@
 }
 
 .clusterItem:hover {
-  background-color: #f2f2f2;
+  background-color: var(--background-color-secondary);
 }
 
 .highlighted {

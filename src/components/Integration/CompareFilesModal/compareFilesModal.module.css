@@ -115,7 +115,7 @@
   white-space: nowrap;
 }
 .infoTable tbody tr:hover {
-  background-color: #f2f2f2;
+  background-color: var(--background-color-secondary);
 }
 
 .noData {

@@ -21,7 +21,7 @@
 .detailTitle {
   margin: 0;
   font-size: 1.4em;
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   text-align: center;
   width: calc(100% - 140px);
   position: absolute;
@@ -40,7 +40,7 @@
 
 .buildClassBtn {
   background-color: var(--button-add-value-color);
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   border: none;
   padding: 8px 14px;
   border-radius: 4px;
@@ -70,7 +70,7 @@
 
 .formField label {
   background-color: var(--tooltray-background-color);
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   padding: 6px 10px;
   border-radius: 8px 8px 0 0;
   border: 1px solid var(--border-color);
@@ -98,7 +98,7 @@
   border: 1px solid var(--border-color);
   border-radius: 0 0 8px 8px;
   font-size: 0.95em;
-  background-color: #e8e8e8;
+  background-color: var(--background-color-tertiary);
   appearance: none;
 }
 

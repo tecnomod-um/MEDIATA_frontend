@@ -49,7 +49,7 @@
   font-weight: 600;
   cursor: pointer;
   background-color: var(--button-add-value-color);
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   border: none;
   border-radius: 4px;
   transition: background-color 0.3s ease, padding 0.3s ease, gap 0.3s ease;
@@ -144,7 +144,7 @@
 .optionButton {
   flex: 0 0 auto;
   white-space: nowrap;
-  background-color: #f2f2f2;
+  background-color: var(--background-color-secondary);
   color: var(--text-color-primary);
   padding: 10px 15px;
   cursor: pointer;
@@ -234,7 +234,7 @@
 
 .formField label {
   background-color: var(--tooltray-background-color);
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   width: fit-content;
   max-width: 100%;
   min-width: min(150px, 100%);
@@ -346,7 +346,7 @@
   padding: 10px;
   border: 1px solid var(--border-color);
   border-radius: 0 8px 8px 8px;
-  background-color: #e8e8e8;
+  background-color: var(--background-color-tertiary);
   font-size: 0.95em;
 }
 
@@ -406,7 +406,7 @@
   border: 1px solid var(--border-color);
   border-left: none;
   background: #333;
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   cursor: pointer;
   user-select: none;
   padding: 0 5px;
@@ -428,7 +428,7 @@
   height: 40px;
   padding: 0 12px;
   margin-left: 0;
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   border: 1px solid var(--border-color);
   border-left: none;
   border-radius: 8px;

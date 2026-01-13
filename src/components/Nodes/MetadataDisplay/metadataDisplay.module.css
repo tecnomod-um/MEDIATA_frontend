@@ -12,7 +12,7 @@
 
 .header {
   padding: 15px 20px;
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   position: relative;
 }
 
@@ -67,7 +67,7 @@
 .accessButton {
   padding: 10px 20px;
   font-size: 1rem;
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   border: none;
   border-radius: 5px;
   cursor: pointer;

@@ -243,7 +243,7 @@
   left: 0;
   width: 20px;
   height: 20px;
-  background-color: white;
+  background-color: var(--text-color-on-darkbg);
   border-radius: 50%;
   transform: scale(1.1);
   transition: left 0.3s;

@@ -22,7 +22,7 @@
   /* center title */
   background: #555;
   /* lighter than before */
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   padding: 12px 0;
 }
 
@@ -129,7 +129,7 @@
 
 .addBtn {
   background-color: var(--button-add-value-color);
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   border: none;
   padding: 8px 14px;
   border-radius: 4px;

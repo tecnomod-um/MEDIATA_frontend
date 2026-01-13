@@ -19,7 +19,7 @@
 
 .modalHeader {
     background-color: var(--background-nav-and-headers-background-color);
-    color: #ffffff;
+    color: var(--text-color-on-darkbg);
     border-radius: 8px 8px 0 0;
     padding: 20px;
     justify-content: space-between;
@@ -244,13 +244,13 @@
     padding: 10px 20px;
     transition: transform 0.25s ease, background-color 0.3s ease;
     background-color: var(--button-color);
-    color: #ffffff;
+    color: var(--text-color-on-darkbg);
     text-align: center;
 }
 
 .applyButton {
     background-color: var(--button-color);
-    color: #ffffff;
+    color: var(--text-color-on-darkbg);
     border: none;
     border-radius: 12px;
     cursor: pointer;

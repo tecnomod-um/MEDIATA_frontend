@@ -2,7 +2,7 @@
 
 .container {
   background-color: var(--text-color-primary);
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   left: 0;
   top: 55px;
   bottom: 0;
@@ -89,7 +89,7 @@
   align-items: center;
   justify-content: flex-start;
   background-color: var(--text-color-secondary);
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.85rem;
@@ -390,7 +390,7 @@
   border-radius: 4px;
   border: none;
   background-color: var(--text-color-secondary);
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   font-size: 14px;
   outline: none;
 }
@@ -403,7 +403,7 @@
   min-width: 70px;
   flex-shrink: 0;
   background-color: var(--text-color-secondary);
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   border: none;
   border-radius: 4px;
   font-size: 0.8em;

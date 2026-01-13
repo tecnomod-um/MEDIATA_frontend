@@ -70,7 +70,7 @@
 .controlButton:hover,
 .activeControl {
   background-color: var(--text-color-primary);
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   border-color: var(--text-color-primary);
 }
 

@@ -136,7 +136,7 @@
 .toast {
   /*top: 55px;*/
   background-color: var(--translucent-background-color) !important;
-  color: #fff !important;
+  color: var(--text-color-on-darkbg) !important;
   min-height: 40px !important;
   border-radius: 8px !important;
   box-shadow: none !important;

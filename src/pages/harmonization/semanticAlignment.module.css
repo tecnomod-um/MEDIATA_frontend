@@ -140,7 +140,7 @@
   cursor: pointer;
   padding: 0.6rem 1rem;
   font-size: 0.9rem;
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   background: var(--button-color);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
@@ -297,7 +297,7 @@
     font-weight: 600;
     width: 100px;
     background-color: var(--text-color-primary);
-    color: #fff;
+    color: var(--text-color-on-darkbg);
     border: 1px solid #222;
     border-radius: 4px;
     cursor: pointer;
@@ -325,7 +325,7 @@
 .toast {
   /*top: 55px;*/
   background-color: var(--translucent-background-color) !important;
-  color: #fff !important;
+  color: var(--text-color-on-darkbg) !important;
   min-height: 40px !important;
   border-radius: 8px !important;
   box-shadow: none !important;

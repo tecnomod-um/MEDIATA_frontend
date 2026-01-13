@@ -5,5 +5,5 @@
 }
 
 .textColor {
-    color: black;
+    color: var(--text-color-dark);
 }

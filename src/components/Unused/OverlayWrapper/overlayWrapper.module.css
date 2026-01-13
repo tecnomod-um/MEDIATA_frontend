@@ -43,7 +43,7 @@
     border: none;
     background: transparent;
     border-radius: 20px;
-    color: black;
+    color: var(--text-color-dark);
     cursor: pointer;
     font-size: 18px;
     font-weight: 500;
@@ -61,7 +61,7 @@
 }
 
 .modal {
-    background: white;
+    background: var(--background-color-card);
     min-width: 50VW;
     max-width: 80vw;
     border-radius: 8px;

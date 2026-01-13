@@ -89,7 +89,7 @@
 }
 
 .active:hover {
-  background-color: #eee;
+  background-color: var(--background-color-tertiary);
 }
 
 .elementContainer {
@@ -128,7 +128,7 @@
 }
 
 .activeCategory:hover {
-  background-color: #eee;
+  background-color: var(--background-color-tertiary);
 }
 
 .uploadItem {
@@ -157,7 +157,7 @@
 
 .built {
   background-color: var(--button-add-value-color);
-  color: #fff;
+  color: var(--text-color-on-darkbg);
 }
 
 .built:hover {

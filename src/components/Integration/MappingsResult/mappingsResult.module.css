@@ -67,7 +67,7 @@
   flex: 1;
   background-image: var(--button-gradient);
   border: none;
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   font-size: 16px;
   font-weight: 600;
   padding: 0 16px;
@@ -113,7 +113,7 @@
   font-size: 16px;
   /* same as Upload Mappings */
   font-weight: 600;
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   cursor: pointer;
   text-align: center;
   border: none;

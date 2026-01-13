@@ -82,7 +82,7 @@
 }
 
 .schemaDisplay {
-    background-color: white;
+    background-color: var(--text-color-on-darkbg);
     border: 1px solid #eee;
     padding: 10px;
     border-radius: 4px;
