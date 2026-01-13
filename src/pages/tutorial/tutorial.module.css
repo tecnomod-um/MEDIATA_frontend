@@ -9,6 +9,8 @@
   overflow: auto;
   scrollbar-width: auto;
   font-size: 1.25rem;
+  background-color: var(--background-color-1);
+  min-height: 100vh;
 }
 
 .mainContainer {

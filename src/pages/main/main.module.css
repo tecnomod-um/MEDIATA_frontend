@@ -6,7 +6,7 @@
 
 .pageContainer {
   position: relative;
-  background-color: var(--background-color-1);
+  /* Cannot add background here - would cover Canvas animation */
 }
 
 .mainContainer {
