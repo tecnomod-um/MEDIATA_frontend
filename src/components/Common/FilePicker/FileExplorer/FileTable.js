@@ -7,6 +7,7 @@ import Styles from "../fileExplorer.module.css";
  * @param {array} sorted - Sorted array of files to display
  * @param {Set} selected - Set of selected file names
  * @param {boolean} busy - Whether an operation is in progress
+ * @param {Set} processingFiles - Set of file names currently being processed
  * @param {function} onRowMouseDown - Handler for row mouse down (long press)
  * @param {function} onRowMouseUp - Handler for row mouse up
  * @param {function} onRowMouseLeave - Handler for row mouse leave
@@ -27,6 +28,7 @@ function FileTable({
   sorted,
   selected,
   busy,
+  processingFiles = new Set(),
   onRowMouseDown,
   onRowMouseUp,
   onRowMouseLeave,
@@ -54,6 +56,7 @@ function FileTable({
 
       {sorted.map((f, idx) => {
         const isSelected = selected.has(f.name);
+        const isProcessing = processingFiles.has(f.name);
 
         return (
           <div
@@ -108,6 +111,11 @@ function FileTable({
                 <span className={Styles.nameText}>
                   {f.name}
                   {isNew(f) ? <span className={Styles.newMark}> *</span> : null}
+                  {isProcessing ? (
+                    <span className={Styles.processingSpinner} title="Processing..." aria-label="Processing file">
+                      ⟳
+                    </span>
+                  ) : null}
                 </span>
               )}
             </div>

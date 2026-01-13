@@ -14,17 +14,17 @@ function FileTypeIcon({ name }) {
 
   return (
     <span className={`${Styles.fileIcon} ${cls}`} aria-hidden="true" title={label}>
-      <svg viewBox="0 0 24 24" width="18" height="18">
+      <svg viewBox="0 0 24 24" width="22" height="22">
         <path
           d="M7 2h7l5 5v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"
           fill="currentColor"
-          opacity="0.14"
+          opacity="0.18"
         />
         <path
           d="M14 2v5h5"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.7"
+          strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
           opacity="0.95"
@@ -33,11 +33,11 @@ function FileTypeIcon({ name }) {
           d="M8 13h8M8 16h8"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.7"
+          strokeWidth="2"
           strokeLinecap="round"
           opacity="0.9"
         />
-        <text x="12" y="11.1" textAnchor="middle" fontSize="6" fontWeight="800" fill="currentColor">
+        <text x="12" y="11.5" textAnchor="middle" fontSize="6.5" fontWeight="800" fill="currentColor">
           {label}
         </text>
       </svg>

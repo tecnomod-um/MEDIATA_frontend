@@ -33,6 +33,22 @@
   max-height: 70vh;
   max-width: 100%;
   align-self: center;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.body::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.body::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 10px;
+}
+
+.body::-webkit-scrollbar-track {
+  background-color: var(--scrollbar-track);
 }
 
 .contextLine {

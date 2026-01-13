@@ -14,6 +14,9 @@ function FileExplorer({ category, isOpen = true, onClose, onOpenFile }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
+  // Track files currently being processed (for showing loaders)
+  const [processingFiles, setProcessingFiles] = useState(() => new Set());
+
   // selection (multi)
   const [selected, setSelected] = useState(() => new Set());
   const [lastIndex, setLastIndex] = useState(null);
@@ -343,15 +346,31 @@ function FileExplorer({ category, isOpen = true, onClose, onOpenFile }) {
 
     setBusy(true);
     setError(null);
+    setProcessingFiles(new Set());
+    
     try {
       const names = Array.from(selected);
       for (const n of names) {
+        // Mark this file as processing
+        setProcessingFiles(prev => new Set([...prev, n]));
+        
         // eslint-disable-next-line no-await-in-loop
         await cleanExplorerFile(category, n);
+        
+        // Remove from processing after completion
+        setProcessingFiles(prev => {
+          const next = new Set(prev);
+          next.delete(n);
+          return next;
+        });
       }
+      
       setShowCleanPanel(false);
+      // Reload the file list to show updated files
+      await load();
     } catch (e) {
       setError(e?.message || "Clean failed");
+      setProcessingFiles(new Set()); // Clear processing on error
     } finally {
       setBusy(false);
     }
@@ -443,6 +462,7 @@ function FileExplorer({ category, isOpen = true, onClose, onOpenFile }) {
                     sorted={sorted}
                     selected={selected}
                     busy={busy}
+                    processingFiles={processingFiles}
                     onRowMouseDown={onRowMouseDown}
                     onRowMouseUp={onRowMouseUp}
                     onRowMouseLeave={onRowMouseLeave}
