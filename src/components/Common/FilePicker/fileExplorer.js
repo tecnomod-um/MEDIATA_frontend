@@ -144,10 +144,16 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
     }
   };
 
+  // Use stable node IDs to prevent infinite re-renders
+  const nodeIds = useMemo(() => {
+    if (!nodes || nodes.length === 0) return null;
+    return nodes.map(n => n.nodeId).sort().join(',');
+  }, [nodes]);
+
   useEffect(() => {
     if (isOpen) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, category, nodes]);
+  }, [isOpen, category, nodeIds]);
 
   // focus rename input when it appears
   useEffect(() => {
