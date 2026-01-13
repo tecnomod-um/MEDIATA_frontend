@@ -295,10 +295,10 @@
   --error-border: var(--error-border-light);
 
   /* Shadows */
-  --box-shadow-sm: var(--box-shadow-sm);
-  --box-shadow-md: var(--box-shadow-md);
-  --box-shadow-lg: var(--box-shadow-lg);
-  --box-shadow-xl: var(--box-shadow-xl);
+  --box-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --box-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
+  --box-shadow-lg: 0 5px 15px rgba(0, 0, 0, 0.2);
+  --box-shadow-xl: 0 14px 40px rgba(0, 0, 0, 0.35);
 }
 
 /* Dark mode class */

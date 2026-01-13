@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Mode Test</title>
+    <style>
+        /* Import the variables */
+        @import url('./src/variables.css');
+        
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .test-box {
+            background-color: var(--background-color-card);
+            color: var(--text-color-primary);
+            padding: 30px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .test-button {
+            background-color: var(--button-color);
+            color: var(--text-color-on-darkbg);
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        
+        .test-button:hover {
+            background-color: var(--button-color-hover);
+        }
+        
+        .success-button {
+            background-color: var(--button-success);
+            color: var(--text-color-on-darkbg);
+        }
+        
+        .toggle-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 30px;
+            font-size: 16px;
+            background-color: var(--button-color);
+            color: var(--text-color-on-darkbg);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .info {
+            background-color: var(--background-color-tertiary);
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <button class="toggle-button" onclick="toggleDarkMode()">
+        🌙 Toggle Dark Mode
+    </button>
+    
+    <div class="test-container">
+        <h1 style="color: var(--text-color-dark);">Dark Mode Test</h1>
+        
+        <div class="test-box">
+            <h2>Testing CSS Variables</h2>
+            <p>This page tests if the CSS variables system is working correctly.</p>
+            <p style="color: var(--text-color-secondary);">Secondary text color</p>
+            <p style="color: var(--text-color-tertiary);">Tertiary text color</p>
+            <p style="color: var(--text-color-muted);">Muted text color</p>
+        </div>
+        
+        <div class="info">
+            <h3>Buttons Test</h3>
+            <button class="test-button">Primary Button</button>
+            <button class="test-button success-button">Success Button</button>
+        </div>
+        
+        <div class="test-box">
+            <h3>Dark Mode Status</h3>
+            <p id="status">Light Mode Active</p>
+            <p>Click the button in the top right to toggle dark mode.</p>
+        </div>
+    </div>
+    
+    <script>
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            document.getElementById('status').textContent = isDark ? 'Dark Mode Active' : 'Light Mode Active';
+            localStorage.setItem('darkMode', isDark.toString());
+            
+            // Log computed styles to console for verification
+            const box = document.querySelector('.test-box');
+            const computed = window.getComputedStyle(box);
+            console.log('Background color:', computed.backgroundColor);
+            console.log('Text color:', computed.color);
+            console.log('Border color:', computed.borderColor);
+        }
+        
+        // Check for saved preference
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('status').textContent = 'Dark Mode Active';
+        }
+    </script>
+</body>
+</html>
