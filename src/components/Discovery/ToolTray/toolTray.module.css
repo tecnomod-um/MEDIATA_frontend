@@ -1,6 +1,6 @@
 
 .container {
-  background-color: var(--text-color-primary);
+  background-color: var(--background-color-3);
   color: var(--text-color-on-darkbg);
   left: 0;
   top: 55px;
@@ -58,7 +58,7 @@
 }
 
 .multiFileSelector {
-  background-color: #444;
+  background-color: var(--background-color-2);
   padding: 10px;
   border-radius: 5px;
   margin-bottom: 10px;
@@ -168,7 +168,7 @@
 
 /* The top section for "Entry: X" or "No entry selected" + toggle button */
 .topSection {
-  background-color: #444;
+  background-color: var(--background-color-2);
   padding: 10px;
   border-radius: 5px;
   margin-bottom: 10px;
@@ -240,7 +240,7 @@
 }
 
 .featuresList {
-  background-color: #3a3a3a;
+  background-color: var(--background-color-4);
   padding: 10px;
   overflow-y: auto;
   max-height: 300px;
@@ -293,7 +293,7 @@
 }
 
 .outliersToggleSection {
-  background-color: #444;
+  background-color: var(--background-color-2);
   padding: 10px;
   margin-bottom: 10px;
   display: flex;
@@ -333,7 +333,7 @@
 
 .buttonContainer button {
   cursor: pointer;
-  background-color: #444;
+  background-color: var(--background-color-2);
   border: none;
   color: var(--text-color-on-darkbg);
   padding: 10px 15px;
@@ -357,7 +357,7 @@
 .nodeGroupTitle {
   font-size: 0.9rem;
   font-weight: bold;
-  color: #ccc;
+  color: var(--border-color);
 }
 
 

@@ -27,7 +27,7 @@
   --text-color-disabled-light: #999;
   --text-color-on-darkbg-light: #fff;
   --text-color-dark-light: #222;
-  --heading-color-light: #08242c; /* Dark blue for headings, better contrast than button-color */
+  --heading-color-light: #06202a; /* Darker blue for headings, similar to theme blue */
 
   /* Button Colors */
   --button-color-light: #08242c;
@@ -142,7 +142,7 @@
   --text-color-disabled-dark: #666666;
   --text-color-on-darkbg-dark: #fff;
   --text-color-dark-dark: #f0f0f0;
-  --heading-color-dark: #4db8e8; /* Bright blue for headings in dark mode, good contrast */
+  --heading-color-dark: #3da8d8; /* Slightly darker blue for headings in dark mode, closer to theme */
 
   /* Button Colors */
   --button-color-dark: #0a2e3a;

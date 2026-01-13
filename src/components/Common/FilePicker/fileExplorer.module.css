@@ -183,8 +183,8 @@
   padding: 10px 14px;
   border-bottom: 1px solid var(--background-color-1);
 
-  background: #f7f9fb;
-  color: #3d3d3d;
+  background: var(--background-color-3);
+  color: var(--text-color-primary);
   font-weight: 900;
   font-size: 0.86rem;
 }
@@ -230,7 +230,7 @@
   align-items: center;
   white-space: nowrap;
   font-size: 0.9rem;
-  color: #424242;
+  color: var(--text-color-secondary);
 }
 
 .nameText {
@@ -238,12 +238,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--background-nav-and-headers-background-color);
+  color: var(--text-color-primary);
 }
 
 .newMark {
   font-weight: 900;
-  color: #111;
+  color: var(--text-color-dark);
 }
 
 /* File icon */

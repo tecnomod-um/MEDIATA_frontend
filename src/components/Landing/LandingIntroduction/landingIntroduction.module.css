@@ -7,6 +7,7 @@
     align-items: center;
     padding: 2rem 1rem;
     box-sizing: border-box;
+    background-color: var(--background-color-2);
 }
 
 .titleContainer {
@@ -33,7 +34,7 @@
 }
 
 .paragraphContainer p {
-    color: #747474;
+    color: var(--text-color-secondary);
     line-height: 1.5;
     font-size: 1.2em;
     text-align: justify;
