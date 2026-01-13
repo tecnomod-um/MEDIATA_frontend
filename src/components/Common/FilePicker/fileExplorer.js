@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CSSTransition } from "react-transition-group";
 import Styles from "./fileExplorer.module.css";
 import { listExplorerFiles, renameExplorerFile, deleteExplorerFile, cleanExplorerFile, processSelectedDatasets, getProcessSelectedDatasetsStatus, getProcessSelectedDatasetsResult } from "../../../util/petitionHandler";
-import { updateNodeAxiosBaseURL } from "../../../util/nodeAxiosSetup";
 import Toolbar from "./FileExplorer/Toolbar";
 import FileTable from "./FileExplorer/FileTable";
 import CleanPanel from "./FileExplorer/CleanPanel";
@@ -428,7 +427,6 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
 
     // New async mode
     await doOpen(target);
-    }
   };
 
 
