@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CSSTransition } from "react-transition-group";
 import Styles from "./fileExplorer.module.css";
 import { listExplorerFiles, renameExplorerFile, deleteExplorerFile, cleanExplorerFile, processSelectedDatasets, getProcessSelectedDatasetsStatus, getProcessSelectedDatasetsResult } from "../../../util/petitionHandler";
+import { updateNodeAxiosBaseURL } from "../../../util/nodeAxiosSetup";
 import Toolbar from "./FileExplorer/Toolbar";
 import FileTable from "./FileExplorer/FileTable";
 import CleanPanel from "./FileExplorer/CleanPanel";
@@ -104,10 +105,32 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
     setShowDeleteConfirm(false);
 
     try {
-      const data = await listExplorerFiles(category);
-      const list = Array.isArray(data) ? data : [];
-      setFiles(list);
-      clampSelectionToExisting(list);
+      let allFiles = [];
+      
+      if (nodes && nodes.length > 0) {
+        // Multi-node mode: load from all nodes
+        for (const node of nodes) {
+          if (node.serviceUrl) {
+            updateNodeAxiosBaseURL(node.serviceUrl);
+          }
+          const data = await listExplorerFiles(category, node.nodeId);
+          const list = Array.isArray(data) ? data : [];
+          // Tag each file with node info
+          list.forEach(f => {
+            f.nodeId = node.nodeId;
+            f.nodeName = node.nodeName || node.name;
+          });
+          allFiles.push(...list);
+        }
+      } else {
+        // Single category mode (backward compatible)
+        const data = await listExplorerFiles(category);
+        const list = Array.isArray(data) ? data : [];
+        allFiles = list;
+      }
+      
+      setFiles(allFiles);
+      clampSelectionToExisting(allFiles);
 
       // Slight delay for smooth transition
       setTimeout(() => setFilesLoaded(true), 40);
@@ -124,7 +147,7 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
   useEffect(() => {
     if (isOpen) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, category]);
+  }, [isOpen, category, nodes]);
 
   // focus rename input when it appears
   useEffect(() => {
@@ -278,6 +301,15 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
       return;
     }
 
+    // Find the file to get its nodeId
+    const file = sorted.find(f => f.name === from);
+    if (file?.nodeId && nodes && nodes.length > 0) {
+      const node = nodes.find(n => n.nodeId === file.nodeId);
+      if (node && node.serviceUrl) {
+        updateNodeAxiosBaseURL(node.serviceUrl);
+      }
+    }
+
     setBusy(true);
     setError(null);
     try {
@@ -308,6 +340,15 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
     try {
       const names = Array.from(selected);
       for (const n of names) {
+        // Find the file to get its nodeId
+        const file = sorted.find(f => f.name === n);
+        if (file?.nodeId && nodes && nodes.length > 0) {
+          const node = nodes.find(nd => nd.nodeId === file.nodeId);
+          if (node && node.serviceUrl) {
+            updateNodeAxiosBaseURL(node.serviceUrl);
+          }
+        }
+        
         // eslint-disable-next-line no-await-in-loop
         await deleteExplorerFile(category, n);
       }
@@ -364,6 +405,15 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
 
     // New async mode with progress tracking
     if (!onFilesOpened) return;
+
+    // Find the file to get its nodeId
+    const file = sorted.find(f => f.name === name);
+    if (file?.nodeId && nodes && nodes.length > 0) {
+      const node = nodes.find(n => n.nodeId === file.nodeId);
+      if (node && node.serviceUrl) {
+        updateNodeAxiosBaseURL(node.serviceUrl);
+      }
+    }
 
     setBusy(true);
     setError(null);
@@ -447,6 +497,15 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
     try {
       const names = Array.from(selected);
       for (const n of names) {
+        // Find the file to get its nodeId
+        const file = sorted.find(f => f.name === n);
+        if (file?.nodeId && nodes && nodes.length > 0) {
+          const node = nodes.find(nd => nd.nodeId === file.nodeId);
+          if (node && node.serviceUrl) {
+            updateNodeAxiosBaseURL(node.serviceUrl);
+          }
+        }
+        
         // Mark this file as processing
         setProcessingFiles(prev => new Set([...prev, n]));
         
