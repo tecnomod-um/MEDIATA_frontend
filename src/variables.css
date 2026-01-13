@@ -23,7 +23,7 @@
   --text-color-primary-light: #333;
   --text-color-secondary-light: #555;
   --text-color-tertiary-light: #666;
-  --text-color-muted-light: #777;
+  --text-color-muted-light: #707070; /* Fixed from #777 for WCAG AA compliance (4.53:1) */
   --text-color-disabled-light: #999;
   --text-color-on-darkbg-light: #fff;
   --text-color-dark-light: #222;
@@ -50,8 +50,8 @@
   --button-description-color: #975019;
   --button-description-hover-color: #b15f1f;
 
-  --button-success-color: #28a745;
-  --button-success-hover-color: #218838;
+  --button-success-color: #1e7e34; /* Fixed from #28a745 for WCAG AA compliance (4.52:1) */
+  --button-success-hover-color: #186429;
 
   /* Border Colors */
   --border-color-light: #ccc;
@@ -137,7 +137,7 @@
   --text-color-primary-dark: #e0e0e0;
   --text-color-secondary-dark: #c0c0c0;
   --text-color-tertiary-dark: #a0a0a0;
-  --text-color-muted-dark: #888888;
+  --text-color-muted-dark: #909090; /* Fixed from #888 for WCAG AA compliance (5.31:1) */
   --text-color-disabled-dark: #666666;
   --text-color-on-darkbg-dark: #fff;
   --text-color-dark-dark: #f0f0f0;
@@ -164,8 +164,8 @@
   --button-description-color-dark: #a85e1f;
   --button-description-hover-color-dark: #c26f25;
 
-  --button-success-color-dark: #2ea84f;
-  --button-success-hover-color-dark: #269440;
+  --button-success-color-dark: #218838; /* Fixed from #2ea84f for WCAG AA compliance (4.53:1) */
+  --button-success-hover-color-dark: #1a6b2d;
 
   /* Border Colors */
   --border-color-dark: #444444;

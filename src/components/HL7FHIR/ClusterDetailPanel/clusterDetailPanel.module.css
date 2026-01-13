@@ -44,7 +44,7 @@
   flex: 1;
   overflow-y: auto;
   outline-offset: -2px;
-  background: #fff;
+  background: var(--background-color-card);
 }
 
 /* UL reset */
@@ -122,8 +122,8 @@
 .select {
   flex: 1;
   padding: 8px;
-  border: 1px solid #ccc;
-  background: #fff;
+  border: 1px solid var(--border-color);
+  background: var(--background-color-card);
   border-radius: 4px;
 }
 

@@ -1,7 +1,7 @@
 @import '../../../variables.css';
 
 .modalContent {
-  background-color: #fff;
+  background-color: var(--background-color-card);
   padding: 24px;
   border-radius: 8px;
   max-height: 80vh;
@@ -22,20 +22,20 @@
 
 .fileHeader {
   font-size: 1.25rem;
-  color: #333;
+  color: var(--text-color-primary);
   margin: 0;
   text-align: left;
 }
 
 .rowCount {
   font-size: 0.9rem;
-  color: #666;
+  color: var(--text-color-tertiary);
 }
 
 .fileSection {
   margin-bottom: 24px;
-  background: #fff;
-  border: 1px solid #ddd;
+  background: var(--background-color-card);
+  border: 1px solid var(--border-color-secondary);
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   animation: fileSectionFade 0.3s ease;
@@ -120,7 +120,7 @@
 
 .noData {
   margin: 4px 12px 12px;
-  color: #666;
+  color: var(--text-color-tertiary);
   font-style: italic;
 }
 

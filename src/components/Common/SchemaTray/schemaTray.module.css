@@ -14,7 +14,7 @@
     right: 0;
     width: 300px;
     height: 100%;
-    background-color: var(--background-color-2-light);
+    background-color: var(--background-color-2);
     box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
     overflow: hidden;
@@ -44,8 +44,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-color: var(--tooltray-background-color-light);
-    color: var(--text-color-on-darkbg-light);
+    background-color: var(--tooltray-background-color);
+    color: var(--text-color-on-darkbg);
     padding: 10px;
 }
 
@@ -58,7 +58,7 @@
 .expandButton {
     background: none;
     border: none;
-    color: var(--text-color-on-darkbg-light);
+    color: var(--text-color-on-darkbg);
     font-size: 14px;
     cursor: pointer;
 }
@@ -96,8 +96,8 @@
 }
 
 .removeButton {
-    background: var(--button-gradient-light);
-    color: var(--text-color-on-darkbg-light);
+    background: var(--button-gradient);
+    color: var(--text-color-on-darkbg);
     border: none;
     padding: 8px 12px;
     border-radius: 4px;
@@ -106,13 +106,13 @@
 }
 
 .removeButton:hover {
-    background-color: var(--button-color-hover-light);
+    background-color: var(--button-color-hover);
 }
 
 .noSchemaText {
     font-size: 16px;
     font-weight: bold;
-    color: #555;
+    color: var(--text-color-secondary);
     margin-bottom: 15px;
 }
 
@@ -136,8 +136,8 @@
 .uploadLabel {
     width: 100%;
     text-align: center;
-    background: var(--button-gradient-light);
-    color: var(--text-color-on-darkbg-light);
+    background: var(--button-gradient);
+    color: var(--text-color-on-darkbg);
     padding: 8px 12px;
     border-radius: 4px;
     cursor: pointer;
@@ -150,7 +150,7 @@
 .orRow {
     width: 100%;
     text-align: center;
-    color: #555;
+    color: var(--text-color-secondary);
     font-size: 14px;
 }
 
@@ -166,7 +166,7 @@
     border: 1px solid var(--background-nav-background-color-hover-light);
     border-right: none;
     border-radius: 4px 0 0 4px;
-    background-color: var(--background-color-1-light);
+    background-color: var(--background-color-1);
     box-sizing: border-box;
 }
 
@@ -175,8 +175,8 @@
     border: 1px solid var(--background-nav-background-color-hover-light);
     border-left: none;
     border-radius: 0 4px 4px 0;
-    background: var(--button-gradient-light);
-    color: var(--text-color-on-darkbg-light);
+    background: var(--button-gradient);
+    color: var(--text-color-on-darkbg);
     cursor: pointer;
     transition: background 0.2s ease;
     white-space: nowrap;
@@ -184,7 +184,7 @@
 }
 
 .fetchButton:hover:not(:disabled) {
-    background-color: var(--button-color-hover-light);
+    background-color: var(--button-color-hover);
 }
 
 .errorMessage {
@@ -206,7 +206,7 @@
     transform: translateY(-50%);
     width: 50px;
     height: 120px;
-    background: var(--tooltray-background-color-light);
+    background: var(--tooltray-background-color);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -221,7 +221,7 @@
 }
 
 .closedTab span {
-    color: var(--text-color-on-darkbg-light);
+    color: var(--text-color-on-darkbg);
     transform: rotate(-90deg);
     font-size: 14px;
     white-space: nowrap;

@@ -15,7 +15,7 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background-color: var(--background-color-1-light);
+  background-color: var(--background-color-1);
   margin: auto;
 }
 
@@ -52,12 +52,12 @@
 }
 
 .leftHeading {
-  color: var(--button-color-light);
+  color: var(--button-color);
   text-align: left;
 }
 
 .rightHeading {
-  color: var(--button-color-light);
+  color: var(--button-color);
   text-align: right;
 }
 
@@ -75,14 +75,14 @@
 .introText {
   font-size: 22px;
   line-height: 1.5;
-  color: #333;
+  color: var(--text-color-primary);
   margin-bottom: 1em;
 }
 
 .lesserText {
   font-size: 20px;
   font-style: italic;
-  color: #666;
+  color: var(--text-color-tertiary);
 }
 
 .imageWrapper {
@@ -121,7 +121,7 @@
   border: none;
   background-size: 300% 300%;
   border-radius: 15px;
-  background-image: var(--button-gradient-light);
+  background-image: var(--button-gradient);
   box-shadow: 0 5px 15px rgba(8, 36, 44, 0.4);
   position: relative;
   overflow: hidden;
@@ -181,7 +181,7 @@
   align-items: center;
   width: 40px;
   height: 40px;
-  background-color: var(--background-nav-and-headers-background-color-light);
+  background-color: var(--background-nav-and-headers-background-color);
   border-radius: 50%;
   opacity: 0.7;
   cursor: pointer;
@@ -232,7 +232,7 @@
 
 .centeredHeading {
   text-align: center;
-  color: var(--button-color-light);
+  color: var(--button-color);
 }
 
 .linkListItem:hover {
@@ -357,7 +357,7 @@
 }
 
 .featureCard {
-  background: var(--background-color-card-light);
+  background: var(--background-color-card);
   border-radius: 16px;
   padding: 20px 18px;
   box-shadow: 0 6px 20px rgba(8, 36, 44, 0.08);
@@ -405,7 +405,7 @@
 
 .highlightSection {
   width: 100%;
-  background-color: var(--background-color-card-light);
+  background-color: var(--background-color-card);
 }
 
 .finalSection {
@@ -422,7 +422,7 @@
 }
 
 .onDark {
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
 }
 
 /* ---- Mobile tweaks ---- */

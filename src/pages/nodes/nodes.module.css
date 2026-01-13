@@ -54,7 +54,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   background-color: var(--translucent-background-color);
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   padding: 20px 40px;
   border-radius: 8px;
   font-size: 1.2em;

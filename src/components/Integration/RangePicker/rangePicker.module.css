@@ -22,7 +22,7 @@
   font-size: 0.8em;
   font-weight: 600;
   font-style: italic;
-  color: #333;
+  color: var(--text-color-primary);
 }
 
 .rangeTextEditable {
@@ -32,7 +32,7 @@
 .rangeLabel {
   font-size: 0.75em;
   font-weight: 600;
-  color: #555;
+  color: var(--text-color-secondary);
 }
 
 .rangeInputs {
@@ -56,7 +56,7 @@
 
 .rangeInput:focus {
   outline: none;
-  border-color: var(--button-color-light);
+  border-color: var(--button-color);
 }
 
 .rangeSeparator {
@@ -83,7 +83,7 @@
 
 .mappingButton {
   background-color: #6c757d;
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   border: none;
   padding: 8px 15px;
   font-size: 0.9em;

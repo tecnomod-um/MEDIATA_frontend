@@ -14,7 +14,7 @@
 
 .exportButton {
     background-color: #444;
-    color: var(--text-color-on-darkbg-light);
+    color: var(--text-color-on-darkbg);
     padding: 10px 20px;
     border: none;
     border-radius: 5px 0 0 5px;

@@ -6,7 +6,7 @@
   align-items: flex-start;
   justify-content: flex-start;
   min-height: calc(100vh - 55px);
-  background-color: #ecebeb;
+  background-color: var(--background-color-1);
   transition: background-color 0.2s ease;
   width: 100%;
   overflow: hidden;

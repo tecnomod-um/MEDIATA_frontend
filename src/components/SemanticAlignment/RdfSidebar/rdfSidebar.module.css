@@ -18,7 +18,7 @@
   display: inline-block;
   outline: none;
   border-radius: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   font-size: 16px;
   overflow: hidden;
   white-space: nowrap;
@@ -70,7 +70,7 @@
 .elementButton {
   padding: 6px 10px;
   background-color: #f5f5f5;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-right: none;
   border-radius: 4px 0 0 4px;
   text-align: left;
@@ -84,7 +84,7 @@
 }
 
 .active {
-  background-color: #fff;
+  background-color: var(--background-color-card);
   border: 1px solid #011224;
   border-right: none;
   border-radius: 4px 0 0 4px;
@@ -112,7 +112,7 @@
   text-align: left;
   padding: 4px 8px;
   background-color: #e0e0e0;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-right: none;
   border-radius: 4px 0 0 4px;
   font-size: 0.8rem;
@@ -125,7 +125,7 @@
 }
 
 .activeCategory {
-  background-color: #fff;
+  background-color: var(--background-color-card);
   border: 1px solid #011224;
   border-right: none;
   font-weight: bold;
@@ -138,7 +138,7 @@
 .uploadItem {
   padding: 0.5rem 0.75rem;
   margin: 0 auto 0.5rem auto;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   text-align: center;
   transition: background-color 0.3s ease;
@@ -146,7 +146,7 @@
 }
 
 .uploadItem:hover {
-  background-color: #f0f0f0;
+  background-color: var(--background-color-tertiary);
 }
 
 .selected {

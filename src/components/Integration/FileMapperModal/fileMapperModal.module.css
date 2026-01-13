@@ -2,7 +2,7 @@
 
 .fileMapperModal {
   padding: 0;
-  background-color: #ffffff;
+  background-color: var(--background-color-card);
   border-radius: 8px;
   min-height: 30vh;
   max-height: 80vh;
@@ -25,8 +25,8 @@
 }
 
 .modalHeader {
-  background-color: var(--background-nav-and-headers-background-color-light);
-  color: var(--text-color-on-darkbg-light);
+  background-color: var(--background-nav-and-headers-background-color);
+  color: var(--text-color-on-darkbg);
   border-radius: 8px 8px 0 0;
   padding: 20px;
   justify-content: space-between;
@@ -48,7 +48,7 @@
   border: none;
   background: transparent;
   border-radius: 50%;
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   cursor: pointer;
   font-size: 18px;
   font-weight: 500;
@@ -67,8 +67,8 @@
 }
 
 .mappingItem {
-  background-color: #f9f9f9;
-  border: 1px solid #ddd;
+  background-color: var(--background-color-3);
+  border: 1px solid var(--border-color-secondary);
   border-radius: 8px;
   padding: 15px;
   display: flex;
@@ -103,10 +103,10 @@
 
 .sendButton {
   flex: 2;
-  background-image: var(--button-gradient-light);
+  background-image: var(--button-gradient);
   border-radius: 0 8px 8px 0;
   border: none;
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -132,7 +132,7 @@
   width: 64px;
   background-color: #28a745 !important;
   border-radius: 8px 0 0 8px;
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   border: none;
   display: flex;
   align-items: center;
@@ -155,7 +155,7 @@
 
 .loader {
   border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top: 3px solid var(--text-color-on-darkbg-light);
+  border-top: 3px solid var(--text-color-on-darkbg);
   border-radius: 50%;
   width: 1.3em;
   height: 1.3em;
@@ -174,7 +174,7 @@
 }
 
 .fileItem {
-  background-color: var(--text-color-on-darkbg-light);
+  background-color: var(--text-color-on-darkbg);
   padding: 10px 15px;
   border-radius: 6px;
   font-size: 0.9em;
@@ -193,19 +193,19 @@
 }
 
 .fileItem.selected {
-  background-color: var(--button-color-light);
-  color: var(--text-color-on-darkbg-light);
+  background-color: var(--button-color);
+  color: var(--text-color-on-darkbg);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .fileIcon {
   font-size: 1.2em;
-  color: #555;
+  color: var(--text-color-secondary);
   transition: color 0.3s;
 }
 
 .fileIcon.selectedIcon {
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
 }
 
 .fileName {
@@ -240,7 +240,7 @@
 .nodeSubtitle {
   display: block;
   font-size: 0.85em;
-  color: #666;
+  color: var(--text-color-tertiary);
   margin-top: 2px;
 }
 
@@ -255,7 +255,7 @@
   border-radius: 8px;
 
   border: none;
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -285,8 +285,8 @@
   min-width: 300px;
   max-width: 80%;
   max-width: 30vw;
-  background-color: #fff;
-  border: 1px solid #ddd;
+  background-color: var(--background-color-card);
+  border: 1px solid var(--border-color-secondary);
   border-radius: 6px;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
   padding: 16px;
@@ -348,11 +348,11 @@
   top: 6px;
   right: 6px;
   cursor: pointer;
-  color: #333;
+  color: var(--text-color-primary);
 }
 
 .popoverCloseBtn:hover {
-  color: #666;
+  color: var(--text-color-tertiary);
 }
 
 .confirmButton {
@@ -384,12 +384,12 @@
 }
 
 .formatDropdown {
-  background-color: #f9f9f9;
-  border: 1px solid #ccc;
+  background-color: var(--background-color-3);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   padding: 4px 8px;
   font-size: 0.80rem;
-  color: #333;
+  color: var(--text-color-primary);
   transition: border-color 0.2s;
 }
 
@@ -465,10 +465,10 @@
   max-height: 80px;
   /* exactly ~two items visible */
   overflow-y: auto;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   padding: 4px;
-  background: #fff;
+  background: var(--background-color-card);
   max-width: 100%;
 }
 

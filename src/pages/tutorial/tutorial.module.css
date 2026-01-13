@@ -18,7 +18,7 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background-color: #ecebeb;
+  background-color: var(--background-color-1);
   padding: 10px;
   margin: auto;
 }
@@ -70,13 +70,13 @@
 
 .introText {
   line-height: 1.5;
-  color: #333;
+  color: var(--text-color-primary);
   margin-bottom: 1em;
 }
 
 .lesserText {
   font-style: italic;
-  color: #666;
+  color: var(--text-color-tertiary);
 }
 
 .imageWrapper {
@@ -120,7 +120,7 @@
 }
 
 .centeredHeading {
-  color: var(--button-color-light);
+  color: var(--button-color);
   text-align: center;
   font-size: 1.5rem;
 }
@@ -133,7 +133,7 @@
 
 .variablesTable th,
 .variablesTable td {
-  border: 1px solid var(--tooltray-background-color-light);
+  border: 1px solid var(--tooltray-background-color);
   padding: 5px;
   text-align: left;
   font-size: 1.1rem;
@@ -196,7 +196,7 @@
   min-width: 180px;
   height: 100vh;
   overflow-y: auto;
-  background-color: var(--tooltray-background-color-light);
+  background-color: var(--tooltray-background-color);
   box-shadow: 3px 0px 10px rgba(0, 0, 0, 0.5);
   color: #ecf0f1;
 }
@@ -247,7 +247,7 @@
   height: 3px;
   margin: 0 auto 0;
   border-radius: 999px;
-  background: linear-gradient(90deg, transparent, var(--background-nav-and-headers-background-color-light) 40%, transparent);
+  background: linear-gradient(90deg, transparent, var(--background-nav-and-headers-background-color) 40%, transparent);
 }
 
 

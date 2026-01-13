@@ -5,8 +5,8 @@
     align-items: center;
     width: 100%;
     height: 400px;
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
+    background-color: var(--background-color-3);
+    border: 1px solid var(--border-color-secondary);
     border-radius: 8px;
     padding: 20px;
 }

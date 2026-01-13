@@ -10,9 +10,9 @@
   position: absolute;
   width: var(--card-width);
   min-height: var(--card-height);
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color-secondary);
   border-radius: 8px;
-  background-color: #fff;
+  background-color: var(--background-color-card);
   cursor: move;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   overflow: hidden;
@@ -75,7 +75,7 @@
 
 .propertyLabel {
   font-size: 0.85rem;
-  color: #333;
+  color: var(--text-color-primary);
   cursor: pointer;
 }
 

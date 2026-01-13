@@ -26,7 +26,7 @@
 .detailTitle {
   font-size: 1.6em;
   font-weight: 700;
-  color: #333;
+  color: var(--text-color-primary);
   padding: 0;
   letter-spacing: 0.5px;
   white-space: nowrap;
@@ -145,10 +145,10 @@
   flex: 0 0 auto;
   white-space: nowrap;
   background-color: #f2f2f2;
-  color: #333;
+  color: var(--text-color-primary);
   padding: 10px 15px;
   cursor: pointer;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-radius: 5px 5px 0 0;
   font-size: 0.95em;
   transition: background-color 0.3s ease;
@@ -162,7 +162,7 @@
 .selected {
   background-color: #fafafa;
   border-bottom: 1px solid #fafafa;
-  color: #333;
+  color: var(--text-color-primary);
   z-index: 2;
 }
 
@@ -233,7 +233,7 @@
 }
 
 .formField label {
-  background-color: var(--tooltray-background-color-light);
+  background-color: var(--tooltray-background-color);
   color: #fff;
   width: fit-content;
   max-width: 100%;
@@ -242,7 +242,7 @@
   border-radius: 8px 8px 0 0;
   margin-bottom: 0;
   padding: 4px 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-bottom: none;
   text-overflow: ellipsis;
   max-width: 100%;
@@ -253,7 +253,7 @@
 .formField input {
   flex: 1;
   padding: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-radius: 0 8px 8px 8px;
   font-size: 0.95em;
 }
@@ -299,7 +299,7 @@
 .tooltipIcon {
   cursor: pointer;
   font-size: 1.2em;
-  color: #333;
+  color: var(--text-color-primary);
   background: #f2f2f2;
   border-radius: 50%;
   width: 24px;
@@ -344,7 +344,7 @@
 .typeSelect {
   flex: 1;
   padding: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-radius: 0 8px 8px 8px;
   background-color: #e8e8e8;
   font-size: 0.95em;
@@ -403,7 +403,7 @@
   justify-content: center;
   padding: 0;
   height: 40px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-left: none;
   background: #333;
   color: #fff;
@@ -429,17 +429,17 @@
   padding: 0 12px;
   margin-left: 0;
   color: #fff;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-left: none;
   border-radius: 8px;
-  background-color: var(--tooltray-background-color-light);
+  background-color: var(--tooltray-background-color);
   font-size: 0.95em;
   cursor: pointer;
 }
 
 .booleanOptions label:hover,
 .addRowBtn:hover {
-  background-color: #666;
+  background-color: var(--text-color-tertiary);
 }
 
 .typeSelect:invalid {
@@ -464,7 +464,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--background-color-card);
   opacity: 0;
   transition: opacity 0.15s ease-in-out;
 }

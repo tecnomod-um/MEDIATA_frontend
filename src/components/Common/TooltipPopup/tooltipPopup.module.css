@@ -7,7 +7,7 @@
     padding-bottom: 36px;
     background-color: rgba(50, 50, 50, 0.9);
     backdrop-filter: blur(3px);
-    color: var(--text-color-on-darkbg-light);
+    color: var(--text-color-on-darkbg);
     font-size: 14px;
     text-align: center;
     transform: none;

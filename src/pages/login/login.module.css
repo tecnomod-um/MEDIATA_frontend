@@ -5,16 +5,16 @@
     justify-content: center;
     align-items: center;
     min-height: calc(100vh - 55px);
-    background-color: #ecebeb;
+    background-color: var(--background-color-1);
     padding: 20px;
     animation: fadeIn 0.5s ease-in-out;
 }
 
 .form {
-    background: white;
+    background: var(--background-color-card);
     padding: 30px;
     border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--box-shadow-md);
     max-width: 400px;
     width: 100%;
     animation: slideIn 0.5s ease-in-out;
@@ -23,16 +23,18 @@
 .title {
     font-size: 24px;
     margin-bottom: 20px;
-    color: var(--button-color-light);
+    color: var(--button-color);
 }
 
 .input {
     width: 100%;
     padding: 10px;
     margin-bottom: 15px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-color);
     border-radius: 5px;
     font-size: 16px;
+    background-color: var(--background-color-card);
+    color: var(--text-color-primary);
 }
 
 .button {
@@ -40,24 +42,24 @@
     padding: 10px;
     border: none;
     border-radius: 5px;
-    background-color: var(--button-color-light);
-    color: var(--text-color-on-darkbg-light);
+    background-color: var(--button-color);
+    color: var(--text-color-on-darkbg);
     font-size: 16px;
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
 
 .button:disabled {
-    background-color: #999;
+    background-color: var(--button-disabled);
     cursor: not-allowed;
 }
 
 .button:hover:enabled {
-    background-color: var(--button-color-hover-light);
+    background-color: var(--button-color-hover);
 }
 
 .error {
-    color: #c22535;
+    color: var(--error-color);
     margin-bottom: 10px;
 }
 

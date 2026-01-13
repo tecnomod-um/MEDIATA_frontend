@@ -11,8 +11,8 @@
   top: 100%;
   left: 0;
   right: 0;
-  background-color: #fff;
-  border: 1px solid #ccc;
+  background-color: var(--background-color-card);
+  border: 1px solid var(--border-color);
   z-index: 100;
   margin: 0;
   padding: 0;
@@ -33,7 +33,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: #ffffff;
+  background-color: var(--background-color-card);
   padding: 1vw;
   border-radius: 10px;
   gap: 0.5vw;
@@ -61,7 +61,7 @@
 
 .droppedItem {
   padding: 10px;
-  background-color: #f0f0f0;
+  background-color: var(--background-color-tertiary);
   border-radius: 8px;
   position: relative;
   width: 100%;
@@ -125,7 +125,7 @@
 .unionInput {
   flex: 1;
   padding: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color-secondary);
   font-size: 1em;
   min-width: 200px;
   border-radius: 5px 0 0 5px;
@@ -134,7 +134,7 @@
 .snomedInput {
   flex: 1;
   padding: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color-secondary);
   border-left: 0;
   font-size: 1em;
   min-width: 120px;
@@ -154,9 +154,9 @@
 
 .addValueButton {
   background-color: var(--button-add-value-color);
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   padding: 12px 15px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color-secondary);
   border-left: 0; 
   cursor: pointer;
   font-size: 1em;
@@ -184,7 +184,7 @@
 
 .saveButton {
   background-color: var(--button-save-color);
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   padding: 12px 15px;
   cursor: pointer;
   font-size: 1em;
@@ -233,7 +233,7 @@
 }
 
 .removeCheckboxInput:checked {
-  background-color: var(--button-color-light);
+  background-color: var(--button-color);
 }
 
 .removeCheckboxInput:before {
@@ -276,7 +276,7 @@
 }
 
 .valueMappingContainer {
-  background-color: #f9f9f9;
+  background-color: var(--background-color-3);
   padding: 6px;
   border-radius: 5px;
   border: 1px solid #e1e1e1;
@@ -372,11 +372,11 @@
 
 .mappedLabel {
   font-weight: 600;
-  color: #333;
+  color: var(--text-color-primary);
 }
 
 .mappedValue {
-  color: #333;
+  color: var(--text-color-primary);
   font-weight: 500;
 }
 
@@ -421,11 +421,11 @@
 .selectMappingContainer {
   flex: 1;
   overflow-y: hidden;
-  background-color: #f9f9f9;
+  background-color: var(--background-color-3);
   border-radius: 6px;
   margin: 0 5px;
-  border: 1px solid #ccc;
-  box-shadow: var(--button-color-shadow-light);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--button-color-shadow);
   overflow: hidden;
 }
 
@@ -453,7 +453,7 @@
 .selectMappingHeader h5 {
   margin: 0;
   font-size: 0.8em;
-  color: #333;
+  color: var(--text-color-primary);
   font-weight: 600;
 }
 
@@ -476,16 +476,16 @@
 
 .columnFileInline {
   font-size: 0.8em;
-  color: #666;
+  color: var(--text-color-tertiary);
   font-style: italic;
 }
 
 .mappingGroup:nth-child(odd) {
-  background-color: #f9f9f9;
+  background-color: var(--background-color-3);
 }
 
 .mappingGroup:nth-child(even) {
-  background-color: #f0f0f0;
+  background-color: var(--background-color-tertiary);
 }
 
 .mappingOptions {
@@ -499,7 +499,7 @@
 
 .mappingButton {
   background-color: #6c757d;
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   border: none;
   padding: 8px 15px;
   font-size: 0.9em;
@@ -555,7 +555,7 @@
 .groupDetail {
   margin: 0;
   font-size: 0.95em;
-  color: #555;
+  color: var(--text-color-secondary);
 }
 
 .categoryList {
@@ -623,7 +623,7 @@
   margin: 0;
   font-size: 1.05rem;
   font-weight: 700;
-  color: #333;
+  color: var(--text-color-primary);
   letter-spacing: 0.2px;
 }
 
@@ -640,12 +640,12 @@
 
 .tooltipIcon {
   cursor: pointer;
-  color: #666;
+  color: var(--text-color-tertiary);
   font-size: 1.2rem;
 }
 
 .tooltipIcon:hover {
-  color: #333;
+  color: var(--text-color-primary);
 }
 
 .buttonText {
@@ -671,7 +671,7 @@
   flex: 1 1 0;
   min-width: 0;
   padding: 12px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
@@ -702,7 +702,7 @@
   padding: 12px 15px;
   height: 100%;
   flex: 0 0 auto;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color-secondary);
   border-left: 0;
   cursor: pointer;
   white-space: nowrap;
@@ -713,7 +713,7 @@
 /* colors */
 .descriptionButton {
   background-color: var(--button-description-color);
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
 }
 
 .descriptionButton:hover {
@@ -722,7 +722,7 @@
 
 .addMappingButton {
   background-color: var(--button-add-mapping-color);
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   border-radius: 0 5px 5px 0;
 }
 

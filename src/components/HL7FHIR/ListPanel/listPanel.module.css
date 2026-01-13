@@ -22,5 +22,5 @@
 }
 
 .elementItem:hover {
-  background-color: #555;
+  background-color: var(--text-color-secondary);
 }

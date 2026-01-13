@@ -15,7 +15,7 @@
 .button {
     padding: 10px 20px;
     font-size: 1rem;
-    color: var(--text-color-on-darkbg-light);
+    color: var(--text-color-on-darkbg);
     border: none;
     border-radius: 5px;
     cursor: pointer;
@@ -29,8 +29,8 @@
     font-weight: 600;
     margin: 20px;
     background-size: 300% 100%;
-    background-image: var(--button-gradient-light);
-    box-shadow: var(--button-color-shadow-light);
+    background-image: var(--button-gradient);
+    box-shadow: var(--button-color-shadow);
 }
 
 .button:hover {

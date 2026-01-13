@@ -45,7 +45,6 @@ const Login = () => {
           className={LoginStyles.form} 
           onSubmit={handleLogin}
           aria-labelledby="login-title"
-          noValidate
         >
           <h2 id="login-title" className={LoginStyles.title}>Login</h2>
           <input

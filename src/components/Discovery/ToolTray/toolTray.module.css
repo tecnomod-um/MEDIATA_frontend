@@ -1,7 +1,7 @@
 @import '../../../variables.css';
 
 .container {
-  background-color: #333;
+  background-color: var(--text-color-primary);
   color: #fff;
   left: 0;
   top: 55px;
@@ -45,8 +45,8 @@
   top: 0px;
   width: 30px;
   height: 55px;
-  background-color: var(--button-color-light);
-  color: var(--text-color-on-darkbg-light);
+  background-color: var(--button-color);
+  color: var(--text-color-on-darkbg);
   display: none;
   align-items: center;
   justify-content: center;
@@ -55,7 +55,7 @@
 }
 
 .toggleButton:hover {
-  background-color: var(--button-color-hover-light);
+  background-color: var(--button-color-hover);
 }
 
 .multiFileSelector {
@@ -88,7 +88,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
-  background-color: #555;
+  background-color: var(--text-color-secondary);
   color: #fff;
   border-radius: 4px;
   cursor: pointer;
@@ -102,18 +102,18 @@
 }
 
 .fileToggleActive {
-  background-color: var(--button-color-light);
+  background-color: var(--button-color);
   font-weight: normal;
   position: relative;
   overflow: hidden;
 }
 
 .fileToggle:hover {
-  background-color: #666;
+  background-color: var(--text-color-tertiary);
 }
 
 .fileToggleActive:hover {
-  background-color: var(--button-color-hover-light);
+  background-color: var(--button-color-hover);
 }
 
 /* New ripple element style */
@@ -185,8 +185,8 @@
 }
 
 .toggleFeatureTypeButton {
-  background-color: #555;
-  color: var(--text-color-on-darkbg-light);
+  background-color: var(--text-color-secondary);
+  color: var(--text-color-on-darkbg);
   padding: 8px 12px;
   border: none;
   border-radius: 5px;
@@ -204,11 +204,11 @@
 }
 
 .toggleFeatureTypeButton:hover {
-  background-color: #666;
+  background-color: var(--text-color-tertiary);
 }
 
 .toggleFeatureTypeButton:disabled {
-  background-color: #333;
+  background-color: var(--text-color-primary);
   color: #aaa;
   cursor: not-allowed;
 }
@@ -300,13 +300,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   border-radius: 5px;
 }
 
 .outliersLabel {
-  background-color: #555;
-  color: var(--text-color-on-darkbg-light);
+  background-color: var(--text-color-secondary);
+  color: var(--text-color-on-darkbg);
   padding: 8px 12px;
   border-radius: 5px;
   display: inline-flex;
@@ -323,7 +323,7 @@
 }
 
 .outliersLabel:hover {
-  background-color: #666;
+  background-color: var(--text-color-tertiary);
 }
 
 .buttonContainer {
@@ -336,7 +336,7 @@
   cursor: pointer;
   background-color: #444;
   border: none;
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   padding: 10px 15px;
   border-radius: 5px;
   width: 100%;
@@ -348,7 +348,7 @@
 }
 
 .buttonContainer button:hover {
-  background-color: #555;
+  background-color: var(--text-color-secondary);
 }
 
 .nodeGroup {
@@ -389,7 +389,7 @@
   padding: 6px 8px;
   border-radius: 4px;
   border: none;
-  background-color: #555;
+  background-color: var(--text-color-secondary);
   color: #fff;
   font-size: 14px;
   outline: none;
@@ -402,7 +402,7 @@
 .toggleAllButton {
   min-width: 70px;
   flex-shrink: 0;
-  background-color: #555;
+  background-color: var(--text-color-secondary);
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -416,5 +416,5 @@
 }
 
 .toggleAllButton:hover {
-  background-color: #666;
+  background-color: var(--text-color-tertiary);
 }

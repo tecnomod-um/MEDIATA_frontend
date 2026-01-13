@@ -1,5 +1,5 @@
 .pageContainer {
-  background-color: #ecebeb;
+  background-color: var(--background-color-1);
   display: flex;
   height: calc(100vh - 55px);
   overflow: hidden;
@@ -34,7 +34,7 @@
 .rightPanel {
   flex: 0 0 0;
   position: relative;
-  background: #ffffff;
+  background: var(--background-color-card);
   overflow: hidden;
   transition: flex-basis 300ms ease;
 }
@@ -81,7 +81,7 @@
 }
 
 .elementItem:hover {
-  background-color: #555;
+  background-color: var(--text-color-secondary);
 }
 
 .detailHeader {
@@ -144,7 +144,7 @@
 
 .instructions {
   font-size: 0.9rem;
-  color: #666;
+  color: var(--text-color-tertiary);
   margin-top: 10px;
 }
 
