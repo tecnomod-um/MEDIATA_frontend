@@ -49,10 +49,6 @@ function AutocompleteInput({  value,  onChange,  placeholder,  className,  sugge
         width: rect.width,
         bottom: showAbove ? window.innerHeight - rect.top : undefined,
         maxHeight,
-        overflowY: "auto",
-        backgroundColor: "#fff",
-        border: "1px solid #ccc",
-        zIndex: 1000,
       });
     }
   }, [showSuggestions]);
@@ -167,7 +163,7 @@ function AutocompleteInput({  value,  onChange,  placeholder,  className,  sugge
         type="text"
         id={inputId}
         name={name}
-        className={className}
+        className={`${AutoCompleteInputStyles.autocompleteInput} ${className || ''}`.trim()}
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
