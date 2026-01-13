@@ -5,11 +5,11 @@
     display: grid;
     overflow: auto;
     scrollbar-width: thin;
-    scrollbar-color: #ccc #f5f5f5;
+    scrollbar-color: var(--table-scrollbar-thumb) var(--table-scrollbar-track);
     background-color: var(--background-color-card);
     color: var(--text-color-primary);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--border-color-secondary);
 }
 
 .resThead,
@@ -71,15 +71,15 @@
 }
 
 .resTable::-webkit-scrollbar-thumb {
-    background-color: #ccc;
+    background-color: var(--table-scrollbar-thumb);
 }
 
 .resTable::-webkit-scrollbar-track {
-    background-color: var(--background-color-secondary);
+    background-color: var(--table-scrollbar-track);
 }
 
 .selectedEntry {
-    background-color: #e9ecef;
+    background-color: var(--table-row-selected-bg);
     transition: background-color 0.3s ease;
 }
 

@@ -1,7 +1,7 @@
 
 .container {
-  background-color: var(--background-color-3);
-  color: var(--text-color-on-darkbg);
+  background-color: var(--tooltray-background-color);
+  color: var(--tooltray-text-color);
   left: 0;
   top: 55px;
   bottom: 0;
@@ -58,7 +58,7 @@
 }
 
 .multiFileSelector {
-  background-color: var(--background-color-2);
+  background-color: var(--tooltray-section-bg);
   padding: 10px;
   border-radius: 5px;
   margin-bottom: 10px;
@@ -87,8 +87,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
-  background-color: var(--text-color-secondary);
-  color: var(--text-color-on-darkbg);
+  background-color: var(--tooltray-button-bg);
+  color: var(--tooltray-text-color);
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.85rem;
@@ -108,7 +108,7 @@
 }
 
 .fileToggle:hover {
-  background-color: var(--text-color-tertiary);
+  background-color: var(--tooltray-button-hover);
 }
 
 .fileToggleActive:hover {
@@ -154,21 +154,21 @@
 }
 
 .filesRow::-webkit-scrollbar-thumb {
-  background: var(--text-color-tertiary);
+  background: var(--tooltray-button-hover);
   border-radius: 3px;
 }
 
 .filesRow::-webkit-scrollbar-thumb:hover {
-  background: var(--text-color-secondary);
+  background: var(--tooltray-button-bg);
 }
 
 .filesRow::-webkit-scrollbar-track {
-  background: var(--background-color-2);
+  background: var(--tooltray-section-bg);
 }
 
 /* The top section for "Entry: X" or "No entry selected" + toggle button */
 .topSection {
-  background-color: var(--background-color-2);
+  background-color: var(--tooltray-section-bg);
   padding: 10px;
   border-radius: 5px;
   margin-bottom: 10px;
@@ -184,8 +184,8 @@
 }
 
 .toggleFeatureTypeButton {
-  background-color: var(--background-color-3);
-  color: var(--text-color-primary);
+  background-color: var(--tooltray-button-bg);
+  color: var(--tooltray-text-color);
   padding: 8px 12px;
   border: none;
   border-radius: 5px;
@@ -203,11 +203,11 @@
 }
 
 .toggleFeatureTypeButton:hover {
-  background-color: var(--background-color-2);
+  background-color: var(--tooltray-button-hover);
 }
 
 .toggleFeatureTypeButton:disabled {
-  background-color: var(--background-color-4);
+  background-color: var(--tooltray-section-bg);
   color: var(--text-color-muted);
   cursor: not-allowed;
 }
@@ -234,13 +234,13 @@
   width: 17px;
   height: 17px;
   border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top: 3px solid #fff;
+  border-top: 3px solid var(--tooltray-text-color);
   border-radius: 50%;
   animation: spinReverse 1s linear infinite;
 }
 
 .featuresList {
-  background-color: var(--background-color-4);
+  background-color: var(--tooltray-section-bg);
   padding: 10px;
   overflow-y: auto;
   max-height: 300px;
@@ -281,31 +281,31 @@
 }
 
 .featuresList::-webkit-scrollbar-track {
-  background: var(--background-color-2);
+  background: var(--tooltray-background-color);
 }
 
 .featuresList::-webkit-scrollbar-thumb {
-  background: var(--text-color-tertiary);
+  background: var(--tooltray-button-hover);
 }
 
 .featuresList::-webkit-scrollbar-thumb:hover {
-  background: var(--text-color-secondary);
+  background: var(--tooltray-button-bg);
 }
 
 .outliersToggleSection {
-  background-color: var(--background-color-2);
+  background-color: var(--tooltray-section-bg);
   padding: 10px;
   margin-bottom: 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: var(--text-color-on-darkbg);
+  color: var(--tooltray-text-color);
   border-radius: 5px;
 }
 
 .outliersLabel {
-  background-color: var(--background-color-3);
-  color: var(--text-color-primary);
+  background-color: var(--tooltray-button-bg);
+  color: var(--tooltray-text-color);
   padding: 8px 12px;
   border-radius: 5px;
   display: inline-flex;
@@ -322,7 +322,7 @@
 }
 
 .outliersLabel:hover {
-  background-color: var(--background-color-2);
+  background-color: var(--tooltray-button-hover);
 }
 
 .buttonContainer {
@@ -333,9 +333,9 @@
 
 .buttonContainer button {
   cursor: pointer;
-  background-color: var(--background-color-3);
+  background-color: var(--tooltray-button-bg);
   border: none;
-  color: var(--text-color-primary);
+  color: var(--tooltray-text-color);
   padding: 10px 15px;
   border-radius: 5px;
   width: 100%;
@@ -347,7 +347,7 @@
 }
 
 .buttonContainer button:hover {
-  background-color: var(--background-color-2);
+  background-color: var(--tooltray-button-hover);
 }
 
 .nodeGroup {
@@ -357,7 +357,7 @@
 .nodeGroupTitle {
   font-size: 0.9rem;
   font-weight: bold;
-  color: var(--border-color);
+  color: var(--tooltray-text-color);
 }
 
 
@@ -388,8 +388,8 @@
   padding: 6px 8px;
   border-radius: 4px;
   border: none;
-  background-color: var(--background-color-3);
-  color: var(--text-color-primary);
+  background-color: var(--tooltray-button-bg);
+  color: var(--tooltray-text-color);
   font-size: 14px;
   outline: none;
 }
@@ -401,8 +401,8 @@
 .toggleAllButton {
   min-width: 70px;
   flex-shrink: 0;
-  background-color: var(--background-color-3);
-  color: var(--text-color-primary);
+  background-color: var(--tooltray-button-bg);
+  color: var(--tooltray-text-color);
   border: none;
   border-radius: 4px;
   font-size: 0.8em;
@@ -415,5 +415,5 @@
 }
 
 .toggleAllButton:hover {
-  background-color: var(--background-color-2);
+  background-color: var(--tooltray-button-hover);
 }

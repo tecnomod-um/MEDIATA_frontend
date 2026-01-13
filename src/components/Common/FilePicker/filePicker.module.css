@@ -248,8 +248,8 @@
   padding: 12px;
 
   border: none;
-  border-bottom: 1px solid var(--background-color-1);
-  background: var(--background-color-card);
+  border-bottom: 1px solid var(--project-row-border);
+  background: var(--project-row-bg);
   cursor: pointer;
   text-align: left;
   transition: background-color 0.3s ease, border-left-color 0.3s ease;
@@ -278,7 +278,7 @@
 }
 
 .projectRow:hover {
-  background-color: var(--background-color-2);
+  background-color: var(--project-row-hover);
 }
 
 .thumbFallback {
@@ -288,8 +288,8 @@
   place-items: center;
   font-weight: 800;
   letter-spacing: 0.5px;
-  color: var(--text-color-primary);
-  background: linear-gradient(135deg, #e8eef5, #f5efe8);
+  color: var(--chip-text);
+  background: var(--chip-bg);
 }
 
 .projectMain {
