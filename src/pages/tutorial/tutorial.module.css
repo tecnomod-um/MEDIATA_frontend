@@ -214,7 +214,8 @@
 
 @media (min-width: 769px) {
   .pageContainer {
-    margin-left: 200px;
+    margin-left: 0;
+    padding-left: 200px;
   }
 }
 
