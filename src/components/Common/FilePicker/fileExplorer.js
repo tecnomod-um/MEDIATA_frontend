@@ -320,7 +320,23 @@ function FileExplorer({ category, isOpen = true, onClose, onOpenFile }) {
   const doOpen = (name) => {
     if (busy) return;
     if (!onOpenFile) return;
+    
+    // Show loading indicator for the file being opened
+    setProcessingFiles(prev => new Set([...prev, name]));
+    setBusy(true);
+    
+    // Call the callback - file will be loaded by parent
     onOpenFile(name);
+    
+    // Clear processing state after a delay to allow file to load
+    setTimeout(() => {
+      setProcessingFiles(prev => {
+        const next = new Set(prev);
+        next.delete(name);
+        return next;
+      });
+      setBusy(false);
+    }, 1500);
   };
 
   const doOpenSelected = () => {
@@ -328,15 +344,28 @@ function FileExplorer({ category, isOpen = true, onClose, onOpenFile }) {
     if (!onOpenFile) return;
     if (selected.size === 0) return;
 
-    // open “primary” selection: lastIndex if included, else first selected
+    // open "primary" selection: lastIndex if included, else first selected
     let target = null;
     if (lastIndex != null && sorted[lastIndex] && selected.has(sorted[lastIndex].name)) {
       target = sorted[lastIndex].name;
     } else {
       target = Array.from(selected)[0];
     }
-    if (target) onOpenFile(target);
+    if (target) {
+      // Show loading indicator for the file being opened
+      setProcessingFiles(new Set([target]));
+      setBusy(true);
+      
+      onOpenFile(target);
+      
+      // Clear processing state after a delay
+      setTimeout(() => {
+        setProcessingFiles(new Set());
+        setBusy(false);
+      }, 1500);
+    }
   };
+
 
   const openCleanPanel = () => {
     if (busy) return;
