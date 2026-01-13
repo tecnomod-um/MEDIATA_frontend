@@ -69,6 +69,11 @@
   --tooltray-button-hover-light: #666;
   --tooltray-text-color-light: #fff;
 
+  /* SchemaTray closedTab */
+  --schema-tab-bg-light: #555;
+  --schema-tab-hover-light: #666;
+  --schema-tab-text-light: #fff;
+
   /* EntryTable selected row */
   --table-row-selected-bg-light: #e9ecef;
   --table-scrollbar-thumb-light: #ccc;
@@ -200,6 +205,11 @@
   --tooltray-button-hover-dark: #333333;
   --tooltray-text-color-dark: #e0e0e0;
 
+  /* SchemaTray closedTab */
+  --schema-tab-bg-dark: #3a3a3a;
+  --schema-tab-hover-dark: #4a4a4a;
+  --schema-tab-text-dark: #e0e0e0;
+
   /* EntryTable selected row */
   --table-row-selected-bg-dark: #2a3a4a;
   --table-scrollbar-thumb-dark: #444444;
@@ -322,6 +332,10 @@
   --tooltray-button-hover: var(--tooltray-button-hover-light);
   --tooltray-text-color: var(--tooltray-text-color-light);
 
+  --schema-tab-bg: var(--schema-tab-bg-light);
+  --schema-tab-hover: var(--schema-tab-hover-light);
+  --schema-tab-text: var(--schema-tab-text-light);
+
   --table-row-selected-bg: var(--table-row-selected-bg-light);
   --table-scrollbar-thumb: var(--table-scrollbar-thumb-light);
   --table-scrollbar-track: var(--table-scrollbar-track-light);
@@ -419,6 +433,10 @@ body.dark-mode {
   --tooltray-button-bg: var(--tooltray-button-bg-dark);
   --tooltray-button-hover: var(--tooltray-button-hover-dark);
   --tooltray-text-color: var(--tooltray-text-color-dark);
+
+  --schema-tab-bg: var(--schema-tab-bg-dark);
+  --schema-tab-hover: var(--schema-tab-hover-dark);
+  --schema-tab-text: var(--schema-tab-text-dark);
 
   --table-row-selected-bg: var(--table-row-selected-bg-dark);
   --table-scrollbar-thumb: var(--table-scrollbar-thumb-dark);
