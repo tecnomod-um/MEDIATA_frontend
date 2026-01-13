@@ -1,9 +1,11 @@
 import React from "react";
 import FileTypeIcon from "./FileTypeIcon";
+import LinearProgress from "@mui/material/LinearProgress";
+import CircularProgress from "@mui/material/CircularProgress";
 import Styles from "../fileExplorer.module.css";
 
 /**
- * FileTable - Table displaying the list of files with inline editing
+ * FileTable - Table displaying the list of files with inline editing and loading indicators
  * @param {array} sorted - Sorted array of files to display
  * @param {Set} selected - Set of selected file names
  * @param {boolean} busy - Whether an operation is in progress
@@ -63,7 +65,7 @@ function FileTable({
             key={f.name}
             className={`${Styles.row} ${isSelected ? Styles.rowSelected : ""} ${
               busy ? Styles.rowDisabled : ""
-            }`}
+            } ${isProcessing ? Styles.rowProcessing : ""}`}
             onMouseDown={() => onRowMouseDown(f.name, idx)}
             onMouseUp={onRowMouseUp}
             onMouseLeave={onRowMouseLeave}
@@ -112,8 +114,8 @@ function FileTable({
                   {f.name}
                   {isNew(f) ? <span className={Styles.newMark}> *</span> : null}
                   {isProcessing ? (
-                    <span className={Styles.processingSpinner} title="Processing..." aria-label="Processing file">
-                      ⟳
+                    <span className={Styles.processingIndicator} title="Processing..." aria-label="Processing file">
+                      <CircularProgress size={16} thickness={5} />
                     </span>
                   ) : null}
                 </span>
@@ -123,6 +125,12 @@ function FileTable({
             <div className={Styles.colSize}>{formatBytes(f.sizeBytes)}</div>
             <div className={Styles.colCreated}>{formatDateTime(f.createdAtMs)}</div>
             <div className={Styles.colModified}>{formatDateTime(f.lastModifiedAtMs)}</div>
+
+            {isProcessing && (
+              <div className={Styles.rowProgressBar}>
+                <LinearProgress />
+              </div>
+            )}
           </div>
         );
       })}
