@@ -119,7 +119,7 @@
 }
 
 .centeredHeading {
-  color: var(--button-color);
+  color: var(--heading-color);
   text-align: center;
   font-size: 1.5rem;
 }

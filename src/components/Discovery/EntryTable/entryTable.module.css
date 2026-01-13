@@ -22,7 +22,7 @@
 .resTh {
     position: relative;
     font-size: 16px;
-    background-color: #f8f9fa;
+    background-color: var(--background-color-5);
     padding: 10px;
     color: #495057;
 }
@@ -62,7 +62,7 @@
 }
 
 .resizeHandle.active {
-    border-color: #6c757d;
+    border-color: var(--text-color-secondary);
 }
 
 .resTable::-webkit-scrollbar {
@@ -75,7 +75,7 @@
 }
 
 .resTable::-webkit-scrollbar-track {
-    background-color: #f5f5f5;
+    background-color: var(--background-color-secondary);
 }
 
 .selectedEntry {

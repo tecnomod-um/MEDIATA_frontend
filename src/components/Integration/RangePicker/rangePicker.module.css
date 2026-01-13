@@ -81,7 +81,7 @@
 }
 
 .mappingButton {
-  background-color: #6c757d;
+  background-color: var(--text-color-tertiary);
   color: var(--text-color-on-darkbg);
   border: none;
   padding: 8px 15px;
@@ -93,5 +93,5 @@
 }
 
 .mappingButton:hover {
-  background-color: #5a6268;
+  background-color: var(--text-color-secondary);
 }

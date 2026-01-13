@@ -164,7 +164,7 @@
 }
 
 .filterSummary li {
-    background-color: #f8f9fa;
+    background-color: var(--background-color-5);
     padding: 10px;
     border-radius: 4px;
     margin-bottom: 5px;
@@ -219,7 +219,7 @@
 
 .criteriaBox {
     display: inline-block;
-    background-color: #f8f9fa;
+    background-color: var(--background-color-5);
     padding: 5px 5px;
     border-radius: 4px;
     margin-left: 5px;
@@ -296,7 +296,7 @@
 }
 
 .logicalOperatorButton {
-    background-color: #5a6268;
+    background-color: var(--text-color-secondary);
     color: var(--text-color-on-darkbg);
     border: none;
     margin-right: 2px;

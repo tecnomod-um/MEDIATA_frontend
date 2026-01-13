@@ -22,7 +22,7 @@
 .title {
     font-size: 24px;
     margin-bottom: 20px;
-    color: var(--button-color);
+    color: var(--heading-color);
 }
 
 .input {

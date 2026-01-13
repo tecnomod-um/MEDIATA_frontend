@@ -23,7 +23,7 @@
 .autocompleteListItem {
   padding: 8px;
   cursor: pointer;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-color-secondary);
 }
 
 .mappingSection {
@@ -42,8 +42,8 @@
 
 .dropArea {
   width: 100%;
-  background-color: #f5f5f5;
-  border: 2px dashed #bbb;
+  background-color: var(--background-color-secondary);
+  border: 2px dashed var(--border-color);
   border-radius: 10px;
   display: flex;
   flex-wrap: wrap;
@@ -54,8 +54,8 @@
 }
 
 .dropArea:hover {
-  background-color: #e0e0e0;
-  border-color: #aaa;
+  background-color: var(--background-color-tertiary);
+  border-color: var(--border-color);
 }
 
 .droppedItem {
@@ -92,13 +92,13 @@
 .resizer {
   width: 100%;
   height: 8px;
-  background: #ccc;
+  background: var(--border-color);
   cursor: row-resize;
   transition: background 0.2s;
 }
 
 .resizer:hover {
-  background: #999;
+  background: var(--text-color-muted);
 }
 
 .createEntrySection {
@@ -109,7 +109,7 @@
   border: 1px solid #e1e1e1;
   border-radius: 10px;
   padding: 10px;
-  background-color: #fafafa;
+  background-color: var(--background-color-4);
   display: flex;
   flex-direction: column;
 }
@@ -173,7 +173,7 @@
   align-items: center;
   justify-content: flex-end;
   width: auto;      
-  background: #fafafa; 
+  background: var(--background-color-4); 
 }
 
 
@@ -200,7 +200,7 @@
 .mappingTypeSelector {
   display: flex;
   align-items: center;
-  background-color: #e0e0e0;
+  background-color: var(--background-color-tertiary);
   border: 1px solid #cfcfcf;
   font-size: 0.9em;
 }
@@ -224,7 +224,7 @@
   height: 20px;
   -webkit-appearance: none;
   appearance: none;
-  background-color: #c6c6c6;
+  background-color: var(--border-color-secondary);
   border-radius: 20px;
   position: relative;
   outline: none;
@@ -324,7 +324,7 @@
   align-items: stretch;
   gap: 0;
   padding: 6px;
-  background-color: #f8f9fa;
+  background-color: var(--background-color-5);
   border-radius: 5px;
   flex-wrap: nowrap;
 }
@@ -337,7 +337,7 @@
   margin: 4px 0 0 4px;
   font-size: 0.8em;
   font-style: italic;
-  color: #6c757d;
+  color: var(--text-color-secondary);
 }
 
 .currentMappings {
@@ -350,7 +350,7 @@
 }
 
 .mappedItem {
-  background-color: #e2e6ea;
+  background-color: var(--background-color-tertiary);
   padding: 5px 10px;
   border-radius: 5px;
   font-size: 0.85em;
@@ -385,7 +385,7 @@
   cursor: pointer;
   padding: 0;
   font-size: 1em;
-  color: #888;
+  color: var(--text-color-muted);
   transition: color 0.3s;
 }
 
@@ -396,7 +396,7 @@
 
 .closeIconButton svg {
   font-size: 1.2em;
-  color: #888;
+  color: var(--text-color-muted);
 }
 
 .closeIconButton:hover svg {
@@ -440,7 +440,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 5px;
-  background-color: #f8f9fa;
+  background-color: var(--background-color-5);
   z-index: 10;
   top: 0;
   position: sticky;
@@ -497,7 +497,7 @@
 }
 
 .mappingButton {
-  background-color: #6c757d;
+  background-color: var(--text-color-tertiary);
   color: var(--text-color-on-darkbg);
   border: none;
   padding: 8px 15px;
@@ -509,13 +509,13 @@
 }
 
 .mappingButton:hover {
-  background-color: #5a6268;
+  background-color: var(--text-color-secondary);
 }
 
 .dropText {
   width: 100%;
   text-align: center;
-  color: #bbb;
+  color: var(--border-color);
   font-size: 1.2em;
   margin: auto;
 }
@@ -534,14 +534,14 @@
 
 .groupType {
   font-size: 0.9em;
-  color: #050505;
+  color: var(--text-color-primary);
   margin-right: 1vw;
   font-weight: bold;
 }
 
 .groupFile {
   font-size: 0.8em;
-  color: #777;
+  color: var(--text-color-muted);
   margin-top: 2px;
 }
 
@@ -566,7 +566,7 @@
 }
 
 .categoryItem {
-  background-color: #e2e6ea;
+  background-color: var(--background-color-tertiary);
   padding: 5px 10px;
   border-radius: 4px;
   font-size: 0.9em;

@@ -395,7 +395,7 @@
 }
 
 .searchInput::placeholder {
-  color: #bbb;
+  color: var(--border-color);
 }
 
 .toggleAllButton {

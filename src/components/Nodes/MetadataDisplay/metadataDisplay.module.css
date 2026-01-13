@@ -51,7 +51,7 @@
 
 /* Remove large margins for the "no metadata" message. */
 .muted {
-  color: #777;
+  color: var(--text-color-muted);
   font-style: italic;
   margin: 0;
   /* override existing margins if needed */
@@ -143,7 +143,7 @@
   padding: 10px;
   border-radius: 4px;
   margin-top: 6px;
-  background-color: #fafafa;
+  background-color: var(--background-color-4);
 }
 
 .distributionCard h6 {

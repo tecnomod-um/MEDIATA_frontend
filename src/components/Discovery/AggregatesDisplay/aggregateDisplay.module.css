@@ -23,13 +23,13 @@
 .splitter {
   flex-shrink: 0;
   height: 8px;
-  background: #ccc;
+  background: var(--border-color);
   cursor: row-resize;
   transition: background 0.2s;
 }
 
 .splitter:hover {
-  background: #999;
+  background: var(--text-color-muted);
 }
 
 .bottomPanel {

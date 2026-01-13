@@ -64,7 +64,7 @@
 
 .memberRole {
   font-size: 14px;
-  color: #888;
+  color: var(--text-color-muted);
 }
 
 .contactInfo {

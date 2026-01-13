@@ -6,7 +6,7 @@
   height: fit-content;
   padding: 10px;
   box-sizing: border-box;
-  background-color: #fafafa;
+  background-color: var(--background-color-4);
   border-radius: 10px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
@@ -159,7 +159,7 @@
 }
 
 .selected {
-  background-color: #fafafa;
+  background-color: var(--background-color-4);
   border-bottom: 1px solid #fafafa;
   color: var(--text-color-primary);
   z-index: 2;
@@ -379,7 +379,7 @@
   font-size: 1.2em;
   line-height: 1;
   cursor: pointer;
-  color: #888;
+  color: var(--text-color-muted);
 }
 
 .addRowBtn {

@@ -51,12 +51,12 @@
 }
 
 .leftHeading {
-  color: var(--button-color);
+  color: var(--heading-color);
   text-align: left;
 }
 
 .rightHeading {
-  color: var(--button-color);
+  color: var(--heading-color);
   text-align: right;
 }
 
@@ -380,13 +380,13 @@
   font-size: 20px;
   font-weight: 700;
   margin: 6px 0 8px;
-  color: #0f2433;
+  color: var(--text-color-dark);
 }
 
 .featureText {
   font-size: 15px;
   line-height: 1.55;
-  color: #334e57;
+  color: var(--text-color-secondary);
   margin: 0 auto;
   max-width: 34ch;
 }

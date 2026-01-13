@@ -47,7 +47,7 @@
 
 .fileName {
   font-size: 0.85em;
-  color: #888;
+  color: var(--text-color-muted);
   font-style: italic;
   margin-top: 5px;
   overflow: hidden;
@@ -90,7 +90,7 @@
   justify-content: space-between;
   font-weight: 600;
   color: var(--text-color-primary);
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-color-secondary);
   padding: 4px 0;
   flex-wrap: nowrap;
   word-break: break-word;
@@ -206,7 +206,7 @@
 .editIcon {
   opacity: 0;
   font-size: 1em;
-  color: #888;
+  color: var(--text-color-muted);
   transition: opacity 0.2s ease;
   flex-shrink: 0;
 }

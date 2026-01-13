@@ -65,13 +65,13 @@
 .resizer {
   height: 100%;
   width: 8px;
-  background: #ccc;
+  background: var(--border-color);
   cursor: col-resize;
   transition: background 0.2s;
 }
 
 .resizer:hover {
-  background: #999;
+  background: var(--text-color-muted);
 }
 
 .connectionMessage {
@@ -262,7 +262,7 @@
     cursor: pointer;
     padding: 0.5rem 1rem;
     font-weight: 600;
-    background: #ddd;
+    background: var(--border-color-secondary);
     border: 1px solid var(--border-color);
     border-radius: 4px;
   }
@@ -277,7 +277,7 @@
     height: 70%;
     position: relative;
     overflow: hidden;
-    background-color: #fafafa;
+    background-color: var(--background-color-4);
   }
 
   .mobileWorkspace {

@@ -2,7 +2,7 @@
 .detailPanel {
   display: flex;
   flex-direction: column;
-  background-color: #fafafa;
+  background-color: var(--background-color-4);
   border-radius: 10px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   padding: 0;

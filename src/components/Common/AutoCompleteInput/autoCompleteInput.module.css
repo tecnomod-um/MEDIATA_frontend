@@ -18,5 +18,5 @@
 .autocompleteListItem {
   padding: 8px;
   cursor: pointer;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-color-secondary);
 }

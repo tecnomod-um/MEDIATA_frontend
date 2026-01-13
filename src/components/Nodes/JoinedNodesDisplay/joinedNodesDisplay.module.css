@@ -163,7 +163,7 @@
 }
 
 .muted {
-  color: #777;
+  color: var(--text-color-muted);
   font-style: italic;
   margin: 0.5rem 0;
 }

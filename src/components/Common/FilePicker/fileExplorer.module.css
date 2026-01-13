@@ -284,7 +284,7 @@
 /* Empty / error */
 .emptyState {
   padding: 18px 14px;
-  color: #777;
+  color: var(--text-color-muted);
   font-style: italic;
 }
 

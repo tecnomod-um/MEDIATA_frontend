@@ -68,7 +68,7 @@
 
 .elementButton {
   padding: 6px 10px;
-  background-color: #f5f5f5;
+  background-color: var(--background-color-secondary);
   border: 1px solid var(--border-color);
   border-right: none;
   border-radius: 4px 0 0 4px;
@@ -110,7 +110,7 @@
 .categoryButton {
   text-align: left;
   padding: 4px 8px;
-  background-color: #e0e0e0;
+  background-color: var(--background-color-tertiary);
   border: 1px solid var(--border-color);
   border-right: none;
   border-radius: 4px 0 0 4px;
