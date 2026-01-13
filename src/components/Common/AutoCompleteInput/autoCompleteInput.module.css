@@ -6,16 +6,10 @@
 }
 
 .autocompleteInput {
-  height: 38px;
-  border-radius: 10px;
-  border: 1px solid var(--border-color);
   background-color: var(--background-color-card);
   color: var(--text-color-primary);
-  padding: 0 12px;
-  font-size: 16px;
+  border-color: var(--border-color);
   outline: none;
-  width: 100%;
-  box-sizing: border-box;
 }
 
 .autocompleteInput:focus {
