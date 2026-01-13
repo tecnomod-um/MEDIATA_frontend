@@ -84,7 +84,14 @@ function FileTable({
             title="Click to select • Long-click for multi • Ctrl/⌘ toggles • Shift range • Double-click opens"
           >
             <div className={Styles.colName}>
-              <FileTypeIcon name={f.name} />
+              {/* Show spinner in place of icon when processing */}
+              {isProcessing ? (
+                <span className={Styles.processingSpinner} title="Processing..." aria-label="Processing file">
+                  <CircularProgress size={22} thickness={4} />
+                </span>
+              ) : (
+                <FileTypeIcon name={f.name} />
+              )}
 
               {renamingName === f.name ? (
                 <input
@@ -109,15 +116,15 @@ function FileTable({
                   onBlur={() => commitRename()}
                   disabled={busy}
                 />
+              ) : isProcessing ? (
+                /* Show progress bar in place of name when processing */
+                <div className={Styles.processingProgress}>
+                  <LinearProgress />
+                </div>
               ) : (
                 <span className={Styles.nameText}>
                   {f.name}
                   {isNew(f) ? <span className={Styles.newMark}> *</span> : null}
-                  {isProcessing ? (
-                    <span className={Styles.processingIndicator} title="Processing..." aria-label="Processing file">
-                      <CircularProgress size={16} thickness={5} />
-                    </span>
-                  ) : null}
                 </span>
               )}
             </div>
@@ -125,12 +132,6 @@ function FileTable({
             <div className={Styles.colSize}>{formatBytes(f.sizeBytes)}</div>
             <div className={Styles.colCreated}>{formatDateTime(f.createdAtMs)}</div>
             <div className={Styles.colModified}>{formatDateTime(f.lastModifiedAtMs)}</div>
-
-            {isProcessing && (
-              <div className={Styles.rowProgressBar}>
-                <LinearProgress />
-              </div>
-            )}
           </div>
         );
       })}
