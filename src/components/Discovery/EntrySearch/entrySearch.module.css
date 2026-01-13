@@ -12,6 +12,8 @@
     outline: none;
     border-radius: 10px;
     border: 1px solid var(--border-color);
+    background-color: var(--background-color-card);
+    color: var(--text-color-primary);
     font-size: 16px;
     text-indent: 5px;
     overflow: hidden;
@@ -35,7 +37,7 @@
     height: calc(100% - 38px - 1vh);
     border-radius: 4px;
     border: 1px solid var(--border-color);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--box-shadow-sm);
   }
   
   /* Row counter positioned at the bottom right of the table container */
@@ -43,11 +45,12 @@
     position: absolute;
     bottom: 5px;
     right: 5px;
-    background-color: lightGray;
+    background-color: var(--background-color-3);
+    color: var(--text-color-primary);
     padding: 2px 4px;
     border-radius: 2px;
     z-index: 5;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--box-shadow-sm);
   }
   
   /* Optionally hide the counter if there are no rows */

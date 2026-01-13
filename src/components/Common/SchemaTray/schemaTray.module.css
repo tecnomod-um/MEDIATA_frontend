@@ -205,7 +205,7 @@
     transform: translateY(-50%);
     width: 50px;
     height: 120px;
-    background: var(--tooltray-background-color);
+    background: var(--background-color-3);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -216,11 +216,11 @@
 }
 
 .closedTab:hover {
-    background: #555;
+    background: var(--text-color-secondary);
 }
 
 .closedTab span {
-    color: var(--text-color-on-darkbg);
+    color: var(--text-color-primary);
     transform: rotate(-90deg);
     font-size: 14px;
     white-space: nowrap;

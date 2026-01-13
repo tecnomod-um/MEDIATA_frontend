@@ -154,16 +154,16 @@
 }
 
 .filesRow::-webkit-scrollbar-thumb {
-  background: #888;
+  background: var(--text-color-tertiary);
   border-radius: 3px;
 }
 
 .filesRow::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: var(--text-color-secondary);
 }
 
 .filesRow::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--background-color-2);
 }
 
 /* The top section for "Entry: X" or "No entry selected" + toggle button */
@@ -184,8 +184,8 @@
 }
 
 .toggleFeatureTypeButton {
-  background-color: var(--text-color-secondary);
-  color: var(--text-color-on-darkbg);
+  background-color: var(--background-color-3);
+  color: var(--text-color-primary);
   padding: 8px 12px;
   border: none;
   border-radius: 5px;
@@ -203,12 +203,12 @@
 }
 
 .toggleFeatureTypeButton:hover {
-  background-color: var(--text-color-tertiary);
+  background-color: var(--background-color-2);
 }
 
 .toggleFeatureTypeButton:disabled {
-  background-color: var(--text-color-primary);
-  color: #aaa;
+  background-color: var(--background-color-4);
+  color: var(--text-color-muted);
   cursor: not-allowed;
 }
 
@@ -281,15 +281,15 @@
 }
 
 .featuresList::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--background-color-2);
 }
 
 .featuresList::-webkit-scrollbar-thumb {
-  background: #888;
+  background: var(--text-color-tertiary);
 }
 
 .featuresList::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: var(--text-color-secondary);
 }
 
 .outliersToggleSection {
@@ -304,8 +304,8 @@
 }
 
 .outliersLabel {
-  background-color: var(--text-color-secondary);
-  color: var(--text-color-on-darkbg);
+  background-color: var(--background-color-3);
+  color: var(--text-color-primary);
   padding: 8px 12px;
   border-radius: 5px;
   display: inline-flex;
@@ -322,7 +322,7 @@
 }
 
 .outliersLabel:hover {
-  background-color: var(--text-color-tertiary);
+  background-color: var(--background-color-2);
 }
 
 .buttonContainer {
@@ -333,9 +333,9 @@
 
 .buttonContainer button {
   cursor: pointer;
-  background-color: var(--background-color-2);
+  background-color: var(--background-color-3);
   border: none;
-  color: var(--text-color-on-darkbg);
+  color: var(--text-color-primary);
   padding: 10px 15px;
   border-radius: 5px;
   width: 100%;
@@ -347,7 +347,7 @@
 }
 
 .buttonContainer button:hover {
-  background-color: var(--text-color-secondary);
+  background-color: var(--background-color-2);
 }
 
 .nodeGroup {
@@ -388,21 +388,21 @@
   padding: 6px 8px;
   border-radius: 4px;
   border: none;
-  background-color: var(--text-color-secondary);
-  color: var(--text-color-on-darkbg);
+  background-color: var(--background-color-3);
+  color: var(--text-color-primary);
   font-size: 14px;
   outline: none;
 }
 
 .searchInput::placeholder {
-  color: var(--border-color);
+  color: var(--text-color-muted);
 }
 
 .toggleAllButton {
   min-width: 70px;
   flex-shrink: 0;
-  background-color: var(--text-color-secondary);
-  color: var(--text-color-on-darkbg);
+  background-color: var(--background-color-3);
+  color: var(--text-color-primary);
   border: none;
   border-radius: 4px;
   font-size: 0.8em;
@@ -415,5 +415,5 @@
 }
 
 .toggleAllButton:hover {
-  background-color: var(--text-color-tertiary);
+  background-color: var(--background-color-2);
 }

@@ -81,17 +81,17 @@
 }
 
 .mappingButton {
-  background-color: var(--text-color-tertiary);
-  color: var(--text-color-on-darkbg);
+  background-color: var(--background-color-3);
+  color: var(--text-color-primary);
   border: none;
   padding: 8px 15px;
   font-size: 0.9em;
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--box-shadow-sm);
 }
 
 .mappingButton:hover {
-  background-color: var(--text-color-secondary);
+  background-color: var(--background-color-2);
 }
