@@ -86,11 +86,14 @@ function FileExplorer({ category, isOpen = true, onClose, onOpenFile }) {
     });
   };
 
-  const load = async () => {
+  const load = async (isReload = false) => {
     setLoading(true);
     setBusy(false);
     setError(null);
-    setFilesLoaded(false);
+    // Only collapse on initial load, not on reload
+    if (!isReload) {
+      setFilesLoaded(false);
+    }
 
     setShowCleanPanel(false);
     setRenamingName(null);
@@ -102,6 +105,7 @@ function FileExplorer({ category, isOpen = true, onClose, onOpenFile }) {
       setFiles(list);
       clampSelectionToExisting(list);
 
+      // Slight delay for smooth transition
       setTimeout(() => setFilesLoaded(true), 40);
     } catch (e) {
       setError(e?.message || "Failed to load files");
@@ -305,7 +309,7 @@ function FileExplorer({ category, isOpen = true, onClose, onOpenFile }) {
       }
       setSelected(new Set());
       setShowDeleteConfirm(false);
-      await load();
+      await load(true);
     } catch (e) {
       setError(e?.message || "Delete failed");
     } finally {
@@ -366,8 +370,8 @@ function FileExplorer({ category, isOpen = true, onClose, onOpenFile }) {
       }
       
       setShowCleanPanel(false);
-      // Reload the file list to show updated files
-      await load();
+      // Reload the file list to show updated files (smooth transition)
+      await load(true);
     } catch (e) {
       setError(e?.message || "Clean failed");
       setProcessingFiles(new Set()); // Clear processing on error
