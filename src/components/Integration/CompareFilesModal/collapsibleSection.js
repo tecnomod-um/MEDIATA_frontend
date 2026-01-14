@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FiChevronDown } from "react-icons/fi";
-import styles from "./compareFilesModal.module.css";
+import CopareFilesModalStyles from "./compareFilesModal.module.css";
 
 const CollapsibleSection = ({ title, badge, isCollapsed, toggle, children }) => {
   const contentRef = useRef(null);
@@ -15,7 +15,7 @@ const CollapsibleSection = ({ title, badge, isCollapsed, toggle, children }) => 
   return (
     <>
       <h4 
-        className={styles.subheading} 
+        className={CopareFilesModalStyles.subheading} 
         onClick={toggle}
         role="button"
         aria-expanded={!isCollapsed}
@@ -29,11 +29,11 @@ const CollapsibleSection = ({ title, badge, isCollapsed, toggle, children }) => 
         }}
       >
         <span>{title}</span>
-        {badge !== undefined && <span className={styles.badge}>{badge}</span>}
-        <span className={styles.arrowContainer}>
+        {badge !== undefined && <span className={CopareFilesModalStyles.badge}>{badge}</span>}
+        <span className={CopareFilesModalStyles.arrowContainer}>
           <FiChevronDown
-            className={`${styles.arrowIcon} ${
-              isCollapsed ? styles.collapsed : styles.expanded
+            className={`${CopareFilesModalStyles.arrowIcon} ${
+              isCollapsed ? CopareFilesModalStyles.collapsed : CopareFilesModalStyles.expanded
             }`}
             aria-hidden="true"
           />
@@ -41,7 +41,7 @@ const CollapsibleSection = ({ title, badge, isCollapsed, toggle, children }) => 
       </h4>
       <div
         ref={contentRef}
-        className={styles.collapsibleContent}
+        className={CopareFilesModalStyles.collapsibleContent}
         style={{ height: height, opacity: isCollapsed ? 0 : 1 }}
         id={`section-${title.replace(/\s+/g, '-')}`}
         role="region"
@@ -51,6 +51,6 @@ const CollapsibleSection = ({ title, badge, isCollapsed, toggle, children }) => 
       </div>
     </>
   );
-};
+}
 
 export default CollapsibleSection;

@@ -1,14 +1,10 @@
 import React from "react";
-import Styles from "../fileExplorer.module.css";
+import FileExplorerStyles from "./fileExplorer.module.css";
 import { getFileExtension } from "./fileUtils";
 import DescriptionIcon from '@mui/icons-material/Description';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 
-/**
- * FileTypeIcon - Displays an icon representing the file type using Material-UI icons
- * @param {string} name - The filename to determine the icon type
- */
 function FileTypeIcon({ name }) {
   const ext = getFileExtension(name);
   const isXlsx = ext === "xlsx" || ext === "xls";
@@ -18,28 +14,28 @@ function FileTypeIcon({ name }) {
 
   let IconComponent = InsertDriveFileIcon;
   let label = "File";
-  let cls = Styles.iconFile;
+  let cls = FileExplorerStyles.iconFile;
 
   if (isXlsx) {
     IconComponent = TableChartIcon;
     label = "XLSX";
-    cls = Styles.iconXlsx;
+    cls = FileExplorerStyles.iconXlsx;
   } else if (isCsv) {
     IconComponent = DescriptionIcon;
     label = "CSV";
-    cls = Styles.iconCsv;
+    cls = FileExplorerStyles.iconCsv;
   } else if (isJson) {
     IconComponent = DescriptionIcon;
     label = "JSON";
-    cls = Styles.iconJson;
+    cls = FileExplorerStyles.iconJson;
   } else if (isTxt) {
     IconComponent = DescriptionIcon;
     label = "TXT";
-    cls = Styles.iconTxt;
+    cls = FileExplorerStyles.iconTxt;
   }
 
   return (
-    <span className={`${Styles.fileIcon} ${cls}`} aria-hidden="true" title={label}>
+    <span className={`${FileExplorerStyles.fileIcon} ${cls}`} aria-hidden="true" title={label}>
       <IconComponent style={{ fontSize: 22 }} />
     </span>
   );

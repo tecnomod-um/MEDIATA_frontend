@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import styles from "./schemaTray.module.css";
+import SchemaTrayStyles from "./schemaTray.module.css";
 import { saveSchemaToBackend, fetchSchemaFromBackend, removeSchemaFromBackend } from "../../../util/petitionHandler";
 
 const SchemaTray = ({ error, setError, nodesFetched, externalSchema = null, onRemoveExternalSchema = null, onSchemaChange, reduced = false }) => {
@@ -136,34 +136,34 @@ const SchemaTray = ({ error, setError, nodesFetched, externalSchema = null, onRe
   }
 
   return (
-    <div className={styles.schemaTrayWrapper}>
+    <div className={SchemaTrayStyles.schemaTrayWrapper}>
       <div
         ref={trayRef}
-        className={`${styles.tray} ${isOpen ? styles.open : styles.closed} ${isExpanded ? styles.expanded : ""
+        className={`${SchemaTrayStyles.tray} ${isOpen ? SchemaTrayStyles.open : SchemaTrayStyles.closed} ${isExpanded ? SchemaTrayStyles.expanded : ""
           }`}
       >
-        <div className={styles.trayHeader}>
+        <div className={SchemaTrayStyles.trayHeader}>
           <h3>JSON Schema</h3>
-          <div className={styles.headerButtons}>
+          <div className={SchemaTrayStyles.headerButtons}>
             {schema && (
-              <button className={styles.expandButton} onClick={toggleExpand}>
+              <button className={SchemaTrayStyles.expandButton} onClick={toggleExpand}>
                 {isExpanded ? "Contract" : "Expand"}
               </button>
             )}
-            <button className={styles.toggleButton} onClick={toggleTray}>
+            <button className={SchemaTrayStyles.toggleButton} onClick={toggleTray}>
               ✖
             </button>
           </div>
         </div>
-        <div className={styles.trayContent}>
+        <div className={SchemaTrayStyles.trayContent}>
           {schema ? (
-            <div className={styles.schemaDisplayContainer}>
-              <div className={styles.schemaScrollArea}>
-                <pre className={styles.schemaDisplay}>{formattedSchema}</pre>
+            <div className={SchemaTrayStyles.schemaDisplayContainer}>
+              <div className={SchemaTrayStyles.schemaScrollArea}>
+                <pre className={SchemaTrayStyles.schemaDisplay}>{formattedSchema}</pre>
               </div>
-              <div className={styles.schemaFooter}>
+              <div className={SchemaTrayStyles.schemaFooter}>
                 <button
-                  className={styles.removeButton}
+                  className={SchemaTrayStyles.removeButton}
                   onClick={handleRemoveSchema}
                 >
                   Remove Schema
@@ -171,11 +171,11 @@ const SchemaTray = ({ error, setError, nodesFetched, externalSchema = null, onRe
               </div>
             </div>
           ) : (
-            <div className={styles.noSchema}>
-              <p className={styles.noSchemaText}>No schema has been set</p>
-              <div className={styles.controlContainer}>
-                <div className={styles.uploadRow}>
-                  <label htmlFor="fileUpload" className={styles.uploadLabel}>
+            <div className={SchemaTrayStyles.noSchema}>
+              <p className={SchemaTrayStyles.noSchemaText}>No schema has been set</p>
+              <div className={SchemaTrayStyles.controlContainer}>
+                <div className={SchemaTrayStyles.uploadRow}>
+                  <label htmlFor="fileUpload" className={SchemaTrayStyles.uploadLabel}>
                     Upload JSON File
                   </label>
                   <input
@@ -183,23 +183,23 @@ const SchemaTray = ({ error, setError, nodesFetched, externalSchema = null, onRe
                     type="file"
                     accept=".json"
                     onChange={handleFileUpload}
-                    className={styles.uploadInput}
+                    className={SchemaTrayStyles.uploadInput}
                   />
                 </div>
-                <div className={styles.orRow}>
+                <div className={SchemaTrayStyles.orRow}>
                   <span>or</span>
                 </div>
-                <div className={styles.urlRow}>
+                <div className={SchemaTrayStyles.urlRow}>
                   <input
                     type="text"
                     placeholder="Enter schema URL"
                     value={urlInput}
                     onChange={(e) => setUrlInput(e.target.value)}
-                    className={styles.urlInput}
+                    className={SchemaTrayStyles.urlInput}
                   />
                   <button
                     onClick={handleFetchSchema}
-                    className={styles.fetchButton}
+                    className={SchemaTrayStyles.fetchButton}
                     disabled={loading}
                   >
                     {loading ? "Fetching..." : "Fetch"}
@@ -207,7 +207,7 @@ const SchemaTray = ({ error, setError, nodesFetched, externalSchema = null, onRe
                 </div>
               </div>
               {!schema && error && (
-                <div className={`${styles.errorMessage} ${styles.fadeIn}`}>
+                <div className={`${SchemaTrayStyles.errorMessage} ${SchemaTrayStyles.fadeIn}`}>
                   {error}
                 </div>
               )}
@@ -217,7 +217,7 @@ const SchemaTray = ({ error, setError, nodesFetched, externalSchema = null, onRe
       </div>
       {!isOpen && (
         <div
-          className={styles.closedTab}
+          className={SchemaTrayStyles.closedTab}
           style={reduced ? { width: "30px" } : {}}
           onClick={toggleTray}
         >

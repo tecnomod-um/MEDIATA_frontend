@@ -7,12 +7,12 @@ import CustomLink from "./customLink";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 import { FaFileAlt, FaSearch, FaSitemap, FaCodeBranch } from "react-icons/fa";
 import { ReactComponent as FhirIcon } from "../../../resources/images/fhir.svg";
-import DarkSwitch from "../../Common/DarkSwitch";
+import DarkSwitch from "../../Common/DarkSwitch/darkSwitch";
 
 function FileSearchIcon() {
   return (
     <div
-    aria-hidden="true"
+      aria-hidden="true"
       style={{
         position: "relative",
         display: "inline-block",
@@ -88,7 +88,6 @@ export default function Navbar() {
             fetchpriority="high"
           />
         </Link>
-        <DarkSwitch />
       </div>
       <ul className={NavbarStyles.navlinks}>
         <TransitionGroup component={null}>
@@ -148,6 +147,9 @@ export default function Navbar() {
                     </span>
                   </CustomLink>
                 </li>
+                <li className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem} ${NavbarStyles.darkerSwitchItem}`}>
+                  <DarkSwitch />
+                </li>
               </div>
             </CSSTransition>
           )}
@@ -165,7 +167,7 @@ export default function Navbar() {
         <label htmlFor="menuToggle" className={NavbarStyles.hamburger}>
           &#9776;
         </label>
-        <div 
+        <div
           id="main-menu"
           className={`${NavbarStyles.menu} ${menuOpen && animate ? NavbarStyles.animate : ""}`}
           role="menu"

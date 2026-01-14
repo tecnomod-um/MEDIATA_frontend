@@ -1,35 +1,34 @@
-
 .chartFlexContainer {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 1.5vh;
-    padding: 1.5vh;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 1.5vh;
+  padding: 1.5vh;
 }
 
 .tablesContainer {
-    display: flex;
-    justify-content: center;
-    gap: 1.5vh;
-    width: calc(100% - 1.5vh);
-    flex-wrap: nowrap;
+  display: flex;
+  justify-content: center;
+  gap: 1.5vh;
+  width: calc(100% - 1.5vh);
+  flex-wrap: nowrap;
 }
 
 .entrySearchWrapper {
-    min-width: 50%;
-    max-height: 60vh;
+  min-width: 50%;
+  max-height: 60vh;
 }
 
 @media (max-width: 768px) {
-    .tablesContainer {
-        flex-direction: column;
-        align-items: center;
-    }
+  .tablesContainer {
+    flex-direction: column;
+    align-items: center;
+  }
 
-    .entrySearchWrapper {
-        width: 100%;
-        min-width: unset;
-        max-height: unset;
-    }
+  .entrySearchWrapper {
+    width: 100%;
+    min-width: unset;
+    max-height: unset;
+  }
 }

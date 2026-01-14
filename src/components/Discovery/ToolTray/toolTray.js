@@ -10,25 +10,7 @@ import { recalculateFeature } from "../../../util/petitionHandler";
 import { updateNodeAxiosBaseURL } from "../../../util/nodeAxiosSetup";
 import { useNode } from "../../../context/nodeContext";
 
-function ToolTray({
-  data,
-  filteredData,
-  setFilteredData,
-  setData,
-  showOutliers,
-  setShowOutliers,
-  isToolTrayOpen,
-  toggleToolTray,
-  selectedEntry,
-  setSelectedEntry,
-  showIndividualView,
-  toggleView,
-  filters,
-  toggleFilters,
-  dataResults = [],
-  activeFileIndices = [],
-  toggleFileActive,
-}) {
+function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, setShowOutliers, isToolTrayOpen, toggleToolTray, selectedEntry, setSelectedEntry, showIndividualView, toggleView, filters, toggleFilters, dataResults = [], activeFileIndices = [], toggleFileActive }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -328,14 +310,8 @@ function ToolTray({
   };
 
   return (
-    <div
-      className={`${ToolTrayStyles.container} ${isToolTrayOpen ? ToolTrayStyles.open : ToolTrayStyles.closed
-        }`}
-    >
-      {/* Toggle arrow */}
-
-
-     <div
+    <div className={`${ToolTrayStyles.container} ${isToolTrayOpen ? ToolTrayStyles.open : ToolTrayStyles.closed}`}>
+      <div
         className={ToolTrayStyles.toggleButton}
         onClick={toggleToolTray}
         role="button"
@@ -345,7 +321,6 @@ function ToolTray({
         {isToolTrayOpen ? <MdChevronLeft /> : <MdChevronRight />}
       </div>
 
-      {/* Selected entry info */}
       <div className={ToolTrayStyles.topSection}>
         {selectedEntry && selectedEntry.featureName ? (
           <>
@@ -365,7 +340,7 @@ function ToolTray({
                   <span className={ToolTrayStyles.entryType}>
                     {(selectedEntry?.type || "").toUpperCase()}
                   </span>
-                  <MdSync className={ToolTrayStyles.iconSpin} aria-hidden="true"/>
+                  <MdSync className={ToolTrayStyles.iconSpin} aria-hidden="true" />
                 </>
               )}
             </button>

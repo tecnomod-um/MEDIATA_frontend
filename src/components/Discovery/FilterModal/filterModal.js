@@ -491,7 +491,6 @@ const FilterModal = ({
               aria-label="Select feature to filter"
               inputId="feature-select"
             />
-            />
             {hasAtLeastTwoFilters() && (
               <div className={FilterModalStyles.globalLogicalOperatorContainer}>
                 <label>Combine all filters with</label>

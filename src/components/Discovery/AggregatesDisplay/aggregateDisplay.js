@@ -1,13 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import AggregateDisplayStyles from "./aggregateDisplay.module.css";
 
-const AggregateDisplay = ({
-  covariances = {},
-  pearsonCorrelations = {},
-  spearmanCorrelations = {},
-  chiSquareTest = [],
-  omittedFeatures = [],
-}) => {
+const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearmanCorrelations = {}, chiSquareTest = [], omittedFeatures = [] }) => {
+
   const [activeTab, setActiveTab] = useState("covariance");
   const [topHeight, setTopHeight] = useState(300);
 
@@ -213,6 +208,6 @@ const AggregateDisplay = ({
       </div>
     </div>
   );
-};
+}
 
 export default AggregateDisplay;

@@ -1,14 +1,14 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import FileTypeIcon from "./FileTypeIcon";
-import Toolbar from "./Toolbar";
-import DeleteConfirmation from "./DeleteConfirmation";
-import CleanPanel from "./CleanPanel";
-import FileTable from "./FileTable";
+import FileTypeIcon from "./fileTypeIcon";
+import FileToolbar from "./fileToolbar";
+import DeleteConfirmation from "./deleteConfirmation";
+import CleanPanel from "./cleanPanel";
+import FileTable from "./fileTable";
 
 // Mock the CSS module
-jest.mock("../fileExplorer.module.css", () => new Proxy({}, { get: (_, k) => String(k) }), {
+jest.mock("./fileExplorer.module.css", () => new Proxy({}, { get: (_, k) => String(k) }), {
   virtual: true,
 });
 
@@ -96,7 +96,7 @@ describe("FileExplorer sub-components", () => {
     };
 
     it("renders all toolbar buttons", () => {
-      render(<Toolbar {...defaultProps} />);
+      render(<FileToolbar {...defaultProps} />);
       expect(screen.getByRole("button", { name: /^Open$/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /^Rename$/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /Data cleaning/i })).toBeInTheDocument();
@@ -106,28 +106,28 @@ describe("FileExplorer sub-components", () => {
     });
 
     it("disables Open button when no selection", () => {
-      render(<Toolbar {...defaultProps} hasSelection={false} />);
+      render(<FileToolbar {...defaultProps} hasSelection={false} />);
       expect(screen.getByRole("button", { name: /^Open$/i })).toBeDisabled();
     });
 
     it("disables Rename button when selection count is not 1", () => {
-      render(<Toolbar {...defaultProps} selectedCount={2} />);
+      render(<FileToolbar {...defaultProps} selectedCount={2} />);
       expect(screen.getByRole("button", { name: /^Rename$/i })).toBeDisabled();
     });
 
     it("shows multi-select mode pill when active", () => {
-      render(<Toolbar {...defaultProps} multiMode={true} />);
+      render(<FileToolbar {...defaultProps} multiMode={true} />);
       expect(screen.getByText("Multi")).toBeInTheDocument();
     });
 
     it("does not show close button when onClose is not provided", () => {
-      render(<Toolbar {...defaultProps} onClose={null} />);
+      render(<FileToolbar {...defaultProps} onClose={null} />);
       expect(screen.queryByRole("button", { name: /^Close$/i })).not.toBeInTheDocument();
     });
 
     it("calls load when refresh button is clicked", () => {
       const load = jest.fn();
-      render(<Toolbar {...defaultProps} load={load} />);
+      render(<FileToolbar {...defaultProps} load={load} />);
       fireEvent.click(screen.getByRole("button", { name: /Refresh/i }));
       expect(load).toHaveBeenCalled();
     });

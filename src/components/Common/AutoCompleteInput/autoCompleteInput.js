@@ -86,20 +86,6 @@ function AutocompleteInput({  value,  onChange,  placeholder,  className,  sugge
     };
   }, []);
   
-  
-  /*
-  useEffect(() => {
-    if (showSuggestions && inputRef.current) {
-      const rect = inputRef.current.getBoundingClientRect();
-      setListStyles({
-        position: "fixed",
-        top: rect.bottom,
-        left: rect.left,
-        width: rect.width,
-      });
-    }
-  }, [showSuggestions]);
-*/
   const handleSuggestionClick = (item) => {
     onChange(item);
     setShowSuggestions(false);

@@ -89,7 +89,6 @@ function MappingHierarchy({ mappingIndex, mappingKey, mapping, columnsData, onDe
     cancelEdit();
   };
 
-
   const renderValueBoxes = () => {
     if (!groups?.length) return null;
 

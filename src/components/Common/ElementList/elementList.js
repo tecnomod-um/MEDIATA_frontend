@@ -1,19 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import ElementListStyles from './elementList.module.css';
 
-const ElementList = ({
-  items = [],
-  activeIndex = null,
-  activeCategoryIndex = null,
-  onSelect,
-  builtClasses = {},
-  searchPlaceholder = 'Search',
-  showCategories = true,
+const ElementList = ({ items = [], activeIndex = null, activeCategoryIndex = null, onSelect, builtClasses = {}, searchPlaceholder = 'Search', showCategories = true, draggableItems = false, onDragStart, onDragEnd }) => {
 
-  draggableItems = false,
-  onDragStart,
-  onDragEnd
-}) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredItems = useMemo(() => items.map((item, index) => ({ item, index }))
@@ -52,9 +41,7 @@ const ElementList = ({
                   onClick={() => handleItemClick(index)}
                   aria-label={`${item.label}${itemBuilt ? ' (built)' : ''}`}
                   aria-current={isItemActive ? 'true' : undefined}
-                  // NEW: make draggable if enabled
                   draggable={draggableItems}
-                  aria-grabbed={draggableItems ? 'false' : undefined}
                   onDragStart={e => {
                     if (!draggableItems) return;
                     onDragStart?.();

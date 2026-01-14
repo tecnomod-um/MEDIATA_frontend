@@ -32,7 +32,6 @@ function ElementExporter({ dataResults = [], activeFileIndices = [], combinedDat
           (item) => item.featureName === feature.featureName
         );
       }
-      // fallback: if no filteredData prop exists, assume the feature is visible
       return true;
     };
   

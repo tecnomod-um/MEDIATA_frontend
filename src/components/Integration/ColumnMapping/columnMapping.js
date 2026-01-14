@@ -179,33 +179,28 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
     if (currentGroupIndex !== null) {
       setCustomValues((prev) =>
         prev.map((cv, i) =>
-          i === currentGroupIndex
-            ? {
-              ...cv,
-              mapping: [
-                ...cv.mapping,
-                {
-                  groupKey,
-                  groupColumn: group.column,
-                  fileName: group.fileName,
-                  nodeId: group.nodeId,
-                  value:
-                    typeof value === "object"
-                      ? {
-                        minValue: value.minValue,
-                        maxValue: value.maxValue,
-                        type: value.type,
-                      }
-                      : value,
-                },
-              ],
-            }
-            : cv
+          i === currentGroupIndex ? {
+            ...cv, mapping: [...cv.mapping,
+            {
+              groupKey,
+              groupColumn: group.column,
+              fileName: group.fileName,
+              nodeId: group.nodeId,
+              value:
+                typeof value === "object"
+                  ? {
+                    minValue: value.minValue,
+                    maxValue: value.maxValue,
+                    type: value.type,
+                  }
+                  : value,
+            },
+            ],
+          } : cv
         )
       );
     }
   };
-
 
   const handleRemoveMapping = (valueIndex, mapIndex) => {
     setCustomValues((prev) =>
@@ -320,7 +315,6 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
 
     return ranges;
   };
-
 
   const formatValue = (value, type) => {
     if (type === "date") {
@@ -597,7 +591,7 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
                         {availableValues.map((value, valueIndex) => (
                           <li key={valueIndex}>
                             <button
-                              onClick={() =>  handleSelectMapping(group, value)                              }
+                              onClick={() => handleSelectMapping(group, value)}
                               className={ColumnMappingStyles.mappingButton}
                             >
                               {value}

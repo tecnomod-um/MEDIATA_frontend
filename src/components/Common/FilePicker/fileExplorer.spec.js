@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent, act, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import FileExplorer from "./fileExplorer";
+import FileExplorer from "../FileExplorer/fileExplorer";
 
 jest.mock("./fileExplorer.module.css", () => new Proxy({}, { get: (_, k) => String(k) }), {
   virtual: true,
