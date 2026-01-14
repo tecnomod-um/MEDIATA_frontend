@@ -22,7 +22,7 @@ jest.mock("../../components/Common/FilePicker/filePicker", () => () => (
   <div data-testid="picker">FilePicker</div>
 ));
 
-jest.mock("../../components/Common/FilePicker/fileExplorer", () => {
+jest.mock("../../components/Common/FileExplorer/fileExplorer", () => {
   const React = require("react");
   return function MockFileExplorer(props) {
     mockFileExplorerProps = props;
@@ -124,7 +124,7 @@ test("opening a file (sync) shows statistics view and hides explorer", async () 
   await waitFor(() => expect(mockFileExplorerProps).toBeDefined());
 
   await act(async () => {
-    await mockFileExplorerProps.onOpenFile("file1.csv");
+    await mockFileExplorerProps.onFilesOpened([PROCESSED_ITEM]);
   });
 
   expect(await screen.findByTestId("tray")).toBeInTheDocument();
@@ -152,7 +152,7 @@ test("opening a file (async) polls and then shows statistics view", async () => 
   await waitFor(() => expect(mockFileExplorerProps).toBeDefined());
 
   await act(async () => {
-    await mockFileExplorerProps.onOpenFile("file1.csv");
+    await mockFileExplorerProps.onFilesOpened([PROCESSED_ITEM]);
   });
 
   expect(await screen.findByTestId("tray")).toBeInTheDocument();

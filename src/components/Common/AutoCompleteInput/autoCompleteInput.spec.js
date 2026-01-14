@@ -58,7 +58,7 @@ describe('AutocompleteInput', () => {
       />
     )
 
-    const input = screen.getByRole('textbox')
+    const input = screen.getByRole('combobox')
     expect(screen.queryByRole('list')).not.toBeInTheDocument()
     fireEvent.focus(input)
 
@@ -80,7 +80,7 @@ describe('AutocompleteInput', () => {
       />
     )
 
-    const input = screen.getByRole('textbox')
+    const input = screen.getByRole('combobox')
     fireEvent.focus(input)
     expect(screen.getByRole('list')).toBeVisible()
 
@@ -104,7 +104,7 @@ describe('AutocompleteInput', () => {
       />
     )
 
-    fireEvent.focus(screen.getByRole('textbox'))
-    expect(screen.getAllByRole('listitem')).toHaveLength(4)
+    fireEvent.focus(screen.getByRole('combobox'))
+    expect(screen.getAllByRole('option')).toHaveLength(4)
   })
 })

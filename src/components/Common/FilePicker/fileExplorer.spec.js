@@ -3,6 +3,14 @@ import { render, screen, fireEvent, act, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import FileExplorer from "../FileExplorer/fileExplorer";
 
+jest.mock("../../../util/nodeAxiosSetup", () => ({
+  __esModule: true,
+  updateNodeAxiosBaseURL: jest.fn(),
+  default: {
+    baseURL: "",
+  },
+}));
+
 jest.mock("./fileExplorer.module.css", () => new Proxy({}, { get: (_, k) => String(k) }), {
   virtual: true,
 });
@@ -122,7 +130,11 @@ describe("<FileExplorer />", () => {
     expect(openBtn).toBeEnabled();
 
     fireEvent.click(openBtn);
-    expect(onOpenFile).toHaveBeenCalledWith("a.csv");
+    
+    await flush();
+    
+    // onOpenFile callback receives the file mapping object for multi-node support
+    expect(onOpenFile).toHaveBeenCalledWith({ default: ["a.csv"] });
   });
 
   it("renames a selected file (Rename -> inline input -> Enter)", async () => {
