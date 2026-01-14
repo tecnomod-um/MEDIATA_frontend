@@ -1,3 +1,4 @@
+// Dot component for joining nodes together
 import React, { useRef, useState, useCallback } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Text } from "@react-three/drei";

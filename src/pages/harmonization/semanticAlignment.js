@@ -1,3 +1,4 @@
+// Semantic alignment page for RDF mapping and ontology connections
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";

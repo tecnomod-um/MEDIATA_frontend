@@ -1,3 +1,4 @@
+// Scroll sidebar navigation component with active section tracking
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import ScrollSidebarStyles from "./scrollSidebar.module.css";
 

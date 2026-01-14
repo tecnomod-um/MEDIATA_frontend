@@ -1,3 +1,4 @@
+// Panel component for viewing and editing FHIR cluster details
 import React, { useState } from 'react';
 import IconButton from '@mui/material/IconButton';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';

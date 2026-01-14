@@ -1,3 +1,4 @@
+// Component for rendering connections between nodes
 import React, { useMemo, useCallback, useRef } from "react";
 import { useTransition, a } from "@react-spring/three";
 import { useFrame } from "@react-three/fiber";

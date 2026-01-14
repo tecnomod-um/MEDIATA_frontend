@@ -1,3 +1,4 @@
+// Column mapping component for data integration with drag-and-drop
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import ColumnMappingStyles from "./columnMapping.module.css";
 import Switch from "react-switch";

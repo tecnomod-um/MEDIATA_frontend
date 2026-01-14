@@ -1,3 +1,4 @@
+// Upload file picker modal for selecting local files to upload
 import React, { useState, useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 import FilePickerStyles from './filePicker.module.css';

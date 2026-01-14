@@ -1,3 +1,4 @@
+// About page displaying team information and project details
 import React from "react";
 import AboutStyles from "./about.module.css";
 

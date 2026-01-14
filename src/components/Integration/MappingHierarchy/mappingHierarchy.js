@@ -1,3 +1,4 @@
+// Component displaying and editing column mapping hierarchies
 import React, { useState, useEffect, useRef } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";

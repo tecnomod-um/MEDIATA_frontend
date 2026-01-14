@@ -1,3 +1,4 @@
+// Range picker component with slider for numeric and date ranges
 import React, { useState, useEffect, useCallback } from "react";
 import RangePickerStyles from "./rangePicker.module.css";
 import Slider from "rc-slider";

@@ -1,3 +1,4 @@
+// Component displaying statistical visualizations for all feature types
 import React, { useState, useMemo, useCallback } from "react";
 import ContinuousChart from "../ContinuousChart/continuousChart";
 import CategoricalChart from "../CategoricalChart/categoricalChart";

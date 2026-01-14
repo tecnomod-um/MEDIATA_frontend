@@ -1,3 +1,4 @@
+// File picker modal for selecting files from multiple nodes
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { CSSTransition } from "react-transition-group";
 import LinearProgress from "@mui/material/LinearProgress";

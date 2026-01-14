@@ -1,3 +1,4 @@
+// Entry search component with filtering for data discovery
 import React, { useState, useMemo, useCallback } from "react";
 import EntryTable from "../EntryTable/entryTable";
 import EntrySearchStyles from "./entrySearch.module.css";

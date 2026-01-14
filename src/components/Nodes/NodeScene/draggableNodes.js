@@ -1,3 +1,4 @@
+// Component managing draggable node interactions in 3D scene
 import React, { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import { DragControls } from "three/examples/jsm/controls/DragControls";

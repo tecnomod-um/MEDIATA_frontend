@@ -1,3 +1,4 @@
+// Landing page component with platform features and introduction
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import MainStyles from "./main.module.css";

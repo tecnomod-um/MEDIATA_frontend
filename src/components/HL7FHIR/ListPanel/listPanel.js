@@ -1,3 +1,4 @@
+// List panel wrapper for FHIR elements using ElementList component
 import React from 'react';
 import ElementList from '../../Common/ElementList/elementList';
 

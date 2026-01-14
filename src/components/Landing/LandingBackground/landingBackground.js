@@ -1,3 +1,4 @@
+// Animated background component using Three.js canvas
 import React, { useEffect, useState, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import Scene from "./scene";

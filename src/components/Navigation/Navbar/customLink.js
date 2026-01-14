@@ -1,3 +1,4 @@
+// Custom link component with active state styling
 import React from "react";
 import NavbarStyles from "./navbar.module.css";
 import { Link, useMatch, useResolvedPath } from "react-router-dom";

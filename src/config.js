@@ -1,3 +1,4 @@
+// Application configuration settings
 const config = {
   // Development
   // backendUrl: "http://localhost:8092/taniwha",

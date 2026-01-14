@@ -1,3 +1,4 @@
+// Introduction section component for landing page
 import React from "react";
 import LandingIntroStyles from "./landingIntroduction.module.css";
 import LandingBackground from "../LandingBackground/landingBackground";

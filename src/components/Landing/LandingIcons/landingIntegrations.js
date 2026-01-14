@@ -1,3 +1,4 @@
+// Integration icon SVG component for landing page
 import React from "react";
 import styles from "./landingIcons.module.css";
 

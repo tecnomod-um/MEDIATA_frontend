@@ -1,3 +1,4 @@
+// Utility functions for converting JSON to CSV format
 export const jsonToCSV = (jsonArray) => {
   const csvRows = [];
 

@@ -1,3 +1,4 @@
+// Axios instance configuration for node-specific API requests
 import axios from "axios";
 
 const nodeAxiosInstance = axios.create({

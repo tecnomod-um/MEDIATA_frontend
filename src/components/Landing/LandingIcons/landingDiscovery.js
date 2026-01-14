@@ -1,3 +1,4 @@
+// Discovery icon SVG component for landing page
 import React from "react";
 import LandingDiscoveryStyles from "./landingIcons.module.css";
 

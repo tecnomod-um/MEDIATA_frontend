@@ -1,3 +1,4 @@
+// Icon component for displaying file type with visual indicator
 import React from "react";
 import FileExplorerStyles from "./fileExplorer.module.css";
 import { getFileExtension } from "./fileUtils";

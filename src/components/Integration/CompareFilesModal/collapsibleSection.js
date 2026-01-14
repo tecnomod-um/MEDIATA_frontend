@@ -1,3 +1,4 @@
+// Collapsible section component with animated expand/collapse
 import React, { useState, useRef, useEffect } from "react";
 import { FiChevronDown } from "react-icons/fi";
 import CopareFilesModalStyles from "./compareFilesModal.module.css";

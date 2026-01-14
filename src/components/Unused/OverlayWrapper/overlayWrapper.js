@@ -1,3 +1,4 @@
+// Modal overlay wrapper component with backdrop
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { CSSTransition } from "react-transition-group";

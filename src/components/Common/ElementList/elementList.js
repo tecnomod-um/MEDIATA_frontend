@@ -1,3 +1,4 @@
+// Searchable list component with categories and drag support
 import React, { useState, useMemo } from 'react';
 import ElementListStyles from './elementList.module.css';
 

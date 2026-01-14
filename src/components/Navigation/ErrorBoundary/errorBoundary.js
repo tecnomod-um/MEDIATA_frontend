@@ -1,3 +1,4 @@
+// Error boundary component for catching and handling React errors
 import React, { Component } from "react";
 import { logError } from "../../../util/petitionHandler";
 

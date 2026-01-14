@@ -1,3 +1,4 @@
+// Dark mode toggle switch component
 import React, { useState, useEffect } from "react";
 import Switch from "react-switch";
 import styles from "./darkSwitch.module.css";

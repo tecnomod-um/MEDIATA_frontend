@@ -1,3 +1,4 @@
+// Utility functions for file formatting and metadata handling
 export const getFileExtension = (fileName) => {
   const m = String(fileName || "").toLowerCase().match(/\.([a-z0-9]+)$/);
   return m ? m[1] : "";

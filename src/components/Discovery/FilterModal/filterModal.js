@@ -1,3 +1,4 @@
+// Filter modal for creating data filters across features
 import React, { useState, useEffect, useRef } from "react";
 import OverlayWrapper from "../../Unused/OverlayWrapper/overlayWrapper";
 import DatePicker from "react-datepicker";

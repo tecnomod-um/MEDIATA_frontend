@@ -1,3 +1,4 @@
+// Detail panel for editing semantic alignment element properties
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import ElementDetailPanelStyles from "./elementDetailPanel.module.css";
 import { fetchClasses, fetchClassFields, fetchSuggestions } from "../../../util/petitionHandler";

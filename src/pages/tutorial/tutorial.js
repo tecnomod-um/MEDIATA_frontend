@@ -1,3 +1,4 @@
+// Tutorial page with step-by-step platform guide
 import React, { useMemo, useLayoutEffect } from "react";
 import ScrollSidebar from "../../components/Common/ScrollSidebar/scrollSidebar.js";
 import TutorialStyles from "./tutorial.module.css";

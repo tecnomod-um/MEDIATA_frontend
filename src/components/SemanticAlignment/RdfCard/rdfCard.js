@@ -1,3 +1,4 @@
+// Draggable RDF card component for semantic alignment visualization
 import React from "react";
 import Close from "@mui/icons-material/Close";
 import RdfCardStyles from "./rdf.module.css";

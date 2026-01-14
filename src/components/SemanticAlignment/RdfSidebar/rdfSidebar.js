@@ -1,3 +1,4 @@
+// Sidebar component for RDF semantic alignment elements
 import React from 'react';
 import ElementList from '../../Common/ElementList/elementList';
 

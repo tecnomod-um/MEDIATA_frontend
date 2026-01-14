@@ -1,3 +1,4 @@
+// Projects page for selecting research projects
 import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import ProjectsStyles from "./projects.module.css";

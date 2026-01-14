@@ -1,3 +1,4 @@
+// Axios instance configuration for backend API requests
 import axios from "axios";
 import config from "../config";
 

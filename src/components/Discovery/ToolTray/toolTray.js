@@ -1,3 +1,4 @@
+// Tool tray sidebar with data export and filtering controls
 import React, { useState } from "react";
 import { MdChevronRight, MdChevronLeft, MdSync } from "react-icons/md";
 import Switch from "react-switch";

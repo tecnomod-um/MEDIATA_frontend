@@ -1,3 +1,4 @@
+// Node selection page with 3D visualization and management
 import React, { useState, useEffect } from "react";
 import { getNodeList, getNodeInfo, getNodeMetadata, nodeAuth } from "../../util/petitionHandler";
 import NodeScene from "../../components/Nodes/NodeScene/nodeScene";

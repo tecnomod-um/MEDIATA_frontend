@@ -1,3 +1,4 @@
+// Component for exporting integrated data elements to backend
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";

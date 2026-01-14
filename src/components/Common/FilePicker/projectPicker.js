@@ -1,3 +1,4 @@
+// Project picker modal for selecting research projects
 import React, { useEffect, useRef, useState } from "react";
 import { CSSTransition } from "react-transition-group";
 import ProjectPickerStyles from "./filePicker.module.css";

@@ -1,3 +1,4 @@
+// Date histogram line chart component using Chart.js
 import React, { useRef, useEffect, useMemo } from "react";
 import { Line } from "react-chartjs-2";
 import "chartjs-adapter-moment";

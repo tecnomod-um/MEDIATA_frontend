@@ -1,3 +1,4 @@
+// Application entry point and routing configuration
 import React, { useEffect, lazy, Suspense } from "react";
 import "./index.css";
 import ReactDOM from "react-dom/client";

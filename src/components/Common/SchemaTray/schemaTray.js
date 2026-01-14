@@ -1,3 +1,4 @@
+// Schema tray component for managing external RDF schemas
 import React, { useState, useRef, useEffect } from "react";
 import SchemaTrayStyles from "./schemaTray.module.css";
 import { saveSchemaToBackend, fetchSchemaFromBackend, removeSchemaFromBackend } from "../../../util/petitionHandler";

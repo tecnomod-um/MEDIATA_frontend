@@ -1,3 +1,4 @@
+// Card component for displaying dataset metadata information
 import React from "react";
 import MetadataDisplayStyles from "./metadataDisplay.module.css";
 

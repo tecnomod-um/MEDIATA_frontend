@@ -1,3 +1,4 @@
+// Modal displaying joined nodes with expandable metadata
 import React, { useState, useRef, useEffect } from "react";
 import OverlayWrapper from "../../Unused/OverlayWrapper/overlayWrapper";
 import { IoMdClose } from "react-icons/io";

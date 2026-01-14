@@ -1,3 +1,4 @@
+// Progress bar component (unused)
 import React, { useState, useEffect } from 'react';
 import styles from './progressBar.module.css';
 

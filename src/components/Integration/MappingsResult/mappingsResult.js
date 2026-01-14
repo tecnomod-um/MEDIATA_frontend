@@ -1,3 +1,4 @@
+// Component displaying filtered and searchable mapping results
 import React, { useMemo, useState } from "react";
 import MappingsResultStyles from "./mappingsResult.module.css";
 import MappingHierarchy from "../MappingHierarchy/mappingHierarchy";

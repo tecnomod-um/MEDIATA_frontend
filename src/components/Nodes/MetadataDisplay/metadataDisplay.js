@@ -1,3 +1,4 @@
+// Component for rendering nested metadata display
 import React from "react";
 import OverlayWrapper from "../../Unused/OverlayWrapper/overlayWrapper";
 import MetadataDisplayStyles from "./metadataDisplay.module.css";

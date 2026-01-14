@@ -1,3 +1,4 @@
+// Column search and filter component for integration
 import React, { useMemo, useState, useCallback } from "react";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";

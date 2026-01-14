@@ -1,3 +1,4 @@
+// List panel component displaying FHIR element clusters
 import React from 'react';
 import { TransitionGroup, CSSTransition } from 'react-transition-group';
 import ClusterListPanelStyles from './clusterListPanel.module.css';

@@ -1,3 +1,4 @@
+// Tooltip popup component with auto-positioning and arrow pointer
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import { CSSTransition } from "react-transition-group";

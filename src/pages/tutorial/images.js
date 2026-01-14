@@ -1,3 +1,4 @@
+// Tutorial image imports for slide components
 const importAll = (r) => r.keys().sort((a, b) =>
   a.localeCompare(b, undefined, { numeric: true })
 ).map(r);

@@ -1,3 +1,4 @@
+// File explorer component for browsing and managing data files across nodes
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { CSSTransition } from "react-transition-group";
 import FileExplorerStyles from "./fileExplorer.module.css";

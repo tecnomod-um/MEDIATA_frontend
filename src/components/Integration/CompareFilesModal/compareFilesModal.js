@@ -1,3 +1,4 @@
+// Modal for comparing statistics across multiple files
 import React, { useState, useEffect } from "react";
 import OverlayWrapper from "../../Unused/OverlayWrapper/overlayWrapper";
 import CollapsibleSection from "./collapsibleSection";

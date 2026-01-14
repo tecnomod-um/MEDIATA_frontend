@@ -1,3 +1,4 @@
+// Integration page for data mapping and harmonization
 import React, { useState, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";

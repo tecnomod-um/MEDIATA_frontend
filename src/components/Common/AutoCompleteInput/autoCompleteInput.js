@@ -1,3 +1,4 @@
+// Autocomplete input component with keyboard navigation and suggestions
 import React, { useState, useRef, useEffect } from "react";
 import ReactDOM from "react-dom";
 import AutoCompleteInputStyles from "./autoCompleteInput.module.css";

@@ -1,3 +1,4 @@
+// Data cleaning panel modal for file preprocessing options
 import React from "react";
 import Switch from "react-switch";
 import IconButton from "@mui/material/IconButton";

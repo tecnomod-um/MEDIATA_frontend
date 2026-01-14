@@ -1,3 +1,4 @@
+// Categorical data bar chart component using Chart.js
 import React, { useRef, useEffect, useMemo } from "react";
 import { Bar } from "react-chartjs-2";
 import chroma from "chroma-js";

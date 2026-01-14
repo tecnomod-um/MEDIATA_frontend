@@ -1,3 +1,4 @@
+// Discovery page for data profiling and statistics visualization
 import React, { useState, useCallback, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { CSSTransition, TransitionGroup } from "react-transition-group";

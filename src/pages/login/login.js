@@ -1,3 +1,4 @@
+// Login page for user authentication with Kerberos
 import React, { useState , useRef} from "react";
 import { useNavigate } from "react-router-dom";
 import LoginStyles from "./login.module.css";

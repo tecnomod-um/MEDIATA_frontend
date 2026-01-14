@@ -1,3 +1,4 @@
+// Three.js canvas scene for displaying interactive nodes
 import React, { useState, useCallback } from "react";
 import { Canvas } from "@react-three/fiber";
 import DraggableNodes from "./draggableNodes";

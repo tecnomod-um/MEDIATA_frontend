@@ -1,3 +1,4 @@
+// Modal component for previewing charts in full screen
 import React from "react";
 import OverlayWrapper from "../../Unused/OverlayWrapper/overlayWrapper";
 import ChartPreviewStyles from "./chartPreview.module.css";

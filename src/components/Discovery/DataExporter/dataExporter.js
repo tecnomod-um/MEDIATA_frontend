@@ -1,3 +1,4 @@
+// Component for exporting discovery statistics data to CSV
 import React from "react";
 import { jsonToCSV } from "../../../util/parser";
 

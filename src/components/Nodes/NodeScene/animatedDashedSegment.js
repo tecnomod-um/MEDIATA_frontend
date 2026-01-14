@@ -1,3 +1,4 @@
+// Animated dashed line segment component for node connections
 import React, { useRef, useMemo, useLayoutEffect, useEffect } from "react";
 import { animated } from "@react-spring/three";
 import { Line } from "@react-three/drei";

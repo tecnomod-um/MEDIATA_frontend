@@ -1,3 +1,4 @@
+// Table component for displaying data entries with virtual scrolling
 import React, { useState, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import EntryTableStyles from "./entryTable.module.css";
 

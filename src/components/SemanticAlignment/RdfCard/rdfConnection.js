@@ -1,3 +1,4 @@
+// Connection line component between RDF cards
 import React from "react";
 import RdfConnectionStyles from "./rdf.module.css";
 

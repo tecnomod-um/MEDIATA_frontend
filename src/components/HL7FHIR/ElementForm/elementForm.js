@@ -1,3 +1,4 @@
+// Form component for editing FHIR element properties
 import React from 'react';
 import styles from './elementForm.module.css';
 

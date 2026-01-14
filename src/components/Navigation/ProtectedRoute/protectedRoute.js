@@ -1,3 +1,4 @@
+// Protected route wrapper requiring authentication and node selection
 import React from "react";
 import { useAuth } from "../../../context/authContext";
 import { useNode } from "../../../context/nodeContext";

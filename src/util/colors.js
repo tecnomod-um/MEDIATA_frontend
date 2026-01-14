@@ -1,3 +1,4 @@
+// Utility functions for generating distinct color palettes
 import distinctColors from "distinct-colors";
 
 export function generateDistinctColors(count) {

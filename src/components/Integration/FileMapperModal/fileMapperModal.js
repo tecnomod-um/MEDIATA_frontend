@@ -1,3 +1,4 @@
+// Modal for mapping and cleaning files before integration
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';

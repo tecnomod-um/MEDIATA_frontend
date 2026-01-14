@@ -1,3 +1,4 @@
+// Table view component for displaying files with selection and renaming
 import React, { useEffect } from "react";
 import FileTypeIcon from "./fileTypeIcon";
 import { FiChevronDown } from "react-icons/fi";

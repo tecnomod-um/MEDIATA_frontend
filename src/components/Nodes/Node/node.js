@@ -1,3 +1,4 @@
+// Three.js node component for interactive 3D node visualization
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { useFrame, useLoader } from "@react-three/fiber";
 import { Text } from "@react-three/drei";
