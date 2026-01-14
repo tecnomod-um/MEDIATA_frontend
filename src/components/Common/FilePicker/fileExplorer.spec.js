@@ -115,7 +115,8 @@ describe("<FileExplorer />", () => {
       },
     ]);
 
-    render(<FileExplorer category="DATASETS" isOpen={true} onOpenFile={onOpenFile} />);
+    const onFilesSelected = jest.fn();
+    render(<FileExplorer category="DATASETS" isOpen={true} onFilesSelected={onFilesSelected} />);
 
     await flush();
     act(() => {
@@ -133,8 +134,8 @@ describe("<FileExplorer />", () => {
     
     await flush();
     
-    // onOpenFile callback receives the file mapping object for multi-node support
-    expect(onOpenFile).toHaveBeenCalledWith({ default: ["a.csv"] });
+    // onFilesSelected callback receives the file mapping object for multi-node support
+    expect(onFilesSelected).toHaveBeenCalledWith({ default: ["a.csv"] });
   });
 
   it("renames a selected file (Rename -> inline input -> Enter)", async () => {

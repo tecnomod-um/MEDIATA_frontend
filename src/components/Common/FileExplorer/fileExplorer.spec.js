@@ -54,26 +54,30 @@ describe("FileExplorer sub-components", () => {
   describe("<FileTypeIcon />", () => {
     it("renders CSV icon for .csv files", () => {
       const { container } = render(<FileTypeIcon name="test.csv" />);
-      expect(container.querySelector("svg")).toBeInTheDocument();
-      expect(container.textContent).toContain("CSV");
+      const svg = container.querySelector("svg");
+      expect(svg).toBeInTheDocument();
+      expect(svg.closest('span')).toHaveAttribute('title', 'CSV');
     });
 
     it("renders XLSX icon for .xlsx files", () => {
       const { container } = render(<FileTypeIcon name="test.xlsx" />);
-      expect(container.querySelector("svg")).toBeInTheDocument();
-      expect(container.textContent).toContain("XLSX");
+      const svg = container.querySelector("svg");
+      expect(svg).toBeInTheDocument();
+      expect(svg.closest('span')).toHaveAttribute('title', 'XLSX');
     });
 
     it("renders XLSX icon for .xls files", () => {
       const { container } = render(<FileTypeIcon name="test.xls" />);
-      expect(container.querySelector("svg")).toBeInTheDocument();
-      expect(container.textContent).toContain("XLSX");
+      const svg = container.querySelector("svg");
+      expect(svg).toBeInTheDocument();
+      expect(svg.closest('span')).toHaveAttribute('title', 'XLSX');
     });
 
     it("handles files without extensions", () => {
       const { container } = render(<FileTypeIcon name="noextension" />);
-      expect(container.querySelector("svg")).toBeInTheDocument();
-      expect(container.textContent).toContain("CSV"); // defaults to CSV
+      const svg = container.querySelector("svg");
+      expect(svg).toBeInTheDocument();
+      expect(svg.closest('span')).toHaveAttribute('title', 'File'); // defaults to generic file
     });
   });
 
@@ -329,7 +333,7 @@ describe("FileExplorer sub-components", () => {
     });
 
     it("shows rename input when file is being renamed", () => {
-      render(<FileTable {...defaultProps} renamingName="file1.csv" renameDraft="newname.csv" />);
+      render(<FileTable {...defaultProps} renamingKey="default::file1.csv" renameDraft="newname.csv" />);
       expect(screen.getByDisplayValue("newname.csv")).toBeInTheDocument();
     });
 
@@ -338,7 +342,7 @@ describe("FileExplorer sub-components", () => {
       render(<FileTable {...defaultProps} onRowDoubleClick={onRowDoubleClick} />);
       const rows = screen.getAllByRole("button");
       fireEvent.doubleClick(rows[0]);
-      expect(onRowDoubleClick).toHaveBeenCalledWith("file1.csv");
+      expect(onRowDoubleClick).toHaveBeenCalledWith("default::file1.csv");
     });
 
     it("shows new file marker for new files", () => {
@@ -349,7 +353,7 @@ describe("FileExplorer sub-components", () => {
 
     it("calls commitRename when Enter is pressed in rename input", () => {
       const commitRename = jest.fn();
-      render(<FileTable {...defaultProps} renamingName="file1.csv" commitRename={commitRename} />);
+      render(<FileTable {...defaultProps} renamingKey="default::file1.csv" renameDraft="" commitRename={commitRename} />);
       const input = screen.getByDisplayValue("");
       fireEvent.keyDown(input, { key: "Enter" });
       expect(commitRename).toHaveBeenCalled();
@@ -357,7 +361,7 @@ describe("FileExplorer sub-components", () => {
 
     it("calls cancelRename when Escape is pressed in rename input", () => {
       const cancelRename = jest.fn();
-      render(<FileTable {...defaultProps} renamingName="file1.csv" cancelRename={cancelRename} />);
+      render(<FileTable {...defaultProps} renamingKey="default::file1.csv" renameDraft="" cancelRename={cancelRename} />);
       const input = screen.getByDisplayValue("");
       fireEvent.keyDown(input, { key: "Escape" });
       expect(cancelRename).toHaveBeenCalled();
