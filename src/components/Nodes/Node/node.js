@@ -5,6 +5,14 @@ import { DoubleSide, TextureLoader, Color, Shape } from "three";
 import { useSpring, useTransition, a, to } from "@react-spring/three";
 import nodeIcon from "../../../resources/images/node_image.png";
 
+// Helper to get node color with CSS variable fallback
+const getNodeColor = (nodeColor) => {
+  if (nodeColor) return nodeColor;
+  if (typeof document === 'undefined') return '#555555';
+  const cssVar = getComputedStyle(document.documentElement).getPropertyValue('--text-color-muted').trim();
+  return cssVar || '#555555';
+};
+
 // Three.js 'sphere-like' node in the scene
 const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descriptionSize, fontSize }) => {
   const ref = useRef();
@@ -41,14 +49,7 @@ const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descr
   });
   const interpolatedOpacity = fadeInProps.opacity.to((o) => o);
 
-  const getNodeColor = () => {
-    if (node.color) return node.color;
-    if (typeof document === 'undefined') return '#555555';
-    const cssVar = getComputedStyle(document.documentElement).getPropertyValue('--text-color-muted').trim();
-    return cssVar || '#555555';
-  };
-
-  const colorSafe = getNodeColor();
+  const colorSafe = getNodeColor(node.color);
   const backgroundColor = new Color(colorSafe).multiplyScalar(0.8).getStyle();
   const margin = 0.1;
 

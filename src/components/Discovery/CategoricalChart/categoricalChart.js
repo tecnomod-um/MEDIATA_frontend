@@ -10,11 +10,11 @@ ChartJS.register(...registerables);
 const TOP_N_OVERVIEW = 8;
 const TOP_N_FULL = 80;
 
-// Helper to get CSS variable value
-const getCSSVariable = (varName) => {
-  if (typeof document === 'undefined') return '';
+// Helper to get CSS variable value with fallback
+const getCSSVariable = (varName, fallback = '') => {
+  if (typeof document === 'undefined') return fallback;
   const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-  return value || '';
+  return value || fallback;
 };
 
 // Display for the categorical features' histogram
@@ -48,13 +48,13 @@ const CategoricalChart = React.memo(
       if (otherSum > 0) {
         labels.push("Other");
         values.push(otherSum);
-        colorsLocal.push(getCSSVariable('--text-color-muted') || '#999999');
+        colorsLocal.push(getCSSVariable('--text-color-muted', '#999999'));
       }
 
       if (feature.missingValuesCount > 0) {
         labels.push("No data");
         values.push(feature.missingValuesCount);
-        colorsLocal.push(getCSSVariable('--background-color-3') || '#D3D3D3');
+        colorsLocal.push(getCSSVariable('--background-color-3', '#D3D3D3'));
       }
 
       return {
