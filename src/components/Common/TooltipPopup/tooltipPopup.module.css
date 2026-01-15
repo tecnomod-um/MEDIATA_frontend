@@ -6,7 +6,7 @@
   background-color: rgba(50, 50, 50, 0.9);
   backdrop-filter: blur(3px);
   color: var(--text-color-on-darkbg);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   text-align: center;
   transform: none;
   white-space: pre-line;
@@ -33,6 +33,6 @@
 
 @media (max-width: 600px) {
   .popup {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
   }
 }

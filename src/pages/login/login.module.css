@@ -19,7 +19,7 @@
 }
 
 .title {
-  font-size: 24px;
+  font-size: var(--font-size-xl);
   margin-bottom: 20px;
   color: var(--heading-color);
 }
@@ -30,7 +30,7 @@
   margin-bottom: 15px;
   border: 1px solid var(--border-color);
   border-radius: 5px;
-  font-size: 16px;
+  font-size: var(--font-size-base);
   background-color: var(--background-color-card);
   color: var(--text-color-primary);
 }
@@ -42,7 +42,7 @@
   border-radius: 5px;
   background-color: var(--button-color);
   color: var(--text-color-on-darkbg);
-  font-size: 16px;
+  font-size: var(--font-size-base);
   cursor: pointer;
   transition: background-color 0.3s ease;
 }

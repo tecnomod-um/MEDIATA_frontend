@@ -20,7 +20,7 @@
 }
 
 .title {
-  font-size: 1.25rem;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--text-primary-color);
   margin: 0;
@@ -35,7 +35,7 @@
   border: none;
   padding: 6px 10px;
   border-radius: 6px;
-  font-size: 0.9rem;
+  font-size: var(--font-size-base);
   cursor: pointer;
   transition: background 0.2s ease, transform 0.1s ease;
 }
@@ -121,13 +121,13 @@
 
 .count {
   background: var(--accent-color);
-  font-size: 0.85rem;
+  font-size: var(--font-size-sm);
   padding: 2px 8px;
   border-radius: 12px;
 }
 
 .instructions {
-  font-size: 0.85rem;
+  font-size: var(--font-size-sm);
   color: var(--text-secondary-color);
   margin-top: 12px;
   text-align: center;

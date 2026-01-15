@@ -14,7 +14,7 @@
 
 .button {
     padding: 10px 20px;
-    font-size: 1rem;
+    font-size: var(--font-size-base);
     color: var(--text-color-on-darkbg);
     border: none;
     border-radius: 5px;

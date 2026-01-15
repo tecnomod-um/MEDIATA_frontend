@@ -9,7 +9,7 @@
     align-items: center;
     justify-content: center;
     color: var(--text-color-on-darkbg);
-    font-size: 1.5rem;
+    font-size: var(--font-size-xl);
     z-index: 100;
     visibility: visible;
     opacity: 1;

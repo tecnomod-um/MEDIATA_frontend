@@ -17,7 +17,7 @@
 }
 
 .rangeText {
-  font-size: 0.8em;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   font-style: italic;
   color: var(--text-color-primary);
@@ -28,7 +28,7 @@
 }
 
 .rangeLabel {
-  font-size: 0.75em;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   color: var(--text-color-secondary);
 }
@@ -40,7 +40,7 @@
 }
 
 .rangeInput {
-  font-size: 0.75em;
+  font-size: var(--font-size-xs);
   padding: 1px 4px;
   border-radius: 3px;
   border: 1px solid #d0d4d9;
@@ -58,7 +58,7 @@
 }
 
 .rangeSeparator {
-  font-size: 0.75em;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   color: #444;
 }
@@ -83,7 +83,7 @@
   color: var(--text-color-primary);
   border: none;
   padding: 8px 15px;
-  font-size: 0.9em;
+  font-size: var(--font-size-base);
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease;

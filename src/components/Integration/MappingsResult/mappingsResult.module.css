@@ -39,7 +39,7 @@
   left: 0;
   background-color: rgba(0, 0, 0, 0.2);
   padding: 5px 10px;
-  font-size: 0.9em;
+  font-size: var(--font-size-base);
   cursor: pointer;
   z-index: 2;
   transition: background-color 0.3s ease-in-out;
@@ -69,7 +69,7 @@
   background-image: var(--button-gradient);
   border: none;
   color: var(--text-color-on-darkbg);
-  font-size: 16px;
+  font-size: var(--font-size-base);
   font-weight: 600;
   padding: 0 16px;
   display: flex;
@@ -108,7 +108,7 @@
   min-height: 54px;
   width: 100%;
   user-select: none;
-  font-size: 16px;
+  font-size: var(--font-size-base);
   font-weight: 600;
   color: var(--text-color-on-darkbg);
   cursor: pointer;
@@ -213,7 +213,7 @@
   border: 1px solid var(--border-color);
   background-color: var(--background-color-card);
   color: var(--text-color-primary);
-  font-size: 16px;
+  font-size: var(--font-size-base);
 
   overflow: hidden;
   white-space: nowrap;

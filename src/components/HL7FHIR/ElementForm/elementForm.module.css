@@ -19,7 +19,7 @@
 
 .detailTitle {
   margin: 0;
-  font-size: 1.4em;
+  font-size: var(--font-size-xl);
   color: var(--text-color-on-darkbg);
   text-align: center;
   width: calc(100% - 140px);
@@ -75,7 +75,7 @@
   border: 1px solid var(--border-color);
   border-bottom: none;
   user-select: none;
-  font-size: 0.95em;
+  font-size: var(--font-size-base);
 }
 
 .formField input,
@@ -83,7 +83,7 @@
   padding: 10px;
   border: 1px solid var(--border-color);
   border-radius: 0 0 8px 8px;
-  font-size: 0.95em;
+  font-size: var(--font-size-base);
   resize: none;
 }
 
@@ -96,7 +96,7 @@
   padding: 10px;
   border: 1px solid var(--border-color);
   border-radius: 0 0 8px 8px;
-  font-size: 0.95em;
+  font-size: var(--font-size-base);
   background-color: var(--background-color-tertiary);
   appearance: none;
 }

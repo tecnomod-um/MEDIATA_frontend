@@ -48,7 +48,7 @@
   border-radius: 50%;
   color: var(--text-color-on-darkbg);
   cursor: pointer;
-  font-size: 18px;
+  font-size: var(--font-size-md);
   font-weight: 500;
   padding: 4px;
   position: absolute;
@@ -105,7 +105,7 @@
   border-radius: 0 8px 8px 0;
   border: none;
   color: var(--text-color-on-darkbg);
-  font-size: 16px;
+  font-size: var(--font-size-base);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease-in-out;
@@ -175,7 +175,7 @@
   background-color: var(--text-color-on-darkbg);
   padding: 10px 15px;
   border-radius: 6px;
-  font-size: 0.9em;
+  font-size: var(--font-size-base);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -197,7 +197,7 @@
 }
 
 .fileIcon {
-  font-size: 1.2em;
+  font-size: var(--font-size-md);
   color: var(--text-color-secondary);
   transition: color 0.3s;
 }
@@ -219,7 +219,7 @@
   word-wrap: break-word;
   overflow-wrap: break-word;
   text-align: center;
-  font-size: 1em;
+  font-size: var(--font-size-base);
   max-width: 100%;
   overflow: hidden;
   quotes: "“""”";
@@ -236,7 +236,7 @@
 
 .nodeSubtitle {
   display: block;
-  font-size: 0.85em;
+  font-size: var(--font-size-sm);
   color: var(--text-color-tertiary);
   margin-top: 2px;
 }
@@ -253,7 +253,7 @@
 
   border: none;
   color: var(--text-color-on-darkbg);
-  font-size: 16px;
+  font-size: var(--font-size-base);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease-in-out;
@@ -340,7 +340,7 @@
 .popoverCloseBtn {
   background: none;
   border: none;
-  font-size: 16px;
+  font-size: var(--font-size-base);
   position: absolute;
   top: 6px;
   right: 6px;
@@ -358,7 +358,7 @@
   border-radius: 4px;
   color: var(--text-color-on-darkbg);
   padding: 6px 12px;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   cursor: pointer;
   font-weight: 600;
 }
@@ -385,7 +385,7 @@
   border: 1px solid var(--border-color);
   border-radius: 4px;
   padding: 4px 8px;
-  font-size: 0.80rem;
+  font-size: var(--font-size-xs);
   color: var(--text-color-primary);
   transition: border-color 0.2s;
 }
@@ -399,7 +399,7 @@
   border-radius: 4px;
   color: var(--text-color-on-darkbg);
   padding: 10px;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   width: 100%;
   box-sizing: border-box;
@@ -439,7 +439,7 @@
 
   .cleanIcon {
     display: inline-block;
-    font-size: 1.2em;
+    font-size: var(--font-size-md);
     vertical-align: middle;
   }
 }

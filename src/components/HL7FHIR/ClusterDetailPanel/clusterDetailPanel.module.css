@@ -24,7 +24,7 @@
 
 .title {
   margin: 0;
-  font-size: 1.4rem;
+  font-size: var(--font-size-xl);
   font-weight: 500;
 }
 
@@ -64,14 +64,14 @@
 .label {
   font-weight: 600;
   color: var(--text-primary-color);
-  font-size: 1rem;
+  font-size: var(--font-size-base);
 }
 
 .remove {
   background: none;
   border: none;
   color: #e74c3c;
-  font-size: 0.9rem;
+  font-size: var(--font-size-base);
   line-height: 1;
   padding: 0;
   cursor: pointer;
@@ -84,7 +84,7 @@
 
 .desc {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: var(--font-size-base);
   line-height: 1.4;
   color: var(--text-secondary-color);
 }

@@ -82,7 +82,7 @@
   color: var(--text-color-on-darkbg);
   padding: 8px 16px;
   border-radius: 4px;
-  font-size: 0.9em;
+  font-size: var(--font-size-base);
   z-index: 2;
   backdrop-filter: blur(2px);
 }
@@ -109,7 +109,7 @@
   color: var(--text-color-on-darkbg);
   padding: 12px 20px;
   border-radius: 8px;
-  font-size: 0.9em;
+  font-size: var(--font-size-base);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   display: none;
   z-index: 100;
@@ -137,7 +137,7 @@
   justify-content: center;
   cursor: pointer;
   padding: 0.6rem 1rem;
-  font-size: 0.9rem;
+  font-size: var(--font-size-base);
   color: var(--text-color-on-darkbg);
   background: var(--button-color);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -160,7 +160,7 @@
 @container controls-container (max-width: 2200px) {
   .controlBtn {
     padding: 8px 12px;
-    font-size: 0.85em;
+    font-size: var(--font-size-sm);
     border-color: none;
   }
 }

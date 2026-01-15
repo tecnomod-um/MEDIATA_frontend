@@ -58,7 +58,7 @@
 
 .panelHeader {
   margin-bottom: 15px;
-  font-size: 1.3rem;
+  font-size: var(--font-size-lg);
 }
 
 .elementList {
@@ -88,7 +88,7 @@
   background: none;
   border: none;
   color: #007bff;
-  font-size: 1rem;
+  font-size: var(--font-size-base);
   cursor: pointer;
   margin-right: 10px;
 }
@@ -137,7 +137,7 @@
 }
 
 .instructions {
-  font-size: 0.9rem;
+  font-size: var(--font-size-base);
   color: var(--text-color-tertiary);
   margin-top: 10px;
 }

@@ -52,7 +52,7 @@
 .menu {
   display: flex;
   gap: 0.30em;
-  font-size: 16px;
+  font-size: var(--font-size-base);
   z-index: 11;
   margin-left: auto;
 }
@@ -78,7 +78,7 @@ input[type=checkbox] {
 
 .hamburger {
   display: none;
-  font-size: 24px;
+  font-size: var(--font-size-xl);
   user-select: none;
   cursor: pointer;
 }
@@ -95,7 +95,7 @@ label[for="menuToggle"] {
 }
 
 .darkerContainer {
-  font-size: 18px;
+  font-size: var(--font-size-md);
   display: flex;
   gap: 0;
   background-color: var(--background-nav-tool-background-color-light);
@@ -149,7 +149,7 @@ label[for="menuToggle"] {
 
 .mobileIcon {
   display: none;
-  font-size: 1.2em;
+  font-size: var(--font-size-md);
 }
 
 .darkerItem.activeDarker,

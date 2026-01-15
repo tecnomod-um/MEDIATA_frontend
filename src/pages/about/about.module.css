@@ -11,7 +11,7 @@
 .mainHeader {
   padding: 20px;
   color: var(--text-color-dark);
-  font-size: 35px;
+  font-size: var(--font-size-2xl);
   text-align: center;
 }
 
@@ -28,13 +28,13 @@
 }
 
 .sectionHeader {
-  font-size: 24px;
+  font-size: var(--font-size-xl);
   font-weight: bold;
   margin-bottom: 10px;
 }
 
 .sectionText {
-  font-size: 16px;
+  font-size: var(--font-size-base);
   line-height: 1.5;
   color: var(--text-color-primary);
   margin-bottom: 20px;
@@ -57,17 +57,17 @@
 
 .memberName {
   font-weight: bold;
-  font-size: 18px;
+  font-size: var(--font-size-md);
   margin-bottom: 5px;
 }
 
 .memberRole {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--text-color-muted);
 }
 
 .contactInfo {
-  font-size: 16px;
+  font-size: var(--font-size-base);
   margin-top: 10px;
 }
 

@@ -77,7 +77,7 @@
   position: absolute;
   right: 10px;
   top: 10px;
-  font-size: 1.2em;
+  font-size: var(--font-size-md);
   color: var(--button-delete-color);
   cursor: pointer;
   opacity: 0;
@@ -126,7 +126,7 @@
   border: 1px solid var(--border-color-secondary);
   background-color: var(--background-color-card);
   color: var(--text-color-primary);
-  font-size: 1em;
+  font-size: var(--font-size-base);
   min-width: 200px;
   border-radius: 5px 0 0 5px;
   outline: none;
@@ -139,7 +139,7 @@
   background-color: var(--background-color-card);
   color: var(--text-color-primary);
   border-left: 0;
-  font-size: 1em;
+  font-size: var(--font-size-base);
   min-width: 120px;
   border-radius: 0;
   outline: none;
@@ -163,7 +163,7 @@
   border: 1px solid var(--border-color-secondary);
   border-left: 0;
   cursor: pointer;
-  font-size: 1em;
+  font-size: var(--font-size-base);
   border-radius: 0 5px 5px 0;
   transition: background-color 0.3s;
 }
@@ -191,7 +191,7 @@
   color: var(--text-color-on-darkbg);
   padding: 12px 15px;
   cursor: pointer;
-  font-size: 1em;
+  font-size: var(--font-size-base);
   border: 1px solid #cfcfcf;
   border-radius: 0 5px 5px 0;
   transition: background-color 0.3s;
@@ -207,7 +207,7 @@
   align-items: center;
   background-color: var(--background-color-tertiary);
   border: 1px solid #cfcfcf;
-  font-size: 0.9em;
+  font-size: var(--font-size-base);
 }
 
 .removeCheckbox {
@@ -261,7 +261,7 @@
 .mappingTypeSelector label {
   display: flex;
   align-items: center;
-  font-size: 0.9em;
+  font-size: var(--font-size-base);
 }
 
 .switchLabel {
@@ -354,7 +354,7 @@
 
 .mappingSummary {
   margin: 4px 0 0 4px;
-  font-size: 0.8em;
+  font-size: var(--font-size-sm);
   font-style: italic;
   color: var(--text-color-secondary);
 }
@@ -372,7 +372,7 @@
   background-color: var(--background-color-tertiary);
   padding: 5px 10px;
   border-radius: 5px;
-  font-size: 0.85em;
+  font-size: var(--font-size-sm);
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -403,7 +403,7 @@
   border: none;
   cursor: pointer;
   padding: 0;
-  font-size: 1em;
+  font-size: var(--font-size-base);
   color: var(--text-color-muted);
   transition: color 0.3s;
 }
@@ -414,7 +414,7 @@
 }
 
 .closeIconButton svg {
-  font-size: 1.2em;
+  font-size: var(--font-size-md);
   color: var(--text-color-muted);
 }
 
@@ -470,7 +470,7 @@
 
 .selectMappingHeader h5 {
   margin: 0;
-  font-size: 0.8em;
+  font-size: var(--font-size-sm);
   color: var(--text-color-primary);
   font-weight: 600;
 }
@@ -493,7 +493,7 @@
 }
 
 .columnFileInline {
-  font-size: 0.8em;
+  font-size: var(--font-size-sm);
   color: var(--text-color-tertiary);
   font-style: italic;
 }
@@ -520,7 +520,7 @@
   color: var(--text-color-on-darkbg);
   border: none;
   padding: 8px 15px;
-  font-size: 0.9em;
+  font-size: var(--font-size-base);
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease;
@@ -535,7 +535,7 @@
   width: 100%;
   text-align: center;
   color: var(--border-color);
-  font-size: 1.2em;
+  font-size: var(--font-size-md);
   margin: auto;
 }
 
@@ -552,14 +552,14 @@
 }
 
 .groupType {
-  font-size: 0.9em;
+  font-size: var(--font-size-base);
   color: var(--text-color-primary);
   margin-right: 1vw;
   font-weight: bold;
 }
 
 .groupFile {
-  font-size: 0.8em;
+  font-size: var(--font-size-sm);
   color: var(--text-color-muted);
   margin-top: 2px;
 }
@@ -572,7 +572,7 @@
 
 .groupDetail {
   margin: 0;
-  font-size: 0.95em;
+  font-size: var(--font-size-base);
   color: var(--text-color-secondary);
 }
 
@@ -588,7 +588,7 @@
   background-color: var(--background-color-tertiary);
   padding: 5px 10px;
   border-radius: 4px;
-  font-size: 0.9em;
+  font-size: var(--font-size-base);
 }
 
 /* animations */
@@ -639,7 +639,7 @@
 
 .sectionTitle {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: var(--font-size-md);
   font-weight: 700;
   color: var(--text-color-primary);
   letter-spacing: 0.2px;
@@ -659,7 +659,7 @@
 .tooltipIcon {
   cursor: pointer;
   color: var(--text-color-tertiary);
-  font-size: 1.2rem;
+  font-size: var(--font-size-lg);
 }
 
 .tooltipIcon:hover {
@@ -676,7 +676,7 @@
 
 .buttonIcon {
   margin: 0 auto;
-  font-size: 1em;
+  font-size: var(--font-size-base);
   vertical-align: middle;
 }
 
@@ -719,7 +719,7 @@
 .descriptionButton,
 .addMappingButton {
   box-sizing: border-box;
-  font-size: 1em;
+  font-size: var(--font-size-base);
   padding: 12px 15px;
   height: 100%;
   flex: 0 0 auto;
