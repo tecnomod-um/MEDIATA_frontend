@@ -187,7 +187,7 @@
 
 .sidebar {
   z-index: 2;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-base);
   position: fixed;
   user-select: none;
   left: 0;
