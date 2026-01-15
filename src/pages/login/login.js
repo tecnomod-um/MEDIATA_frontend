@@ -1,4 +1,3 @@
-// Login page for user authentication with Kerberos
 import React, { useState , useRef} from "react";
 import { useNavigate } from "react-router-dom";
 import LoginStyles from "./login.module.css";
@@ -6,6 +5,7 @@ import { loginUser } from "../../util/petitionHandler";
 import { useAuth } from "../../context/authContext";
 import { CSSTransition } from "react-transition-group";
 
+// Main login page
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");

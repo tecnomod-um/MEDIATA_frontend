@@ -1,12 +1,12 @@
-// Connection line component between RDF cards
 import React from "react";
 import RdfConnectionStyles from "./rdf.module.css";
 
+// Connection between RDF cards, represents a property
 const RdfConnection = ({ connections, cards }) => {
   const computedStyle = getComputedStyle(document.documentElement);
   const cardWidth = parseFloat(computedStyle.getPropertyValue('--card-width')) || 220;
   const cardHeight = parseFloat(computedStyle.getPropertyValue('--card-height')) || 100;
-  
+
   if (!cards || cards.length === 0) return null;
 
   let minX = cards[0].x;
@@ -45,7 +45,7 @@ const RdfConnection = ({ connections, cards }) => {
     const ty = direction.y !== 0
       ? (direction.y > 0 ? halfHeight : -halfHeight) / direction.y
       : Infinity;
-    
+
     const t = Math.min(tx, ty);
 
     return {
@@ -108,6 +108,6 @@ const RdfConnection = ({ connections, cards }) => {
       })}
     </svg>
   );
-};
+}
 
 export default RdfConnection;

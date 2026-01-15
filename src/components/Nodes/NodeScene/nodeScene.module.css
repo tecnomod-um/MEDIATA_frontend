@@ -1,10 +1,9 @@
-
 .canvas {
-    width: 100vw !important;
-    height: calc(100vh - 55px) !important;
-    display: block;
-    position: absolute;
-    top: 0;
-    left: 0;
-    overflow: hidden;
+  width: 100vw !important;
+  height: calc(100vh - 55px) !important;
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
 }

@@ -1,7 +1,7 @@
-// List panel wrapper for FHIR elements using ElementList component
 import React from 'react';
 import ElementList from '../../Common/ElementList/elementList';
 
+// List panel wrapper for FHIR elements using ElementList component
 export default function ListPanel({ elements, selectedElement, builtClasses, onSelectElement, onDragStart, onDragEnd }) {
   const items = elements.map(el => ({ id: el.id, label: el.label }));
   const activeIndex = selectedElement

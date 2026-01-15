@@ -1,4 +1,3 @@
-
 .rangePicker {
   position: relative;
   display: flex;
@@ -46,11 +45,11 @@
   border-radius: 3px;
   border: 1px solid #d0d4d9;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);
-  width: 52px; /* tiny numeric input */
+  width: 52px;
 }
 
 .rangeInput[type="date"] {
-  width: 110px; /* still relatively small, but readable */
+  width: 110px;
 }
 
 .rangeInput:focus {
@@ -65,7 +64,6 @@
 }
 
 .doneHint {
-  /* invisible clickable area, gives you a second double-click target */
   width: 1px;
   height: 1px;
 }

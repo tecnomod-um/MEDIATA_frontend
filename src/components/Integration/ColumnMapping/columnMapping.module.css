@@ -161,10 +161,10 @@
   color: var(--text-color-on-darkbg);
   padding: 12px 15px;
   border: 1px solid var(--border-color-secondary);
-  border-left: 0; 
+  border-left: 0;
   cursor: pointer;
   font-size: 1em;
-  border-radius: 0 5px 5px 0; 
+  border-radius: 0 5px 5px 0;
   transition: background-color 0.3s;
 }
 
@@ -177,8 +177,8 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  width: auto;      
-  background: var(--background-color-4); 
+  width: auto;
+  background: var(--background-color-4);
 }
 
 
@@ -274,7 +274,7 @@
   overflow-x: hidden;
   position: relative;
   padding-left: 20px;
-  padding-right: 8px; 
+  padding-right: 8px;
   padding-bottom: 50px;
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
@@ -705,7 +705,7 @@
   border-radius: 0;
 }
 
-.valueMappingRow > * {
+.valueMappingRow>* {
   min-height: 40px;
 }
 

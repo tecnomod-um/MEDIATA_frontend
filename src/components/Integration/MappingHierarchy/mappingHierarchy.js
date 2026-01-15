@@ -1,4 +1,3 @@
-// Component displaying and editing column mapping hierarchies
 import React, { useState, useEffect, useRef } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
@@ -6,6 +5,7 @@ import CheckIcon from "@mui/icons-material/Check";
 import MappingHierarchyStyles from "./mappingHierarchy.module.css";
 import EditIcon from "@mui/icons-material/Edit";
 
+// Display for the mappings declared, contains all columns that will be present in mapped files and their value groupings 
 function MappingHierarchy({ mappingIndex, mappingKey, mapping, columnsData, onDeleteMapping, formatValue, onUpdateMapping }) {
   const [editing, setEditing] = useState({ type: null, groupIndex: null, valueIndex: null });
   const [editText, setEditText] = useState("");
@@ -72,7 +72,7 @@ function MappingHierarchy({ mappingIndex, mappingKey, mapping, columnsData, onDe
     }
 
     else if (type === "columnTitle") {
-      // Renaming column → also update groupColumn references to this column
+      // Renaming column will also update groupColumn references to this column
       const updatedGroups = mapping.groups.map((group) => ({
         ...group,
         values: group.values.map((val) => ({

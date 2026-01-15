@@ -1,4 +1,3 @@
-// Icon component for displaying file type with visual indicator
 import React from "react";
 import FileExplorerStyles from "./fileExplorer.module.css";
 import { getFileExtension } from "./fileUtils";
@@ -6,6 +5,7 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 
+// Gets a file Icon for each extension
 function FileTypeIcon({ name }) {
   const ext = getFileExtension(name);
   const isXlsx = ext === "xlsx" || ext === "xls";

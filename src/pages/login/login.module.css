@@ -1,105 +1,104 @@
-
 .container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: calc(100vh - 55px);
-    background-color: var(--background-color-1);
-    padding: 20px;
-    animation: fadeIn 0.5s ease-in-out;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 55px);
+  background-color: var(--background-color-1);
+  padding: 20px;
+  animation: fadeIn 0.5s ease-in-out;
 }
 
 .form {
-    background: var(--background-color-card);
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: var(--box-shadow-md);
-    max-width: 400px;
-    width: 100%;
-    animation: slideIn 0.5s ease-in-out;
+  background: var(--background-color-card);
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: var(--box-shadow-md);
+  max-width: 400px;
+  width: 100%;
+  animation: slideIn 0.5s ease-in-out;
 }
 
 .title {
-    font-size: 24px;
-    margin-bottom: 20px;
-    color: var(--heading-color);
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: var(--heading-color);
 }
 
 .input {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid var(--border-color);
-    border-radius: 5px;
-    font-size: 16px;
-    background-color: var(--background-color-card);
-    color: var(--text-color-primary);
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  font-size: 16px;
+  background-color: var(--background-color-card);
+  color: var(--text-color-primary);
 }
 
 .button {
-    width: 100%;
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    background-color: var(--button-color);
-    color: var(--text-color-on-darkbg);
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: var(--button-color);
+  color: var(--text-color-on-darkbg);
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .button:disabled {
-    background-color: var(--button-disabled);
-    cursor: not-allowed;
+  background-color: var(--button-disabled);
+  cursor: not-allowed;
 }
 
 .button:hover:enabled {
-    background-color: var(--button-color-hover);
+  background-color: var(--button-color-hover);
 }
 
 .error {
-    color: var(--error-color);
-    margin-bottom: 10px;
+  color: var(--error-color);
+  margin-bottom: 10px;
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
+  from {
+    opacity: 0;
+  }
 
-    to {
-        opacity: 1;
-    }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideIn {
-    from {
-        transform: translateY(-20px);
-        opacity: 0;
-    }
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
 
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .fade-enter {
-    opacity: 0;
-    transform: translateY(-20px);
+  opacity: 0;
+  transform: translateY(-20px);
 }
 
 .fade-enter-active {
-    opacity: 1;
-    transform: translateY(0);
-    transition: opacity 500ms, transform 500ms;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 500ms, transform 500ms;
 }
 
 .fade-exit {
-    opacity: 1;
+  opacity: 1;
 }
 
 .fade-exit-active {
-    opacity: 0;
-    transition: opacity 500ms;
+  opacity: 0;
+  transition: opacity 500ms;
 }

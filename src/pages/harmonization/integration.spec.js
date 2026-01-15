@@ -39,7 +39,7 @@ jest.mock('react-transition-group', () => ({
 
 jest.mock('./integration.module.css', () => ({}));
 jest.mock('../../components/Integration/ColumnMapping/columnMapping', () => () => <div data-testid="ColumnMapping" />);
-jest.mock('../../components/Integration/ColumnSearch/columnSearch', () => () => <div data-testid="ColumnSearch" />);
+jest.mock('../../components/Integration/ColumnSearchList/columnSearchList', () => () => <div data-testid="ColumnSearchList" />);
 jest.mock('../../components/Integration/FileMapperModal/fileMapperModal', () => () => <div data-testid="FileMapperModal" />);
 jest.mock('../../components/Common/FilePicker/filePicker', () => ({ files, onFilesSelected, isProcessing, modalTitle }) => (
   <div
@@ -105,7 +105,7 @@ describe('Integration Page', () => {
 
     render(<Integration />);
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalledWith('file.csv'));
-    expect(await screen.findByTestId('ColumnSearch')).toBeInTheDocument();
+    expect(await screen.findByTestId('ColumnSearchList')).toBeInTheDocument();
     expect(await screen.findByTestId('ColumnMapping')).toBeInTheDocument();
     expect(await screen.findByTestId('MappingsResult')).toBeInTheDocument();
     expect(await screen.findByTestId('SchemaTray')).toBeInTheDocument();

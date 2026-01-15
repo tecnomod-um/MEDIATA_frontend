@@ -1,4 +1,3 @@
-// Table view component for displaying files with selection and renaming
 import React, { useEffect } from "react";
 import FileTypeIcon from "./fileTypeIcon";
 import { FiChevronDown } from "react-icons/fi";
@@ -6,6 +5,7 @@ import LinearProgress from "@mui/material/LinearProgress";
 import CircularProgress from "@mui/material/CircularProgress";
 import FileExplorerStyles from "./fileExplorer.module.css";
 
+// Files detected will be displayed as rows here. Allows selection and renaming
 function FileTable({ sorted, selected, busy, processingFiles = new Set(), fileProgress, nodes = [], onRowMouseDown, onRowMouseUp, onRowMouseLeave, longPressFired, onRowClick, onRowDoubleClick, renamingKey, renameInputRef, renameDraft, setRenameDraft, commitRename, cancelRename, formatBytes, formatDateTime, isNew, onLayoutChange }) {
   const [collapsedNodes, setCollapsedNodes] = React.useState(() => new Set());
   const [nodeHeights, setNodeHeights] = React.useState({});

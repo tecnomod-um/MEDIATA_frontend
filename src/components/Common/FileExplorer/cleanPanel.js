@@ -1,10 +1,10 @@
-// Data cleaning panel modal for file preprocessing options
 import React from "react";
 import Switch from "react-switch";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 import FileExplorerStyles from "./fileExplorer.module.css";
 
+// Data cleaning panel for file preprocessing options
 function CleanPanel({ show, onClose, busy, removeDuplicates, setRemoveDuplicates, removeEmptyRows, setRemoveEmptyRows, standardizeDates, setStandardizeDates, selectedDateFormat, setSelectedDateFormat, dateFormats, standardizeNumeric, setStandardizeNumeric, numericMode, setNumericMode, selectedCount, applyClean }) {
   if (!show) return null;
 

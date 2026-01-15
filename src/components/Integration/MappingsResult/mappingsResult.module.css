@@ -1,4 +1,3 @@
-
 .resultingSection {
   flex: 1;
   max-width: 30%;
@@ -50,7 +49,6 @@
   background-color: rgba(0, 0, 0, 0.4);
 }
 
-/* Bottom area for both buttons */
 .bottomActions {
   margin-top: auto;
   display: flex;
@@ -58,24 +56,14 @@
   gap: 10px;
 }
 
-/* =============== */
-/* Upload Mappings */
-/* =============== */
 .uploadMappingsContainer {
   display: flex;
   width: 100%;
   height: 54px;
   border-radius: 8px;
   overflow: hidden;
-  /* ensures corners are shared with no gap */
 }
 
-/* 
-     Use the SAME base color as "Process Mappings" 
-     but no gradient or animation. 
-     "Process Mappings" has a gradient from #0f3e48 to #08242c,
-     so let's pick #0f3e48 for consistency.
-  */
 .uploadMappingsButton {
   flex: 1;
   background-image: var(--button-gradient);
@@ -116,15 +104,11 @@
   background-color: #229a54;
 }
 
-/* =========================== */
-/* Process Mappings (animated) */
-/* =========================== */
 .processMappingsButton {
   min-height: 54px;
   width: 100%;
   user-select: none;
   font-size: 16px;
-  /* same as Upload Mappings */
   font-weight: 600;
   color: var(--text-color-on-darkbg);
   cursor: pointer;
@@ -182,7 +166,6 @@
   cursor: not-allowed;
 }
 
-/* Spinner for "Processing..." */
 .loader {
   border: 3px solid rgba(255, 255, 255, 0.3);
   border-top: 3px solid #fff;

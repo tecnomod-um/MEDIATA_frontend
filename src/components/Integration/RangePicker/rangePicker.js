@@ -1,9 +1,9 @@
-// Range picker component with slider for numeric and date ranges
 import React, { useState, useEffect, useCallback } from "react";
 import RangePickerStyles from "./rangePicker.module.css";
 import Slider from "rc-slider";
 import "rc-slider/assets/index.css";
 
+// Range picker control with slider for numeric and date ranges
 function RangePicker({ min, max, type, onRangeChange, unavailableRanges = [] }) {
   const [selectedRange, setSelectedRange] = useState([min, max]);
   const [isEditingDisplay, setIsEditingDisplay] = useState(false);

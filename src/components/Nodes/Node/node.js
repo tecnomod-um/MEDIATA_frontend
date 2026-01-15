@@ -1,4 +1,3 @@
-// Three.js node component for interactive 3D node visualization
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { useFrame, useLoader } from "@react-three/fiber";
 import { Text } from "@react-three/drei";
@@ -6,15 +5,8 @@ import { DoubleSide, TextureLoader, Color, Shape } from "three";
 import { useSpring, useTransition, a, to } from "@react-spring/three";
 import nodeIcon from "../../../resources/images/node_image.png";
 
-const Node = ({
-  node,
-  onNodeClick,
-  isDragging,
-  globalIsDragging,
-  nodeSize,
-  descriptionSize,
-  fontSize,
-}) => {
+// Three.js 'sphere-like' node in the scene
+const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descriptionSize, fontSize }) => {
   const ref = useRef();
   const auraRef = useRef();
   const rippleMeshRef = useRef();

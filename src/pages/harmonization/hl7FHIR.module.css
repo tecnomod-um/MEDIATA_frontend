@@ -14,12 +14,10 @@
 }
 
 .leftPanel {
-  /* fixed width on left */
   flex: 0 0 20vw;
 }
 
 .middlePanel {
-  /* flex to occupy remaining space when right panel is hidden */
   flex: 1 1 auto;
   border-right: 1px solid #ddd;
   padding: 10px;
@@ -30,7 +28,6 @@
   overflow: hidden;
 }
 
-/* rightPanel grows/shrinks its width via flex-basis */
 .rightPanel {
   flex: 0 0 0;
   position: relative;
@@ -43,13 +40,11 @@
   flex: 0 0 30vw;
 }
 
-/* inner wrapper for CSSTransition sliding */
 .rightInner {
   width: 100%;
   height: 100%;
 }
 
-/* full‐screen dark overlay during drag */
 .globalOverlay {
   position: fixed;
   top: 0;
@@ -61,7 +56,6 @@
   z-index: 10;
 }
 
-/* existing utility styles */
 .panelHeader {
   margin-bottom: 15px;
   font-size: 1.3rem;
@@ -148,7 +142,6 @@
   margin-top: 10px;
 }
 
-/* slide in from left for the middle panel */
 .middleEnter {
   opacity: 0;
   transform: translateX(-20px);
@@ -171,7 +164,6 @@
   transition: transform 300ms ease, opacity 300ms ease;
 }
 
-/* slide in/out for the rightInner content */
 .rightInnerEnter {
   opacity: 0;
   transform: translateX(100%);

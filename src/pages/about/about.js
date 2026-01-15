@@ -1,7 +1,7 @@
-// About page displaying team information and project details
 import React from "react";
 import AboutStyles from "./about.module.css";
 
+// About page for the project
 function About() {
   return (
     <div className={AboutStyles.pageContainer}>

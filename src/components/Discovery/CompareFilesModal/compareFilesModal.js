@@ -1,6 +1,6 @@
 // Modal for comparing statistics across multiple files
 import React, { useState, useEffect } from "react";
-import OverlayWrapper from "../../Unused/OverlayWrapper/overlayWrapper";
+import OverlayWrapper from "../../Common/OverlayWrapper/overlayWrapper";
 import CollapsibleSection from "./collapsibleSection";
 import styles from "./compareFilesModal.module.css";
 
@@ -68,6 +68,7 @@ function getOutlierColumns(file) {
   return outliers;
 }
 
+// Modal that shows a comparison of missing values and outliers across multiple files
 const CompareFilesModal = ({ isOpen, closeModal, filesData }) => {
   const [collapsedStates, setCollapsedStates] = useState(
     filesData.map(() => ({ missing: false, outliers: false }))

@@ -1,8 +1,8 @@
-// Draggable RDF card component for semantic alignment visualization
 import React from "react";
 import Close from "@mui/icons-material/Close";
 import RdfCardStyles from "./rdf.module.css";
 
+// Draggable RDF card, represents a class
 const RdfCard = ({ card, onMouseDown, onTouchStart, onCardClick, onRemoveCard }) => {
   const title = card.elementName || "";
   const subtitle = card.optionLabel || "";
@@ -48,6 +48,6 @@ const RdfCard = ({ card, onMouseDown, onTouchStart, onCardClick, onRemoveCard })
       </div>
     </div>
   );
-};
+}
 
 export default RdfCard;

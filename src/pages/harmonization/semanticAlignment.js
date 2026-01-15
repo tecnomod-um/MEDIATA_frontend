@@ -1,4 +1,3 @@
-// Semantic alignment page for RDF mapping and ontology connections
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";
@@ -12,6 +11,7 @@ import { generateDistinctColors } from "../../util/colors";
 import { uploadSemanticMappingCsv } from "../../util/petitionHandler";
 import { toast, ToastContainer } from "react-toastify";
 
+// Semantic alignment page for RDF mapping and ontology connections
 function SemanticAlignment() {
   const location = useLocation();
   const workspaceRef = useRef(null);
@@ -145,10 +145,8 @@ function SemanticAlignment() {
       return alert(`Please build mappings for: ${missingNames.join(", ")}`);
     }
 
-    // 1) Build the union of every field name across all built cards:
-    const dynamicFields = Array.from(new Set(cards.flatMap((card) => card.fields)));
 
-    // 2) Assemble the full header in the desired order:
+    const dynamicFields = Array.from(new Set(cards.flatMap((card) => card.fields)));
     const header = [
       "field_id",
       "pattern_type",
@@ -158,13 +156,11 @@ function SemanticAlignment() {
       "categorical_ontology_mapping"
     ];
 
-    // 3) Build each row (exploding categoricals)
     const rows = [];
     cards.forEach((card) => {
       const base = {
         field_id: card.elementName,
         pattern_type: card.optionLabel,
-        // fill in all dynamic fields (empty if unused)
         ...dynamicFields.reduce((acc, f) => {
           acc[f] = card.inputs[f] ?? "";
           return acc;
@@ -182,7 +178,6 @@ function SemanticAlignment() {
           })
         });
       } else {
-        // non‑categorical: one row, blank C‑columns
         rows.push({
           ...base,
           categorical_value: "",
@@ -191,7 +186,6 @@ function SemanticAlignment() {
       }
     });
 
-    // 4) Serialize & download
     const csv = header.join(",") + "\n" + rows.map((r) => header.map((col) => {
       const v = r[col] ?? "";
       return v.includes(",") ? `"${v.replace(/"/g, '""')}"` : v;
@@ -212,7 +206,6 @@ function SemanticAlignment() {
     else
       toast.error(result.csvMessage);
 
-    // 2) RDF feedback
     if (result.rdfGenerated) {
       let msg;
       try {
@@ -240,13 +233,10 @@ function SemanticAlignment() {
   const handleSelectElement = (elementIndex, categoryIndex) => {
     setActiveElementIndex(elementIndex);
     setActiveCategoryIndex(categoryIndex ?? null);
-    // On mobile, automatically switch to detail tab
     if (isMobile) {
       setMobileView("detail");
     }
   };
-  // before you had logic to return category if activeCategoryIndex != null.
-  // replace it with:
   const getActiveItem = () => {
     if (!elements || activeElementIndex == null) return null;
     return { ...elements.elements[activeElementIndex], isCategory: false };
@@ -326,7 +316,6 @@ function SemanticAlignment() {
     });
   };
 
-  // --- Drag logic ---
   const handleMouseDownCard = (e, cardId) => {
     if (isConnecting) return;
     const card = cards.find((c) => c.id === cardId);
@@ -445,7 +434,6 @@ function SemanticAlignment() {
     setZoom(newZoom);
   };
 
-  // Resizer logic (desktop only)
   const handleResizerMouseDown = () => {
     setIsResizing(true);
   };
@@ -493,12 +481,10 @@ function SemanticAlignment() {
     }
   };
 
-  // Toggle the mobileView
   const toggleMobileView = () => {
     setMobileView((prev) => (prev === "detail" ? "workspace" : "detail"));
   };
 
-  // ---- Desktop Layout ----
   const renderDesktopLayout = () => {
     return (
       <CSSTransition
@@ -513,7 +499,6 @@ function SemanticAlignment() {
         unmountOnExit
       >
         <div className={SemanticAlignmentStyles.mainContent} ref={workspaceRef} data-testid="main-content">
-          {/* LEFT PANEL: RdfSidebar */}
           <div className={SemanticAlignmentStyles.leftPanel}>
             {elements && (
               <RdfSidebar
@@ -525,8 +510,6 @@ function SemanticAlignment() {
               />
             )}
           </div>
-
-          {/* MIDDLE PANEL: ElementDetailPanel */}
           <div
             className={SemanticAlignmentStyles.middlePanel}
             style={{ width: `${middlePanelWidth}vw` }}

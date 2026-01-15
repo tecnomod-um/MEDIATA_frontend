@@ -1,4 +1,3 @@
-// Component for exporting integrated data elements to backend
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
@@ -20,6 +19,7 @@ const stripFileSuffix = (featureName) => {
   return featureName;
 };
 
+// Component for exporting dataset metadata and save in the backend. Feeds integration.
 function ElementExporter({ dataResults = [], activeFileIndices = [], combinedData, filteredData }) {
   const navigate = useNavigate();
   const { selectedNodes } = useNode();

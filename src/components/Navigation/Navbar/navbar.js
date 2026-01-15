@@ -1,4 +1,3 @@
-// Navigation bar component with authentication and routing
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useMatch } from "react-router-dom";
 import NavbarStyles from "./navbar.module.css";
@@ -43,6 +42,7 @@ function FileSearchIcon() {
   );
 }
 
+// Main navigation bar used thought the app
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [animate, setAnimate] = useState(false);

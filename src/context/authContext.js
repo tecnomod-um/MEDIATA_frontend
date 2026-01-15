@@ -1,9 +1,10 @@
-// Authentication context provider for managing user login state and JWT tokens
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { useNode } from "./nodeContext";
 import { setupNodeAxiosInterceptors } from "../util/nodeAxiosSetup";
+
+// Authentication context provider for managing user login state and JWT tokens
 
 const AuthContext = createContext();
 

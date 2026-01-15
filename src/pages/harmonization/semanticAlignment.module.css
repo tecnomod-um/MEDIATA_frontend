@@ -1,4 +1,3 @@
-
 .container {
   display: flex;
   width: 100vw;
@@ -322,7 +321,6 @@
 }
 
 .toast {
-  /*top: 55px;*/
   background-color: var(--translucent-background-color) !important;
   color: var(--text-color-on-darkbg) !important;
   min-height: 40px !important;

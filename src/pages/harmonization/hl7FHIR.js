@@ -1,4 +1,3 @@
-// HL7 FHIR resource mapping page for healthcare standards
 import React, { useState, useMemo } from 'react';
 import { CSSTransition } from 'react-transition-group';
 import HL7FHIRStyles from './hl7FHIR.module.css';
@@ -37,6 +36,7 @@ function parseCsvData(csvData) {
   });
 }
 
+// HL7 FHIR resource mapping page
 export default function HL7FHIR() {
   const [dataFormat, setDataFormat] = useState(false);
   const [isDragging, setIsDragging] = useState(false);

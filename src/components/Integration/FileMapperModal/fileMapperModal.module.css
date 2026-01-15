@@ -1,4 +1,3 @@
-
 .fileMapperModal {
   padding: 0;
   background-color: var(--background-color-card);
@@ -235,7 +234,6 @@
   white-space: nowrap;
 }
 
-/* Put the node on its own line */
 .nodeSubtitle {
   display: block;
   font-size: 0.85em;
@@ -462,7 +460,6 @@
 
 .numericList {
   max-height: 80px;
-  /* exactly ~two items visible */
   overflow-y: auto;
   border: 1px solid var(--border-color);
   border-radius: 4px;

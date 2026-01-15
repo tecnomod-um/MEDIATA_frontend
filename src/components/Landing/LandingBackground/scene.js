@@ -1,7 +1,8 @@
-// Three.js scene component for landing page animation
 import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
+
+// Main background scene, with all 3D elements and animations
 
 const verticalPlusGeometry = new THREE.BoxGeometry(0.15, 0.5, 0.05);
 const horizontalPlusGeometry = new THREE.BoxGeometry(0.5, 0.15, 0.05);

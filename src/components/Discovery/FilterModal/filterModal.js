@@ -1,6 +1,5 @@
-// Filter modal for creating data filters across features
 import React, { useState, useEffect, useRef } from "react";
-import OverlayWrapper from "../../Unused/OverlayWrapper/overlayWrapper";
+import OverlayWrapper from "../../Common/OverlayWrapper/overlayWrapper";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Select from "react-select";
@@ -27,24 +26,12 @@ const initializeFilters = (dataStatistics) => {
   return filters;
 };
 
-const FilterModal = ({
-  isOpen,
-  dataStatistics,
-  closeModal,
-  filters,
-  setFilters,
-  setFilteredDataStatistics,
-  dataResults,
-  activeFileIndices,
-  setDataResults,
-  combineSelectedData,
-  setDataStatistics,
-}) => {
+// Modal that works with the features in dataStatistics. Allows to build a filter query for the backend to repopulate dataResults
+const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, setFilteredDataStatistics, dataResults, activeFileIndices, setDataResults, combineSelectedData, setDataStatistics }) => {
   const [filterConditions, setFilterConditions] = useState({});
   const [logicalOperators, setLogicalOperators] = useState({});
   const [globalLogicalOperator, setGlobalLogicalOperator] = useState("AND");
 
-  // UI selections
   const [selectedFeature, setSelectedFeature] = useState("");
   const [dateFilterType, setDateFilterType] = useState("equal");
   const [dateValue, setDateValue] = useState(new Date());
@@ -53,8 +40,6 @@ const FilterModal = ({
   const [minValue, setMinValue] = useState("");
   const [maxValue, setMaxValue] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
-
-  // New loading state
   const [isLoading, setIsLoading] = useState(false);
 
   const addButtonRef = useRef(null);
@@ -68,13 +53,10 @@ const FilterModal = ({
     }
   }, [dataStatistics]);
 
-  // --- NEW: Group filters by node and send filtering petitions per node ---
   const handleApplyFilters = async () => {
     setIsLoading(true);
     try {
-      // Build a payload for each file including the nodeId.
       const multipleFileFilters = dataResults.map((fileResult, idx) => {
-        // Include nodeId from fileResult (processed earlier)
         const basePayload = {
           fileName: fileResult.fileName,
           nodeId: fileResult.nodeId
@@ -83,7 +65,6 @@ const FilterModal = ({
           return { ...basePayload, filters: null };
         }
         const fileSpecificConditions = {};
-        // Note: Our filterConditions keys are in the format "FeatureName (FileName)"
         for (let feature in filterConditions) {
           if (
             feature.endsWith(`(${fileResult.fileName})`) &&
@@ -107,7 +88,6 @@ const FilterModal = ({
         };
       });
 
-      // Group the payload by nodeId
       const groupedByNode = multipleFileFilters.reduce((acc, filterObj) => {
         const nodeId = filterObj.nodeId || "unknown";
         if (!acc[nodeId]) acc[nodeId] = [];
@@ -158,8 +138,6 @@ const FilterModal = ({
       setIsLoading(false);
     }
   };
-
-  // ----------------- End NEW grouping logic -----------------
 
   const handleAddFilter = () => {
     if (!selectedFeature) {
@@ -769,6 +747,6 @@ const FilterModal = ({
       </div>
     </OverlayWrapper>
   );
-};
+}
 
 export default FilterModal;

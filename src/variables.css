@@ -1,3 +1,4 @@
+  /* css variables */
 :root {
   /* ==================== LIGHT THEME ==================== */
   
@@ -11,6 +12,7 @@
   --background-color-secondary-light: #f5f5f5;
   --background-color-tertiary-light: #f0f0f0;
   --background-color-modal-light: #ffffff;
+  --logo-backplate-light: #ecebeb;
 
   /* Navigation & Headers */
   --background-nav-and-headers-background-color-light: #08242c;
@@ -141,8 +143,7 @@
 
   /* ==================== DARK THEME ==================== */
   
-  /* Background Colors */
-  --background-color-1-dark: #121212; /* Darker for better dark mode */
+  --background-color-1-dark: #121212;
   --background-color-2-dark: #1a1a1a;
   --background-color-3-dark: #242424;
   --background-color-4-dark: #2a2a2a;
@@ -151,6 +152,7 @@
   --background-color-secondary-dark: #222222;
   --background-color-tertiary-dark: #282828;
   --background-color-modal-dark: #2d2d2d;
+  --logo-backplate-dark: #909090;
 
   /* Navigation & Headers */
   --background-nav-and-headers-background-color-dark: #0a2e3a;
@@ -282,6 +284,8 @@
   --background-color-secondary: var(--background-color-secondary-light);
   --background-color-tertiary: var(--background-color-tertiary-light);
   --background-color-modal: var(--background-color-modal-light);
+  --logo-backplate: var(--logo-backplate-light);
+
 
   /* Navigation & Headers */
   --background-nav-and-headers-background-color: var(--background-nav-and-headers-background-color-light);
@@ -387,7 +391,8 @@ body.dark-mode {
   --background-color-secondary: var(--background-color-secondary-dark);
   --background-color-tertiary: var(--background-color-tertiary-dark);
   --background-color-modal: var(--background-color-modal-dark);
-
+  --logo-backplate: var(--logo-backplate-dark);
+  
   /* Navigation & Headers */
   --background-nav-and-headers-background-color: var(--background-nav-and-headers-background-color-dark);
   --background-nav-background-color-hover: var(--background-nav-background-color-hover-dark);
@@ -503,7 +508,8 @@ body.dark-mode {
   --box-shadow-xl: var(--box-shadow-xl-dark);
 }
 
-/* ============================================================================
+/* TODO
+ ============================================================================
    CSS VARIABLES IMPLEMENTATION NOTES & FURTHER STANDARDIZATION OPPORTUNITIES
    ============================================================================
 

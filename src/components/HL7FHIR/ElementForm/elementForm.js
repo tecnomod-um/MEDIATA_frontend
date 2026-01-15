@@ -1,14 +1,8 @@
-// Form component for editing FHIR element properties
 import React from 'react';
 import styles from './elementForm.module.css';
 
-export default function ElementForm({
-  element,
-  formValues,
-  onChange,
-  onCreateClusters,
-  allDescribed
-}) {
+// Form component for editing FHIR element properties
+export default function ElementForm({ element, formValues, onChange, onCreateClusters, allDescribed }) {
   if (!element) return null;
 
   return (

@@ -1,44 +1,33 @@
-
-/* Panel wrapper */
 .panel {
   display: flex;
   flex-direction: column;
   background: #e8e8e8;
-  /* lighter gray */
   height: 100%;
   overflow: hidden;
   border-radius: 0;
   position: relative;
   z-index: 20;
-  /* sit above the global overlay */
 }
 
-/* HEADER: flex row, center title, backBtn pushed to left */
 .header {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* center title */
   background: #555;
-  /* lighter than before */
   color: var(--text-color-on-darkbg);
   padding: 12px 0;
 }
 
-/* back button sits at start */
 .backBtn {
   margin-right: auto;
-  /* push it all the way left */
 }
 
-/* title stays centered */
 .title {
   margin: 0;
   font-size: 1.4rem;
   font-weight: 500;
 }
 
-/* Scrollable list section with persistent outline */
 .listSection {
   flex: 1;
   overflow-y: auto;
@@ -46,14 +35,12 @@
   background: var(--background-color-card);
 }
 
-/* UL reset */
 .list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-/* Each item */
 .item {
   display: flex;
   flex-direction: column;
@@ -67,7 +54,6 @@
   background: var(--background-color-secondary);
 }
 
-/* Top row: label + remove */
 .topRow {
   display: flex;
   justify-content: space-between;
@@ -75,14 +61,12 @@
   margin-bottom: 8px;
 }
 
-/* Element name */
 .label {
   font-weight: 600;
   color: var(--text-primary-color);
   font-size: 1rem;
 }
 
-/* smaller remove “✕” */
 .remove {
   background: none;
   border: none;
@@ -93,7 +77,6 @@
   cursor: pointer;
 }
 
-/* Description spans full width */
 .descWrapper {
   max-height: 6em;
   overflow-y: auto;
@@ -106,7 +89,6 @@
   color: var(--text-secondary-color);
 }
 
-/* Footer add row */
 .footer {
   padding: 12px;
   background: #eee;
@@ -146,7 +128,6 @@
   background-color: var(--button-add-value-hover-color);
 }
 
-/* Animations */
 .itemEnter {
   opacity: 0;
   transform: translateY(-10px);

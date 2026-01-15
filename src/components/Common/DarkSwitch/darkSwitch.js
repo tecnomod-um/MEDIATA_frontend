@@ -1,8 +1,8 @@
-// Dark mode toggle switch component
 import React, { useState, useEffect } from "react";
 import Switch from "react-switch";
 import styles from "./darkSwitch.module.css";
 
+// Dark mode toggle switch component. Uses variables in global CSS for colors
 function DarkSwitch() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");

@@ -1,4 +1,3 @@
-// Discovery page for data profiling and statistics visualization
 import React, { useState, useCallback, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
@@ -14,6 +13,7 @@ import { updateNodeAxiosBaseURL } from "../../util/nodeAxiosSetup";
 
 import { useNode } from "../../context/nodeContext";
 
+// Discovery page for data profiling and statistics visualization
 function Discovery() {
   const [dataResults, setDataResults] = useState([]);
   const [activeFileIndices, setActiveFileIndices] = useState([]);
@@ -84,7 +84,7 @@ function Discovery() {
               }
 
               if (result.mode === "async") {
-                const arr = await pollDiscoveryJob(result.jobId, () => { }); // no progress needed here
+                const arr = await pollDiscoveryJob(result.jobId, () => { });
                 allResults = allResults.concat(
                   arr.map((r) => ({
                     ...r,
@@ -127,7 +127,7 @@ function Discovery() {
     };
 
     dataResultsArray.forEach((res, idx) => {
-      if (!activeIndices[idx]) return; // skip non-active files
+      if (!activeIndices[idx]) return;
       const fileLabel = res.fileName || `File #${idx + 1}`;
 
       res.continuousFeatures?.forEach((item) => {

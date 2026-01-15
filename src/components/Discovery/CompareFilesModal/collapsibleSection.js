@@ -1,8 +1,8 @@
-// Collapsible section component with animated expand/collapse
 import React, { useState, useRef, useEffect } from "react";
 import { FiChevronDown } from "react-icons/fi";
 import CopareFilesModalStyles from "./compareFilesModal.module.css";
 
+// Collapsible section of the missing statistics for a file
 const CollapsibleSection = ({ title, badge, isCollapsed, toggle, children }) => {
   const contentRef = useRef(null);
   const [height, setHeight] = useState("0px");

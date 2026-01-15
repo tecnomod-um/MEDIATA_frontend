@@ -1,7 +1,7 @@
-// Component for exporting discovery statistics data to CSV
 import React from "react";
 import { jsonToCSV } from "../../../util/parser";
 
+// Exporting functionality from the discovery statistical data to CSV
 function DataExporter({ data, filteredData }) {
   const exportData = () => {
     const continuousAndDateData = data.continuousFeatures.map((feature) => ({

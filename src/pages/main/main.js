@@ -1,4 +1,3 @@
-// Landing page component with platform features and introduction
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import MainStyles from "./main.module.css";
@@ -9,6 +8,7 @@ import LandingStandards from "../../components/Landing/LandingIcons/landingStand
 import LandingSecurity from "../../components/Landing/LandingIcons/landingSecurity";
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
+// Landing page. The main entry point to the application
 function Main() {
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
 
@@ -16,7 +16,6 @@ function Main() {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, []);
 
-  // Single handler to control indicator
   useEffect(() => {
     const update = () => {
       const docEl = document.documentElement;
@@ -26,7 +25,6 @@ function Main() {
       setShowScrollIndicator(y < maxScroll - EPS);
     };
 
-    // run once and then attach listeners
     update();
     window.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
@@ -40,8 +38,6 @@ function Main() {
     const docEl = document.documentElement;
     const maxScroll = Math.max(0, docEl.scrollHeight - window.innerHeight);
     const y = window.scrollY || docEl.scrollTop || 0;
-
-    // step one viewport, but never beyond bottom
     const next = Math.min(y + window.innerHeight, maxScroll);
     window.scrollTo({ top: next, behavior: "smooth" });
   };
@@ -149,9 +145,9 @@ function Main() {
         </div>
         <div className={MainStyles.finalSection}>
           <div className={MainStyles.contentContainer}>
-              <Link to={"/discovery"}>
-                <button className={MainStyles.big_button}>Explore your datasets</button>
-              </Link>
+            <Link to={"/discovery"}>
+              <button className={MainStyles.big_button}>Explore your datasets</button>
+            </Link>
           </div>
         </div>
         {showScrollIndicator && (

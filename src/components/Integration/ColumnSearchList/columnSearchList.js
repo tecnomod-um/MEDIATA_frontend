@@ -1,10 +1,10 @@
-// Column search and filter component for integration
 import React, { useMemo, useState, useCallback } from "react";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
-import ColumnSearchStyles from "./columnSearch.module.css";
+import ColumnSearchListStyles from "./columnSearchList.module.css";
 
-function ColumnSearch({ columnsData, handleColumnClick, handleDragStart }) {
+// Column list with search functionality and additional controls
+function ColumnSearchList({ columnsData, handleColumnClick, handleDragStart }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [collapsed, setCollapsed] = useState({});
 
@@ -63,10 +63,10 @@ function ColumnSearch({ columnsData, handleColumnClick, handleDragStart }) {
   }, [grouped]);
 
   return (
-    <div className={ColumnSearchStyles.search}>
-      <div className={ColumnSearchStyles.searchRow}>
+    <div className={ColumnSearchListStyles.search}>
+      <div className={ColumnSearchListStyles.searchRow}>
         <input
-          className={ColumnSearchStyles.input}
+          className={ColumnSearchListStyles.input}
           type="search"
           placeholder="Search columns"
           onChange={handleChange}
@@ -74,11 +74,11 @@ function ColumnSearch({ columnsData, handleColumnClick, handleDragStart }) {
           role="searchbox"
         />
 
-        <div className={ColumnSearchStyles.groupActionsInline}>
+        <div className={ColumnSearchListStyles.groupActionsInline}>
           <button
             type="button"
             onClick={openAll}
-            className={ColumnSearchStyles.expandCollapseBtn}
+            className={ColumnSearchListStyles.expandCollapseBtn}
             aria-label="Expand all column groups"
           >
             <UnfoldMoreIcon />
@@ -86,7 +86,7 @@ function ColumnSearch({ columnsData, handleColumnClick, handleDragStart }) {
           <button
             type="button"
             onClick={collapseAll}
-            className={ColumnSearchStyles.expandCollapseBtn}
+            className={ColumnSearchListStyles.expandCollapseBtn}
             aria-label="Collapse all column groups"
           >
             <UnfoldLessIcon />
@@ -94,38 +94,38 @@ function ColumnSearch({ columnsData, handleColumnClick, handleDragStart }) {
         </div>
       </div>
 
-      <div className={ColumnSearchStyles.scrollableContainer} role="list" aria-label="Column groups">
+      <div className={ColumnSearchListStyles.scrollableContainer} role="list" aria-label="Column groups">
         {grouped.map((group) => {
           const isCollapsed = !!collapsed[group.groupKey];
           return (
-            <div key={group.groupKey} className={ColumnSearchStyles.fileGroup} role="listitem">
+            <div key={group.groupKey} className={ColumnSearchListStyles.fileGroup} role="listitem">
               <button
                 type="button"
-                className={ColumnSearchStyles.fileHeader}
+                className={ColumnSearchListStyles.fileHeader}
                 onClick={() => toggleGroup(group.groupKey)}
                 aria-expanded={!isCollapsed}
                 aria-label={`${group.fileName} - ${group.items.length} column${group.items.length !== 1 ? 's' : ''}`}
                 aria-controls={`column-group-${group.groupKey}`}
               >
                 <span
-                  className={ColumnSearchStyles.fileColorPill}
+                  className={ColumnSearchListStyles.fileColorPill}
                   style={{ backgroundColor: group.fileColor || "transparent" }}
                   aria-hidden="true"
                 />
-                <span className={ColumnSearchStyles.fileTitle} title={group.fileName}>
+                <span className={ColumnSearchListStyles.fileTitle} title={group.fileName}>
                   {group.fileName}
                 </span>
-                <span className={ColumnSearchStyles.fileMeta}>
+                <span className={ColumnSearchListStyles.fileMeta}>
                   ({group.items.length})
                 </span>
-                <span className={ColumnSearchStyles.chevron}>
+                <span className={ColumnSearchListStyles.chevron}>
                   {isCollapsed ? "▸" : "▾"}
                 </span>
               </button>
 
               {!isCollapsed && (
                 <div
-                  className={ColumnSearchStyles.fileItems}
+                  className={ColumnSearchListStyles.fileItems}
                   id={`column-group-${group.groupKey}`}
                   role="list"
                   aria-label={`Columns in ${group.fileName}`}
@@ -135,7 +135,7 @@ function ColumnSearch({ columnsData, handleColumnClick, handleDragStart }) {
                     return (
                       <div
                         key={itemKey}
-                        className={ColumnSearchStyles.columnItem}
+                        className={ColumnSearchListStyles.columnItem}
                         style={{ borderLeftColor: column.color }}
                         draggable
                         onDragStart={(e) => handleDragStart(e, column)}
@@ -162,11 +162,11 @@ function ColumnSearch({ columnsData, handleColumnClick, handleDragStart }) {
         })}
 
         {grouped.length === 0 && (
-          <div className={ColumnSearchStyles.emptyState} role="status">No columns found.</div>
+          <div className={ColumnSearchListStyles.emptyState} role="status">No columns found.</div>
         )}
       </div>
     </div>
   );
 }
 
-export default ColumnSearch;
+export default ColumnSearchList;

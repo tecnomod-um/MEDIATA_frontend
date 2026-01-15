@@ -1,4 +1,3 @@
-// Categorical data bar chart component using Chart.js
 import React, { useRef, useEffect, useMemo } from "react";
 import { Bar } from "react-chartjs-2";
 import chroma from "chroma-js";
@@ -11,6 +10,7 @@ ChartJS.register(...registerables);
 const TOP_N_OVERVIEW = 8;
 const TOP_N_FULL = 80;
 
+// Display for the categorical features' histogram
 const CategoricalChart = React.memo(
   ({ feature, onClick, onDoubleClick, isSelected, inOverview }) => {
     const chartRef = useRef(null);
@@ -147,6 +147,6 @@ const CategoricalChart = React.memo(
       </div>
     );
   }
-);
+)
 
 export default CategoricalChart;

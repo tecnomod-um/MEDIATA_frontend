@@ -1,4 +1,3 @@
-
 .modalContent {
   background-color: var(--background-color-card);
   border-radius: 8px;
@@ -55,22 +54,18 @@
   margin-bottom: 1rem;
 }
 
-/* This container ensures a fixed space for loading or "no metadata" */
 .placeholderContainer {
   min-height: 120px;
-  /* adjust as needed */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
 }
 
-/* Remove large margins for the "no metadata" message. */
 .muted {
   color: var(--text-color-muted);
   font-style: italic;
   margin: 0;
-  /* override existing margins if needed */
 }
 
 .footer {

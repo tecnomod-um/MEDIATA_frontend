@@ -1,17 +1,15 @@
-// Modal displaying joined nodes with expandable metadata
 import React, { useState, useRef, useEffect } from "react";
-import OverlayWrapper from "../../Unused/OverlayWrapper/overlayWrapper";
+import OverlayWrapper from "../../Common/OverlayWrapper/overlayWrapper";
 import { IoMdClose } from "react-icons/io";
 import JoinedNodesDisplayStyles from "./joinedNodesDisplay.module.css";
 import DatasetCard from "../MetadataDisplay/datasetCard";
 import { getNodeMetadata } from "../../../util/petitionHandler";
 
+// Card representing a node in the joined nodes display
 const JoinedNodeCard = ({ node }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [loadingMetadata, setLoadingMetadata] = useState(false);
   const [metadata, setMetadata] = useState(null);
-
-  // For smooth height animation
   const contentRef = useRef(null);
   const [contentHeight, setContentHeight] = useState(0);
 
@@ -31,7 +29,6 @@ const JoinedNodeCard = ({ node }) => {
     setIsExpanded((prev) => !prev);
   };
 
-  // Update max-height whenever toggling or when metadata loads
   useEffect(() => {
     if (contentRef.current) {
       setContentHeight(isExpanded ? contentRef.current.scrollHeight : 0);
@@ -47,8 +44,6 @@ const JoinedNodeCard = ({ node }) => {
             {node.description || "No description provided."}
           </p>
         </div>
-
-        {/* The toggle button (fixed width). If loading, show only spinner. */}
         <button
           className={JoinedNodesDisplayStyles.toggleButton}
           onClick={!loadingMetadata ? toggleExpansion : undefined}
@@ -60,8 +55,6 @@ const JoinedNodeCard = ({ node }) => {
           )}
         </button>
       </div>
-
-      {/* Smoothly collapsible content */}
       <div
         className={JoinedNodesDisplayStyles.collapsibleWrapper}
         style={{ maxHeight: `${contentHeight}px` }}
@@ -83,15 +76,10 @@ const JoinedNodeCard = ({ node }) => {
       </div>
     </div>
   );
-};
+}
 
-const JoinedNodesDisplay = ({
-  isOpen,
-  joinedNodes,
-  onClose,
-  onAccessJoinedNodes,
-  accessingNode
-}) => {
+// Access modal that displays joined nodes with their DCAT description
+const JoinedNodesDisplay = ({ isOpen, joinedNodes, onClose, onAccessJoinedNodes, accessingNode }) => {
   return (
     <OverlayWrapper isOpen={isOpen} closeModal={onClose}>
       <div className={JoinedNodesDisplayStyles.modalContent}>
@@ -115,10 +103,10 @@ const JoinedNodesDisplay = ({
         </div>
 
         <div className={JoinedNodesDisplayStyles.footer}>
-          <button 
-            className={JoinedNodesDisplayStyles.accessButton} 
+          <button
+            className={JoinedNodesDisplayStyles.accessButton}
             onClick={onAccessJoinedNodes}
-            disabled={accessingNode} // Disable during access
+            disabled={accessingNode}
           >
             {accessingNode ? "Accessing..." : "Access joined nodes"}
           </button>
@@ -126,6 +114,6 @@ const JoinedNodesDisplay = ({
       </div>
     </OverlayWrapper>
   );
-};
+}
 
 export default JoinedNodesDisplay;

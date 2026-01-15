@@ -41,8 +41,8 @@
 
 .resultCount {
   position: absolute;
-  bottom: 5px;
-  right: 5px;
+  bottom: 10px;
+  right: 10px;
   background-color: var(--background-color-3);
   color: var(--text-color-primary);
   padding: 2px 4px;

@@ -1,7 +1,7 @@
-// Component displaying aggregate statistics including correlations and chi-square tests
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import AggregateDisplayStyles from "./aggregateDisplay.module.css";
 
+// Display for all aggregate statistics
 const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearmanCorrelations = {}, chiSquareTest = [], omittedFeatures = [] }) => {
 
   const [activeTab, setActiveTab] = useState("covariance");

@@ -1,9 +1,9 @@
-// File picker modal for selecting files from multiple nodes
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { CSSTransition } from "react-transition-group";
 import LinearProgress from "@mui/material/LinearProgress";
 import FilePickerStyles from "./filePicker.module.css";
 
+// Obsolete file picker modal
 function FilePicker({ files = [], onFilesSelected, isProcessing = false, modalTitle, preSelectedFiles = {}, autoProcess = false, progressMode = "spinner", progressValue = 0 }) {
   const [selectedFiles, setSelectedFiles] = useState({});
   const [showModal] = useState(true);

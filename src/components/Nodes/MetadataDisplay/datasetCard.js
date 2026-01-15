@@ -1,4 +1,3 @@
-// Card component for displaying dataset metadata information
 import React from "react";
 import MetadataDisplayStyles from "./metadataDisplay.module.css";
 
@@ -30,6 +29,7 @@ function renderField(label, value) {
   );
 }
 
+// Card displaying dataset metadata information
 const DatasetCard = ({ dataset }) => {
   const {
     title,

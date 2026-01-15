@@ -1,4 +1,3 @@
-// Continuous data histogram chart component using Chart.js
 import React, { useRef, useEffect, useMemo } from "react";
 import { Bar } from "react-chartjs-2";
 import ContinuousChartStyles from "./continuousChart.module.css";
@@ -6,6 +5,7 @@ import { Chart as ChartJS, registerables } from "chart.js";
 
 ChartJS.register(...registerables);
 
+// Display for the continuous features' histogram
 const ContinuousChart = React.memo(
   ({ feature, showOutliers, onClick, onDoubleClick, isSelected, inOverview }) => {
     const chartRef = useRef(null);

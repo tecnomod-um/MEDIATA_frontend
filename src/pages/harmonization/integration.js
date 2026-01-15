@@ -1,4 +1,3 @@
-// Integration page for data mapping and harmonization
 import React, { useState, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";
@@ -8,13 +7,14 @@ import { updateNodeAxiosBaseURL } from "../../util/nodeAxiosSetup";
 import { useNode } from "../../context/nodeContext";
 import IntegrationStyles from "./integration.module.css";
 import ColumnMapping from "../../components/Integration/ColumnMapping/columnMapping";
-import ColumnSearch from "../../components/Integration/ColumnSearch/columnSearch";
+import ColumnSearchList from "../../components/Integration/ColumnSearchList/columnSearchList";
 import FileMapperModal from "../../components/Integration/FileMapperModal/fileMapperModal";
 import FilePicker from "../../components/Common/FilePicker/filePicker";
 import SchemaTray from "../../components/Common/SchemaTray/schemaTray";
 import MappingsResult from "../../components/Integration/MappingsResult/mappingsResult";
 import { generateDistinctColors } from "../../util/colors";
 
+// Integration page for data mapping and harmonization
 function Integration() {
   const location = useLocation();
   const { selectedNodes } = useNode();
@@ -127,10 +127,6 @@ function Integration() {
     setMappings((prev) => [...prev, newMapping]);
   }, []);
 
-  // ------------------------------
-  // 2. Process each node’s selected files
-  //    'selectedFilenamesMapping' => { nodeId: ["file1", "file2"], ... }
-  // ------------------------------
   const handleProcessSelectedElements = useCallback(
     async (selectedFilenamesMapping) => {
       setProcessingStatus("processing");
@@ -138,7 +134,6 @@ function Integration() {
       try {
         let mergedCols = [...columnsData];
 
-        // Collect all selected filenames for color assignment
         const allSelectedFiles = [];
         selectedNodes.forEach((node) => {
           const filesForNode = selectedFilenamesMapping[node.nodeId] || [];
@@ -147,13 +142,10 @@ function Integration() {
         const fileColors = generateDistinctColors(allSelectedFiles.length);
         let colorIndex = 0;
 
-        // For each node, fetch the text of each selected file
         await Promise.all(
           selectedNodes.map(async (node) => {
             const filesForNode = selectedFilenamesMapping[node.nodeId] || [];
             if (filesForNode.length === 0) return;
-
-            // Switch axios baseURL to the node’s service
             updateNodeAxiosBaseURL(node.serviceUrl);
 
             const fileTexts = await Promise.all(
@@ -163,19 +155,15 @@ function Integration() {
               })
             );
 
-            // Parse & merge each file’s columns
             fileTexts.forEach((fileObj) => {
               const { filename, text } = fileObj;
               const parsed = parseCSV(text);
-
-              // Assign color and nodeId to each column
               parsed.forEach((col) => {
                 col.color = fileColors[colorIndex];
                 col.fileName = filename;
-                col.nodeId = node.nodeId; // Added nodeId assignment
+                col.nodeId = node.nodeId;
               });
               colorIndex++;
-
               mergedCols = mergeColumnsData(mergedCols, parsed);
               initializeMappings(parsed, filename, node.nodeId);
             });
@@ -216,8 +204,8 @@ function Integration() {
     setProcessingStatus("processing");
 
     try {
-      // 1. Build a lookup of nodeId => { fileName => [datasets] }
-      const nodeFileMappings = {}; // e.g. { "nodeA": { "Barthel.csv": ["dsA"], ... } }
+      const nodeFileMappings = {};
+      // e.g. { "nodeA": { "Barthel.csv": ["dsA"], ... } }
 
       for (const fileName of Object.keys(selectedDatasets)) {
         const col = columnsData.find((c) => c.fileName === fileName);
@@ -229,7 +217,6 @@ function Integration() {
 
         nodeFileMappings[nodeId][fileName] = selectedDatasets[fileName];
       }
-      // 2. For each node that has some file mappings, set baseURL and call setParseConfigs
       for (const node of selectedNodes) {
         const fileMappingsForNode = nodeFileMappings[node.nodeId];
         if (!fileMappingsForNode) continue;
@@ -243,8 +230,6 @@ function Integration() {
         console.log("[handleProcessMappings] payload for node", node.nodeId, payload);
         await setParseConfigs(payload);
       }
-
-      // If all requests succeed
       setProcessingStatus("success");
       return "All parse requests done";
     } catch (error) {
@@ -254,7 +239,6 @@ function Integration() {
     }
   };
 
-  // Callback that receives grouping info from ColumnMapping
   const handleMappingChange = (newGroups) => {
     setTemporaryGroups(newGroups);
   };
@@ -321,9 +305,7 @@ function Integration() {
         [unionName]: {
           mappingType: "standard",
           fileName: "custom_mapping",
-          // Keep track of which original columns are merged
           columns: groups.map((g) => g.column),
-          // A single group object, with all merged values
           groups: [
             {
               column: unionName,
@@ -346,12 +328,9 @@ function Integration() {
         setMappings((prev) => [...prev, newMapping]);
       }
     }
-    // Clear the drop area
     setTemporaryGroups([]);
   };
 
-
-  // Delete a single mapping
   const handleDeleteMapping = (mappingIndex, mappingKey) => {
     const mappingToDelete = {
       index: mappingIndex,
@@ -372,7 +351,6 @@ function Integration() {
     setMappings(updatedMappings);
   };
 
-  // Undo last delete
   const handleUndoDelete = () => {
     if (deletedItems.length > 0) {
       const lastDeletedItem = deletedItems[deletedItems.length - 1];
@@ -390,7 +368,6 @@ function Integration() {
     }
   };
 
-  // Format value for date or numeric range
   const formatValue = (value, type) => {
     if (type === "date") {
       const date = new Date(value);
@@ -401,7 +378,6 @@ function Integration() {
     return value !== undefined && value !== null ? value.toString() : "";
   };
 
-  // Fetch external schema if needed
   useEffect(() => {
     (async function loadSchema() {
       try {
@@ -429,10 +405,8 @@ function Integration() {
         nodes={selectedNodes}
         onSend={handleProcessMappings}
       />
-      {/* Only show FilePicker if no columns have been processed yet */}
       {!columnsData.length && (
         <FilePicker
-          // Pass multi‐node array: [ { nodeId, nodeName, files: [...] }, ... ]
           files={elementFileList}
           onFilesSelected={handleProcessSelectedElements}
           isProcessing={processingStatus === "processing"}
@@ -453,7 +427,7 @@ function Integration() {
           unmountOnExit
         >
           <div className={IntegrationStyles.columnsSection}>
-            <ColumnSearch
+            <ColumnSearchList
               columnsData={columnsData}
               handleColumnClick={(col) => {
                 const alreadyExists = temporaryGroups.some(

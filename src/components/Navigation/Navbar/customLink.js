@@ -1,8 +1,8 @@
-// Custom link component with active state styling
 import React from "react";
 import NavbarStyles from "./navbar.module.css";
 import { Link, useMatch, useResolvedPath } from "react-router-dom";
 
+// Custom link component with active state styling
 function CustomLink({ to, children, onClick, noToggle, reloadOnActive = false, ...props }) {
   const resolvedPath = useResolvedPath(to);
   const isActive = useMatch({ path: resolvedPath.pathname, end: true });

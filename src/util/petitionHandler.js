@@ -1,6 +1,6 @@
-// API request handlers for all backend and node petitions
 import axiosInstance from "./axiosSetup";
 import nodeAxiosInstance, { updateNodeAxiosBaseURL } from "./nodeAxiosSetup";
+// API request handlers for all backend and node petitions
 
 /* System petitions */
 // Fetch the list of nodes

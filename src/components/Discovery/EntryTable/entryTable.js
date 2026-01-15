@@ -1,4 +1,3 @@
-// Table component for displaying data entries with virtual scrolling
 import React, { useState, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import EntryTableStyles from "./entryTable.module.css";
 
@@ -96,6 +95,7 @@ function getTableContent(filteredLists, maxRows, onRowClick, selectedEntry, type
   );
 }
 
+// Table component for displaying data entries with virtual scrolling and resizable columns
 function EntryTable({ filteredLists, minCellWidth, maxRows = 1000, onRowSelect, selectedEntry, type }) {
   const [tableHeight, setTableHeight] = useState("auto");
   const [activeIndex, setActiveIndex] = useState(null);

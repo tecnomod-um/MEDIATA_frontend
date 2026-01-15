@@ -1,4 +1,3 @@
-// Column mapping component for data integration with drag-and-drop
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import ColumnMappingStyles from "./columnMapping.module.css";
 import Switch from "react-switch";
@@ -15,6 +14,7 @@ import { darkenColor } from "../../../util/colors.js";
 import { fetchSuggestions } from "../../../util/petitionHandler";
 import debounce from "lodash/debounce";
 
+// Main control area for defining mappings in data integration
 function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
   const [unionName, setUnionName] = useState("");
   const [customValues, setCustomValues] = useState([]);

@@ -1,8 +1,8 @@
-// Page image component with scroll-based fade animation
 import React from "react";
 import PageImageStyles from "./pageImage.module.css";
 import useScrollFade from "../../../hooks/useScrollFade.js";
 
+// Page image component with scroll-based fade animation
 const PageImage = ({ imageSrc, width, height, maintainAspectRatio = false, addDarkBorder = false }) => {
   const { ref, style } = useScrollFade();
 

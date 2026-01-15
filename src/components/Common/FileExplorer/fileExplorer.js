@@ -1,4 +1,3 @@
-// File explorer component for browsing and managing data files across nodes
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { CSSTransition } from "react-transition-group";
 import FileExplorerStyles from "./fileExplorer.module.css";
@@ -10,6 +9,7 @@ import CleanPanel from "./cleanPanel";
 import DeleteConfirmation from "./deleteConfirmation";
 import { formatBytes, formatDateTime, isFileNew } from "./fileUtils";
 
+// File explorer component for browsing files across nodes of the chosen category
 function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile, onFilesOpened, onFilesSelected, preSelectedFiles = {}, autoProcess = false }) {
 
   const [files, setFiles] = useState([]);

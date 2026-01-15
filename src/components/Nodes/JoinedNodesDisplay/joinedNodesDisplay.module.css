@@ -42,7 +42,6 @@
 }
 
 .body {
-  /* Center the list container within the modal */
   padding: 15px 20px;
   max-height: 65vh;
   overflow-y: auto;
@@ -52,7 +51,6 @@
 }
 
 .nodeList {
-  /* Limit width so the cards are nicely centered and not too wide */
   width: 100%;
   max-width: 700px;
   display: flex;
@@ -69,7 +67,6 @@
   width: 100%;
 }
 
-/* Node header: name & desc on left, toggle button on right */
 .nodeHeader {
   display: flex;
   align-items: center;
@@ -133,7 +130,6 @@
   animation: spin 0.8s linear infinite;
 }
 
-/* Loading spinner container for the main dataset area */
 .loadingContainer {
   display: flex;
   flex-direction: column;

@@ -1,4 +1,3 @@
-// Tooltip popup component with auto-positioning and arrow pointer
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import { CSSTransition } from "react-transition-group";
@@ -6,6 +5,7 @@ import TooltipPopupStyles from "./tooltipPopup.module.css";
 
 const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
 
+// Tooltip popup alert, to be triggered by and anchored to controls (e.g. buttons)
 const TooltipPopup = ({ message, buttonRef, onClose, offsetY = 0, autoHideMs = 3000, viewportMargin = 10, arrowWidth = 18, arrowHeight = 12 }) => {
   const tooltipRef = useRef(null);
   const [show, setShow] = useState(true);

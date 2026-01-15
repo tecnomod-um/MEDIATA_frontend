@@ -1,10 +1,10 @@
-// Component for rendering connections between nodes
 import React, { useMemo, useCallback, useRef } from "react";
 import { useTransition, a } from "@react-spring/three";
 import { useFrame } from "@react-three/fiber";
 import JoinNodesDot from "./joinNodesDot";
 import AnimatedDashedSegment from "./animatedDashedSegment";
 
+// Defines connection behavior between nodes
 const Connections = ({ nodes, nodePositions, nodeSize, onJoinNodesDoubleClick }) => {
   const auraFactor = 1.2;
   const threshold = 2 * nodeSize * auraFactor;

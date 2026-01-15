@@ -1,4 +1,3 @@
-// Project picker modal for selecting research projects
 import React, { useEffect, useRef, useState } from "react";
 import { CSSTransition } from "react-transition-group";
 import ProjectPickerStyles from "./filePicker.module.css";
@@ -23,6 +22,8 @@ const badgeClassFor = (status, styles) => {
   }
 };
 
+
+// Project picker modal for selecting research projects
 function ProjectPicker({ projects = [], onSelectProject, modalTitle }) {
   const [showModal] = useState(true);
   const [loaded, setLoaded] = useState(false);

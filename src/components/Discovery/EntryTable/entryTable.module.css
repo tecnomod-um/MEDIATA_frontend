@@ -6,7 +6,7 @@
     scrollbar-width: thin;
     scrollbar-color: var(--table-scrollbar-thumb) var(--table-scrollbar-track);
     background-color: var(--background-color-card);
-    color: var(--text-color-primary);
+    color: var(--text-color-muted);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     border: 1px solid var(--border-color-secondary);
 }
@@ -23,7 +23,7 @@
     font-size: 16px;
     background-color: var(--background-color-5);
     padding: 10px;
-    color: #495057;
+    color: var(--text-color-primary);
 }
 
 .resTable .resTh,

@@ -1,7 +1,7 @@
-// Discovery icon SVG component for landing page
 import React from "react";
 import LandingDiscoveryStyles from "./landingIcons.module.css";
 
+// 'Discovery' SVG icon for the landing page
 export default function LandingDiscovery({ size, title = "Search document" }) {
   const svgStyle = size ? { width: size, height: size } : {};
 
@@ -15,7 +15,6 @@ export default function LandingDiscovery({ size, title = "Search document" }) {
       focusable="false"
     >
       <defs data-testid="ld-defs">
-        {/* Shadow filter: blur + offset (Firefox-friendly) */}
         <filter
           id="ld_shadow"
           x="-60%" y="-60%" width="220%" height="220%"
@@ -60,14 +59,11 @@ export default function LandingDiscovery({ size, title = "Search document" }) {
 
       {/* Move a parent wrapper that contains shadow + magnifier */}
       <g id="ld_mover">
-        {/* Shadow copy (same shapes) */}
         <g filter="url(#ld_shadow)" aria-hidden="true">
           <circle cx="0" cy="0" r="12" className={LandingDiscoveryStyles.lens} />
           <line x1="8" y1="8" x2="22" y2="22" className={LandingDiscoveryStyles.handle} />
           <circle cx="-4" cy="-4" r="5" className={LandingDiscoveryStyles.glint} />
         </g>
-
-        {/* Actual magnifier (no filter) */}
         <g className={LandingDiscoveryStyles.magnifier} data-testid="ld-magnifier">
           <circle cx="0" cy="0" r="12" className={LandingDiscoveryStyles.lens} />
           <line x1="8" y1="8" x2="22" y2="22" className={LandingDiscoveryStyles.handle} />

@@ -1,10 +1,10 @@
-// Panel component for viewing and editing FHIR cluster details
 import React, { useState } from 'react';
 import IconButton from '@mui/material/IconButton';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import styles from './clusterDetailPanel.module.css';
 
+// Panel component for viewing and editing FHIR cluster details
 export default function ClusterDetailPanel({ cluster, allElements, onRemoveElement, onAddElement, onBack, onDragStart, onDragEnd }) {
   const available = allElements.filter(el => !cluster.elements.some(e => e.id === el.id));
   const [toAdd, setToAdd] = useState(available[0]?.id || '');

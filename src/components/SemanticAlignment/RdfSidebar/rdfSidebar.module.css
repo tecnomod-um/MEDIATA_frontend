@@ -1,4 +1,3 @@
-
 .sidebarContainer {
   box-sizing: border-box;
   height: 100%;
@@ -35,8 +34,6 @@
 
 .elementsListWrapper {
   flex: 1;
-
-  /* only scroll vertically, let things overflow horizontally */
   overflow-y: auto;
   overflow-x: visible;
   position: relative;
@@ -47,7 +44,6 @@
   scrollbar-width: thin;
   scrollbar-color: #aaa transparent;
 }
-
 
 .elementsListWrapper::-webkit-scrollbar {
   width: 6px;

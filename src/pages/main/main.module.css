@@ -1,4 +1,3 @@
-
 * {
   margin: 0;
   padding: 0;
@@ -6,7 +5,6 @@
 
 .pageContainer {
   position: relative;
-  /* Cannot add background here - would cover Canvas animation */
 }
 
 .mainContainer {
@@ -106,7 +104,6 @@
   margin-top: 20px;
 }
 
-/* ---- CTA button (responsive width & centered) ---- */
 .big_button {
   min-height: 80px;
   width: clamp(220px, 70vw, 320px);
@@ -339,7 +336,6 @@
   margin-bottom: 10px;
 }
 
-/* === Features row === */
 .featuresSection {
   width: 100%;
   padding: 32px 16px 8px;
@@ -425,7 +421,6 @@
   color: var(--text-color-on-darkbg);
 }
 
-/* ---- Mobile tweaks ---- */
 @media (max-width: 768px) {
   .textImageContainerUnion {
     flex-direction: column;
@@ -464,7 +459,6 @@
     margin: 10px 0;
   }
 
-  /* keep smaller text/height if you like, but no fixed width */
   .big_button {
     font-size: 14px;
     min-height: 55px;

@@ -1,8 +1,8 @@
-// Autocomplete input component with keyboard navigation and suggestions
 import React, { useState, useRef, useEffect } from "react";
 import ReactDOM from "react-dom";
 import AutoCompleteInputStyles from "./autoCompleteInput.module.css";
 
+// Input component with autocomplete functionality, keyboard navigation and suggestions
 function AutocompleteInput({  value,  onChange,  placeholder,  className,  suggestions = [],  limitInitial = true, id, name, ariaLabel}) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [filtered, setFiltered] = useState([]);

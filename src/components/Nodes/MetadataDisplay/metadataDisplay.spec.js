@@ -5,7 +5,7 @@ import DatasetCard from './datasetCard';
 import '@testing-library/jest-dom';
 
 jest.mock(
-  '../../Unused/OverlayWrapper/overlayWrapper',
+  '../../Common/OverlayWrapper/overlayWrapper',
   () => ({
     __esModule: true,
     default: ({ isOpen, children }) =>

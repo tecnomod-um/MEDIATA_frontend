@@ -1,7 +1,7 @@
-// Sidebar component for RDF semantic alignment elements
 import React from 'react';
 import ElementList from '../../Common/ElementList/elementList';
 
+// Sidebar wrapper for RDF semantic alignment elements. Heavy stylization
 export default function RdfSidebar({ elements, activeElementIndex, activeCategoryIndex, onSelectElement, builtClasses }) {
   const items = (elements?.elements || []).map((el, idx) => ({
     id: el.name,

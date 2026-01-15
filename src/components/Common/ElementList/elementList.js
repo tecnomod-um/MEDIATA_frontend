@@ -1,7 +1,7 @@
-// Searchable list component with categories and drag support
 import React, { useState, useMemo } from 'react';
 import ElementListStyles from './elementList.module.css';
 
+// List component with categories and drag support
 const ElementList = ({ items = [], activeIndex = null, activeCategoryIndex = null, onSelect, builtClasses = {}, searchPlaceholder = 'Search', showCategories = true, draggableItems = false, onDragStart, onDragEnd }) => {
 
   const [searchTerm, setSearchTerm] = useState('');

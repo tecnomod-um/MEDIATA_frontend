@@ -1,9 +1,9 @@
-// Toolbar component with file operation buttons
 import React from "react";
 import IconButton from "@mui/material/IconButton";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import FileExplorerStyles from "./fileExplorer.module.css";
 
+// Controls of the file explorer
 function FileToolbar({ toolbarDisabled, doOpenSelected, hasSelection, onOpenFile, onFilesSelected, onFilesOpened, renamingName, selectedCount, startRename, openCleanPanel, requestDelete, multiMode, setMultiMode, busy, load, onClose }) {
   const hasOpenHandler = Boolean(onOpenFile || onFilesSelected || onFilesOpened);
   return (

@@ -1,8 +1,8 @@
-// Upload file picker modal for selecting local files to upload
 import React, { useState, useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 import FilePickerStyles from './filePicker.module.css';
 
+// File uploader modal for views that need a local file to work
 function UploadFilePicker({ onFileUpload, isProcessing = false, modalTitle }) {
   const [file, setFile] = useState(null);
   const [showModal, setShowModal] = useState(true);

@@ -1,6 +1,6 @@
-// Axios instance configuration for node-specific API requests
 import axios from "axios";
 
+// Axios instance configuration for node-specific API requests
 const nodeAxiosInstance = axios.create({
   baseURL: "",
   timeout: 300000,

@@ -1,5 +1,6 @@
-// Node context provider for managing selected data nodes
 import React, { createContext, useContext, useState, useEffect } from "react";
+
+// Node context provider for managing selected data nodes
 
 const NodeContext = createContext();
 

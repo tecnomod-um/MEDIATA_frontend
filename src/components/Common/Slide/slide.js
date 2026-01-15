@@ -1,10 +1,10 @@
-// Slide carousel component for tutorial images
 import React, { useState } from 'react';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import SlideStyles from './slide.module.css';
 import useScrollFade from '../../../hooks/useScrollFade';
 
+// Slide carousel for images
 const Slide = ({ images, steps }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const { ref, style } = useScrollFade();

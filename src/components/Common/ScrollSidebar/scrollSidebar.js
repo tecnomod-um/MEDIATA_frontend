@@ -1,7 +1,7 @@
-// Scroll sidebar navigation component with active section tracking
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import ScrollSidebarStyles from "./scrollSidebar.module.css";
 
+// Navigation focused sidebar with active section tracking
 function ScrollSidebar({ sections = [], offset = 55, maxLines = 2, className, listClassName, itemClassName, activeClassName }) {
   const [active, setActive] = useState(sections[0] || null);
   const activeRef = useRef(active);

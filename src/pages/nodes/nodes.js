@@ -1,4 +1,3 @@
-// Node selection page with 3D visualization and management
 import React, { useState, useEffect } from "react";
 import { getNodeList, getNodeInfo, getNodeMetadata, nodeAuth } from "../../util/petitionHandler";
 import NodeScene from "../../components/Nodes/NodeScene/nodeScene";
@@ -12,6 +11,7 @@ import JoinedNodesDisplay from "../../components/Nodes/JoinedNodesDisplay/joined
 import SchemaTray from "../../components/Common/SchemaTray/schemaTray";
 import { lightenColor } from "../../util/colors";
 
+// Node selection page. Based on the 3D node scene
 const Nodes = () => {
   const [nodes, setNodes] = useState([]);
   const [error, setError] = useState(null);
@@ -123,13 +123,11 @@ const Nodes = () => {
       if (response.error) throw new Error(response.error);
 
       const { token, nodeInfo } = response;
-      // Call nodeAuth with the node's service URL and token.
       const validationResponse = await nodeAuth(nodeInfo.serviceUrl, token);
       if (validationResponse.error) throw new Error(validationResponse.error);
 
       const { jwtNodeToken } = validationResponse;
       console.log("Got node JWT for node", selectedNode.nodeId, ":", jwtNodeToken);
-      // The token is now stored (see nodeAuth below) in the mapping.
       selectNode(nodeInfo);
       setShowMetadataModal(false);
       setTimeout(() => {

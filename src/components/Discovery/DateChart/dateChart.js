@@ -1,4 +1,3 @@
-// Date histogram line chart component using Chart.js
 import React, { useRef, useEffect, useMemo } from "react";
 import { Line } from "react-chartjs-2";
 import "chartjs-adapter-moment";
@@ -7,6 +6,7 @@ import { Chart as ChartJS, registerables } from "chart.js";
 
 ChartJS.register(...registerables);
 
+// Display for the continuous features' histogram that are a datetype
 function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick, isSelected }) {
   const chartRef = useRef(null);
 
