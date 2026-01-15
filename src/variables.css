@@ -285,6 +285,7 @@
   --background-color-tertiary: var(--background-color-tertiary-light);
   --background-color-modal: var(--background-color-modal-light);
   --logo-backplate: var(--logo-backplate-light);
+  --schema-tray-bg: var(--background-color-2-light);
 
 
   /* Navigation & Headers */
@@ -392,6 +393,7 @@ body.dark-mode {
   --background-color-tertiary: var(--background-color-tertiary-dark);
   --background-color-modal: var(--background-color-modal-dark);
   --logo-backplate: var(--logo-backplate-dark);
+  --schema-tray-bg: var(--background-color-5-dark);
   
   /* Navigation & Headers */
   --background-nav-and-headers-background-color: var(--background-nav-and-headers-background-color-dark);
@@ -513,43 +515,6 @@ body.dark-mode {
    CSS VARIABLES IMPLEMENTATION NOTES & FURTHER STANDARDIZATION OPPORTUNITIES
    ============================================================================
 
-   This section documents:
-   1. What colors and values were added/changed during implementation
-   2. Analysis of remaining hardcoded values across all CSS modules
-   3. Recommendations for future standardization work
-
-   --------------------------------------------------------------------------
-   WHAT WAS CHANGED IN THIS IMPLEMENTATION
-   --------------------------------------------------------------------------
-
-   ORIGINAL VARIABLES (before this PR):
-   • 3 background colors (1-light, 2-light, card-light)
-   • 5 navigation colors
-   • 1 text color (on-darkbg only)
-   • 6 button-specific colors (add-value, delete, save, mapping, description)
-   • Primary button colors (color, hover, gradient, shadow)
-   • 2 tooltray colors
-   • 2 file-selected colors
-   • 2 overlay colors (darkened, translucent)
-   • 8 icon colors
-   • 8 project status colors
-   • 2 transitions (duration, ease)
-   • 1 size (project-thumb-size)
-   Total: ~40 variables
-
-   ADDED VARIABLES (in this PR):
-   • 6 additional background variations (3-5, secondary, tertiary, modal)
-   • 6 text color variations (primary, secondary, tertiary, muted, disabled, dark)
-   • 5 border colors (light, secondary, tertiary, dark, input)
-   • 3 error/alert colors (color, bg, border)
-   • 1 button-success color pair
-   • 1 button-disabled color
-   • 2 additional transitions (fast, slow)
-   • 4 box-shadow presets (sm, md, lg, xl)
-   • Complete dark mode equivalents for ALL colors above
-   • Active theme mapping variables
-   Total added: ~160 new variables
-
    COLORS PRESERVED (no changes to existing appearance):
    • All original color values kept exactly as-is for light theme
    • Navigation colors: #08242c, #0c343f, #08181d, #3a6f7a, #071418
@@ -636,6 +601,7 @@ body.dark-mode {
      --font-size-2xl: 2rem (32px)
    • CAUTION: Font sizes are often context-specific, be conservative
 
+   
    GAP/SPACING (moderately inconsistent):
    • Common values: 8px, 10px, 5px, 20px, 6px, 12px, 14px, 16px
    • RECOMMENDATION: Create spacing scale (if standardization desired)
