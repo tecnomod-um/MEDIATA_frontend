@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import FilterModal from './filterModal';
 
-jest.mock('../../Unused/OverlayWrapper/overlayWrapper', () => ({
+jest.mock('../../Common/OverlayWrapper/overlayWrapper', () => ({
   __esModule: true,
   default: ({ children }) => <div data-testid="overlay">{children}</div>,
 }));

@@ -5,9 +5,9 @@ import SchemaTray from './schemaTray'
 import { saveSchemaToBackend, fetchSchemaFromBackend, removeSchemaFromBackend } from '../../../util/petitionHandler'
 
 jest.mock('../../../util/petitionHandler', () => ({
-  saveSchemaToBackend: jest.fn(),
-  fetchSchemaFromBackend: jest.fn(),
-  removeSchemaFromBackend: jest.fn(),
+  saveSchemaToBackend: jest.fn().mockResolvedValue(undefined),
+  fetchSchemaFromBackend: jest.fn().mockResolvedValue(null),
+  removeSchemaFromBackend: jest.fn().mockResolvedValue(undefined),
 }))
 
 const renderTray = (props = {}) =>
@@ -184,12 +184,17 @@ describe('SchemaTray • interaction details', () => {
     ).toBeInTheDocument()
   })
 
-  it('closes tray when user clicks outside', () => {
+  it('closes tray when user clicks outside', async () => {
     renderTray();
     openTray()
     expect(screen.getByText(/JSON Schema/i)).toBeInTheDocument()
+    // When open, closed tab should not be visible
+    expect(screen.queryByText(/^Schema$/i)).not.toBeInTheDocument()
 
     fireEvent.mouseDown(document.body)
-    expect(screen.getByText(/^Schema$/i)).toBeInTheDocument()
+    await waitFor(() => {
+      // When closed, the closed tab should be visible
+      expect(screen.getByText(/^Schema$/i)).toBeInTheDocument()
+    })
   })
 })
