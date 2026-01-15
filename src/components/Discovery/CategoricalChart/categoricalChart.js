@@ -12,7 +12,7 @@ const TOP_N_FULL = 80;
 
 // Helper to get CSS variable value
 const getCSSVariable = (varName) => {
-  if (typeof window === 'undefined') return '';
+  if (typeof document === 'undefined') return '';
   const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
   return value || '';
 };

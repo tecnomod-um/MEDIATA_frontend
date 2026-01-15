@@ -43,6 +43,7 @@ const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descr
 
   const getNodeColor = () => {
     if (node.color) return node.color;
+    if (typeof document === 'undefined') return '#555555';
     const cssVar = getComputedStyle(document.documentElement).getPropertyValue('--text-color-muted').trim();
     return cssVar || '#555555';
   };
