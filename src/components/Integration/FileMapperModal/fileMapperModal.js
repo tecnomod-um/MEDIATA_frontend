@@ -158,7 +158,7 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
 
   const getFileColor = (fileName) => {
     const col = columnsData.find((c) => c.fileName === fileName);
-    return col ? col.color : '#ccc';
+    return col ? col.color : 'var(--background-color-3)';
   };
 
   const toggleDataset = (file, ds) =>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import IconButton from '@mui/material/IconButton';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
+import CloseIcon from '@mui/icons-material/Close';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import styles from './clusterDetailPanel.module.css';
 
@@ -13,7 +14,7 @@ export default function ClusterDetailPanel({ cluster, allElements, onRemoveEleme
     <div className={styles.panel}>
       <header className={styles.header}>
         <IconButton onClick={onBack} className={styles.backBtn} size="small" aria-label="back" >
-          <ArrowBackIosIcon fontSize="small" style={{ color: '#fff' }} />
+          <ArrowBackIosIcon fontSize="small" style={{ color: 'var(--text-color-on-darkbg)' }} />
         </IconButton>
         <h2 className={styles.title}>{cluster.name}</h2>
       </header>
@@ -53,8 +54,9 @@ export default function ClusterDetailPanel({ cluster, allElements, onRemoveEleme
                   <button
                     onClick={() => onRemoveElement(el.id)}
                     className={styles.remove}
+                    aria-label="Remove element"
                   >
-                    ✕
+                    <CloseIcon fontSize="small" />
                   </button>
                 </div>
                 <div className={styles.descWrapper}>

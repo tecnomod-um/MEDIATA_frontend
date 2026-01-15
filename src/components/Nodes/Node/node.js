@@ -41,7 +41,13 @@ const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descr
   });
   const interpolatedOpacity = fadeInProps.opacity.to((o) => o);
 
-  const colorSafe = node.color ?? "#555555";
+  const getNodeColor = () => {
+    if (node.color) return node.color;
+    const cssVar = getComputedStyle(document.documentElement).getPropertyValue('--text-color-muted').trim();
+    return cssVar || '#555555';
+  };
+
+  const colorSafe = getNodeColor();
   const backgroundColor = new Color(colorSafe).multiplyScalar(0.8).getStyle();
   const margin = 0.1;
 
