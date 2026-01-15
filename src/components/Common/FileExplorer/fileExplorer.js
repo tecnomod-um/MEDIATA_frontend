@@ -5,9 +5,15 @@ import { listExplorerFiles, renameExplorerFile, deleteExplorerFile, cleanExplore
 import { updateNodeAxiosBaseURL } from "../../../util/nodeAxiosSetup";
 import FileToolbar from "./fileToolbar";
 import FileTable from "./fileTable";
+import { toast } from "react-toastify";
 import CleanPanel from "./cleanPanel";
 import DeleteConfirmation from "./deleteConfirmation";
 import { formatBytes, formatDateTime, isFileNew } from "./fileUtils";
+
+const notifyError = (e, fallback) => {
+  const msg = e?.response?.data?.message || e?.message || fallback;
+  toast.error(msg);
+};
 
 // File explorer component for browsing files across nodes of the chosen category
 function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile, onFilesOpened, onFilesSelected, preSelectedFiles = {}, autoProcess = false }) {
@@ -39,7 +45,6 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
   const filesLoadedTimer = useRef(null);
   const modalContainerRef = useRef(null);
   const toolbarRef = useRef(null);
-  const errorRef = useRef(null);
 
   const getMaxListAvail = useCallback(() => {
     const modal = modalContainerRef.current;
@@ -51,8 +56,7 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
       : modal.getBoundingClientRect().height;
 
     const toolbarH = toolbarRef.current?.getBoundingClientRect().height ?? 0;
-    const errorH = errorRef.current?.getBoundingClientRect().height ?? 0;
-    return Math.max(0, maxH - toolbarH - errorH);
+    return Math.max(0, maxH - toolbarH);
   }, []);
 
   const animateWrapBy = useCallback((delta) => {
@@ -70,17 +74,17 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
 
       setIsAnimating(true);
       setListHeight(current);
-      
+
       requestAnimationFrame(() => {
         setListHeight(target);
-      
+
         autoHeightTimer.current = window.setTimeout(() => {
           if (predictedContent <= maxAvail + 1) setListHeight("auto");
           else setListHeight(maxAvail);
-      
+
           setIsAnimating(false);
         }, 260);
-      });      
+      });
     });
   }, [getMaxListAvail]);
 
@@ -257,7 +261,7 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
         requestAnimationFrame(() => animateWrapToContent());
       }, 0);
     } catch (e) {
-      setError(e?.message || "Failed to load files");
+      notifyError(e, "Failed to load files");
       setFiles([]);
       setSelected(new Set());
       setFilesLoaded(true);
@@ -418,7 +422,7 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
       setRenameDraft("");
       await load(true);
     } catch (e) {
-      setError(e?.message || "Rename failed");
+      notifyError(e, "Rename failed");
     } finally {
       setBusy(false);
     }
@@ -454,7 +458,7 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
       setShowDeleteConfirm(false);
       await load(true);
     } catch (e) {
-      setError(e?.message || "Delete failed");
+      notifyError(e, "Delete failed");
     } finally {
       setBusy(false);
     }
@@ -497,7 +501,7 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
     if (!keys?.length) return;
 
     if (!onFilesOpened) {
-      setError("Multi-file open requires onFilesOpened.");
+      toast.error("Multi-file open requires onFilesOpened.");
       return;
     }
 
@@ -577,7 +581,7 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
 
       onFilesOpened(allResults);
     } catch (e) {
-      setError(e?.message || "Failed to open selected files");
+      notifyError(e, "Failed to open selected files");
     } finally {
       setProcessingFiles(new Set());
       clearProgressFor(keys);
@@ -615,8 +619,7 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
       await doOpenMany(Array.from(selected));
       return;
     }
-
-    setError("No handler: pass onFilesSelected or onFilesOpened.");
+    toast.error("No handler: pass onFilesSelected or onFilesOpened.");
   };
 
   const openCleanPanel = () => {
@@ -657,7 +660,7 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
       setShowCleanPanel(false);
       await load(true);
     } catch (e) {
-      setError(e?.message || "Clean failed");
+      notifyError(e, "Clean failed");
       setProcessingFiles(new Set());
     } finally {
       setBusy(false);
@@ -852,10 +855,10 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
                   overflowY: isAnimating ? "hidden" : "auto",
                   overflowX: "hidden",
                   transition: "height 260ms ease",
-                }}                
+                }}
               >
                 {loading ? (
-                  <div ref={errorRef} className={FileExplorerStyles.emptyState}>Loading…</div>
+                  <div className={FileExplorerStyles.emptyState}>Loading…</div>
                 ) : sorted.length === 0 ? (
                   <div className={FileExplorerStyles.emptyState}>No files available</div>
                 ) : (
@@ -920,8 +923,6 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
               />
             </CSSTransition>
           </div>
-
-          {error ? <div className={FileExplorerStyles.errorLine}>{error}</div> : null}
           <CSSTransition
             in={showDeleteConfirm}
             timeout={180}

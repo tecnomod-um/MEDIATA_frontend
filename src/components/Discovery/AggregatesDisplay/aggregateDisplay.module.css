@@ -152,6 +152,12 @@
   margin: 0;
 }
 
+.matrixCorner {
+  background-color: var(--background-color-card);
+  border: 1px solid var(--border-color-secondary);
+  padding: 0;
+}
+
 .matrixHeader,
 .matrixCell {
   padding: 15px;
@@ -178,7 +184,7 @@
   background-color: var(--background-color-tertiary);
 }
 
-.matrixCell.diagonal:hover  {
+.matrixCell.diagonal:hover {
   background-color: var(--background-nav-background-color-hover);
 }
 
@@ -198,11 +204,16 @@
   background-color: var(--background-color-card);
   color: var(--text-color-primary);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  padding: 12px;
+  padding: 0 12px;
   font-size: var(--font-size-md);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.selectPosition {
+  box-sizing: border-box;
+  display: block;
 }
 
 .selectPosition option {

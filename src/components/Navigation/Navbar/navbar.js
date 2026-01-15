@@ -32,7 +32,7 @@ function FileSearchIcon() {
       <FaSearch
         style={{
           fontSize: "0.75em",
-          color: "var(--text-color-primary)",
+          color: "var(--text-color-primary-light)",
           position: "absolute",
           top: "28%",
           left: "22%"

@@ -231,8 +231,8 @@ function RangePicker({ min, max, type, onRangeChange, unavailableRanges = [] }) 
             allowCross={false}
             styles={{
               rail: { backgroundColor: "#ddd" },
-              track: { backgroundColor: accentColor },
-              handle: { borderColor: accentColor },
+              track: { backgroundColor: "var(--background-nav-tool-background-color-active)" },
+              handle: { borderColor: "var(--background-nav-tool-background-color-active)" },
             }}
           />
         </div>

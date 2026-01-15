@@ -38,13 +38,15 @@ const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearman
 
   useEffect(() => {
     const updateSelectWidth = () => {
-      if (matrixRef.current && selectRef.current) {
-        const firstHeaderCell = matrixRef.current.querySelector("th");
-        if (firstHeaderCell) {
-          selectRef.current.style.width = `${firstHeaderCell.offsetWidth}px`;
-        }
-      }
+      if (!matrixRef.current || !selectRef.current) return;
+    
+      const firstHeaderCell = matrixRef.current.querySelector("th");
+      if (!firstHeaderCell) return;
+      const rect = firstHeaderCell.getBoundingClientRect();
+      selectRef.current.style.width = `${Math.ceil(rect.width)}px`;
+      selectRef.current.style.height = `${Math.ceil(rect.height)}px`;
     };
+    
     updateSelectWidth();
     window.addEventListener("resize", updateSelectWidth);
     return () => window.removeEventListener("resize", updateSelectWidth);

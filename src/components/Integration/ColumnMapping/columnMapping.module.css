@@ -59,18 +59,20 @@
 
 .droppedItem {
   padding: 10px;
-  background-color: var(--background-color-tertiary);
+  background-color: var(--background-color-3);
+  border: 1px solid var(--border-color-secondary);
   border-radius: 8px;
   position: relative;
   width: 100%;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.3s;
+  box-shadow: var(--box-shadow-sm);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
   display: flex;
   flex-direction: column;
+  color: var(--text-color-primary);
 }
 
 .droppedItem:hover {
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
 }
 
 .deleteIcon {
@@ -205,8 +207,9 @@
 .mappingTypeSelector {
   display: flex;
   align-items: center;
-  background-color: var(--background-color-tertiary);
-  border: 1px solid #cfcfcf;
+  background-color: var(--background-color-3);
+  border: 1px solid var(--border-color-secondary);
+  color: var(--text-color-primary);
   font-size: var(--font-size-base);
 }
 
@@ -516,19 +519,26 @@
 }
 
 .mappingButton {
-  background-color: var(--text-color-tertiary);
-  color: var(--text-color-on-darkbg);
-  border: none;
-  padding: 8px 15px;
-  font-size: var(--font-size-base);
+  background-color: var(--background-color-4);
+  color: var(--text-color-primary);
+  border: 1px solid var(--border-color-secondary);
+  font-size: var(--font-size-xs);
+  padding: 6px 10px;
   border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  box-shadow: var(--box-shadow-sm);
 }
 
 .mappingButton:hover {
-  background-color: var(--text-color-secondary);
+  background-color: var(--background-color-5);
+  border-color: var(--border-color);
+}
+
+
+.mappingButton:hover {
+  background-color: var(--background-color-5);
+  border-color: var(--border-color);
 }
 
 .dropText {
@@ -551,15 +561,21 @@
   align-items: flex-start;
 }
 
-.groupType {
+.groupTitle {
+  margin: 0;
   font-size: var(--font-size-base);
+  font-weight: 700;
   color: var(--text-color-primary);
-  margin-right: 1vw;
-  font-weight: bold;
+}
+
+.groupType {
+  font-size: var(--font-size-sm);
+  color: var(--text-color-primary);
+  font-weight: 600;
 }
 
 .groupFile {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
   color: var(--text-color-muted);
   margin-top: 2px;
 }
@@ -572,7 +588,7 @@
 
 .groupDetail {
   margin: 0;
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
   color: var(--text-color-secondary);
 }
 
@@ -585,10 +601,12 @@
 }
 
 .categoryItem {
-  background-color: var(--background-color-tertiary);
+  background-color: var(--background-color-4);
+  color: var(--text-color-primary);
+  border: 1px solid var(--border-color-secondary);
   padding: 5px 10px;
   border-radius: 4px;
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
 }
 
 /* animations */
@@ -639,8 +657,8 @@
 
 .sectionTitle {
   margin: 0;
-  font-size: var(--font-size-md);
-  font-weight: 700;
+  font-size: var(--font-size-base);
+  font-weight: 600;
   color: var(--text-color-primary);
   letter-spacing: 0.2px;
 }
@@ -790,4 +808,44 @@
   to {
     overflow-y: auto;
   }
+}
+
+.dropArea {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.dropArea::-webkit-scrollbar {
+  width: 10px;
+}
+
+.dropArea::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 10px;
+  border: 2px solid var(--scrollbar-track);
+}
+
+.dropArea::-webkit-scrollbar-track {
+  background-color: var(--scrollbar-track);
+  border-radius: 10px;
+}
+
+.selectMappingContainer {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.selectMappingContainer::-webkit-scrollbar {
+  width: 10px;
+}
+
+.selectMappingContainer::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 10px;
+  border: 2px solid var(--scrollbar-track);
+}
+
+.selectMappingContainer::-webkit-scrollbar-track {
+  background-color: var(--scrollbar-track);
+  border-radius: 10px;
 }

@@ -79,17 +79,19 @@
 }
 
 .mappingButton {
-  background-color: var(--background-color-3);
-  color: var(--text-color-primary);
-  border: none;
+  background-color: var(--button-save-color);
+  color: var(--text-color-on-darkbg);
+  border: 1px solid var(--border-color-secondary);
+  font-size: var(--font-size-sm);
   padding: 8px 15px;
-  font-size: var(--font-size-base);
   border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.2s ease;
   box-shadow: var(--box-shadow-sm);
 }
 
+
 .mappingButton:hover {
-  background-color: var(--background-color-2);
+  background-color: var(--button-save-hover-color);
+  border-color: var(--border-color);
 }
