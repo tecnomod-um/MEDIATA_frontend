@@ -6,6 +6,7 @@ import { CSSTransition, SwitchTransition } from "react-transition-group";
 import AutocompleteInput from "../../Common/AutoCompleteInput/autoCompleteInput";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddBoxIcon from "@mui/icons-material/AddBox";
+import CloseIcon from "@mui/icons-material/Close";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import TooltipPopup from "../../Common/TooltipPopup/tooltipPopup";
 import debounce from "lodash/debounce";
@@ -402,8 +403,9 @@ const ElementDetailPanel = ({ activeElement, currentSelection, onSelectOption, a
                                           cats.splice(i, 1);
                                           handleInputChange(catsKey, cats);
                                         }}
+                                        aria-label="Remove category row"
                                       >
-                                        ×
+                                        <CloseIcon fontSize="small" />
                                       </button>
                                     </div>
                                   );
