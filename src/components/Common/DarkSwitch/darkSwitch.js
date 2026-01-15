@@ -10,6 +10,19 @@ function DarkSwitch() {
   });
 
   useEffect(() => {
+    document.body.classList.toggle("dark-mode", isDarkMode);
+    localStorage.setItem("darkMode", String(isDarkMode));
+  }, [isDarkMode]);
+
+  function cssVar(name, fallback) {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return v || fallback;
+  }
+
+  const offColor = cssVar("--background-nav-and-headers-background-color", "#0b2a33");
+  const onColor = cssVar("--background-nav-tool-background-color-active-light", "#1fb6d5");
+
+  useEffect(() => {
     if (isDarkMode) document.body.classList.add("dark-mode");
     else document.body.classList.remove("dark-mode");
     localStorage.setItem("darkMode", String(isDarkMode));
@@ -22,8 +35,8 @@ function DarkSwitch() {
         onChange={setIsDarkMode}
         uncheckedIcon={false}
         checkedIcon={false}
-        offColor="#0b2a33"
-        onColor="#1fb6d5"
+        offColor={offColor}
+        onColor={onColor}
         offHandleColor="#ffffff"
         onHandleColor="#ffffff"
         width={34}
