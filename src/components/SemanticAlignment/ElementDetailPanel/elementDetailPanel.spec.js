@@ -204,7 +204,7 @@ describe("<ElementDetailPanel />", () => {
       const addBtn = await screen.findByRole("button", { name: "+ Add row" });
       fireEvent.click(addBtn);
       expect(setElementFormValues).toHaveBeenCalled();
-      const remove = await screen.findByText("×");
+      const remove = await screen.findByLabelText("Remove category row");
       fireEvent.click(remove);
       expect(setElementFormValues).toHaveBeenCalled();
     });

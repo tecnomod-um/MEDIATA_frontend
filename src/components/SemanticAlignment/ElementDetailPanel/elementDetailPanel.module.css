@@ -22,7 +22,7 @@
 }
 
 .detailTitle {
-  font-size: 1.6em;
+  font-size: var(--font-size-xl);
   font-weight: 700;
   color: var(--text-color-primary);
   padding: 0;
@@ -43,7 +43,7 @@
   gap: 8px;
   line-height: 1;
   padding: 8px 10px;
-  font-size: 0.9em;
+  font-size: var(--font-size-base);
   font-weight: 600;
   cursor: pointer;
   background-color: var(--button-add-value-color);
@@ -148,7 +148,7 @@
   cursor: pointer;
   border: 1px solid var(--border-color);
   border-radius: 5px 5px 0 0;
-  font-size: 0.95em;
+  font-size: var(--font-size-base);
   transition: background-color 0.3s ease;
   position: relative;
 }
@@ -253,7 +253,7 @@
   padding: 10px;
   border: 1px solid var(--border-color);
   border-radius: 0 8px 8px 8px;
-  font-size: 0.95em;
+  font-size: var(--font-size-base);
 }
 
 .spinnerContainer {
@@ -296,7 +296,7 @@
 
 .tooltipIcon {
   cursor: pointer;
-  font-size: 1.2em;
+  font-size: var(--font-size-md);
   color: var(--text-color-primary);
   background: #f2f2f2;
   border-radius: 50%;
@@ -345,7 +345,7 @@
   border: 1px solid var(--border-color);
   border-radius: 0 8px 8px 8px;
   background-color: var(--background-color-tertiary);
-  font-size: 0.95em;
+  font-size: var(--font-size-base);
 }
 
 .booleanOptions {
@@ -375,7 +375,7 @@
 .removeRowBtn {
   background: transparent;
   border: none;
-  font-size: 1.2em;
+  font-size: var(--font-size-md);
   line-height: 1;
   cursor: pointer;
   color: var(--text-color-muted);
@@ -384,7 +384,7 @@
 .addRowBtn {
   margin-left: 8px;
   padding: 4px 8px;
-  font-size: 0.9em;
+  font-size: var(--font-size-base);
   cursor: pointer;
 }
 
@@ -431,7 +431,7 @@
   border-left: none;
   border-radius: 8px;
   background-color: var(--tooltray-background-color);
-  font-size: 0.95em;
+  font-size: var(--font-size-base);
   cursor: pointer;
 }
 

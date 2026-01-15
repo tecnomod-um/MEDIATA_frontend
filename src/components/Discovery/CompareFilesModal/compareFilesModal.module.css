@@ -20,14 +20,14 @@
 }
 
 .fileHeader {
-  font-size: 1.25rem;
+  font-size: var(--font-size-lg);
   color: var(--text-color-primary);
   margin: 0;
   text-align: left;
 }
 
 .rowCount {
-  font-size: 0.9rem;
+  font-size: var(--font-size-base);
   color: var(--text-color-tertiary);
 }
 
@@ -58,7 +58,7 @@
   justify-content: space-between;
   background-color: var(--background-color-tertiary);
   padding: 8px 12px;
-  font-size: 1rem;
+  font-size: var(--font-size-base);
   font-weight: 600;
   cursor: pointer;
   user-select: none;
@@ -74,7 +74,7 @@
 
 .arrowIcon {
   transition: transform 0.3s ease;
-  font-size: 1.2rem;
+  font-size: var(--font-size-lg);
 }
 
 .expanded {
@@ -103,12 +103,12 @@
   font-weight: 600;
   padding: 8px;
   border-bottom: 1px solid #ddd;
-  font-size: 0.95rem;
+  font-size: var(--font-size-base);
   white-space: nowrap;
 }
 .infoTable td {
   padding: 8px;
-  font-size: 0.9rem;
+  font-size: var(--font-size-base);
   vertical-align: top;
   border-bottom: 1px solid var(--border-color-secondary);
   white-space: nowrap;

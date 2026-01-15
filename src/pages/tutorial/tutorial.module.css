@@ -7,7 +7,7 @@
   position: relative;
   overflow: auto;
   scrollbar-width: auto;
-  font-size: 1.25rem;
+  font-size: var(--font-size-lg);
   background-color: var(--background-color-1);
   min-height: 100vh;
 }
@@ -122,7 +122,7 @@
 .centeredHeading {
   color: var(--heading-color);
   text-align: center;
-  font-size: 1.5rem;
+  font-size: var(--font-size-xl);
 }
 
 .variablesTable {
@@ -136,7 +136,7 @@
   border: 1px solid var(--tooltray-background-color);
   padding: 5px;
   text-align: left;
-  font-size: 1.1rem;
+  font-size: var(--font-size-md);
 }
 
 .variablesTable th {
@@ -187,7 +187,7 @@
 
 .sidebar {
   z-index: 2;
-  font-size: 12pt;
+  font-size: var(--font-size-base);
   position: fixed;
   user-select: none;
   left: 0;
@@ -221,16 +221,16 @@
 @media (max-width: 768px) {
   .pageContainer {
     margin-left: 0;
-    font-size: 0.975rem;
+    font-size: var(--font-size-base);
   }
 
   .centeredHeading {
-    font-size: 1.375rem;
+    font-size: var(--font-size-xl);
   }
 
   .variablesTable th,
   .variablesTable td {
-    font-size: 0.9375rem;
+    font-size: var(--font-size-base);
   }
 
 }

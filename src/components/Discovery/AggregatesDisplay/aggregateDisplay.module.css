@@ -155,7 +155,7 @@
 .matrixHeader,
 .matrixCell {
   padding: 15px;
-  font-size: 0.9em;
+  font-size: var(--font-size-base);
   text-align: center;
   background-color: var(--background-color-3);
   color: var(--text-color-muted);
@@ -186,7 +186,7 @@
   color: gray;
   text-align: center;
   padding: 20px;
-  font-size: 1.2em;
+  font-size: var(--font-size-md);
 }
 
 .selectPosition {
@@ -199,7 +199,7 @@
   color: var(--text-color-primary);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   padding: 12px;
-  font-size: 1.2em;
+  font-size: var(--font-size-md);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -211,7 +211,7 @@
   border-radius: 0;
   background-color: var(--background-color-card);
   color: var(--text-color-primary);
-  font-size: 1em;
+  font-size: var(--font-size-base);
 }
 
 @media (max-width: 768px) {

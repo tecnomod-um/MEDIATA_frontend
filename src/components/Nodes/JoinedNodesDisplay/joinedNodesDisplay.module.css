@@ -20,7 +20,7 @@
 .title {
   margin: 0;
   font-weight: 600;
-  font-size: 1.35rem;
+  font-size: var(--font-size-xl);
 }
 
 .closeBtn {
@@ -31,7 +31,7 @@
   background: transparent;
   color: var(--text-color-on-darkbg);
   cursor: pointer;
-  font-size: 1.25rem;
+  font-size: var(--font-size-lg);
   border-radius: 50%;
   padding: 6px;
   transition: background-color 0.2s ease;
@@ -80,14 +80,14 @@
 
 .nodeName {
   margin: 0 0 4px 0;
-  font-size: 1rem;
+  font-size: var(--font-size-base);
   font-weight: 600;
   color: var(--text-color-primary);
 }
 
 .nodeDesc {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: var(--font-size-base);
   color: var(--text-color-secondary);
 }
 
@@ -117,7 +117,7 @@
   border: 1px solid var(--border-color);
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: var(--font-size-base);
   height: fit-content;
 }
 
@@ -175,7 +175,7 @@
   -webkit-user-select: none;
   -moz-user-select: none;
   padding: 10px 20px;
-  font-size: 1rem;
+  font-size: var(--font-size-base);
   color: var(--text-color-on-darkbg);
   border: none;
   border-radius: 5px;

@@ -45,7 +45,7 @@
     border-radius: 20px;
     color: var(--text-color-dark);
     cursor: pointer;
-    font-size: 18px;
+    font-size: var(--font-size-md);
     font-weight: 500;
     margin-right: 2px;
     margin-top: 2px;

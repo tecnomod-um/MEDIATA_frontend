@@ -126,7 +126,7 @@
   border: 1px solid rgba(255, 255, 255, 0.20);
   background: rgba(255, 255, 255, 0.10);
   font-weight: 900;
-  font-size: 0.82rem;
+  font-size: var(--font-size-sm);
 }
 
 .pillBtn {
@@ -176,7 +176,7 @@
   background: var(--background-nav-and-headers-background-color);
   color: var(--text-color-on-darkbg);
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: var(--font-size-base);
 }
 
 .nodeHeaderText {
@@ -225,7 +225,7 @@
   display: flex;
   align-items: center;
   white-space: nowrap;
-  font-size: 0.9rem;
+  font-size: var(--font-size-base);
   color: var(--text-color-secondary);
 }
 
@@ -262,7 +262,7 @@
 }
 
 .progressText {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   color: var(--text-color-secondary);
   min-width: 38px;
@@ -404,7 +404,7 @@
 }
 
 .cleanSubtitle {
-  font-size: 0.85rem;
+  font-size: var(--font-size-sm);
   color: var(--text-color-tertiary);
   font-weight: 800;
 }
@@ -418,7 +418,7 @@
   background: var(--background-color-card);
   cursor: pointer;
   font-weight: 1000;
-  font-size: 18px;
+  font-size: var(--font-size-md);
   line-height: 1;
 }
 
@@ -451,7 +451,7 @@
 }
 
 .cleanDesc {
-  font-size: 0.82rem;
+  font-size: var(--font-size-sm);
   color: var(--text-color-tertiary);
   line-height: 1.2;
 }
@@ -471,7 +471,7 @@
 }
 
 .cleanInlineLabel {
-  font-size: 0.86rem;
+  font-size: var(--font-size-sm);
   font-weight: 900;
   color: var(--text-color-secondary);
 }
@@ -487,7 +487,7 @@
 
 .cleanNote {
   margin-top: 10px;
-  font-size: 0.84rem;
+  font-size: var(--font-size-sm);
   color: var(--text-color-tertiary);
   line-height: 1.25;
 }
@@ -504,7 +504,7 @@
 }
 
 .cleanFooterLeft {
-  font-size: 0.86rem;
+  font-size: var(--font-size-sm);
   color: var(--text-color-secondary);
   font-weight: 850;
 }
@@ -597,7 +597,7 @@
 }
 
 .confirmTitle {
-  font-size: 1.05rem;
+  font-size: var(--font-size-md);
   color: var(--text-color-primary);
 }
 
@@ -778,7 +778,7 @@
   background: var(--background-nav-and-headers-background-color);
   color: var(--text-color-on-darkbg);
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: var(--font-size-base);
   border: 0;
   cursor: pointer;
   text-align: left;

@@ -17,12 +17,12 @@
 .header h2 {
   margin: 0 0 6px 0;
   font-weight: 600;
-  font-size: 1.35rem;
+  font-size: var(--font-size-xl);
 }
 
 .header p {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: var(--font-size-base);
 }
 
 .body {
@@ -76,7 +76,7 @@
 
 .accessButton {
   padding: 10px 20px;
-  font-size: 1rem;
+  font-size: var(--font-size-base);
   color: var(--text-color-on-darkbg);
   border: none;
   border-radius: 5px;
@@ -121,7 +121,7 @@
 }
 
 .datasetTitle {
-  font-size: 1.2rem;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   margin: 0 0 8px 0;
   color: var(--text-color-primary);
@@ -159,7 +159,7 @@
 
 .distributionCard h6 {
   margin: 0 0 8px 0;
-  font-size: 1rem;
+  font-size: var(--font-size-base);
   font-weight: 600;
 }
 
@@ -212,7 +212,7 @@
   background: transparent;
   color: var(--text-color-on-darkbg);
   cursor: pointer;
-  font-size: 20px;
+  font-size: var(--font-size-lg);
   padding: 6px;
   border-radius: 50%;
   display: flex;

@@ -58,7 +58,7 @@
   background: none;
   border: none;
   color: var(--text-color-on-darkbg);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   cursor: pointer;
 }
 
@@ -122,7 +122,7 @@
 
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   line-height: 1.35;
 
   white-space: pre;
@@ -138,7 +138,7 @@
 }
 
 .schemaStatus {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--text-color-secondary);
   margin-bottom: 6px;
   text-align: left;
@@ -159,7 +159,7 @@
 }
 
 .noSchemaText {
-  font-size: 16px;
+  font-size: var(--font-size-base);
   font-weight: bold;
   color: var(--text-color-secondary);
   margin-bottom: 15px;
@@ -200,7 +200,7 @@
   width: 100%;
   text-align: center;
   color: var(--text-color-secondary);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 .urlRow {
@@ -239,7 +239,7 @@
 .errorMessage {
   margin-top: 10px;
   color: red;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   text-align: center;
 }
 
@@ -272,6 +272,6 @@
 .closedTab span {
   color: var(--schema-tab-text);
   transform: rotate(-90deg);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   white-space: nowrap;
 }

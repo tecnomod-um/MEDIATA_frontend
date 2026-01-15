@@ -20,7 +20,7 @@
 .mainHeader {
   padding: 20px;
   color: var(--text-color-dark);
-  font-size: 35px;
+  font-size: var(--font-size-2xl);
   text-align: justify;
 }
 
@@ -71,14 +71,14 @@
 }
 
 .introText {
-  font-size: 22px;
+  font-size: var(--font-size-xl);
   line-height: 1.5;
   color: var(--text-color-primary);
   margin-bottom: 1em;
 }
 
 .lesserText {
-  font-size: 20px;
+  font-size: var(--font-size-lg);
   font-style: italic;
   color: var(--text-color-tertiary);
 }
@@ -110,7 +110,7 @@
   margin-inline: auto;
 
   user-select: none;
-  font-size: 18px;
+  font-size: var(--font-size-md);
   font-weight: 600;
   color: var(--text-color-on-darkbg);
   cursor: pointer;
@@ -328,7 +328,7 @@
   list-style-type: decimal;
   margin-left: 20px;
   padding: 10px;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   line-height: 1.6;
 }
 
@@ -374,14 +374,14 @@
 }
 
 .featureTitle {
-  font-size: 20px;
+  font-size: var(--font-size-lg);
   font-weight: 700;
   margin: 6px 0 8px;
   color: var(--text-color-dark);
 }
 
 .featureText {
-  font-size: 15px;
+  font-size: var(--font-size-base);
   line-height: 1.55;
   color: var(--text-color-secondary);
   margin: 0 auto;
@@ -437,7 +437,7 @@
   }
 
   .textContainerUnion {
-    font-size: 16px;
+    font-size: var(--font-size-base);
   }
 
   .contentContainer {
@@ -460,7 +460,7 @@
   }
 
   .big_button {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     min-height: 55px;
   }
 

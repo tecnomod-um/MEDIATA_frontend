@@ -129,6 +129,15 @@
   /* Sizes */
   --project-thumb-size: 90px;
 
+  /* Font Sizes */
+  --font-size-xs: 0.75rem;     /* 12px */
+  --font-size-sm: 0.875rem;    /* 14px */
+  --font-size-base: 1rem;      /* 16px */
+  --font-size-md: 1.125rem;    /* 18px */
+  --font-size-lg: 1.25rem;     /* 20px */
+  --font-size-xl: 1.5rem;      /* 24px */
+  --font-size-2xl: 2rem;       /* 32px */
+
   /* Transitions & Animations */
   --transition-duration: 600ms;
   --transition-duration-fast: 300ms;
@@ -588,10 +597,10 @@ body.dark-mode {
    • Usage: ~100+ instances across all modules
    • NOTE: Some components intentionally use specific values for design
 
-   FONT SIZES (very inconsistent):
-   • Common values: 14px, 16px, 18px, 20px, 22px, 24px, 35px
-   • Also: 0.75rem, 0.8rem, 0.82rem, 0.85rem, 0.9rem, 1rem, 1.2rem
-   • RECOMMENDATION: Create type scale
+   FONT SIZES (✓ COMPLETED):
+   • Font-size variables implemented (lines 132-139)
+   • All ~260+ hardcoded font-sizes in .module.css files replaced with variables
+   • Type scale now in use:
      --font-size-xs: 0.75rem (12px)
      --font-size-sm: 0.875rem (14px)
      --font-size-base: 1rem (16px)
@@ -599,7 +608,7 @@ body.dark-mode {
      --font-size-lg: 1.25rem (20px)
      --font-size-xl: 1.5rem (24px)
      --font-size-2xl: 2rem (32px)
-   • CAUTION: Font sizes are often context-specific, be conservative
+   • Conservative mapping applied to minimize visual changes
 
    
    GAP/SPACING (moderately inconsistent):

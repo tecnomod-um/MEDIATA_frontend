@@ -41,7 +41,7 @@
   border-radius: 50%;
   color: var(--text-color-on-darkbg);
   cursor: pointer;
-  font-size: 18px;
+  font-size: var(--font-size-md);
   font-weight: 500;
   padding: 4px;
   position: absolute;
@@ -243,7 +243,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 1.2em;
+  font-size: var(--font-size-md);
   color: #d9534f;
   margin-left: 5px;
 }
@@ -252,7 +252,7 @@
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  font-size: 1em;
+  font-size: var(--font-size-base);
   font-weight: bold;
   padding: 10px 20px;
   transition: transform 0.25s ease, background-color 0.3s ease;
@@ -267,7 +267,7 @@
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  font-size: 1em;
+  font-size: var(--font-size-base);
   font-weight: bold;
   padding: 10px 20px;
   transition: background-color 0.3s ease;
@@ -334,7 +334,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1em;
+  font-size: var(--font-size-base);
   font-weight: bold;
   text-align: right;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
