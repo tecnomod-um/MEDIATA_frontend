@@ -22,7 +22,7 @@ jest.mock("axios", () => {
   const mockCreate = jest.fn(() => mockAxios);
   return { 
     __esModule: true, 
-    default: { create: mockCreate },
+    default: mockAxios,
     create: mockCreate,
   };
 });
