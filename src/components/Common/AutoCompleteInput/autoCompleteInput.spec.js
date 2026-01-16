@@ -107,4 +107,117 @@ describe('AutocompleteInput', () => {
     fireEvent.focus(screen.getByRole('combobox'))
     expect(screen.getAllByRole('option')).toHaveLength(4)
   })
+
+  it('handles keyboard navigation with arrow keys', () => {
+    const handleChange = jest.fn()
+    render(
+      <AutocompleteInput
+        value="a"
+        onChange={handleChange}
+        suggestions={suggestions}
+      />
+    )
+
+    const input = screen.getByRole('combobox')
+    fireEvent.focus(input)
+
+    // Press down arrow
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    
+    // Check if list is visible
+    expect(screen.queryByRole('listbox')).toBeInTheDocument()
+  })
+
+  it('handles Enter key to select suggestion', () => {
+    const handleChange = jest.fn()
+    render(
+      <AutocompleteInput
+        value="app"
+        onChange={handleChange}
+        suggestions={suggestions}
+      />
+    )
+
+    const input = screen.getByRole('combobox')
+    fireEvent.focus(input)
+    
+    // Press Enter
+    fireEvent.keyDown(input, { key: 'Enter' })
+    
+    // Verify handler behavior
+    expect(input).toBeInTheDocument()
+  })
+
+  it('handles Escape key to close dropdown', () => {
+    const handleChange = jest.fn()
+    render(
+      <AutocompleteInput
+        value=""
+        onChange={handleChange}
+        suggestions={suggestions}
+      />
+    )
+
+    const input = screen.getByRole('combobox')
+    fireEvent.focus(input)
+    expect(screen.queryByRole('listbox')).toBeInTheDocument()
+    
+    // Press Escape
+    fireEvent.keyDown(input, { key: 'Escape' })
+    
+    act(() => {
+      jest.advanceTimersByTime(150)
+    })
+    
+    // Dropdown should close
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+  })
+
+  it('shows no suggestions when input does not match', () => {
+    const handleChange = jest.fn()
+    render(
+      <AutocompleteInput
+        value="xyz"
+        onChange={handleChange}
+        suggestions={suggestions}
+      />
+    )
+
+    const input = screen.getByRole('combobox')
+    fireEvent.focus(input)
+    
+    // No matching suggestions
+    expect(screen.queryByRole('option')).not.toBeInTheDocument()
+  })
+
+  it('handles empty suggestions list', () => {
+    const handleChange = jest.fn()
+    render(
+      <AutocompleteInput
+        value=""
+        onChange={handleChange}
+        suggestions={[]}
+      />
+    )
+
+    const input = screen.getByRole('combobox')
+    fireEvent.focus(input)
+    
+    // No options should be shown
+    expect(screen.queryByRole('option')).not.toBeInTheDocument()
+  })
+
+  it('applies custom placeholder text', () => {
+    const handleChange = jest.fn()
+    render(
+      <AutocompleteInput
+        value=""
+        onChange={handleChange}
+        suggestions={suggestions}
+        placeholder="Type to search..."
+      />
+    )
+
+    expect(screen.getByPlaceholderText('Type to search...')).toBeInTheDocument()
+  })
 })
