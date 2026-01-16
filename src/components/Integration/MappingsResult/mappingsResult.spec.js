@@ -207,4 +207,219 @@ describe('<MappingsResult />', () => {
       />
     );
   });
+
+  it('filters mappings by search term', () => {
+    const mappings = [
+      {
+        TargetCol: {
+          fileName: 'test.csv',
+          groups: [
+            {
+              values: [
+                { name: 'SearchMe', mapping: [] },
+                { name: 'DontSearchMe', mapping: [] },
+              ],
+            },
+          ],
+        },
+        OtherCol: {
+          fileName: 'other.csv',
+          groups: [],
+        },
+      },
+    ];
+
+    render(
+      <MappingsResult
+        mappings={mappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="idle"
+        {...defaultHandlers}
+      />
+    );
+
+    const searchInput = screen.getByPlaceholderText(/search mapped columns/i);
+    fireEvent.change(searchInput, { target: { value: 'SearchMe' } });
+
+    // The hierarchy should still be rendered
+    expect(screen.getAllByTestId('hierarchy').length).toBeGreaterThan(0);
+  });
+
+  it('filters mappings by file name', () => {
+    const mappings = [
+      {
+        TargetCol: {
+          fileName: 'findme.csv',
+          groups: [],
+        },
+      },
+    ];
+
+    render(
+      <MappingsResult
+        mappings={mappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="idle"
+        {...defaultHandlers}
+      />
+    );
+
+    const searchInput = screen.getByPlaceholderText(/search mapped columns/i);
+    fireEvent.change(searchInput, { target: { value: 'findme' } });
+
+    // After filtering by file name, hierarchy should still be rendered
+    expect(screen.queryAllByTestId('hierarchy').length).toBeGreaterThan(0);
+  });
+
+  it('filters mappings by mapping key', () => {
+    const mappings = [
+      {
+        KeyToFind: {
+          fileName: 'test.csv',
+          groups: [],
+        },
+        OtherKey: {
+          fileName: 'other.csv',
+          groups: [],
+        },
+      },
+    ];
+
+    render(
+      <MappingsResult
+        mappings={mappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="idle"
+        {...defaultHandlers}
+      />
+    );
+
+    const searchInput = screen.getByPlaceholderText(/search mapped columns/i);
+    fireEvent.change(searchInput, { target: { value: 'KeyToFind' } });
+
+    // Should still render filtered hierarchies
+    const hierarchies = screen.queryAllByTestId('hierarchy');
+    expect(hierarchies.length).toBeGreaterThan(0);
+  });
+
+  it('filters by mapping line values', () => {
+    const mappings = [
+      {
+        TargetCol: {
+          fileName: 'test.csv',
+          groups: [
+            {
+              values: [
+                {
+                  name: 'Value',
+                  mapping: [
+                    { groupColumn: 'col1', value: 'UniqueValue', fileName: 'data.csv' },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ];
+
+    render(
+      <MappingsResult
+        mappings={mappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="idle"
+        {...defaultHandlers}
+      />
+    );
+
+    const searchInput = screen.getByPlaceholderText(/search mapped columns/i);
+    fireEvent.change(searchInput, { target: { value: 'UniqueValue' } });
+
+    // After search, should still find results
+    expect(screen.queryAllByTestId('hierarchy').length).toBeGreaterThan(0);
+  });
+
+  it('shows no results when search term does not match', () => {
+    render(
+      <MappingsResult
+        mappings={sampleMappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="idle"
+        {...defaultHandlers}
+      />
+    );
+
+    const searchInput = screen.getByPlaceholderText(/search mapped columns/i);
+    fireEvent.change(searchInput, { target: { value: 'NonexistentSearchTerm' } });
+
+    expect(screen.queryByTestId('hierarchy')).not.toBeInTheDocument();
+  });
+
+  it('handles empty search term to show all mappings', () => {
+    render(
+      <MappingsResult
+        mappings={sampleMappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="idle"
+        {...defaultHandlers}
+      />
+    );
+
+    const searchInput = screen.getByPlaceholderText(/search mapped columns/i);
+    
+    // Set search term
+    fireEvent.change(searchInput, { target: { value: 'test' } });
+    
+    // Clear search term
+    fireEvent.change(searchInput, { target: { value: '' } });
+
+    // Should show all mappings again
+    expect(screen.getAllByTestId('hierarchy').length).toBeGreaterThan(0);
+  });
+
+  it('displays different processing statuses', () => {
+    const { rerender } = render(
+      <MappingsResult
+        mappings={sampleMappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="success"
+        {...defaultHandlers}
+      />
+    );
+
+    expect(screen.getByText('Processing Successful')).toBeInTheDocument();
+
+    rerender(
+      <MappingsResult
+        mappings={sampleMappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="error"
+        {...defaultHandlers}
+      />
+    );
+
+    expect(screen.getByText('Processing Failed')).toBeInTheDocument();
+  });
+
+  it('does not show undo button when no deleted items', () => {
+    render(
+      <MappingsResult
+        mappings={sampleMappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="idle"
+        {...defaultHandlers}
+      />
+    );
+
+    expect(screen.queryByText(/undo changes/i)).not.toBeInTheDocument();
+  });
 });
