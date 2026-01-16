@@ -50,11 +50,7 @@ function FileToolbar({ toolbarDisabled, doOpenSelected, hasSelection, onOpenFile
         >
           Delete
         </button>
-
         <span className={FileExplorerStyles.toolbarMeta}>
-          <span className={FileExplorerStyles.selPill} title="Selected">
-            {selectedCount} selected
-          </span>
           {multiMode ? (
             <button
               className={FileExplorerStyles.pillBtn}
@@ -63,7 +59,7 @@ function FileToolbar({ toolbarDisabled, doOpenSelected, hasSelection, onOpenFile
               disabled={busy}
               title="Exit multi-select mode"
             >
-              Multi
+              Selecting multiple files
             </button>
           ) : null}
         </span>

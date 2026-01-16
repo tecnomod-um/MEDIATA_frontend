@@ -461,6 +461,7 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
         >
           <div className={FilterModalStyles.featureSelection}>
             <Select
+            classNamePrefix="react-select"
               options={getOptions(dataStatistics)}
               onChange={(option) => setSelectedFeature(option.value)}
               value={getOptions(dataStatistics).find(
@@ -507,6 +508,7 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
                     <label>Choose categories:</label>
                     <Select
                       isMulti
+                      classNamePrefix="react-select"
                       options={getCategoryOptions(selectedFeature)}
                       onChange={(vals) =>
                         setSelectedCategories(vals.map((v) => v.value))

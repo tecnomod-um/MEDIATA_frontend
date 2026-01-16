@@ -117,18 +117,6 @@
   margin-left: 6px;
 }
 
-.selPill {
-  display: inline-flex;
-  align-items: center;
-  height: 26px;
-  padding: 0 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.20);
-  background: rgba(255, 255, 255, 0.10);
-  font-weight: 900;
-  font-size: var(--font-size-sm);
-}
-
 .pillBtn {
   height: 26px;
   padding: 0 10px;
@@ -136,7 +124,7 @@
   border: 1px solid rgba(255, 255, 255, 0.20);
   background: rgba(255, 255, 255, 0.14);
   color: var(--text-color-on-darkbg);
-  font-weight: 900;
+  font-size: var(--font-size-sm);
   cursor: pointer;
 }
 
