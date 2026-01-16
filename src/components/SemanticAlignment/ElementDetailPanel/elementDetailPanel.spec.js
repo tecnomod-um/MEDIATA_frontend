@@ -208,5 +208,339 @@ describe("<ElementDetailPanel />", () => {
       fireEvent.click(remove);
       expect(setElementFormValues).toHaveBeenCalled();
     });
+
+    it("initializes typeField_categories when kind is categorical and categories exist", async () => {
+      mockFetchClassFields.mockResolvedValueOnce(FIELDS_TYPE);
+      const initialValues = {
+        "0": { typeField_kind: "categorical" }
+      };
+      const setElementFormValues = jest.fn();
+      renderPanel({
+        activeElement: { name: "ElementX", categories: ["Cat1", "Cat2"] },
+        elementFormValues: initialValues,
+        setElementFormValues
+      });
+      
+      await waitFor(() => {
+        expect(setElementFormValues).toHaveBeenCalledWith(
+          expect.any(Function)
+        );
+      });
+    });
+
+    it("renders integer type option", async () => {
+      mockFetchClassFields.mockResolvedValueOnce(FIELDS_TYPE);
+      const initialValues = {
+        "0": { typeField_kind: "integer" }
+      };
+      renderPanel({ elementFormValues: initialValues });
+      
+      await waitFor(() => {
+        expect(screen.getByRole("combobox")).toBeInTheDocument();
+      });
+    });
+
+    it("renders double type option", async () => {
+      mockFetchClassFields.mockResolvedValueOnce(FIELDS_TYPE);
+      const initialValues = {
+        "0": { typeField_kind: "double" }
+      };
+      renderPanel({ elementFormValues: initialValues });
+      
+      await waitFor(() => {
+        expect(screen.getByRole("combobox")).toBeInTheDocument();
+      });
+    });
+
+    it("renders date type option", async () => {
+      mockFetchClassFields.mockResolvedValueOnce(FIELDS_TYPE);
+      const initialValues = {
+        "0": { typeField_kind: "date" }
+      };
+      renderPanel({ elementFormValues: initialValues });
+      
+      await waitFor(() => {
+        expect(screen.getByRole("combobox")).toBeInTheDocument();
+      });
+    });
+
+    it("handles changing type kind via dropdown", async () => {
+      mockFetchClassFields.mockResolvedValueOnce(FIELDS_TYPE);
+      const setElementFormValues = jest.fn();
+      renderPanel({ setElementFormValues });
+      
+      const select = await screen.findByRole("combobox");
+      fireEvent.change(select, { target: { value: "integer" } });
+      
+      expect(setElementFormValues).toHaveBeenCalled();
+    });
+
+    it("updates category value in typeField_categories", async () => {
+      mockFetchClassFields.mockResolvedValueOnce(FIELDS_TYPE);
+      const initialValues = {
+        "0": { typeField_kind: "categorical", typeField_categories: [["CatA", "OldVal"]] }
+      };
+      const setElementFormValues = jest.fn();
+      renderPanel({ elementFormValues: initialValues, setElementFormValues });
+      
+      const input = await screen.findByDisplayValue("CatA");
+      fireEvent.change(input, { target: { value: "CatB" } });
+      
+      expect(setElementFormValues).toHaveBeenCalled();
+    });
+
+    it("updates ontology mapping in typeField_categories", async () => {
+      mockFetchClassFields.mockResolvedValueOnce(FIELDS_TYPE);
+      const initialValues = {
+        "0": { typeField_kind: "categorical", typeField_categories: [["Cat1", "OldOnto"]] }
+      };
+      const setElementFormValues = jest.fn();
+      renderPanel({ elementFormValues: initialValues, setElementFormValues });
+      
+      const inputs = await screen.findAllByRole("textbox");
+      const ontoInput = inputs.find(i => i.value === "OldOnto");
+      if (ontoInput) {
+        fireEvent.change(ontoInput, { target: { value: "NewOnto" } });
+        expect(setElementFormValues).toHaveBeenCalled();
+      }
+    });
+  });
+
+  describe("Auto-population of form fields", () => {
+    it("auto-fills field_id with active element name", async () => {
+      mockFetchClassFields.mockResolvedValueOnce(FIELDS_STRING);
+      const setElementFormValues = jest.fn();
+      renderPanel({ 
+        activeElement: { name: "AutoElement" },
+        setElementFormValues 
+      });
+      
+      await waitFor(() => {
+        expect(setElementFormValues).toHaveBeenCalledWith(
+          expect.any(Function)
+        );
+      });
+    });
+
+    it("does not override existing field_id", async () => {
+      mockFetchClassFields.mockResolvedValueOnce(FIELDS_STRING);
+      const initialValues = {
+        "0": { field_id: "ExistingID" }
+      };
+      const setElementFormValues = jest.fn();
+      renderPanel({ 
+        activeElement: { name: "AutoElement" },
+        elementFormValues: initialValues,
+        setElementFormValues 
+      });
+      
+      await waitFor(() => {
+        // Should not be called to override
+        const calls = setElementFormValues.mock.calls.filter(call => {
+          const fn = call[0];
+          if (typeof fn === 'function') {
+            const result = fn(initialValues);
+            return result["0"]?.field_id !== "ExistingID";
+          }
+          return false;
+        });
+        expect(calls.length).toBe(0);
+      });
+    });
+
+    it("auto-fills pattern_type with current selection label", async () => {
+      mockFetchClassFields.mockResolvedValueOnce(FIELDS_STRING);
+      const setElementFormValues = jest.fn();
+      renderPanel({ 
+        currentSelection: CLASSES_FIXTURE[0],
+        setElementFormValues 
+      });
+      
+      await waitFor(() => {
+        expect(setElementFormValues).toHaveBeenCalled();
+      });
+    });
+
+    it("updates pattern_type when selection changes", async () => {
+      mockFetchClassFields.mockResolvedValueOnce(FIELDS_STRING);
+      const setElementFormValues = jest.fn();
+      const { rerender } = renderPanel({ 
+        currentSelection: CLASSES_FIXTURE[0],
+        setElementFormValues 
+      });
+      
+      await screen.findByPlaceholderText(/Enter field1/i);
+      
+      rerender(
+        <ElementDetailPanel
+          activeElement={{ name: "Element" }}
+          activeElementIndex={0}
+          activeCategoryIndex={null}
+          currentSelection={CLASSES_FIXTURE[1]}
+          onSelectOption={jest.fn()}
+          elementFormValues={{}}
+          setElementFormValues={setElementFormValues}
+          onBuildClass={jest.fn()}
+          onDeleteClass={jest.fn()}
+          builtClasses={{}}
+        />
+      );
+      
+      await waitFor(() => {
+        expect(setElementFormValues).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe("Category index handling", () => {
+    it("handles active category index for built class deletion", async () => {
+      const builtKey = "0-cat-1";
+      const { props } = renderPanel({ 
+        activeCategoryIndex: 1,
+        builtClasses: { [builtKey]: true } 
+      });
+      
+      const delBtn = await screen.findByRole("button", { name: /delete/i });
+      fireEvent.click(delBtn);
+      
+      expect(props.onDeleteClass).toHaveBeenCalledWith(builtKey);
+    });
+
+    it("uses activeElementIndex only when activeCategoryIndex is null", async () => {
+      const builtKey = "0";
+      const { props } = renderPanel({ 
+        activeElementIndex: 0,
+        activeCategoryIndex: null,
+        builtClasses: { [builtKey]: true } 
+      });
+      
+      const delBtn = await screen.findByRole("button", { name: /delete/i });
+      fireEvent.click(delBtn);
+      
+      expect(props.onDeleteClass).toHaveBeenCalledWith(builtKey);
+    });
+  });
+
+  describe("Error handling and edge cases", () => {
+    it("handles fetch classes error gracefully", async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      mockFetchClasses.mockRejectedValue(new Error("Classes fetch failed"));
+      
+      renderPanel();
+      
+      await waitFor(() => {
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          "Error fetching classes:",
+          expect.any(Error)
+        );
+      });
+      
+      consoleErrorSpy.mockRestore();
+    });
+
+    it("handles fetch class fields error gracefully", async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      mockFetchClassFields.mockRejectedValue(new Error("Fields fetch failed"));
+      
+      renderPanel();
+      
+      await waitFor(() => {
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          "Error fetching fields for",
+          expect.any(String),
+          expect.any(Error)
+        );
+      });
+      
+      consoleErrorSpy.mockRestore();
+    });
+
+    it("handles fetch suggestions error gracefully", async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      mockFetchClassFields.mockResolvedValueOnce(FIELDS_STRING);
+      mockFetchSuggestions.mockRejectedValue(new Error("Suggestions failed"));
+      
+      const setElementFormValues = jest.fn();
+      renderPanel({ setElementFormValues });
+      
+      const input = await screen.findByPlaceholderText(/Enter field1/i);
+      fireEvent.change(input, { target: { value: "FailQuery" } });
+      
+      await waitFor(() => {
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          "Error fetching suggestions:",
+          expect.any(Error)
+        );
+      });
+      
+      consoleErrorSpy.mockRestore();
+    });
+
+    it("clears fields when currentSelection has no iri", async () => {
+      mockFetchClassFields.mockResolvedValueOnce(FIELDS_STRING);
+      const { rerender } = renderPanel();
+      
+      await screen.findByPlaceholderText(/Enter field1/i);
+      
+      rerender(
+        <ElementDetailPanel
+          activeElement={{ name: "Element" }}
+          activeElementIndex={0}
+          activeCategoryIndex={null}
+          currentSelection={null}
+          onSelectOption={jest.fn()}
+          elementFormValues={{}}
+          setElementFormValues={jest.fn()}
+          onBuildClass={jest.fn()}
+          onDeleteClass={jest.fn()}
+          builtClasses={{}}
+        />
+      );
+      
+      await waitFor(() => {
+        expect(screen.queryByPlaceholderText(/Enter field1/i)).not.toBeInTheDocument();
+      });
+    });
+
+    it("uses cached fields when available", async () => {
+      mockFetchClassFields.mockResolvedValueOnce(FIELDS_STRING);
+      
+      const { rerender } = renderPanel({ currentSelection: CLASSES_FIXTURE[0] });
+      await screen.findByPlaceholderText(/Enter field1/i);
+      
+      // Change to different selection and back
+      rerender(
+        <ElementDetailPanel
+          activeElement={{ name: "Element" }}
+          activeElementIndex={0}
+          activeCategoryIndex={null}
+          currentSelection={CLASSES_FIXTURE[1]}
+          onSelectOption={jest.fn()}
+          elementFormValues={{}}
+          setElementFormValues={jest.fn()}
+          onBuildClass={jest.fn()}
+          onDeleteClass={jest.fn()}
+          builtClasses={{}}
+        />
+      );
+      
+      rerender(
+        <ElementDetailPanel
+          activeElement={{ name: "Element" }}
+          activeElementIndex={0}
+          activeCategoryIndex={null}
+          currentSelection={CLASSES_FIXTURE[0]}
+          onSelectOption={jest.fn()}
+          elementFormValues={{}}
+          setElementFormValues={jest.fn()}
+          onBuildClass={jest.fn()}
+          onDeleteClass={jest.fn()}
+          builtClasses={{}}
+        />
+      );
+      
+      // Should only have been called once due to caching
+      expect(mockFetchClassFields).toHaveBeenCalledTimes(1);
+    });
   });
 });

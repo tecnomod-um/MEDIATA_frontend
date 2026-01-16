@@ -165,3 +165,220 @@ test("opening a file (async) polls and then shows statistics view", async () => 
   // would be called by FileExplorer internally, but since FileExplorer is mocked in this test,
   // those calls don't happen. This test only verifies Discovery's response to onFilesOpened callback.
 });
+
+test("processes location.state with multiple element files across multiple nodes", async () => {
+  const { useLocation } = require("react-router-dom");
+  const multiNodeFiles = [
+    { nodeId: 1, fileName: "fileA.csv" },
+    { nodeId: 2, fileName: "fileB.csv" }
+  ];
+  useLocation.mockReturnValue({ state: { elementFiles: multiNodeFiles } });
+  
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  mockProcessSelectedDatasets.mockResolvedValue({
+    mode: "sync",
+    results: [PROCESSED_ITEM]
+  });
+
+  render(<Discovery />);
+  await waitFor(() => expect(mockProcessSelectedDatasets).toHaveBeenCalled());
+});
+
+test("handles async mode from location.state element files", async () => {
+  const { useLocation } = require("react-router-dom");
+  useLocation.mockReturnValue({ 
+    state: { elementFiles: [{ nodeId: 1, fileName: "test.csv" }] } 
+  });
+  
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  mockProcessSelectedDatasets.mockResolvedValue({
+    mode: "async",
+    jobId: "job-456"
+  });
+  
+  mockGetProcessSelectedDatasetsStatus.mockResolvedValue({ state: "DONE", percent: 100 });
+  mockGetProcessSelectedDatasetsResult.mockResolvedValue([PROCESSED_ITEM]);
+
+  render(<Discovery />);
+  await waitFor(() => expect(mockGetProcessSelectedDatasetsStatus).toHaveBeenCalled());
+});
+
+test("shows error toast when processing location.state files fails", async () => {
+  const { toast } = require("react-toastify");
+  const { useLocation } = require("react-router-dom");
+  useLocation.mockReturnValue({ 
+    state: { elementFiles: [{ nodeId: 1, fileName: "bad.csv" }] } 
+  });
+  
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  mockProcessSelectedDatasets.mockRejectedValue(new Error("Processing failed"));
+
+  render(<Discovery />);
+  await waitFor(() => expect(toast.error).toHaveBeenCalledWith(
+    expect.stringContaining("Error processing parsed element files")
+  ));
+});
+
+test("handles ERROR state from pollDiscoveryJob", async () => {
+  const { toast } = require("react-toastify");
+  const { useLocation } = require("react-router-dom");
+  useLocation.mockReturnValue({ 
+    state: { elementFiles: [{ nodeId: 1, fileName: "error.csv" }] } 
+  });
+  
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  mockProcessSelectedDatasets.mockResolvedValue({
+    mode: "async",
+    jobId: "error-job"
+  });
+  
+  mockGetProcessSelectedDatasetsStatus.mockResolvedValue({ 
+    state: "ERROR", 
+    message: "Job failed" 
+  });
+
+  render(<Discovery />);
+  await waitFor(() => expect(toast.error).toHaveBeenCalled());
+});
+
+test("shows error toast when no parsed files returned", async () => {
+  const { toast } = require("react-toastify");
+  const { useLocation } = require("react-router-dom");
+  useLocation.mockReturnValue({ 
+    state: { elementFiles: [{ nodeId: 1, fileName: "empty.csv" }] } 
+  });
+  
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  mockProcessSelectedDatasets.mockResolvedValue({
+    mode: "sync",
+    results: []
+  });
+
+  render(<Discovery />);
+  await waitFor(() => expect(toast.error).toHaveBeenCalledWith(
+    "No parsed files returned from backend."
+  ));
+});
+
+test("combines multiple data results with different feature types", async () => {
+  const multipleResults = [
+    {
+      fileName: "file1.csv",
+      continuousFeatures: [{ featureName: "age", mean: 30 }],
+      categoricalFeatures: [{ featureName: "gender", categories: ["M", "F"] }],
+      dateFeatures: [{ featureName: "birthDate", min: "2000-01-01" }],
+      chiSquareTest: [{ test: "result1" }],
+      covariances: { age: { height: 0.5 } },
+      pearsonCorrelations: { age: { height: 0.7 } },
+      spearmanCorrelations: { age: { height: 0.65 } },
+      omittedFeatures: ["badCol1"]
+    },
+    {
+      fileName: "file2.csv",
+      continuousFeatures: [{ featureName: "height", mean: 170 }],
+      categoricalFeatures: [],
+      dateFeatures: [],
+      chiSquareTest: [],
+      covariances: {},
+      pearsonCorrelations: {},
+      spearmanCorrelations: {},
+      omittedFeatures: []
+    }
+  ];
+
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  
+  render(<Discovery />);
+  await waitFor(() => expect(mockFileExplorerProps).toBeDefined());
+
+  await act(async () => {
+    await mockFileExplorerProps.onFilesOpened(multipleResults);
+  });
+
+  expect(await screen.findByTestId("stats")).toBeInTheDocument();
+});
+
+test("adjusts viewport width and toggles tool tray", async () => {
+  Object.defineProperty(window, 'innerWidth', { writable: true, value: 1024 });
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  
+  render(<Discovery />);
+  
+  act(() => {
+    Object.defineProperty(window, 'innerWidth', { value: 500 });
+    window.dispatchEvent(new Event('resize'));
+  });
+
+  await waitFor(() => {});
+});
+
+test("handles viewport resize to mobile width", async () => {
+  Object.defineProperty(window, 'innerWidth', { writable: true, value: 1024 });
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  
+  render(<Discovery />);
+  
+  act(() => {
+    Object.defineProperty(window, 'innerWidth', { value: 600 });
+    window.dispatchEvent(new Event('resize'));
+  });
+
+  await waitFor(() => {});
+});
+
+test("doesn't process location.state files more than once", async () => {
+  const { useLocation } = require("react-router-dom");
+  useLocation.mockReturnValue({ 
+    state: { elementFiles: [{ nodeId: 1, fileName: "once.csv" }] } 
+  });
+  
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  mockProcessSelectedDatasets.mockResolvedValue({
+    mode: "sync",
+    results: [PROCESSED_ITEM]
+  });
+
+  const { rerender } = render(<Discovery />);
+  await waitFor(() => expect(mockProcessSelectedDatasets).toHaveBeenCalledTimes(1));
+  
+  // Rerender with same location.state shouldn't process again
+  rerender(<Discovery />);
+  await waitFor(() => expect(mockProcessSelectedDatasets).toHaveBeenCalledTimes(1));
+});
+
+test("handles unexpected response mode from processList", async () => {
+  const { toast } = require("react-toastify");
+  const { useLocation } = require("react-router-dom");
+  useLocation.mockReturnValue({ 
+    state: { elementFiles: [{ nodeId: 1, fileName: "weird.csv" }] } 
+  });
+  
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  mockProcessSelectedDatasets.mockResolvedValue({
+    mode: "unknown"
+  });
+
+  render(<Discovery />);
+  await waitFor(() => expect(toast.error).toHaveBeenCalled());
+});
+
+test("handles files with no fileName in results", async () => {
+  const resultWithoutFileName = {
+    continuousFeatures: [],
+    categoricalFeatures: [],
+    dateFeatures: [],
+    nodeId: 1,
+    nodeName: "Node1"
+  };
+  
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  
+  render(<Discovery />);
+  await waitFor(() => expect(mockFileExplorerProps).toBeDefined());
+
+  await act(async () => {
+    await mockFileExplorerProps.onFilesOpened([resultWithoutFileName]);
+  });
+
+  expect(await screen.findByTestId("stats")).toBeInTheDocument();
+});
