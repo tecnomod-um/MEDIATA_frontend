@@ -121,7 +121,7 @@ describe("FileExplorer sub-components", () => {
 
     it("shows multi-select mode pill when active", () => {
       render(<FileToolbar {...defaultProps} multiMode={true} />);
-      expect(screen.getByText("Multi")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /selecting multiple files/i })).toBeInTheDocument();
     });
 
     it("does not show close button when onClose is not provided", () => {
