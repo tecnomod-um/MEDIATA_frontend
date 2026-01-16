@@ -367,4 +367,69 @@ describe("FileExplorer sub-components", () => {
       expect(cancelRename).toHaveBeenCalled();
     });
   });
+
+  // Additional tests for utility functions used by FileExplorer
+  describe("Utility Functions", () => {
+    it("handles formatBytes correctly", () => {
+      const { formatBytes } = require("./fileUtils");
+      expect(formatBytes(0)).toBe("0 B");
+      expect(formatBytes(1023)).toBe("1023 B");
+      expect(formatBytes(1024)).toContain("KB");
+      expect(formatBytes(1048576)).toContain("MB");
+      expect(formatBytes(1073741824)).toContain("GB");
+      expect(formatBytes(-1)).toBe("—");
+      expect(formatBytes("invalid")).toBe("—");
+      expect(formatBytes(null)).toBe("0 B"); // Number(null) = 0
+      expect(formatBytes(undefined)).toBe("—"); // Number(undefined) = NaN
+      expect(formatBytes(Infinity)).toBe("—");
+      // Test edge cases for formatting
+      expect(formatBytes(1536)).toBe("1.50 KB"); // 1.5 KB
+      expect(formatBytes(10240)).toBe("10.0 KB"); // 10 KB
+      expect(formatBytes(102400)).toBe("100 KB"); // 100 KB
+    });
+
+    it("handles formatDateTime correctly", () => {
+      const { formatDateTime } = require("./fileUtils");
+      expect(formatDateTime(0)).toBe("—");
+      expect(formatDateTime(-1)).toBe("—");
+      expect(formatDateTime(null)).toBe("—"); // Number(null) = 0
+      expect(formatDateTime(undefined)).toBe("—"); // Number(undefined) = NaN
+      const validTime = Date.now();
+      expect(formatDateTime(validTime)).not.toBe("—");
+      expect(formatDateTime(validTime)).toContain("/");
+      expect(formatDateTime(1609459200000)).not.toBe("—"); // Valid timestamp
+    });
+
+    it("handles isFileNew correctly", () => {
+      const { isFileNew } = require("./fileUtils");
+      const newFile = { createdAtMs: Date.now() - 30000 }; // 30 seconds ago
+      const oldFile = { createdAtMs: Date.now() - 120000 }; // 2 minutes ago
+      const noTimeFile = {};
+      
+      expect(isFileNew(newFile, 60000)).toBe(true);
+      expect(isFileNew(oldFile, 60000)).toBe(false);
+      expect(isFileNew(noTimeFile, 60000)).toBe(false);
+      expect(isFileNew({ createdAtMs: 0 }, 60000)).toBe(false);
+      expect(isFileNew({ createdAtMs: null }, 60000)).toBe(false);
+      // Test with custom threshold
+      expect(isFileNew(newFile, 20000)).toBe(false); // 30s ago is not new with 20s threshold
+      expect(isFileNew(newFile, 40000)).toBe(true); // 30s ago is new with 40s threshold
+    });
+
+    it("handles getFileExtension correctly", () => {
+      const { getFileExtension } = require("./fileUtils");
+      expect(getFileExtension("test.csv")).toBe("csv");
+      expect(getFileExtension("test.CSV")).toBe("csv");
+      expect(getFileExtension("test.XLSX")).toBe("xlsx");
+      expect(getFileExtension("test.xlsx")).toBe("xlsx");
+      expect(getFileExtension("noext")).toBe("");
+      expect(getFileExtension("file.tar.gz")).toBe("gz");
+      expect(getFileExtension("")).toBe("");
+      expect(getFileExtension(null)).toBe("");
+      expect(getFileExtension(undefined)).toBe("");
+      expect(getFileExtension(".hidden")).toBe("hidden");
+      expect(getFileExtension("file.PDF")).toBe("pdf");
+      expect(getFileExtension("archive.ZIP")).toBe("zip");
+    });
+  });
 });
