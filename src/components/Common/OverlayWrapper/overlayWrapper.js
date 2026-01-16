@@ -3,25 +3,25 @@ import { createPortal } from "react-dom";
 import { CSSTransition } from "react-transition-group";
 import OverlayWrapperStyles from "./overlayWrapper.module.css";
 
+// Modal overlay wrapper used through the app
 function OverlayWrapper({ isOpen, children, closeModal, maxWidth }) {
-  // Modal behavior
+
   const modalRef = useRef(null);
   const [mouseDownOnBackdrop, setMouseDownOnBackdrop] = useState(false);
 
-  // Get focus on open
   useEffect(() => {
-    if (isOpen) {
-      modalRef.current?.focus();
-    }
+    if (isOpen) modalRef.current?.focus();
   }, [isOpen]);
 
   const handleBackdropMouseDown = (e) => {
     if (e.target === e.currentTarget) setMouseDownOnBackdrop(true);
   };
+
   const handleBackdropMouseUp = (e) => {
     if (mouseDownOnBackdrop && e.target === e.currentTarget) closeModal();
     setMouseDownOnBackdrop(false);
   };
+  
   return createPortal(
     <CSSTransition
       in={isOpen}

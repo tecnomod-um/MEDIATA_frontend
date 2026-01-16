@@ -1,9 +1,10 @@
 import React from "react";
-import OverlayWrapper from "../../Unused/OverlayWrapper/overlayWrapper";
+import OverlayWrapper from "../../Common/OverlayWrapper/overlayWrapper";
 import MetadataDisplayStyles from "./metadataDisplay.module.css";
 import DatasetCard from "./datasetCard";
 import { IoMdClose } from "react-icons/io";
 
+// Component for rendering nested metadata display
 const MetadataDisplay = ({ isOpen, metadata, loadingMetadata, accessingNode, headerColor, nodeName, nodeDescription, closeModal, onAccessNode }) => {
   return (
     <OverlayWrapper isOpen={isOpen} closeModal={closeModal}>

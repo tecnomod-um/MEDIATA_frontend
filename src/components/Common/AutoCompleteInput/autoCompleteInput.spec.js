@@ -25,11 +25,11 @@ describe('AutocompleteInput', () => {
       />
     )
 
-    expect(screen.queryByRole('list')).not.toBeInTheDocument()
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
     const input = screen.getByPlaceholderText('Search…')
     fireEvent.focus(input)
-    expect(screen.getByRole('list')).toBeVisible()
-    expect(screen.getAllByRole('listitem')).toHaveLength(4)
+    expect(screen.getByRole('listbox')).toBeVisible()
+    expect(screen.getAllByRole('option')).toHaveLength(4)
 
     fireEvent.change(input, { target: { value: 'ap' } })
     expect(handleChange).toHaveBeenLastCalledWith('ap')
@@ -43,7 +43,7 @@ describe('AutocompleteInput', () => {
       />
     )
 
-    const items = screen.getAllByRole('listitem')
+    const items = screen.getAllByRole('option')
     expect(items).toHaveLength(2)
     expect(items.map(li => li.textContent)).toEqual(['Apple', 'Apricot'])
   })
@@ -58,7 +58,7 @@ describe('AutocompleteInput', () => {
       />
     )
 
-    const input = screen.getByRole('textbox')
+    const input = screen.getByRole('combobox')
     expect(screen.queryByRole('list')).not.toBeInTheDocument()
     fireEvent.focus(input)
 
@@ -80,12 +80,12 @@ describe('AutocompleteInput', () => {
       />
     )
 
-    const input = screen.getByRole('textbox')
+    const input = screen.getByRole('combobox')
     fireEvent.focus(input)
-    expect(screen.getByRole('list')).toBeVisible()
+    expect(screen.getByRole('listbox')).toBeVisible()
 
     fireEvent.blur(input)
-    expect(screen.getByRole('list')).toBeVisible()
+    expect(screen.getByRole('listbox')).toBeVisible()
 
     act(() => {
       jest.advanceTimersByTime(150)
@@ -104,7 +104,7 @@ describe('AutocompleteInput', () => {
       />
     )
 
-    fireEvent.focus(screen.getByRole('textbox'))
-    expect(screen.getAllByRole('listitem')).toHaveLength(4)
+    fireEvent.focus(screen.getByRole('combobox'))
+    expect(screen.getAllByRole('option')).toHaveLength(4)
   })
 })

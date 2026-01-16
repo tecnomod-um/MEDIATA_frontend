@@ -1,6 +1,7 @@
 import React from "react";
 import styles from "./landingIcons.module.css";
 
+// 'Security' SVG icon for the landing page
 export default function LandingSecurity({ size = 170, title = "Security" }) {
   const svgStyle = size ? { width: size, height: size } : {};
 
@@ -20,8 +21,6 @@ export default function LandingSecurity({ size = 170, title = "Security" }) {
         <path id="sec_R" d="M 150 68 Q 96 62 80 58 Q 104 92 120 112" fill="none" />
         <path id="sec_T" d="M 64 8 L 70 48 L 120 40" fill="none" />
       </defs>
-
-      {/* background */}
       <rect
         x="8" y="8" width="112" height="112" rx="18" ry="18"
         className={`${styles.iconSquare} iconSquare`}

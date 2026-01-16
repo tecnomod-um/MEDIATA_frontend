@@ -36,6 +36,7 @@ function parseCsvData(csvData) {
   });
 }
 
+// HL7 FHIR resource mapping page
 export default function HL7FHIR() {
   const [dataFormat, setDataFormat] = useState(false);
   const [isDragging, setIsDragging] = useState(false);

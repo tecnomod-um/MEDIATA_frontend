@@ -1,9 +1,8 @@
-@import '../../variables.css';
-
 .container {
   height: calc(100vh - 55px);
   width: 100%;
   position: relative;
+  background-color: var(--background-color-2);
 }
 
 .fadeIn {
@@ -54,18 +53,17 @@
   left: 50%;
   transform: translate(-50%, -50%);
   background-color: var(--translucent-background-color);
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   padding: 20px 40px;
   border-radius: 8px;
-  font-size: 1.2em;
+  font-size: var(--font-size-md);
   user-select: none;
   text-align: center;
 }
 
 .toast {
-  /*top: 55px;*/
   background-color: var(--translucent-background-color) !important;
-  color: #fff !important;
+  color: var(--text-color-on-darkbg) !important;
   min-height: 40px !important;
   border-radius: 8px !important;
   box-shadow: none !important;

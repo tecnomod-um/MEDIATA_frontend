@@ -6,28 +6,18 @@ import { Chart as ChartJS, registerables } from "chart.js";
 
 ChartJS.register(...registerables);
 
-function DateChart({
-  dateData,
-  dateDataKey,
-  showOutliers,
-  onClick,
-  onDoubleClick,
-  isSelected,
-}) {
+// Display for the continuous features' histogram that are a datetype
+function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick, isSelected }) {
   const chartRef = useRef(null);
 
-  const sortedEntries = useMemo(
-    () =>
-      Object.entries(dateData.dateHistogram).sort(
-        (a, b) => new Date(a[0]) - new Date(b[0])
-      ),
-    [dateData.dateHistogram]
-  );
+  const sortedEntries = useMemo(() =>
+    Object.entries(dateData.dateHistogram).sort(
+      (a, b) => new Date(a[0]) - new Date(b[0])
+    ), [dateData.dateHistogram]);
 
-  const outlierDatesSet = useMemo(
-    () => new Set(dateData.outliers),
-    [dateData.outliers]
-  );
+  const outlierDatesSet = useMemo(() =>
+    new Set(dateData.outliers)
+    , [dateData.outliers]);
 
   const labels = useMemo(() => {
     if (!showOutliers)
@@ -128,9 +118,8 @@ function DateChart({
 
   return (
     <div
-      className={`${DateChartStyles.chartContainer} ${
-        isSelected ? DateChartStyles.selected : ""
-      }`}
+      className={`${DateChartStyles.chartContainer} ${isSelected ? DateChartStyles.selected : ""
+        }`}
       onClick={onClick}
       style={{ maxWidth: "100%" }}
       onDoubleClick={onDoubleClick}

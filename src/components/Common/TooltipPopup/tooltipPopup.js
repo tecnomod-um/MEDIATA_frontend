@@ -5,6 +5,7 @@ import TooltipPopupStyles from "./tooltipPopup.module.css";
 
 const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
 
+// Tooltip popup alert, to be triggered by and anchored to controls (e.g. buttons)
 const TooltipPopup = ({ message, buttonRef, onClose, offsetY = 0, autoHideMs = 3000, viewportMargin = 10, arrowWidth = 18, arrowHeight = 12 }) => {
   const tooltipRef = useRef(null);
   const [show, setShow] = useState(true);
@@ -15,15 +16,11 @@ const TooltipPopup = ({ message, buttonRef, onClose, offsetY = 0, autoHideMs = 3
     clipPath: `polygon(0 0, 100% 0, 100% calc(100% - 12px), 55% calc(100% - 12px), 50% 100%, 45% calc(100% - 12px), 0 calc(100% - 12px))`,
   });
 
-  // Track tooltip size robustly (content changes, font load, etc.)
   useLayoutEffect(() => {
     const el = tooltipRef.current;
     if (!el) return;
 
     const ro = new ResizeObserver(() => {
-      // trigger a reposition via updatePosition below (it reads offsetWidth/offsetHeight)
-      // by just calling updatePosition directly if we have it, or forcing a layout effect run:
-      // simplest: dispatch a microtask to let layout settle
       queueMicrotask(() => window.dispatchEvent(new Event("resize")));
     });
 
@@ -100,6 +97,7 @@ const TooltipPopup = ({ message, buttonRef, onClose, offsetY = 0, autoHideMs = 3
         clipPath: computeClipPath(placement, arrowX),
       });
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buttonRef, offsetY, viewportMargin, arrowWidth, arrowHeight]);
 
   useLayoutEffect(() => {

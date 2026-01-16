@@ -29,6 +29,7 @@ function renderField(label, value) {
   );
 }
 
+// Card displaying dataset metadata information
 const DatasetCard = ({ dataset }) => {
   const {
     title,

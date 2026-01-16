@@ -1,12 +1,10 @@
-@import '../../variables.css';
-
 .dropContainer {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
   justify-content: flex-start;
   min-height: calc(100vh - 55px);
-  background-color: #ecebeb;
+  background-color: var(--background-color-1);
   transition: background-color 0.2s ease;
   width: 100%;
   overflow: hidden;
@@ -128,7 +126,7 @@
 }
 
 .loadingText {
-  font-size: 1.2rem;
+  font-size: var(--font-size-lg);
   font-weight: 500;
   color: #444;
 }
@@ -136,7 +134,7 @@
 .toast {
   /*top: 55px;*/
   background-color: var(--translucent-background-color) !important;
-  color: #fff !important;
+  color: var(--text-color-on-darkbg) !important;
   min-height: 40px !important;
   border-radius: 8px !important;
   box-shadow: none !important;

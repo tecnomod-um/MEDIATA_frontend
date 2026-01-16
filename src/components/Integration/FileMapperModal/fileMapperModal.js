@@ -6,18 +6,18 @@ import { IoMdClose } from 'react-icons/io';
 import { FaFileCsv, FaFileExcel, FaFileAlt, FaBroom } from 'react-icons/fa';
 import ArrowBackwardsIcon from '@mui/icons-material/ArrowBack';
 import { toast } from 'react-toastify';
-import OverlayWrapper from '../../Unused/OverlayWrapper/overlayWrapper';
+import OverlayWrapper from '../../Common/OverlayWrapper/overlayWrapper';
 import FileMapperModalStyles from './fileMapperModal.module.css';
 import { updateNodeAxiosBaseURL } from '../../../util/nodeAxiosSetup';
 import { getNodeDatasets } from '../../../util/petitionHandler';
 import { dateFormats } from '../../../util/dateFormat';
 
+// Displays datasets in backend nodes for user to select which to apply mappings to
 const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = [], onSend, }) => {
   const navigate = useNavigate();
   const popoverRef = useRef(null);
   const cleanButtonRef = useRef(null);
 
-  // Data & datasets
   const [datasetFiles, setDatasetFiles] = useState({});
   const [selectedDatasets, setSelectedDatasets] = useState({});
 
@@ -58,7 +58,6 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
     );
   }, [columnsData]);
 
-  // Build map of nodeId → nodeName
   const nodeMap = nodes.reduce((acc, { nodeId, name }) => {
     acc[nodeId] = name;
     return acc;
@@ -159,7 +158,7 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
 
   const getFileColor = (fileName) => {
     const col = columnsData.find((c) => c.fileName === fileName);
-    return col ? col.color : '#ccc';
+    return col ? col.color : 'var(--background-color-3)';
   };
 
   const toggleDataset = (file, ds) =>
@@ -505,9 +504,6 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                       </div>
                     )}
                   </div>
-
-
-
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '8px', }} >
                   <button className={`${FileMapperModalStyles.cleanMenuButton} ${changesApplied ? FileMapperModalStyles.remove : FileMapperModalStyles.apply}`}

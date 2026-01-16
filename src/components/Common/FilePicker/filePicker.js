@@ -3,6 +3,7 @@ import { CSSTransition } from "react-transition-group";
 import LinearProgress from "@mui/material/LinearProgress";
 import FilePickerStyles from "./filePicker.module.css";
 
+// Obsolete file picker modal
 function FilePicker({ files = [], onFilesSelected, isProcessing = false, modalTitle, preSelectedFiles = {}, autoProcess = false, progressMode = "spinner", progressValue = 0 }) {
   const [selectedFiles, setSelectedFiles] = useState({});
   const [showModal] = useState(true);
@@ -76,11 +77,21 @@ function FilePicker({ files = [], onFilesSelected, isProcessing = false, modalTi
       }}
       unmountOnExit
     >
-      <div ref={modalRef} className={FilePickerStyles.modalBackground}>
+      <div 
+        ref={modalRef} 
+        className={FilePickerStyles.modalBackground}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="file-picker-title"
+        aria-describedby="file-picker-description"
+      >
         <div className={FilePickerStyles.modalContainer}>
-          <h2 className={FilePickerStyles.modalTitle}>
+          <h2 id="file-picker-title" className={FilePickerStyles.modalTitle}>
             {modalTitle || "Select Files to Process"}
           </h2>
+          <p id="file-picker-description" className="visually-hidden">
+            Select one or more files from the list below to process. Click on a file to select or deselect it.
+          </p>
 
           <CSSTransition
             in={filesLoaded}
@@ -113,22 +124,54 @@ function FilePicker({ files = [], onFilesSelected, isProcessing = false, modalTi
                 overflow: height === "auto" ? "auto" : "hidden",
                 transition: "height 300ms ease",
               }}
+              role="region"
+              aria-label="File selection list"
             >
               {files.length === 0 || files.every((node) => !node.files || node.files.length === 0) ? (
-                <div className={FilePickerStyles.noFiles}>No files available</div>
+                <div 
+                  className={FilePickerStyles.noFiles}
+                  role="status"
+                  aria-live="polite"
+                >
+                  No files available
+                </div>
               ) : (
                 files.map((node) => (
                   <div key={node.nodeId} className={FilePickerStyles.nodeSection}>
-                    {files.length > 1 && <h3 className={FilePickerStyles.nodeTitle}>{node.nodeName}</h3>}
-                    <ul className={FilePickerStyles.fileList}>
+                    {files.length > 1 && (
+                      <h3 
+                        id={`node-${node.nodeId}-title`}
+                        className={FilePickerStyles.nodeTitle}
+                      >
+                        {node.nodeName}
+                      </h3>
+                    )}
+                    <ul 
+                      className={FilePickerStyles.fileList}
+                      role="listbox"
+                      aria-labelledby={files.length > 1 ? `node-${node.nodeId}-title` : "file-picker-title"}
+                      aria-multiselectable="true"
+                    >
                       {node.files.map((file, index) => {
                         const isSelected = (selectedFiles[node.nodeId] || []).includes(file);
+                        const fileId = `file-${node.nodeId}-${index}`;
                         return (
                           <li
                             key={index}
+                            id={fileId}
                             className={`${FilePickerStyles.fileItem} ${isSelected ? FilePickerStyles.selected : ""
                               } ${isProcessing ? FilePickerStyles.disabledFile : ""}`}
                             onClick={() => handleToggle(node.nodeId, file)}
+                            role="option"
+                            aria-selected={isSelected}
+                            aria-disabled={isProcessing}
+                            tabIndex={isProcessing ? -1 : 0}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                handleToggle(node.nodeId, file);
+                              }
+                            }}
                           >
                             {file}
                           </li>
@@ -142,13 +185,17 @@ function FilePicker({ files = [], onFilesSelected, isProcessing = false, modalTi
           </CSSTransition>
 
           <button
+            id="file-picker-confirm-button"
             className={FilePickerStyles.confirmButton}
             onClick={handleProcess}
             disabled={isProcessing || !Object.values(selectedFiles).some((arr) => arr.length > 0)}
+            aria-label={isProcessing ? "Processing files, please wait" : "Process selected files"}
+            aria-busy={isProcessing}
+            aria-live={isProcessing ? "polite" : "off"}
           >
             {isProcessing ? (
               isBar ? (
-                <div style={{ width: "100%" }}>
+                <div style={{ width: "100%" }} role="progressbar" aria-valuenow={safeProgress} aria-valuemin="0" aria-valuemax="100">
                   <LinearProgress
                     variant="determinate"
                     value={safeProgress}
@@ -163,7 +210,7 @@ function FilePicker({ files = [], onFilesSelected, isProcessing = false, modalTi
                 </div>
               ) : (
                 <div className={FilePickerStyles.buttonSpinner}>
-                  <span className={FilePickerStyles.spinnerIcon}></span>
+                  <span className={FilePickerStyles.spinnerIcon} aria-hidden="true"></span>
                   <span>Processing...</span>
                 </div>
               )

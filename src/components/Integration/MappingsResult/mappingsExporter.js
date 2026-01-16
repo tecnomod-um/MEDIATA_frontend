@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import MappingsResultStyles from "./mappingsResult.module.css";
 
+// Exports the integration mappings object to CSV
 function generateMappingsCSV(mappings) {
   const lines = [];
 

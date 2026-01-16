@@ -1,5 +1,5 @@
 .pageContainer {
-  background-color: #ecebeb;
+  background-color: var(--background-color-1);
   display: flex;
   height: calc(100vh - 55px);
   overflow: hidden;
@@ -14,12 +14,10 @@
 }
 
 .leftPanel {
-  /* fixed width on left */
   flex: 0 0 20vw;
 }
 
 .middlePanel {
-  /* flex to occupy remaining space when right panel is hidden */
   flex: 1 1 auto;
   border-right: 1px solid #ddd;
   padding: 10px;
@@ -30,11 +28,10 @@
   overflow: hidden;
 }
 
-/* rightPanel grows/shrinks its width via flex-basis */
 .rightPanel {
   flex: 0 0 0;
   position: relative;
-  background: #ffffff;
+  background: var(--background-color-card);
   overflow: hidden;
   transition: flex-basis 300ms ease;
 }
@@ -43,13 +40,11 @@
   flex: 0 0 30vw;
 }
 
-/* inner wrapper for CSSTransition sliding */
 .rightInner {
   width: 100%;
   height: 100%;
 }
 
-/* full‐screen dark overlay during drag */
 .globalOverlay {
   position: fixed;
   top: 0;
@@ -61,10 +56,9 @@
   z-index: 10;
 }
 
-/* existing utility styles */
 .panelHeader {
   margin-bottom: 15px;
-  font-size: 1.3rem;
+  font-size: var(--font-size-lg);
 }
 
 .elementList {
@@ -81,7 +75,7 @@
 }
 
 .elementItem:hover {
-  background-color: #555;
+  background-color: var(--text-color-secondary);
 }
 
 .detailHeader {
@@ -94,7 +88,7 @@
   background: none;
   border: none;
   color: #007bff;
-  font-size: 1rem;
+  font-size: var(--font-size-base);
   cursor: pointer;
   margin-right: 10px;
 }
@@ -108,7 +102,7 @@
 
 .clusterButton {
   background-color: #007bff;
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   border: none;
   padding: 6px 12px;
   border-radius: 4px;
@@ -128,27 +122,26 @@
 
 .clusterItem {
   padding: 8px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-color-secondary);
   cursor: pointer;
   transition: background-color 0.3s;
 }
 
 .clusterItem:hover {
-  background-color: #f2f2f2;
+  background-color: var(--background-color-secondary);
 }
 
 .highlighted {
-  background-color: #e0e0e0;
+  background-color: var(--background-color-tertiary);
   font-weight: bold;
 }
 
 .instructions {
-  font-size: 0.9rem;
-  color: #666;
+  font-size: var(--font-size-base);
+  color: var(--text-color-tertiary);
   margin-top: 10px;
 }
 
-/* slide in from left for the middle panel */
 .middleEnter {
   opacity: 0;
   transform: translateX(-20px);
@@ -171,7 +164,6 @@
   transition: transform 300ms ease, opacity 300ms ease;
 }
 
-/* slide in/out for the rightInner content */
 .rightInnerEnter {
   opacity: 0;
   transform: translateX(100%);

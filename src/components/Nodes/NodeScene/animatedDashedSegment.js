@@ -5,6 +5,7 @@ import * as THREE from "three";
 
 const AnimatedLine = animated(Line);
 
+// Graphic animated dashed line segment used in node connections
 const AnimatedDashedSegment = ({ start, end, opacity, registerLine }) => {
   const lineRef = useRef();
 

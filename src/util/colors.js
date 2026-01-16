@@ -1,5 +1,6 @@
 import distinctColors from "distinct-colors";
 
+// Utility functions for generating distinct color palettes
 export function generateDistinctColors(count) {
   return distinctColors({
     count,

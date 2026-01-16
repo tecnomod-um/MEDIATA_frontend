@@ -3,6 +3,7 @@ import MappingsResultStyles from "./mappingsResult.module.css";
 import MappingHierarchy from "../MappingHierarchy/mappingHierarchy";
 import MappingsExporter from "./mappingsExporter";
 
+// Displays mapping results and their controls
 function MappingsResult({ mappings, columnsData, deletedItems, processingStatus, onUndoDelete, onDeleteMapping, onOpenFileMapper, formatValue, setMappings }) {
   const [searchTerm, setSearchTerm] = useState("");
 

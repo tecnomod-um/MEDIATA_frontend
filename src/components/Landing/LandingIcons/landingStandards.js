@@ -1,15 +1,16 @@
 import React from "react";
 import styles from "./landingIcons.module.css";
 
+// 'Standards' SVG icon for the landing page
 export default function LandingStandards({ size, title = "Standards supported" }) {
   const svgStyle = size ? { width: size, height: size } : {};
 
   const piecePath = (x, y, s, sides) => {
     const a = s * 0.32, b = s * 0.68, r = s * 0.18, k = r * 1.3;
-    const kyTop    = (t) => (t === "out" ? -k :  k);
-    const kyBottom = (t) => (t === "out" ?  k : -k);
-    const kxRight  = (t) => (t === "out" ?  k : -k);
-    const kxLeft   = (t) => (t === "out" ? -k :  k);
+    const kyTop = (t) => (t === "out" ? -k : k);
+    const kyBottom = (t) => (t === "out" ? k : -k);
+    const kxRight = (t) => (t === "out" ? k : -k);
+    const kxLeft = (t) => (t === "out" ? -k : k);
     return [
       `M ${x} ${y}`, `H ${x + a}`,
       `C ${x + a + r} ${y + kyTop(sides.top)} ${x + b - r} ${y + kyTop(sides.top)} ${x + b} ${y}`,
@@ -22,9 +23,9 @@ export default function LandingStandards({ size, title = "Standards supported" }
     ].join(" ");
   };
 
-  const S=30, X0=28, Y0=34, DX=34, DY=34;
-  const A = { top: "out", right: "in",  bottom: "out", left: "in"  };
-  const B = { top: "in",  right: "out", bottom: "in",  left: "out" };
+  const S = 30, X0 = 28, Y0 = 34, DX = 34, DY = 34;
+  const A = { top: "out", right: "in", bottom: "out", left: "in" };
+  const B = { top: "in", right: "out", bottom: "in", left: "out" };
 
   return (
     <svg
@@ -41,19 +42,12 @@ export default function LandingStandards({ size, title = "Standards supported" }
         data-testid="ls-iconSquare"
       />
 
-      {/* TL (A) */}
       <path d={piecePath(X0, Y0, S, A)} className={styles.puzzlePiece} data-testid="ls-puzzlePiece" />
-      {/* BL (B) */}
       <path d={piecePath(X0, Y0 + DY, S, B)} className={styles.puzzlePiece} data-testid="ls-puzzlePiece" />
-      {/* BR (A) */}
       <path d={piecePath(X0 + DX, Y0 + DY, S, A)} className={styles.puzzlePiece} data-testid="ls-puzzlePiece" />
-
-      {/* TR (B) — animated/movable */}
       <g className={styles.puzzleMover} data-testid="ls-puzzleMover">
         <path d={piecePath(X0 + DX, Y0, S, B)} className={styles.puzzlePiece} data-testid="ls-puzzlePiece" />
       </g>
-
-      {/* single explicit path test hook */}
       <path d={piecePath(X0, Y0, S, A)} className={styles.puzzlePiece} data-testid="ls-puzzlePiece-path" style={{ display: 'none' }} />
     </svg>
   );

@@ -20,7 +20,7 @@ const Tutorial = lazy(() => import(/* webpackChunkName: "page-tutorial" */ "./pa
 const Nodes = lazy(() => import(/* webpackChunkName: "page-nodes" */ "./pages/nodes/nodes"));
 const Projects = lazy(() => import(/* webpackChunkName: "page-projects" */ "./pages/projects/projects"));
 
-
+// Application entry point and routing configuration
 const App = () => {
   const { logout } = useAuth();
   useEffect(() => setupAxiosInterceptors(logout), [logout]);

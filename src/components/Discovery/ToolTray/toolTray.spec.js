@@ -31,9 +31,9 @@ jest.mock('react-icons/md', () => ({
 
 jest.mock('../DataExporter/dataExporter',
   () => () => <div data-testid="data-exporter" />);
-jest.mock('../../Integration/ElementExporter/elementExporter',
+jest.mock('../../Discovery/ElementExporter/elementExporter',
   () => () => <div data-testid="element-exporter" />);
-jest.mock('../../Integration/CompareFilesModal/compareFilesModal',
+jest.mock('../../Discovery/CompareFilesModal/compareFilesModal',
   () => ({ isOpen }) => (isOpen ? <div data-testid="compare-modal" /> : null));
 
 jest.mock('../../../util/petitionHandler', () => ({ recalculateFeature: jest.fn() }));

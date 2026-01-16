@@ -1,3 +1,4 @@
+// Visual connector component (unused)
 import React, { useState } from "react";
 import VisualConnectorStyles from "./visualConnector.module.css";
 

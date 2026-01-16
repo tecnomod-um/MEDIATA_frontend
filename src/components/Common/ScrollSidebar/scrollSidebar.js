@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import styles from "./scrollSidebar.module.css";
+import ScrollSidebarStyles from "./scrollSidebar.module.css";
 
+// Navigation focused sidebar with active section tracking
 function ScrollSidebar({ sections = [], offset = 55, maxLines = 2, className, listClassName, itemClassName, activeClassName }) {
   const [active, setActive] = useState(sections[0] || null);
   const activeRef = useRef(active);
@@ -67,18 +68,18 @@ function ScrollSidebar({ sections = [], offset = 55, maxLines = 2, className, li
 
   return (
     <nav
-      className={[styles.nav, className].filter(Boolean).join(" ")}
+      className={[ScrollSidebarStyles.nav, className].filter(Boolean).join(" ")}
       aria-label="Section navigation"
       style={maxLines != null ? { '--ssb-max-lines': maxLines } : undefined}
     >
-      <ul className={[styles.list, listClassName].filter(Boolean).join(" ")}>
+      <ul className={[ScrollSidebarStyles.list, listClassName].filter(Boolean).join(" ")}>
         {sections.map((id) => {
           const isActive = active === id;
           const label = id.replaceAll("-", " ");
           const liClass = [
-            styles.item,
+            ScrollSidebarStyles.item,
             itemClassName,
-            isActive ? styles.active : "",
+            isActive ? ScrollSidebarStyles.active : "",
             isActive && activeClassName ? activeClassName : "",
           ].filter(Boolean).join(" ");
 
@@ -91,7 +92,7 @@ function ScrollSidebar({ sections = [], offset = 55, maxLines = 2, className, li
             <li key={id} className={liClass}>
               <button
                 type="button"
-                className={styles.button}
+                className={ScrollSidebarStyles.button}
                 onClick={() => scrollToId(id)}
                 onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && scrollToId(id)}
                 aria-current={isActive ? "page" : undefined}
@@ -100,8 +101,8 @@ function ScrollSidebar({ sections = [], offset = 55, maxLines = 2, className, li
               >
                 {hasColon ? (
                   <>
-                    <span className={styles.kicker}>{prefix}</span>
-                    <span className={styles.title}>{suffix}</span>
+                    <span className={ScrollSidebarStyles.kicker}>{prefix}</span>
+                    <span className={ScrollSidebarStyles.title}>{suffix}</span>
                   </>
                 ) : (
                   label

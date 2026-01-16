@@ -22,6 +22,8 @@ const badgeClassFor = (status, styles) => {
   }
 };
 
+
+// Project picker modal for selecting research projects
 function ProjectPicker({ projects = [], onSelectProject, modalTitle }) {
   const [showModal] = useState(true);
   const [loaded, setLoaded] = useState(false);
@@ -50,9 +52,18 @@ function ProjectPicker({ projects = [], onSelectProject, modalTitle }) {
       }}
       unmountOnExit
     >
-      <div ref={modalRef} className={ProjectPickerStyles.modalBackground}>
+      <div 
+        ref={modalRef} 
+        className={ProjectPickerStyles.modalBackground}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="project-picker-title"
+      >
         <div className={`${ProjectPickerStyles.modalContainer} ${ProjectPickerStyles.projectModal}`}>
-          <h2 className={ProjectPickerStyles.modalTitle}>
+          <h2 
+            id="project-picker-title"
+            className={ProjectPickerStyles.modalTitle}
+          >
             {modalTitle || "Select project"}
           </h2>
 
@@ -89,20 +100,26 @@ function ProjectPicker({ projects = [], onSelectProject, modalTitle }) {
               }}
             >
               {projects.length === 0 ? (
-                <div className={ProjectPickerStyles.emptyState}>
+                <div 
+                  className={ProjectPickerStyles.emptyState}
+                  role="status"
+                  aria-live="polite"
+                >
                   No projects available
                 </div>
               ) : (
-                projects.map((p) => {
+                <ul aria-label="Available projects">
+                {projects.map((p) => {
                   const showImg = !!p.imageUrl && !brokenImages[p.id];
 
                   return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      className={ProjectPickerStyles.projectRow}
-                      onClick={() => onSelectProject?.(p)}
-                    >
+                    <li key={p.id}>
+                      <button
+                        type="button"
+                        className={ProjectPickerStyles.projectRow}
+                        onClick={() => onSelectProject?.(p)}
+                        aria-label={`Select project ${p.name}. ${p.description || ''} Status: ${p.badge || 'Unknown'}`}
+                      >
                       <div className={ProjectPickerStyles.thumb}>
                         {showImg ? (
                           <img
@@ -164,8 +181,10 @@ function ProjectPicker({ projects = [], onSelectProject, modalTitle }) {
                         ›
                       </div>
                     </button>
+                   </li>
                   );
-                })
+                })}
+                </ul>
               )}
             </div>
           </CSSTransition>

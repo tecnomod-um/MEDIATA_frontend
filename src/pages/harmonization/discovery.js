@@ -1,10 +1,8 @@
-
 import React, { useState, useCallback, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 import DiscoveryStyles from "./discovery.module.css";
-import FilePicker from "../../components/Common/FilePicker/filePicker";
-import FileExplorer from "../../components/Common/FilePicker/fileExplorer"; 
+import FileExplorer from "../../components/Common/FileExplorer/fileExplorer";
 import StatisticsDisplay from "../../components/Discovery/StatisticsDisplay/statisticsDisplay";
 import ToolTray from "../../components/Discovery/ToolTray/toolTray";
 import AggregateDisplay from "../../components/Discovery/AggregatesDisplay/aggregateDisplay";
@@ -15,14 +13,13 @@ import { updateNodeAxiosBaseURL } from "../../util/nodeAxiosSetup";
 
 import { useNode } from "../../context/nodeContext";
 
+// Discovery page for data profiling and statistics visualization
 function Discovery() {
   const [dataResults, setDataResults] = useState([]);
   const [activeFileIndices, setActiveFileIndices] = useState([]);
   const [dataStatistics, setDataStatistics] = useState(null);
   const [filteredDataStatistics, setFilteredDataStatistics] = useState(null);
-
   const [showIndividualView, toggleShownView] = useState(true);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [showOutliers, setShowOutliers] = useState(false);
   const [isToolTrayOpen, setIsToolTrayOpen] = useState(true);
   const [selectedEntry, setSelectedEntry] = useState(null);
@@ -30,11 +27,9 @@ function Discovery() {
   const [isFiltersOpen, setIsFiltersopen] = useState(false);
   const [filters, setFilters] = useState([]);
 
-  const [progressMode, setProgressMode] = useState("spinner");
-  const [progressValue, setProgressValue] = useState(0);
-
   const [hasProcessedMappingState, setHasProcessedMappingState] = useState(false);
   const { selectedNodes } = useNode();
+  // eslint-disable-next-line no-unused-vars
   const [datasets, setDatasets] = useState([]);
   const location = useLocation();
   const toggleToolTray = () => setIsToolTrayOpen(!isToolTrayOpen);
@@ -45,18 +40,18 @@ function Discovery() {
     while (true) {
       const status = await getProcessSelectedDatasetsStatus(jobId);
       if (typeof status?.percent === "number") onProgress(status.percent);
-  
+
       const state = String(status?.state || "").toUpperCase();
       if (state === "DONE") {
         const results = await getProcessSelectedDatasetsResult(jobId);
         return results || [];
       }
       if (state === "ERROR") throw new Error(status.message || "Discovery job failed");
-  
+
       await sleep(500);
     }
   }, []);
-  
+
   useEffect(() => {
     if (location.state?.elementFiles?.length && !hasProcessedMappingState) {
       const elementFiles = location.state.elementFiles;
@@ -87,10 +82,9 @@ function Discovery() {
                 );
                 return;
               }
-              
+
               if (result.mode === "async") {
-                setProgressMode("bar"); // optional
-                const arr = await pollDiscoveryJob(result.jobId, () => {}); // no progress needed here
+                const arr = await pollDiscoveryJob(result.jobId, () => { });
                 allResults = allResults.concat(
                   arr.map((r) => ({
                     ...r,
@@ -101,9 +95,9 @@ function Discovery() {
                 );
                 return;
               }
-              
+
               throw new Error("Unexpected response from processList");
-              
+
             })
           );
           if (allResults.length === 0) {
@@ -133,7 +127,7 @@ function Discovery() {
     };
 
     dataResultsArray.forEach((res, idx) => {
-      if (!activeIndices[idx]) return; // skip non-active files
+      if (!activeIndices[idx]) return;
       const fileLabel = res.fileName || `File #${idx + 1}`;
 
       res.continuousFeatures?.forEach((item) => {
@@ -216,80 +210,6 @@ function Discovery() {
     });
   };
 
-  const handleProcessSelectedDatasets = async (selectedFilenamesMapping) => {
-    setIsProcessing(true);
-    setProgressMode("spinner");
-    setProgressValue(0);
-  
-    try {
-      const allResults = [];
-      const perNodePercent = {};
-  
-      const updateOverallProgress = () => {
-        const vals = Object.values(perNodePercent);
-        const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
-        setProgressValue(avg);
-      };
-  
-      await Promise.all(
-        selectedNodes.map(async (node) => {
-          const filesForNode = selectedFilenamesMapping[node.nodeId] || [];
-          if (!filesForNode.length) return;
-  
-          updateNodeAxiosBaseURL(node.serviceUrl);
-  
-          const result = await processSelectedDatasets(filesForNode);
-  
-          if (result.mode === "sync") {
-            const arr = result.results || [];
-            allResults.push(
-              ...arr.map((r) => ({
-                ...r,
-                fileName: r.fileName || "Unknown File",
-                nodeId: node.nodeId,
-                nodeName: node.name,
-              }))
-            );
-            return;
-          }
-  
-          if (result.mode === "async") {
-            setProgressMode("bar");
-            perNodePercent[node.nodeId] = 0;
-            updateOverallProgress();
-  
-            const arr = await pollDiscoveryJob(result.jobId, (p) => {
-              perNodePercent[node.nodeId] = p;
-              updateOverallProgress();
-            });
-  
-            allResults.push(
-              ...arr.map((r) => ({
-                ...r,
-                fileName: r.fileName || "Unknown File",
-                nodeId: node.nodeId,
-                nodeName: node.name,
-              }))
-            );
-            return;
-          }
-  
-          throw new Error("Unexpected response from processList");
-        })
-      );
-  
-      setDataResults(allResults);
-      setActiveFileIndices(allResults.map((_, idx) => idx === 0));
-    } catch (error) {
-      console.error(error);
-      toast.error(error.message || "Error processing datasets");
-    } finally {
-      setIsProcessing(false);
-      setProgressMode("spinner");
-      setProgressValue(0);
-    }
-  };
-
   useEffect(() => {
     if (selectedNodes && selectedNodes.length > 0) {
       const fetchDatasets = async () => {
@@ -332,62 +252,12 @@ function Discovery() {
       preSelected[nodeId].push(fileName);
     });
   }
-  const handleOpenFromExplorer = async (fileName) => {
-    if (!selectedNodes?.length) {
-      toast.error("No node selected.");
-      return;
-    }
 
-    // Basic version: use FIRST node only (predictable).
-    const node = selectedNodes[0];
-
-    setIsProcessing(true);
-    setProgressMode("spinner");
-    setProgressValue(0);
-
-    try {
-      updateNodeAxiosBaseURL(node.serviceUrl);
-
-      const result = await processSelectedDatasets([fileName]);
-
-      if (result.mode === "sync") {
-        const arr = result.results || [];
-        const allResults = arr.map((r) => ({
-          ...r,
-          fileName: r.fileName || fileName,
-          nodeId: node.nodeId,
-          nodeName: node.name,
-        }));
-        setDataResults(allResults);
-        setActiveFileIndices(allResults.map((_, idx) => idx === 0));
-        return;
-      }
-
-      if (result.mode === "async") {
-        setProgressMode("bar");
-        const arr = await pollDiscoveryJob(result.jobId, (p) => setProgressValue(p));
-        const allResults = (arr || []).map((r) => ({
-          ...r,
-          fileName: r.fileName || fileName,
-          nodeId: node.nodeId,
-          nodeName: node.name,
-        }));
-        setDataResults(allResults);
-        setActiveFileIndices(allResults.map((_, idx) => idx === 0));
-        return;
-      }
-
-      throw new Error("Unexpected response from processList");
-    } catch (e) {
-      console.error(e);
-      toast.error(e.message || "Error processing dataset");
-    } finally {
-      setIsProcessing(false);
-      setProgressMode("spinner");
-      setProgressValue(0);
-    }
+  const handleFilesOpened = (allResults) => {
+    setDataResults(allResults);
+    setActiveFileIndices(allResults.map((_, idx) => idx === 0));
   };
-  console.log(dataStatistics)
+
   return (
     <div className={DiscoveryStyles.dropContainer}>
       <FilterModal
@@ -403,30 +273,14 @@ function Discovery() {
         combineSelectedData={combineSelectedData}
         setDataStatistics={setDataStatistics}
       />
-      {/*!filteredDataStatistics && (
-        <FilePicker
-          files={datasets}
-          onFilesSelected={handleProcessSelectedDatasets}
-          isProcessing={isProcessing}
-          modalTitle="Select dataset files to process"
-          preSelectedFiles={preSelected}
-          autoProcess={!!location.state?.elementFiles?.length}
-
-          progressMode={progressMode}
-          progressValue={progressValue}
-        />
-      )*/}
-            {/* Show explorer when we have not loaded data yet */}
-            {!filteredDataStatistics && (
+      {!filteredDataStatistics && (
         <FileExplorer
+          nodes={selectedNodes}
           category="DATASETS"
           isOpen={true}
-          modalTitle={
-            isProcessing
-              ? (progressMode === "bar" ? `Processing… ${Math.round(progressValue)}%` : "Processing…")
-              : "Browse datasets (double-click to open)"
-          }
-          onOpenFile={handleOpenFromExplorer}
+          preSelectedFiles={preSelected}
+          autoProcess={!!location.state?.elementFiles?.length}
+          onFilesOpened={handleFilesOpened}
         />
       )}
       <CSSTransition

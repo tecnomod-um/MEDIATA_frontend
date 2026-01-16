@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import JoinedNodesDisplay from './joinedNodesDisplay';
 import { getNodeMetadata } from '../../../util/petitionHandler';
 
-jest.mock('../../Unused/OverlayWrapper/overlayWrapper', () => ({
+jest.mock('../../Common/OverlayWrapper/overlayWrapper', () => ({
   __esModule: true,
   default: ({ isOpen, children }) =>
     isOpen ? <div data-testid="overlay">{children}</div> : null,

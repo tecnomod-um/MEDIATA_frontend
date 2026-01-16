@@ -1,3 +1,4 @@
+// Date format options for data cleaning and standardization
 export const dateFormats = [
   { value: 'YYYY-MM-DD', label: 'ISO (YYYY-MM-DD)' },
   { value: 'MM/DD/YYYY', label: 'US (MM/DD/YYYY)' },

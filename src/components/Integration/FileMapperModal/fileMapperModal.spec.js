@@ -36,7 +36,7 @@ jest.mock("react-toastify", () => ({
   toast: { error: jest.fn() },
 }));
 
-jest.mock("../../Unused/OverlayWrapper/overlayWrapper", () => ({
+jest.mock("../../Common/OverlayWrapper/overlayWrapper", () => ({
   isOpen,
   children,
 }) => (isOpen ? <div data-testid="overlay">{children}</div> : null));

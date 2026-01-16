@@ -1,228 +1,277 @@
-@import '../../../variables.css';
-
 .schemaTrayWrapper {
-    position: fixed;
-    top: 55px;
-    right: 0;
-    height: calc(100% - 55px);
-    z-index: 998;
+  position: fixed;
+  top: 55px;
+  right: 0;
+  height: calc(100% - 55px);
+  z-index: 998;
 }
 
 .tray {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 300px;
-    height: 100%;
-    background-color: var(--background-color-2-light);
-    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
-    overflow: hidden;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 300px;
+  height: 100%;
+  background-color: var(--schema-tray-bg);
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
+  overflow: hidden;
 }
 
 .expanded {
-    width: 50vw;
+  width: 50vw;
 }
 
 .closed {
-    transform: translateX(100%);
+  transform: translateX(100%);
 }
 
 .open {
-    transform: translateX(0);
+  transform: translateX(0);
 }
 
 @media (max-width: 600px) {
-    .tray {
-        width: 100vw;
-        height: 100vh;
-        top: 0;
-    }
+  .tray {
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+  }
 }
 
 .trayHeader {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background-color: var(--tooltray-background-color-light);
-    color: var(--text-color-on-darkbg-light);
-    padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--tooltray-background-color);
+  color: var(--text-color-on-darkbg);
+  padding: 10px;
 }
 
 .headerButtons {
-    display: flex;
-    gap: 8px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 .toggleButton,
 .expandButton {
-    background: none;
-    border: none;
-    color: var(--text-color-on-darkbg-light);
-    font-size: 14px;
-    cursor: pointer;
+  background: none;
+  border: none;
+  color: var(--text-color-on-darkbg);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.toggleButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  line-height: 0;
 }
 
 .trayContent {
-    padding: 15px;
-    overflow-y: auto;
-    height: calc(100% - 50px);
-    position: relative;
+  padding: 15px;
+  height: calc(100% - 50px);
+  box-sizing: border-box;
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .schemaDisplayContainer {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .schemaScrollArea {
-    flex: 1;
-    overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overflow-x: auto;
 }
 
 .schemaDisplay {
-    background-color: white;
-    border: 1px solid #eee;
-    padding: 10px;
-    border-radius: 4px;
-    white-space: pre-wrap;
-    word-wrap: break-word;
+  background-color: var(--text-color-on-darkbg);
+  border: 1px solid #eee;
+  padding: 10px;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+}
+
+.schemaEditor {
+  display: block;
+  box-sizing: border-box;
+
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  max-height: 100%;
+
+  margin: 0;
+  background-color: var(--text-color-on-darkbg);
+  border: 1px solid #eee;
+  padding: 10px;
+  border-radius: 4px;
+
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: var(--font-size-sm);
+  line-height: 1.35;
+
+  white-space: pre;
+  resize: none;
+  outline: none;
+
+  overflow: visible;
 }
 
 .schemaFooter {
-    margin-top: 10px;
-    text-align: center;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.schemaStatus {
+  font-size: var(--font-size-xs);
+  color: var(--text-color-secondary);
+  margin-bottom: 6px;
+  text-align: left;
 }
 
 .removeButton {
-    background: var(--button-gradient-light);
-    color: var(--text-color-on-darkbg-light);
-    border: none;
-    padding: 8px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.2s ease;
+  background: var(--button-gradient);
+  color: var(--text-color-on-darkbg);
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease;
 }
 
 .removeButton:hover {
-    background-color: var(--button-color-hover-light);
+  background-color: var(--button-color-hover);
 }
 
 .noSchemaText {
-    font-size: 16px;
-    font-weight: bold;
-    color: #555;
-    margin-bottom: 15px;
+  font-size: var(--font-size-base);
+  font-weight: bold;
+  color: var(--text-color-secondary);
+  margin-bottom: 15px;
 }
 
 .controlContainer {
-    padding: 15px;
-    border: inset 2px #a7a2a2;
-    border-radius: 5px;
-    width: 96%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
+  padding: 15px;
+  border: inset 2px #a7a2a2;
+  border-radius: 5px;
+  width: 96%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 
 .uploadRow {
-    width: 100%;
-    display: flex;
-    justify-content: center;
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .uploadLabel {
-    width: 100%;
-    text-align: center;
-    background: var(--button-gradient-light);
-    color: var(--text-color-on-darkbg-light);
-    padding: 8px 12px;
-    border-radius: 4px;
-    cursor: pointer;
+  width: 100%;
+  text-align: center;
+  background: var(--button-gradient);
+  color: var(--text-color-on-darkbg);
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 .uploadInput {
-    display: none;
+  display: none;
 }
 
 .orRow {
-    width: 100%;
-    text-align: center;
-    color: #555;
-    font-size: 14px;
+  width: 100%;
+  text-align: center;
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-sm);
 }
 
 .urlRow {
-    display: flex;
-    width: 100%;
-    gap: 0;
+  display: flex;
+  width: 100%;
+  gap: 0;
 }
 
 .urlInput {
-    flex: 1;
-    padding: 8px;
-    border: 1px solid var(--background-nav-background-color-hover-light);
-    border-right: none;
-    border-radius: 4px 0 0 4px;
-    background-color: var(--background-color-1-light);
-    box-sizing: border-box;
+  flex: 1;
+  padding: 8px;
+  border: 1px solid var(--background-nav-background-color-hover-light);
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+  background-color: var(--background-color-1);
+  box-sizing: border-box;
 }
 
 .fetchButton {
-    padding: 8px 12px;
-    border: 1px solid var(--background-nav-background-color-hover-light);
-    border-left: none;
-    border-radius: 0 4px 4px 0;
-    background: var(--button-gradient-light);
-    color: var(--text-color-on-darkbg-light);
-    cursor: pointer;
-    transition: background 0.2s ease;
-    white-space: nowrap;
-    box-sizing: border-box;
+  padding: 8px 12px;
+  border: 1px solid var(--background-nav-background-color-hover-light);
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+  background: var(--button-gradient);
+  color: var(--text-color-on-darkbg);
+  cursor: pointer;
+  transition: background 0.2s ease;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .fetchButton:hover:not(:disabled) {
-    background-color: var(--button-color-hover-light);
+  background-color: var(--button-color-hover);
 }
 
 .errorMessage {
-    margin-top: 10px;
-    color: red;
-    font-size: 14px;
-    text-align: center;
+  margin-top: 10px;
+  color: red;
+  font-size: var(--font-size-sm);
+  text-align: center;
 }
 
 .fadeIn {
-    opacity: 1;
-    transition: opacity 0.5s ease-in;
+  opacity: 1;
+  transition: opacity 0.5s ease-in;
 }
 
 .closedTab {
-    position: absolute;
-    top: 50%;
-    right: 0;
-    transform: translateY(-50%);
-    width: 50px;
-    height: 120px;
-    background: var(--tooltray-background-color-light);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
-    border-radius: 8px 0 0 8px;
-    transition: background 0.2s ease;
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  width: 50px;
+  height: 120px;
+  background: var(--schema-tab-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+  border-radius: 8px 0 0 8px;
+  transition: background 0.2s ease;
 }
 
 .closedTab:hover {
-    background: #555;
+  background: var(--schema-tab-hover);
 }
 
 .closedTab span {
-    color: var(--text-color-on-darkbg-light);
-    transform: rotate(-90deg);
-    font-size: 14px;
-    white-space: nowrap;
+  color: var(--schema-tab-text);
+  transform: rotate(-90deg);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
 }

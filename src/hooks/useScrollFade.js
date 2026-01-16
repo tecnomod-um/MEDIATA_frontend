@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
+// Custom hook for scroll-based fade animation effects
 export default function useScrollFade() {
   const ref = useRef(null);
   const [opacity, setOpacity] = useState(0);

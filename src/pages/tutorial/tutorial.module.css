@@ -1,5 +1,3 @@
-@import '../../variables.css';
-
 * {
   margin: 0;
   padding: 0;
@@ -9,7 +7,9 @@
   position: relative;
   overflow: auto;
   scrollbar-width: auto;
-  font-size: 1.25rem;
+  font-size: var(--font-size-lg);
+  background-color: var(--background-color-1);
+  min-height: 100vh;
 }
 
 .mainContainer {
@@ -18,14 +18,14 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background-color: #ecebeb;
+  background-color: var(--background-color-1);
   padding: 10px;
   margin: auto;
 }
 
 .mainHeader {
   padding: 20px;
-  color: black;
+  color: var(--text-color-dark);
   text-align: justify;
 }
 
@@ -70,13 +70,13 @@
 
 .introText {
   line-height: 1.5;
-  color: #333;
+  color: var(--text-color-primary);
   margin-bottom: 1em;
 }
 
 .lesserText {
   font-style: italic;
-  color: #666;
+  color: var(--text-color-tertiary);
 }
 
 .imageWrapper {
@@ -120,9 +120,9 @@
 }
 
 .centeredHeading {
-  color: var(--button-color-light);
+  color: var(--heading-color);
   text-align: center;
-  font-size: 1.5rem;
+  font-size: var(--font-size-xl);
 }
 
 .variablesTable {
@@ -133,15 +133,15 @@
 
 .variablesTable th,
 .variablesTable td {
-  border: 1px solid var(--tooltray-background-color-light);
+  border: 1px solid var(--tooltray-background-color);
   padding: 5px;
   text-align: left;
-  font-size: 1.1rem;
+  font-size: var(--font-size-md);
 }
 
 .variablesTable th {
-  background-color: #f2f2f2;
-  color: black;
+  background-color: var(--background-color-secondary);
+  color: var(--text-color-dark);
 }
 
 .textImageContainerUnion {
@@ -164,7 +164,7 @@
   text-align: left;
   margin: 0 10px;
   padding: 10px;
-  background-color: #f8f8f8;
+  background-color: var(--background-color-3);
   border-radius: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
@@ -187,7 +187,7 @@
 
 .sidebar {
   z-index: 2;
-  font-size: 12pt;
+  font-size: var(--font-size-base);
   position: fixed;
   user-select: none;
   left: 0;
@@ -196,7 +196,7 @@
   min-width: 180px;
   height: 100vh;
   overflow-y: auto;
-  background-color: var(--tooltray-background-color-light);
+  background-color: var(--tooltray-background-color);
   box-shadow: 3px 0px 10px rgba(0, 0, 0, 0.5);
   color: #ecf0f1;
 }
@@ -213,28 +213,28 @@
 
 @media (min-width: 769px) {
   .pageContainer {
-    margin-left: 200px;
+    margin-left: 0;
+    padding-left: 200px;
   }
 }
 
 @media (max-width: 768px) {
   .pageContainer {
     margin-left: 0;
-    font-size: 0.975rem;
+    font-size: var(--font-size-base);
   }
 
   .centeredHeading {
-    font-size: 1.375rem;
+    font-size: var(--font-size-xl);
   }
 
   .variablesTable th,
   .variablesTable td {
-    font-size: 0.9375rem;
+    font-size: var(--font-size-base);
   }
 
 }
 
-/* Anchor scrolling: adjust for fixed navbar height */
 .contentContainer {
   scroll-margin-top: 70px;
 }
@@ -247,7 +247,7 @@
   height: 3px;
   margin: 0 auto 0;
   border-radius: 999px;
-  background: linear-gradient(90deg, transparent, var(--background-nav-and-headers-background-color-light) 40%, transparent);
+  background: linear-gradient(90deg, transparent, var(--background-nav-and-headers-background-color) 40%, transparent);
 }
 
 

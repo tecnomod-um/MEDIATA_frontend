@@ -1,6 +1,8 @@
+
 import axios from "axios";
 import config from "../config";
 
+// Axios instance configuration for backend API requests
 const axiosInstance = axios.create({
   baseURL: config.backendUrl,
   timeout: 300000,

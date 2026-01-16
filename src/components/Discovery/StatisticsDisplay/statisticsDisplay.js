@@ -6,6 +6,7 @@ import EntrySearch from "../EntrySearch/entrySearch";
 import StatisticsDisplayStyles from "./statisticsDisplay.module.css";
 import ChartPreview from "../ChartPreview/chartPreview";
 
+// Display for individual statistics, contains tables and graphs
 const StatisticsDisplay = React.memo(
   ({ data, showOutliers, setSelectedEntry, selectedEntry }) => {
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -18,17 +19,17 @@ const StatisticsDisplay = React.memo(
         : `${missingValuesCount} (${missingPercentage}%)`;
     }, []);
 
-    const sortedContinuousFeatures = useMemo(() => 
+    const sortedContinuousFeatures = useMemo(() =>
       [...(data.continuousFeatures || [])].sort((a, b) => a.count - b.count),
       [data.continuousFeatures]
     );
 
-    const sortedCategoricalFeatures = useMemo(() => 
+    const sortedCategoricalFeatures = useMemo(() =>
       [...(data.categoricalFeatures || [])].sort((a, b) => a.count - b.count),
       [data.categoricalFeatures]
     );
 
-    const sortedDateFeatures = useMemo(() => 
+    const sortedDateFeatures = useMemo(() =>
       [...(data.dateFeatures || [])].sort((a, b) => a.count - b.count),
       [data.dateFeatures]
     );

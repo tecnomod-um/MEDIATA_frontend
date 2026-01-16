@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
+// Node context provider for managing selected data nodes
+
 const NodeContext = createContext();
 
 export const NodeProvider = ({ children }) => {

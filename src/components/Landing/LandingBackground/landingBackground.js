@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import Scene from "./scene";
 
+// Animated canvas background for the landing page with WebGL context handling
 const LandingBackground = () => {
   const [contextLost, setContextLost] = useState(false);
   const [webGLSupported, setWebGLSupported] = useState(true);

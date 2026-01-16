@@ -3,6 +3,7 @@ import RangePickerStyles from "./rangePicker.module.css";
 import Slider from "rc-slider";
 import "rc-slider/assets/index.css";
 
+// Range picker control with slider for numeric and date ranges
 function RangePicker({ min, max, type, onRangeChange, unavailableRanges = [] }) {
   const [selectedRange, setSelectedRange] = useState([min, max]);
   const [isEditingDisplay, setIsEditingDisplay] = useState(false);
@@ -230,8 +231,8 @@ function RangePicker({ min, max, type, onRangeChange, unavailableRanges = [] }) 
             allowCross={false}
             styles={{
               rail: { backgroundColor: "#ddd" },
-              track: { backgroundColor: accentColor },
-              handle: { borderColor: accentColor },
+              track: { backgroundColor: "var(--background-nav-tool-background-color-active)" },
+              handle: { borderColor: "var(--background-nav-tool-background-color-active)" },
             }}
           />
         </div>

@@ -1,380 +1,455 @@
-@import '../../../variables.css';
-
 .filterModal {
-    padding: 0;
-    background-color: #ffffff;
-    border-radius: 8px;
-    margin: 0 auto;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    transition: height 0.5s ease-in-out;
+  padding: 0;
+  background-color: var(--background-color-card);
+  border-radius: 8px;
+  margin: 0 auto;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: height 0.5s ease-in-out;
 }
 
 .modalContent {
-    transition: height 0.5s ease-in-out;
-    overflow: hidden;
+  transition: height 0.5s ease-in-out;
+  overflow: hidden;
 }
 
 .modalHeader {
-    background-color: var(--background-nav-and-headers-background-color-light);
-    color: #ffffff;
-    border-radius: 8px 8px 0 0;
-    padding: 20px;
-    justify-content: space-between;
-    align-items: center;
-    text-align: center;
-    border-bottom: 1px solid #e1e1e1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  background-color: var(--background-nav-and-headers-background-color);
+  color: var(--text-color-on-darkbg);
+  border-radius: 8px 8px 0 0;
+  padding: 20px;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+  border-bottom: 1px solid #e1e1e1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .modalHeader h3 {
-    margin: 0;
-    align-self: center;
+  margin: 0;
+  align-self: center;
 }
 
 .closeBtn {
-    align-self: flex-end;
-    border: none;
-    background: transparent;
-    border-radius: 50%;
-    color: var(--text-color-on-darkbg-light);
-    cursor: pointer;
-    font-size: 18px;
-    font-weight: 500;
-    padding: 4px;
-    position: absolute;
-    right: 2px;
-    top: 2px;
-    transition: background-color 0.3s, box-shadow 0.3s;
-    overflow: hidden;
-    white-space: nowrap;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  align-self: flex-end;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  color: var(--text-color-on-darkbg);
+  cursor: pointer;
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  padding: 4px;
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  transition: background-color 0.3s, box-shadow 0.3s;
+  overflow: hidden;
+  white-space: nowrap;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .closeBtn:hover {
-    background-color: rgba(0, 0, 0, 0.25);
+  background-color: rgba(0, 0, 0, 0.25);
 }
 
 .formRow {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 20px;
-    padding: 20px;
-    align-items: center;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  padding: 20px;
+  align-items: center;
 }
 
 .centeredRow {
-    display: flex;
-    padding: 20px;
+  display: flex;
+  padding: 20px;
 }
 
 .featureSelection {
-    width: 100%;
-    min-width: 250px;
+  width: 100%;
+  min-width: 250px;
 }
 
 .filterCriteria {
-    width: 100%;
-    background-color: #f0f0f0;
-    padding: 10px;
-    gap: 1em;
-    border-radius: 8px;
-    display: grid;
-    align-items: center;
+  width: 100%;
+  background-color: var(--background-color-tertiary);
+  padding: 10px;
+  gap: 1em;
+  border-radius: 8px;
+  display: grid;
+  align-items: center;
 }
 
 .betweenFields,
 .singleValueField {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
 }
 
 .featureSelection label,
 .filterCriteria label {
-    display: block;
-    margin-bottom: 5px;
-    color: #555;
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text-color-secondary);
 }
 
 .select {
-    width: 100%;
-    padding: 8px;
-    height: 38px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
+  width: 100%;
+  padding: 8px;
+  height: 38px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
 }
 
 .input,
 .datePicker {
-    width: 100%;
-    padding: 8px;
-    height: 38px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
+  width: 100%;
+  padding: 8px;
+  height: 38px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
 }
 
 .addButton,
 .applyButton,
 .cancelButton {
-    padding: 10px;
-    background-color: var(--button-color-light);
-    color: var(--text-color-on-darkbg-light);
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    margin-top: 10px;
-    align-self: flex-end;
+  padding: 10px;
+  background-color: var(--button-color);
+  color: var(--text-color-on-darkbg);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-top: 10px;
+  align-self: flex-end;
 }
 
 .addButton:hover,
 .applyButton:hover,
 .cancelButton:hover {
-    background-color: var(--button-color-hover-light);
+  background-color: var(--button-color-hover);
 }
 
 .buttonRow {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 18px;
 }
 
 .filterSummary {
-    margin-top: 20px;
-    max-height: 200px;
-    overflow-y: auto;
-    padding: 0 20px;
-    transition: height 0.5s ease-in-out;
+  margin-top: 20px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0 20px;
+  transition: height 0.5s ease-in-out;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.filterSummary::-webkit-scrollbar {
+  width: 8px;
+}
+
+.filterSummary::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 10px;
+}
+
+.filterSummary::-webkit-scrollbar-track {
+  background-color: var(--scrollbar-track);
 }
 
 .filterSummary ul {
-    list-style: none;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .filterSummary li {
-    background-color: #f8f9fa;
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 5px;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    opacity: 0;
-    transform: translateY(-20px);
-    animation: fadeIn 0.5s forwards, slideIn 0.5s forwards;
+  background-color: var(--background-color-5);
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 5px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  opacity: 0;
+  transform: translateY(-20px);
+  animation: fadeIn 0.5s forwards, slideIn 0.5s forwards;
 }
 
 @keyframes fadeIn {
-    to {
-        opacity: 1;
-    }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideIn {
-    to {
-        transform: translateY(0);
-    }
+  to {
+    transform: translateY(0);
+  }
 }
 
 @keyframes fadeOut {
-    to {
-        opacity: 0;
-    }
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes slideOut {
-    to {
-        transform: translateY(-20px);
-    }
+  to {
+    transform: translateY(-20px);
+  }
 }
 
 .fadeOut {
-    animation: fadeOut 0.5s forwards, slideOut 0.5s forwards;
+  animation: fadeOut 0.5s forwards, slideOut 0.5s forwards;
 }
 
 .criteriaContainer {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    background-color: #e9ecef;
-    padding: 5px 10px;
-    border-radius: 4px;
-    margin-bottom: 5px;
-    width: auto;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  background: var(--background-color-3);
+  color: var(--text-color-primary);
+  border: 1px solid var(--border-color-secondary);
+  border-radius: 10px;
+  padding: 2px 8px;
+  margin-bottom: 6px;
+  width: auto;
 }
 
+
 .criteriaBox {
-    display: inline-block;
-    background-color: #f8f9fa;
-    padding: 5px 5px;
-    border-radius: 4px;
-    margin-left: 5px;
+  display: inline-block;
+  background-color: var(--background-color-5);
+  padding: 5px 5px;
+  border-radius: 4px;
+  margin-left: 5px;
 }
 
 .deleteButton {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1.2em;
-    color: #d9534f;
-    margin-left: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-size-md);
+  color: #d9534f;
+  margin-left: 5px;
 }
 
 .cancelButton {
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 1em;
-    font-weight: bold;
-    padding: 10px 20px;
-    transition: transform 0.25s ease, background-color 0.3s ease;
-    background-color: var(--button-color-light);
-    color: #ffffff;
-    text-align: center;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  font-weight: bold;
+  padding: 10px 20px;
+  transition: transform 0.25s ease, background-color 0.3s ease;
+  background-color: var(--button-color);
+  color: var(--text-color-on-darkbg);
+  text-align: center;
 }
 
 .applyButton {
-    background-color: var(--button-color-light);
-    color: #ffffff;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    font-size: 1em;
-    font-weight: bold;
-    padding: 10px 20px;
-    transition: background-color 0.3s ease;
-    position: relative;
+  background-color: var(--button-color);
+  color: var(--text-color-on-darkbg);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  font-weight: bold;
+  padding: 10px 20px;
+  transition: background-color 0.3s ease;
+  position: relative;
 }
 
 .applyButton:before {
-    content: "";
-    position: absolute;
-    top: -5px;
-    left: -5px;
-    right: -5px;
-    bottom: -5px;
-    border-radius: 12px;
-    background-color: inherit;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    z-index: -1;
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  border-radius: 12px;
+  background-color: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
 }
 
 .filterRow,
 .filterRowActive {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    transition: max-height 0.2s cubic-bezier(0, 1, 0, 1), opacity 0.2s ease-in-out;
-    max-height: 0;
-    opacity: 0;
-    overflow: hidden;
-    padding: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  transition: max-height 0.2s cubic-bezier(0, 1, 0, 1), opacity 0.2s ease-in-out;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  padding: 0;
 }
 
 .filterRowActive {
-    max-height: 50px;
-    opacity: 1;
-    padding: 5px;
-    border-bottom: 1px solid #e1e1e1;
+  max-height: 50px;
+  opacity: 1;
+  padding: 5px;
+  border-bottom: 1px solid #e1e1e1;
 }
 
 .logicalOperatorButton {
-    background-color: #5a6268;
-    color: var(--text-color-on-darkbg-light);
-    border: none;
-    margin-right: 2px;
-    margin-left: 2px;
-    padding: 5px 10px;
-    border-radius: 3px;
-    min-width: 50px;
-    cursor: pointer;
+  background-color: var(--text-color-secondary);
+  color: var(--text-color-on-darkbg);
+  border: none;
+  margin-right: 2px;
+  margin-left: 2px;
+  padding: 5px 10px;
+  border-radius: 3px;
+  min-width: 50px;
+  cursor: pointer;
 }
 
 .logicalOperatorButton:hover {
-    background-color: #4e555b;
+  background-color: #4e555b;
 }
 
 .filterSummaryTitle {
-    background-color: var(--button-color-light);
-    color: var(--text-color-on-darkbg-light);
-    padding: 10px 20px;
-    border-radius: 4px;
-    margin-right: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1em;
-    font-weight: bold;
-    text-align: right;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: var(--button-color);
+  color: var(--text-color-on-darkbg);
+  padding: 8px 15px;
+  border-radius: 4px;
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-base);
+  text-align: right;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .criteriaRow {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
-    flex: 3;
-    justify-content: center;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  flex: 3;
+  justify-content: center;
 }
 
 .itemEnter {
-    opacity: 0;
-    transform: translateY(-20px);
-    height: 0;
+  opacity: 0;
+  transform: translateY(-20px);
+  height: 0;
 }
 
 .itemEnterActive {
-    opacity: 1;
-    transform: translateY(0);
-    height: auto;
-    transition: opacity 0.5s, transform 0.5s, height 0.5s;
+  opacity: 1;
+  transform: translateY(0);
+  height: auto;
+  transition: opacity 0.5s, transform 0.5s, height 0.5s;
 }
 
 .globalLogicalOperatorContainer {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 10px;
-    width: 100%;
-    padding: 10px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+  width: 100%;
+  padding: 10px 0;
 }
 
 .spinner {
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top: 2px solid #ffffff;
-    border-radius: 50%;
-    width: 16px;
-    height: 16px;
-    animation: spin 1s linear infinite;
-    display: inline-block;
-    margin-right: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid #ffffff;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  margin-right: 8px;
 }
 
 @keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
+  0% {
+    transform: rotate(0deg);
+  }
 
-    100% {
-        transform: rotate(360deg);
-    }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+:global(.react-select__control) {
+  min-height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color-secondary) !important;
+  background: var(--background-color-card) !important;
+  box-shadow: none !important;
+}
+
+:global(.react-select__control--is-focused) {
+  border-color: var(--border-color) !important;
+}
+
+:global(.react-select__single-value),
+:global(.react-select__input-container),
+:global(.react-select__placeholder) {
+  color: var(--text-color-primary) !important;
+}
+
+:global(.react-select__indicator-separator) {
+  background: var(--border-color-secondary) !important;
+}
+
+:global(.react-select__dropdown-indicator),
+:global(.react-select__clear-indicator) {
+  color: var(--text-color-secondary) !important;
+}
+
+:global(.react-select__menu) {
+  background: var(--background-color-card) !important;
+  border: 1px solid var(--border-color-secondary) !important;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35) !important;
+}
+
+:global(.react-select__option) {
+  color: var(--text-color-primary) !important;
+  background: transparent !important;
+}
+
+:global(.react-select__option--is-focused) {
+  background: var(--background-color-3) !important;
+}
+
+:global(.react-select__option--is-selected) {
+  background: var(--background-color-5) !important;
+}
+
+:global(.react-select__multi-value) {
+  background: var(--background-color-3) !important;
+  border: 1px solid var(--border-color-secondary) !important;
+}
+
+:global(.react-select__multi-value__label) {
+  color: var(--text-color-primary) !important;
+}
+
+:global(.react-select__multi-value__remove) {
+  color: var(--text-color-secondary) !important;
 }

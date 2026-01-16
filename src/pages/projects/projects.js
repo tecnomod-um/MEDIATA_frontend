@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import ProjectsStyles from "./projects.module.css";
 import ProjectPicker from "../../components/Common/FilePicker/projectPicker";
 
+// Project middle page for selecting workspace
 const Projects = () => {
   const navigate = useNavigate();
 

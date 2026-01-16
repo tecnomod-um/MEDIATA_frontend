@@ -4,6 +4,7 @@ import { useFrame } from "@react-three/fiber";
 import JoinNodesDot from "./joinNodesDot";
 import AnimatedDashedSegment from "./animatedDashedSegment";
 
+// Defines connection behavior between nodes
 const Connections = ({ nodes, nodePositions, nodeSize, onJoinNodesDoubleClick }) => {
   const auraFactor = 1.2;
   const threshold = 2 * nodeSize * auraFactor;

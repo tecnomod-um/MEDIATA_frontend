@@ -1,15 +1,15 @@
 import React, { useMemo, useState, useCallback } from "react";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
-import ColumnSearchStyles from "./columnSearch.module.css";
+import ColumnSearchListStyles from "./columnSearchList.module.css";
 
-function ColumnSearch({ columnsData, handleColumnClick, handleDragStart }) {
+// Column list with search functionality and additional controls
+function ColumnSearchList({ columnsData, handleColumnClick, handleDragStart }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [collapsed, setCollapsed] = useState({});
 
   const handleChange = (e) => setSearchTerm(e.target.value.toLowerCase());
 
-  // 1) Filter columns by search term
   const filteredColumns = useMemo(() => {
     const term = searchTerm.trim();
     if (!term) return columnsData;
@@ -19,7 +19,6 @@ function ColumnSearch({ columnsData, handleColumnClick, handleDragStart }) {
     );
   }, [columnsData, searchTerm]);
 
-  // 2) Group by nodeId + fileName (element file)
   const grouped = useMemo(() => {
     const map = new Map();
 
@@ -33,7 +32,6 @@ function ColumnSearch({ columnsData, handleColumnClick, handleDragStart }) {
           groupKey,
           nodeId,
           fileName,
-          // use first column's color as the file color (all columns in a file share it in your Integration code)
           fileColor: col.color,
           items: [],
         });
@@ -41,7 +39,6 @@ function ColumnSearch({ columnsData, handleColumnClick, handleDragStart }) {
       map.get(groupKey).items.push(col);
     }
 
-    // Optional: sort groups and items for stable UI
     const groups = Array.from(map.values()).sort((a, b) => {
       if (a.nodeId !== b.nodeId) return String(a.nodeId).localeCompare(String(b.nodeId));
       return String(a.fileName).localeCompare(String(b.fileName));
@@ -66,80 +63,93 @@ function ColumnSearch({ columnsData, handleColumnClick, handleDragStart }) {
   }, [grouped]);
 
   return (
-    <div className={ColumnSearchStyles.search}>
-<div className={ColumnSearchStyles.searchRow}>
-  <input
-    className={ColumnSearchStyles.input}
-    type="search"
-    placeholder="Search columns"
-    onChange={handleChange}
-  />
+    <div className={ColumnSearchListStyles.search}>
+      <div className={ColumnSearchListStyles.searchRow}>
+        <input
+          className={ColumnSearchListStyles.input}
+          type="search"
+          placeholder="Search columns"
+          onChange={handleChange}
+          aria-label="Search columns by name"
+          role="searchbox"
+        />
 
-<div className={ColumnSearchStyles.groupActionsInline}>
-  <button
-    type="button"
-    className={ColumnSearchStyles.iconBtn}
-    onClick={openAll}
-    title="Expand all"
-    aria-label="Expand all"
-  >
-    <UnfoldMoreIcon fontSize="small" />
-  </button>
+        <div className={ColumnSearchListStyles.groupActionsInline}>
+          <button
+            type="button"
+            onClick={openAll}
+            className={ColumnSearchListStyles.expandCollapseBtn}
+            aria-label="Expand all column groups"
+          >
+            <UnfoldMoreIcon />
+          </button>
+          <button
+            type="button"
+            onClick={collapseAll}
+            className={ColumnSearchListStyles.expandCollapseBtn}
+            aria-label="Collapse all column groups"
+          >
+            <UnfoldLessIcon />
+          </button>
+        </div>
+      </div>
 
-  <button
-    type="button"
-    className={ColumnSearchStyles.iconBtn}
-    onClick={collapseAll}
-    title="Collapse all"
-    aria-label="Collapse all"
-  >
-    <UnfoldLessIcon fontSize="small" />
-  </button>
-</div>
-
-</div>
-
-
-      <div className={ColumnSearchStyles.scrollableContainer}>
+      <div className={ColumnSearchListStyles.scrollableContainer} role="list" aria-label="Column groups">
         {grouped.map((group) => {
           const isCollapsed = !!collapsed[group.groupKey];
           return (
-            <div key={group.groupKey} className={ColumnSearchStyles.fileGroup}>
+            <div key={group.groupKey} className={ColumnSearchListStyles.fileGroup} role="listitem">
               <button
                 type="button"
-                className={ColumnSearchStyles.fileHeader}
+                className={ColumnSearchListStyles.fileHeader}
                 onClick={() => toggleGroup(group.groupKey)}
                 aria-expanded={!isCollapsed}
+                aria-label={`${group.fileName} - ${group.items.length} column${group.items.length !== 1 ? 's' : ''}`}
+                aria-controls={`column-group-${group.groupKey}`}
               >
                 <span
-                  className={ColumnSearchStyles.fileColorPill}
+                  className={ColumnSearchListStyles.fileColorPill}
                   style={{ backgroundColor: group.fileColor || "transparent" }}
                   aria-hidden="true"
                 />
-                <span className={ColumnSearchStyles.fileTitle} title={group.fileName}>
+                <span className={ColumnSearchListStyles.fileTitle} title={group.fileName}>
                   {group.fileName}
                 </span>
-                <span className={ColumnSearchStyles.fileMeta}>
+                <span className={ColumnSearchListStyles.fileMeta}>
                   ({group.items.length})
                 </span>
-                <span className={ColumnSearchStyles.chevron}>
+                <span className={ColumnSearchListStyles.chevron}>
                   {isCollapsed ? "▸" : "▾"}
                 </span>
               </button>
 
               {!isCollapsed && (
-                <div className={ColumnSearchStyles.fileItems}>
+                <div
+                  className={ColumnSearchListStyles.fileItems}
+                  id={`column-group-${group.groupKey}`}
+                  role="list"
+                  aria-label={`Columns in ${group.fileName}`}
+                >
                   {group.items.map((column) => {
                     const itemKey = `${group.groupKey}::${column.column}`;
                     return (
                       <div
                         key={itemKey}
-                        className={ColumnSearchStyles.columnItem}
+                        className={ColumnSearchListStyles.columnItem}
                         style={{ borderLeftColor: column.color }}
                         draggable
                         onDragStart={(e) => handleDragStart(e, column)}
                         onClick={() => handleColumnClick(column)}
                         title={`${group.fileName} • ${column.column}`}
+                        role="listitem"
+                        aria-label={`Column: ${column.column}`}
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleColumnClick(column);
+                          }
+                        }}
                       >
                         {column.column}
                       </div>
@@ -152,11 +162,11 @@ function ColumnSearch({ columnsData, handleColumnClick, handleDragStart }) {
         })}
 
         {grouped.length === 0 && (
-          <div className={ColumnSearchStyles.emptyState}>No columns found.</div>
+          <div className={ColumnSearchListStyles.emptyState} role="status">No columns found.</div>
         )}
       </div>
     </div>
   );
 }
 
-export default ColumnSearch;
+export default ColumnSearchList;

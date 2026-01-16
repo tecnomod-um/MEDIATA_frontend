@@ -1,31 +1,29 @@
-@import '../../../variables.css';
-
 .resTable {
     width: 100%;
     height: 100%;
     display: grid;
     overflow: auto;
     scrollbar-width: thin;
-    scrollbar-color: #ccc #f5f5f5;
-    background-color: #ffffff;
-    color: #333333;
+    scrollbar-color: var(--table-scrollbar-thumb) var(--table-scrollbar-track);
+    background-color: var(--background-color-card);
+    color: var(--text-color-muted);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--border-color-secondary);
 }
 
 .resThead,
 .resTbody,
 .resTr {
     display: contents;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
 }
 
 .resTh {
     position: relative;
-    font-size: 16px;
-    background-color: #f8f9fa;
+    font-size: var(--font-size-base);
+    background-color: var(--background-color-5);
     padding: 10px;
-    color: #495057;
+    color: var(--text-color-primary);
 }
 
 .resTable .resTh,
@@ -63,7 +61,7 @@
 }
 
 .resizeHandle.active {
-    border-color: #6c757d;
+    border-color: var(--text-color-secondary);
 }
 
 .resTable::-webkit-scrollbar {
@@ -72,15 +70,15 @@
 }
 
 .resTable::-webkit-scrollbar-thumb {
-    background-color: #ccc;
+    background-color: var(--table-scrollbar-thumb);
 }
 
 .resTable::-webkit-scrollbar-track {
-    background-color: #f5f5f5;
+    background-color: var(--table-scrollbar-track);
 }
 
 .selectedEntry {
-    background-color: #e9ecef;
+    background-color: var(--table-row-selected-bg);
     transition: background-color 0.3s ease;
 }
 
@@ -103,8 +101,8 @@
 }
 
 .resTable .resTbody .fillerRow .resTd {
-    background-color: #f7f7f7;
-    color: #ccc;
+    background-color: var(--background-color-3);
+    color: var(--text-color-muted);
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     -khtml-user-select: none;

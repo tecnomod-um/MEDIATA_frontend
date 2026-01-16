@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ChartPreview from './chartPreview';
 
-jest.mock('../../Unused/OverlayWrapper/overlayWrapper', () => {
+jest.mock('../../Common/OverlayWrapper/overlayWrapper', () => {
   return ({ isOpen, closeModal, children }) => (
     <div
       data-testid="overlay"

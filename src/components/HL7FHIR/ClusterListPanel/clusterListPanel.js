@@ -2,6 +2,7 @@ import React from 'react';
 import { TransitionGroup, CSSTransition } from 'react-transition-group';
 import ClusterListPanelStyles from './clusterListPanel.module.css';
 
+// List panel component displaying FHIR element clusters
 export default function ClusterListPanel({ clusters, onSelectCluster, onMoveElement, isDragging }) {
   return (
     <div

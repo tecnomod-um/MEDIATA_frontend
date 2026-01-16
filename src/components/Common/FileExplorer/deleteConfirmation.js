@@ -1,33 +1,26 @@
 import React from "react";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
-import Styles from "../fileExplorer.module.css";
+import FileExplorerStyles from "./fileExplorer.module.css";
 
-/**
- * DeleteConfirmation - Confirmation dialog for deleting files
- * @param {boolean} show - Whether to show the confirmation dialog
- * @param {number} selectedCount - Number of files to be deleted
- * @param {function} onCancel - Handler to cancel deletion
- * @param {function} onConfirm - Handler to confirm deletion
- * @param {boolean} busy - Whether an operation is in progress
- */
+// Tiny delete confirmation modal for file removal
 function DeleteConfirmation({ show, selectedCount, onCancel, onConfirm, busy }) {
   if (!show) return null;
 
   return (
     <div
-      className={Styles.confirmOverlay}
+      className={FileExplorerStyles.confirmOverlay}
       onMouseDown={() => !busy && onCancel()}
       role="presentation"
     >
       <div
-        className={Styles.confirmCard}
+        className={FileExplorerStyles.confirmCard}
         onMouseDown={(e) => e.stopPropagation()}
         role="dialog"
         aria-label="Delete confirmation"
       >
         <IconButton
-          className={Styles.confirmCloseIcon}
+          className={FileExplorerStyles.confirmCloseIcon}
           onClick={onCancel}
           disabled={busy}
           aria-label="Close"
@@ -36,16 +29,16 @@ function DeleteConfirmation({ show, selectedCount, onCancel, onConfirm, busy }) 
           <CloseIcon fontSize="small" />
         </IconButton>
 
-        <div className={Styles.confirmHeader}>
-          <div className={Styles.confirmTitle}>Delete</div>
-          <div className={Styles.confirmText}>
+        <div className={FileExplorerStyles.confirmHeader}>
+          <div className={FileExplorerStyles.confirmTitle}>Delete</div>
+          <div className={FileExplorerStyles.confirmText}>
             Delete {selectedCount} file{selectedCount === 1 ? "" : "s"}?
           </div>
         </div>
 
-        <div className={Styles.confirmActions}>
+        <div className={FileExplorerStyles.confirmActions}>
           <button
-            className={Styles.confirmCancelBtn}
+            className={FileExplorerStyles.confirmCancelBtn}
             onClick={onCancel}
             disabled={busy}
             type="button"
@@ -53,7 +46,7 @@ function DeleteConfirmation({ show, selectedCount, onCancel, onConfirm, busy }) 
             Cancel
           </button>
           <button
-            className={Styles.confirmDeleteBtn}
+            className={FileExplorerStyles.confirmDeleteBtn}
             onClick={onConfirm}
             disabled={busy}
             type="button"

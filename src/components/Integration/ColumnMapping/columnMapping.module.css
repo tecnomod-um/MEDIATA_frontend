@@ -1,5 +1,3 @@
-@import "../../../variables.css";
-
 .autocompleteWrapper {
   position: relative;
   display: flex;
@@ -11,8 +9,8 @@
   top: 100%;
   left: 0;
   right: 0;
-  background-color: #fff;
-  border: 1px solid #ccc;
+  background-color: var(--background-color-card);
+  border: 1px solid var(--border-color);
   z-index: 100;
   margin: 0;
   padding: 0;
@@ -24,7 +22,7 @@
 .autocompleteListItem {
   padding: 8px;
   cursor: pointer;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-color-secondary);
 }
 
 .mappingSection {
@@ -33,7 +31,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: #ffffff;
+  background-color: var(--background-color-card);
   padding: 1vw;
   border-radius: 10px;
   gap: 0.5vw;
@@ -43,8 +41,8 @@
 
 .dropArea {
   width: 100%;
-  background-color: #f5f5f5;
-  border: 2px dashed #bbb;
+  background-color: var(--background-color-secondary);
+  border: 2px dashed var(--border-color);
   border-radius: 10px;
   display: flex;
   flex-wrap: wrap;
@@ -55,31 +53,33 @@
 }
 
 .dropArea:hover {
-  background-color: #e0e0e0;
-  border-color: #aaa;
+  background-color: var(--background-color-tertiary);
+  border-color: var(--border-color);
 }
 
 .droppedItem {
   padding: 10px;
-  background-color: #f0f0f0;
+  background-color: var(--background-color-3);
+  border: 1px solid var(--border-color-secondary);
   border-radius: 8px;
   position: relative;
   width: 100%;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.3s;
+  box-shadow: var(--box-shadow-sm);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
   display: flex;
   flex-direction: column;
+  color: var(--text-color-primary);
 }
 
 .droppedItem:hover {
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
 }
 
 .deleteIcon {
   position: absolute;
   right: 10px;
   top: 10px;
-  font-size: 1.2em;
+  font-size: var(--font-size-md);
   color: var(--button-delete-color);
   cursor: pointer;
   opacity: 0;
@@ -93,13 +93,13 @@
 .resizer {
   width: 100%;
   height: 8px;
-  background: #ccc;
+  background: var(--border-color);
   cursor: row-resize;
   transition: background 0.2s;
 }
 
 .resizer:hover {
-  background: #999;
+  background: var(--text-color-muted);
 }
 
 .createEntrySection {
@@ -110,7 +110,7 @@
   border: 1px solid #e1e1e1;
   border-radius: 10px;
   padding: 10px;
-  background-color: #fafafa;
+  background-color: var(--background-color-4);
   display: flex;
   flex-direction: column;
 }
@@ -125,20 +125,26 @@
 .unionInput {
   flex: 1;
   padding: 12px;
-  border: 1px solid #ddd;
-  font-size: 1em;
+  border: 1px solid var(--border-color-secondary);
+  background-color: var(--background-color-card);
+  color: var(--text-color-primary);
+  font-size: var(--font-size-base);
   min-width: 200px;
   border-radius: 5px 0 0 5px;
+  outline: none;
 }
 
 .snomedInput {
   flex: 1;
   padding: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color-secondary);
+  background-color: var(--background-color-card);
+  color: var(--text-color-primary);
   border-left: 0;
-  font-size: 1em;
+  font-size: var(--font-size-base);
   min-width: 120px;
   border-radius: 0;
+  outline: none;
 }
 
 
@@ -154,13 +160,13 @@
 
 .addValueButton {
   background-color: var(--button-add-value-color);
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   padding: 12px 15px;
-  border: 1px solid #ddd;
-  border-left: 0; 
+  border: 1px solid var(--border-color-secondary);
+  border-left: 0;
   cursor: pointer;
-  font-size: 1em;
-  border-radius: 0 5px 5px 0; 
+  font-size: var(--font-size-base);
+  border-radius: 0 5px 5px 0;
   transition: background-color 0.3s;
 }
 
@@ -173,8 +179,8 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  width: auto;      
-  background: #fafafa; 
+  width: auto;
+  background: var(--background-color-4);
 }
 
 
@@ -184,10 +190,10 @@
 
 .saveButton {
   background-color: var(--button-save-color);
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   padding: 12px 15px;
   cursor: pointer;
-  font-size: 1em;
+  font-size: var(--font-size-base);
   border: 1px solid #cfcfcf;
   border-radius: 0 5px 5px 0;
   transition: background-color 0.3s;
@@ -201,9 +207,10 @@
 .mappingTypeSelector {
   display: flex;
   align-items: center;
-  background-color: #e0e0e0;
-  border: 1px solid #cfcfcf;
-  font-size: 0.9em;
+  background-color: var(--background-color-3);
+  border: 1px solid var(--border-color-secondary);
+  color: var(--text-color-primary);
+  font-size: var(--font-size-base);
 }
 
 .removeCheckbox {
@@ -225,7 +232,7 @@
   height: 20px;
   -webkit-appearance: none;
   appearance: none;
-  background-color: #c6c6c6;
+  background-color: var(--border-color-secondary);
   border-radius: 20px;
   position: relative;
   outline: none;
@@ -233,7 +240,7 @@
 }
 
 .removeCheckboxInput:checked {
-  background-color: var(--button-color-light);
+  background-color: var(--button-color);
 }
 
 .removeCheckboxInput:before {
@@ -243,7 +250,7 @@
   left: 0;
   width: 20px;
   height: 20px;
-  background-color: white;
+  background-color: var(--text-color-on-darkbg);
   border-radius: 50%;
   transform: scale(1.1);
   transition: left 0.3s;
@@ -257,7 +264,7 @@
 .mappingTypeSelector label {
   display: flex;
   align-items: center;
-  font-size: 0.9em;
+  font-size: var(--font-size-base);
 }
 
 .switchLabel {
@@ -270,13 +277,27 @@
   overflow-x: hidden;
   position: relative;
   padding-left: 20px;
-
-  padding-right: 8px; 
+  padding-right: 8px;
   padding-bottom: 50px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.valueListContainer::-webkit-scrollbar {
+  width: 8px;
+}
+
+.valueListContainer::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 10px;
+}
+
+.valueListContainer::-webkit-scrollbar-track {
+  background-color: var(--scrollbar-track);
 }
 
 .valueMappingContainer {
-  background-color: #f9f9f9;
+  background-color: var(--background-color-3);
   padding: 6px;
   border-radius: 5px;
   border: 1px solid #e1e1e1;
@@ -325,7 +346,7 @@
   align-items: stretch;
   gap: 0;
   padding: 6px;
-  background-color: #f8f9fa;
+  background-color: var(--background-color-5);
   border-radius: 5px;
   flex-wrap: nowrap;
 }
@@ -336,9 +357,9 @@
 
 .mappingSummary {
   margin: 4px 0 0 4px;
-  font-size: 0.8em;
+  font-size: var(--font-size-sm);
   font-style: italic;
-  color: #6c757d;
+  color: var(--text-color-secondary);
 }
 
 .currentMappings {
@@ -351,10 +372,10 @@
 }
 
 .mappedItem {
-  background-color: #e2e6ea;
+  background-color: var(--background-color-tertiary);
   padding: 5px 10px;
   border-radius: 5px;
-  font-size: 0.85em;
+  font-size: var(--font-size-sm);
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -372,11 +393,11 @@
 
 .mappedLabel {
   font-weight: 600;
-  color: #333;
+  color: var(--text-color-primary);
 }
 
 .mappedValue {
-  color: #333;
+  color: var(--text-color-primary);
   font-weight: 500;
 }
 
@@ -385,8 +406,8 @@
   border: none;
   cursor: pointer;
   padding: 0;
-  font-size: 1em;
-  color: #888;
+  font-size: var(--font-size-base);
+  color: var(--text-color-muted);
   transition: color 0.3s;
 }
 
@@ -396,8 +417,8 @@
 }
 
 .closeIconButton svg {
-  font-size: 1.2em;
-  color: #888;
+  font-size: var(--font-size-md);
+  color: var(--text-color-muted);
 }
 
 .closeIconButton:hover svg {
@@ -421,11 +442,11 @@
 .selectMappingContainer {
   flex: 1;
   overflow-y: hidden;
-  background-color: #f9f9f9;
+  background-color: var(--background-color-3);
   border-radius: 6px;
   margin: 0 5px;
-  border: 1px solid #ccc;
-  box-shadow: var(--button-color-shadow-light);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--button-color-shadow);
   overflow: hidden;
 }
 
@@ -441,7 +462,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 5px;
-  background-color: #f8f9fa;
+  background-color: var(--background-color-5);
   z-index: 10;
   top: 0;
   position: sticky;
@@ -452,8 +473,8 @@
 
 .selectMappingHeader h5 {
   margin: 0;
-  font-size: 0.8em;
-  color: #333;
+  font-size: var(--font-size-sm);
+  color: var(--text-color-primary);
   font-weight: 600;
 }
 
@@ -475,17 +496,17 @@
 }
 
 .columnFileInline {
-  font-size: 0.8em;
-  color: #666;
+  font-size: var(--font-size-sm);
+  color: var(--text-color-tertiary);
   font-style: italic;
 }
 
 .mappingGroup:nth-child(odd) {
-  background-color: #f9f9f9;
+  background-color: var(--background-color-3);
 }
 
 .mappingGroup:nth-child(even) {
-  background-color: #f0f0f0;
+  background-color: var(--background-color-tertiary);
 }
 
 .mappingOptions {
@@ -498,26 +519,33 @@
 }
 
 .mappingButton {
-  background-color: #6c757d;
-  color: var(--text-color-on-darkbg-light);
-  border: none;
-  padding: 8px 15px;
-  font-size: 0.9em;
+  background-color: var(--background-color-4);
+  color: var(--text-color-primary);
+  border: 1px solid var(--border-color-secondary);
+  font-size: var(--font-size-xs);
+  padding: 6px 10px;
   border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  box-shadow: var(--box-shadow-sm);
 }
 
 .mappingButton:hover {
-  background-color: #5a6268;
+  background-color: var(--background-color-5);
+  border-color: var(--border-color);
+}
+
+
+.mappingButton:hover {
+  background-color: var(--background-color-5);
+  border-color: var(--border-color);
 }
 
 .dropText {
   width: 100%;
   text-align: center;
-  color: #bbb;
-  font-size: 1.2em;
+  color: var(--border-color);
+  font-size: var(--font-size-md);
   margin: auto;
 }
 
@@ -533,16 +561,22 @@
   align-items: flex-start;
 }
 
+.groupTitle {
+  margin: 0;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--text-color-primary);
+}
+
 .groupType {
-  font-size: 0.9em;
-  color: #050505;
-  margin-right: 1vw;
-  font-weight: bold;
+  font-size: var(--font-size-sm);
+  color: var(--text-color-primary);
+  font-weight: 600;
 }
 
 .groupFile {
-  font-size: 0.8em;
-  color: #777;
+  font-size: var(--font-size-xs);
+  color: var(--text-color-muted);
   margin-top: 2px;
 }
 
@@ -554,8 +588,8 @@
 
 .groupDetail {
   margin: 0;
-  font-size: 0.95em;
-  color: #555;
+  font-size: var(--font-size-sm);
+  color: var(--text-color-secondary);
 }
 
 .categoryList {
@@ -567,10 +601,12 @@
 }
 
 .categoryItem {
-  background-color: #e2e6ea;
+  background-color: var(--background-color-4);
+  color: var(--text-color-primary);
+  border: 1px solid var(--border-color-secondary);
   padding: 5px 10px;
   border-radius: 4px;
-  font-size: 0.9em;
+  font-size: var(--font-size-sm);
 }
 
 /* animations */
@@ -621,9 +657,9 @@
 
 .sectionTitle {
   margin: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #333;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--text-color-primary);
   letter-spacing: 0.2px;
 }
 
@@ -640,12 +676,12 @@
 
 .tooltipIcon {
   cursor: pointer;
-  color: #666;
-  font-size: 1.2rem;
+  color: var(--text-color-tertiary);
+  font-size: var(--font-size-lg);
 }
 
 .tooltipIcon:hover {
-  color: #333;
+  color: var(--text-color-primary);
 }
 
 .buttonText {
@@ -658,7 +694,7 @@
 
 .buttonIcon {
   margin: 0 auto;
-  font-size: 1em;
+  font-size: var(--font-size-base);
   vertical-align: middle;
 }
 
@@ -671,8 +707,11 @@
   flex: 1 1 0;
   min-width: 0;
   padding: 12px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
+  background-color: var(--background-color-card);
+  color: var(--text-color-primary);
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  outline: none;
 }
 
 .valueNameInput {
@@ -684,7 +723,7 @@
   border-radius: 0;
 }
 
-.valueMappingRow > * {
+.valueMappingRow>* {
   min-height: 40px;
 }
 
@@ -698,11 +737,11 @@
 .descriptionButton,
 .addMappingButton {
   box-sizing: border-box;
-  font-size: 1em;
+  font-size: var(--font-size-base);
   padding: 12px 15px;
   height: 100%;
   flex: 0 0 auto;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color-secondary);
   border-left: 0;
   cursor: pointer;
   white-space: nowrap;
@@ -713,7 +752,7 @@
 /* colors */
 .descriptionButton {
   background-color: var(--button-description-color);
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
 }
 
 .descriptionButton:hover {
@@ -722,7 +761,7 @@
 
 .addMappingButton {
   background-color: var(--button-add-mapping-color);
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   border-radius: 0 5px 5px 0;
 }
 
@@ -769,4 +808,44 @@
   to {
     overflow-y: auto;
   }
+}
+
+.dropArea {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.dropArea::-webkit-scrollbar {
+  width: 10px;
+}
+
+.dropArea::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 10px;
+  border: 2px solid var(--scrollbar-track);
+}
+
+.dropArea::-webkit-scrollbar-track {
+  background-color: var(--scrollbar-track);
+  border-radius: 10px;
+}
+
+.selectMappingContainer {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.selectMappingContainer::-webkit-scrollbar {
+  width: 10px;
+}
+
+.selectMappingContainer::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 10px;
+  border: 2px solid var(--scrollbar-track);
+}
+
+.selectMappingContainer::-webkit-scrollbar-track {
+  background-color: var(--scrollbar-track);
+  border-radius: 10px;
 }

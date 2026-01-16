@@ -1,12 +1,10 @@
-@import '../../../variables.css';
-
 .resultingSection {
   flex: 1;
   max-width: 30%;
   min-width: 200px;
   display: flex;
   flex-direction: column;
-  background-color: #f4f4f4;
+  background-color: var(--background-color-3);
   padding: 5px;
   border-radius: 8px;
   height: 90vh;
@@ -19,6 +17,20 @@
   position: relative;
   padding-right: 10px;
   scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.scrollableContainer::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollableContainer::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 10px;
+}
+
+.scrollableContainer::-webkit-scrollbar-track {
+  background-color: var(--scrollbar-track);
 }
 
 .undoContainer {
@@ -27,7 +39,7 @@
   left: 0;
   background-color: rgba(0, 0, 0, 0.2);
   padding: 5px 10px;
-  font-size: 0.9em;
+  font-size: var(--font-size-base);
   cursor: pointer;
   z-index: 2;
   transition: background-color 0.3s ease-in-out;
@@ -37,7 +49,6 @@
   background-color: rgba(0, 0, 0, 0.4);
 }
 
-/* Bottom area for both buttons */
 .bottomActions {
   margin-top: auto;
   display: flex;
@@ -45,30 +56,20 @@
   gap: 10px;
 }
 
-/* =============== */
-/* Upload Mappings */
-/* =============== */
 .uploadMappingsContainer {
   display: flex;
   width: 100%;
   height: 54px;
   border-radius: 8px;
   overflow: hidden;
-  /* ensures corners are shared with no gap */
 }
 
-/* 
-     Use the SAME base color as "Process Mappings" 
-     but no gradient or animation. 
-     "Process Mappings" has a gradient from #0f3e48 to #08242c,
-     so let's pick #0f3e48 for consistency.
-  */
 .uploadMappingsButton {
   flex: 1;
-  background-image: var(--button-gradient-light);
+  background-image: var(--button-gradient);
   border: none;
-  color: #fff;
-  font-size: 16px;
+  color: var(--text-color-on-darkbg);
+  font-size: var(--font-size-base);
   font-weight: 600;
   padding: 0 16px;
   display: flex;
@@ -83,14 +84,14 @@
 
 .uploadMappingsButton:hover {
   background-position: 100% 0;
-  background-color: var(--button-color-hover-light);
+  background-color: var(--button-color-hover);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .uploadArrowButton {
   width: 64px;
   background-color: #27ae60;
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   border: none;
   display: flex;
   align-items: center;
@@ -103,23 +104,19 @@
   background-color: #229a54;
 }
 
-/* =========================== */
-/* Process Mappings (animated) */
-/* =========================== */
 .processMappingsButton {
   min-height: 54px;
   width: 100%;
   user-select: none;
-  font-size: 16px;
-  /* same as Upload Mappings */
+  font-size: var(--font-size-base);
   font-weight: 600;
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   cursor: pointer;
   text-align: center;
   border: none;
   border-radius: 8px;
   background-size: 300% 300%;
-  background-image: var(--button-gradient-light);
+  background-image: var(--button-gradient);
   box-shadow: 0 5px 15px rgba(8, 36, 44, 0.4);
   position: relative;
   overflow: hidden;
@@ -169,7 +166,6 @@
   cursor: not-allowed;
 }
 
-/* Spinner for "Processing..." */
 .loader {
   border: 3px solid rgba(255, 255, 255, 0.3);
   border-top: 3px solid #fff;
@@ -204,7 +200,7 @@
   position: sticky;
   top: 0;
   z-index: 3;
-  background: #f4f4f4;
+  background: var(--background-color-3);
 }
 
 .searchInput {
@@ -214,8 +210,10 @@
   padding: 1em;
   outline: none;
   border-radius: 10px;
-  border: 1px solid #ccc;
-  font-size: 16px;
+  border: 1px solid var(--border-color);
+  background-color: var(--background-color-card);
+  color: var(--text-color-primary);
+  font-size: var(--font-size-base);
 
   overflow: hidden;
   white-space: nowrap;

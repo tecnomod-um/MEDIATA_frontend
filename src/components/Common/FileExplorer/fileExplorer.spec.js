@@ -1,14 +1,14 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import FileTypeIcon from "./FileTypeIcon";
-import Toolbar from "./Toolbar";
-import DeleteConfirmation from "./DeleteConfirmation";
-import CleanPanel from "./CleanPanel";
-import FileTable from "./FileTable";
+import FileTypeIcon from "./fileTypeIcon";
+import FileToolbar from "./fileToolbar";
+import DeleteConfirmation from "./deleteConfirmation";
+import CleanPanel from "./cleanPanel";
+import FileTable from "./fileTable";
 
 // Mock the CSS module
-jest.mock("../fileExplorer.module.css", () => new Proxy({}, { get: (_, k) => String(k) }), {
+jest.mock("./fileExplorer.module.css", () => new Proxy({}, { get: (_, k) => String(k) }), {
   virtual: true,
 });
 
@@ -54,26 +54,30 @@ describe("FileExplorer sub-components", () => {
   describe("<FileTypeIcon />", () => {
     it("renders CSV icon for .csv files", () => {
       const { container } = render(<FileTypeIcon name="test.csv" />);
-      expect(container.querySelector("svg")).toBeInTheDocument();
-      expect(container.textContent).toContain("CSV");
+      const svg = container.querySelector("svg");
+      expect(svg).toBeInTheDocument();
+      expect(svg.closest('span')).toHaveAttribute('title', 'CSV');
     });
 
     it("renders XLSX icon for .xlsx files", () => {
       const { container } = render(<FileTypeIcon name="test.xlsx" />);
-      expect(container.querySelector("svg")).toBeInTheDocument();
-      expect(container.textContent).toContain("XLSX");
+      const svg = container.querySelector("svg");
+      expect(svg).toBeInTheDocument();
+      expect(svg.closest('span')).toHaveAttribute('title', 'XLSX');
     });
 
     it("renders XLSX icon for .xls files", () => {
       const { container } = render(<FileTypeIcon name="test.xls" />);
-      expect(container.querySelector("svg")).toBeInTheDocument();
-      expect(container.textContent).toContain("XLSX");
+      const svg = container.querySelector("svg");
+      expect(svg).toBeInTheDocument();
+      expect(svg.closest('span')).toHaveAttribute('title', 'XLSX');
     });
 
     it("handles files without extensions", () => {
       const { container } = render(<FileTypeIcon name="noextension" />);
-      expect(container.querySelector("svg")).toBeInTheDocument();
-      expect(container.textContent).toContain("CSV"); // defaults to CSV
+      const svg = container.querySelector("svg");
+      expect(svg).toBeInTheDocument();
+      expect(svg.closest('span')).toHaveAttribute('title', 'File'); // defaults to generic file
     });
   });
 
@@ -96,7 +100,7 @@ describe("FileExplorer sub-components", () => {
     };
 
     it("renders all toolbar buttons", () => {
-      render(<Toolbar {...defaultProps} />);
+      render(<FileToolbar {...defaultProps} />);
       expect(screen.getByRole("button", { name: /^Open$/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /^Rename$/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /Data cleaning/i })).toBeInTheDocument();
@@ -106,28 +110,28 @@ describe("FileExplorer sub-components", () => {
     });
 
     it("disables Open button when no selection", () => {
-      render(<Toolbar {...defaultProps} hasSelection={false} />);
+      render(<FileToolbar {...defaultProps} hasSelection={false} />);
       expect(screen.getByRole("button", { name: /^Open$/i })).toBeDisabled();
     });
 
     it("disables Rename button when selection count is not 1", () => {
-      render(<Toolbar {...defaultProps} selectedCount={2} />);
+      render(<FileToolbar {...defaultProps} selectedCount={2} />);
       expect(screen.getByRole("button", { name: /^Rename$/i })).toBeDisabled();
     });
 
     it("shows multi-select mode pill when active", () => {
-      render(<Toolbar {...defaultProps} multiMode={true} />);
-      expect(screen.getByText("Multi")).toBeInTheDocument();
+      render(<FileToolbar {...defaultProps} multiMode={true} />);
+      expect(screen.getByRole("button", { name: /selecting multiple files/i })).toBeInTheDocument();
     });
 
     it("does not show close button when onClose is not provided", () => {
-      render(<Toolbar {...defaultProps} onClose={null} />);
+      render(<FileToolbar {...defaultProps} onClose={null} />);
       expect(screen.queryByRole("button", { name: /^Close$/i })).not.toBeInTheDocument();
     });
 
     it("calls load when refresh button is clicked", () => {
       const load = jest.fn();
-      render(<Toolbar {...defaultProps} load={load} />);
+      render(<FileToolbar {...defaultProps} load={load} />);
       fireEvent.click(screen.getByRole("button", { name: /Refresh/i }));
       expect(load).toHaveBeenCalled();
     });
@@ -329,7 +333,7 @@ describe("FileExplorer sub-components", () => {
     });
 
     it("shows rename input when file is being renamed", () => {
-      render(<FileTable {...defaultProps} renamingName="file1.csv" renameDraft="newname.csv" />);
+      render(<FileTable {...defaultProps} renamingKey="default::file1.csv" renameDraft="newname.csv" />);
       expect(screen.getByDisplayValue("newname.csv")).toBeInTheDocument();
     });
 
@@ -338,7 +342,7 @@ describe("FileExplorer sub-components", () => {
       render(<FileTable {...defaultProps} onRowDoubleClick={onRowDoubleClick} />);
       const rows = screen.getAllByRole("button");
       fireEvent.doubleClick(rows[0]);
-      expect(onRowDoubleClick).toHaveBeenCalledWith("file1.csv");
+      expect(onRowDoubleClick).toHaveBeenCalledWith("default::file1.csv");
     });
 
     it("shows new file marker for new files", () => {
@@ -349,7 +353,7 @@ describe("FileExplorer sub-components", () => {
 
     it("calls commitRename when Enter is pressed in rename input", () => {
       const commitRename = jest.fn();
-      render(<FileTable {...defaultProps} renamingName="file1.csv" commitRename={commitRename} />);
+      render(<FileTable {...defaultProps} renamingKey="default::file1.csv" renameDraft="" commitRename={commitRename} />);
       const input = screen.getByDisplayValue("");
       fireEvent.keyDown(input, { key: "Enter" });
       expect(commitRename).toHaveBeenCalled();
@@ -357,7 +361,7 @@ describe("FileExplorer sub-components", () => {
 
     it("calls cancelRename when Escape is pressed in rename input", () => {
       const cancelRename = jest.fn();
-      render(<FileTable {...defaultProps} renamingName="file1.csv" cancelRename={cancelRename} />);
+      render(<FileTable {...defaultProps} renamingKey="default::file1.csv" renameDraft="" cancelRename={cancelRename} />);
       const input = screen.getByDisplayValue("");
       fireEvent.keyDown(input, { key: "Escape" });
       expect(cancelRename).toHaveBeenCalled();

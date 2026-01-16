@@ -5,6 +5,7 @@ import { loginUser } from "../../util/petitionHandler";
 import { useAuth } from "../../context/authContext";
 import { CSSTransition } from "react-transition-group";
 
+// Main login page
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -40,33 +41,60 @@ const Login = () => {
         classNames={LoginStyles}
         nodeRef={formRef}
       >
-        <form ref={formRef} className={LoginStyles.form} onSubmit={handleLogin}>
-          <h2 className={LoginStyles.title}>Login</h2>
+        <form 
+          ref={formRef} 
+          className={LoginStyles.form} 
+          onSubmit={handleLogin}
+          aria-labelledby="login-title"
+        >
+          <h2 id="login-title" className={LoginStyles.title}>Login</h2>
           <input
             type="text"
+            id="username-input"
+            name="username"
             className={LoginStyles.input}
             placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
             autoComplete="username"
+            aria-label="Username"
+            aria-required="true"
+            aria-invalid={errorMessage ? "true" : "false"}
+            aria-describedby={errorMessage ? "login-error" : undefined}
           />
           <input
             type="password"
+            id="password-input"
+            name="password"
             className={LoginStyles.input}
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             autoComplete="current-password"
+            aria-label="Password"
+            aria-required="true"
+            aria-invalid={errorMessage ? "true" : "false"}
+            aria-describedby={errorMessage ? "login-error" : undefined}
           />
           {errorMessage && (
-            <div className={LoginStyles.error}>{errorMessage}</div>
+            <div 
+              id="login-error" 
+              className={LoginStyles.error} 
+              role="alert"
+              aria-live="polite"
+            >
+              {errorMessage}
+            </div>
           )}
           <button
             type="submit"
+            id="login-submit-button"
             className={LoginStyles.button}
             disabled={isLoggingIn}
+            aria-busy={isLoggingIn}
+            aria-label={isLoggingIn ? "Logging in, please wait" : "Login to your account"}
           >
             {isLoggingIn ? "Logging in..." : "Login"}
           </button>

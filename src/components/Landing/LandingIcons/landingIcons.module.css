@@ -77,7 +77,6 @@
   stroke-linecap: round;
 }
 
-/* bars */
 .barLeft1 {
   animation: leftBar1 4s ease-in-out infinite;
 }
@@ -182,7 +181,6 @@
   }
 }
 
-/* puzzle */
 .puzzlePiece {
   fill: var(--icon-fill);
   stroke: var(--icon-stroke);
@@ -216,7 +214,6 @@
   }
 }
 
-/* shield */
 .shieldArcGroup {
   transform-box: fill-box;
   transform-origin: center;
@@ -251,7 +248,6 @@
   pointer-events: none;
 }
 
-/* arrows */
 .arrow {
   opacity: 0;
   transform-box: fill-box;
@@ -280,7 +276,6 @@
   stroke-linejoin: round;
 }
 
-/* Keep strokes consistent while moving */
 .magnifier .lens,
 .magnifier .handle,
 .magnifier .glint {

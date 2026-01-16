@@ -4,6 +4,8 @@ import { jwtDecode } from "jwt-decode";
 import { useNode } from "./nodeContext";
 import { setupNodeAxiosInterceptors } from "../util/nodeAxiosSetup";
 
+// Authentication context provider for managing user login state and JWT tokens
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {

@@ -1,3 +1,4 @@
+
 import React, { useMemo, useLayoutEffect } from "react";
 import ScrollSidebar from "../../components/Common/ScrollSidebar/scrollSidebar.js";
 import TutorialStyles from "./tutorial.module.css";
@@ -5,6 +6,7 @@ import Slide from '../../components/Common/Slide/slide.js';
 import PageImage from "../../components/Common/PageImage/pageImage.js";
 import { DiscoverySlides, AggregateSlides, IntegrationSlides } from "./images";
 
+// Tutorial page for the platform
 function Tutorial() {
 
   useLayoutEffect(() => {

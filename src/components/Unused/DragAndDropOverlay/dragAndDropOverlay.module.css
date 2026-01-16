@@ -8,8 +8,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
-    font-size: 1.5rem;
+    color: var(--text-color-on-darkbg);
+    font-size: var(--font-size-xl);
     z-index: 100;
     visibility: visible;
     opacity: 1;

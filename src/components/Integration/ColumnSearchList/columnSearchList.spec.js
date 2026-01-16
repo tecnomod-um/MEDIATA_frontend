@@ -1,9 +1,9 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import ColumnSearch from './columnSearch';
+import ColumnSearchList from './columnSearchList';
 
-describe('<ColumnSearch />', () => {
+describe('<ColumnSearchList />', () => {
   const columnsData = [
     { column: 'Alpha', color: '#f00' },
     { column: 'Beta',  color: '#0f0' },
@@ -15,7 +15,7 @@ describe('<ColumnSearch />', () => {
     const handleDragStart = jest.fn();
 
     render(
-      <ColumnSearch
+      <ColumnSearchList
         columnsData={columnsData}
         handleColumnClick={handleColumnClick}
         handleDragStart={handleDragStart}
@@ -32,7 +32,7 @@ describe('<ColumnSearch />', () => {
     const handleDragStart = jest.fn();
 
     render(
-      <ColumnSearch
+      <ColumnSearchList
         columnsData={columnsData}
         handleColumnClick={handleColumnClick}
         handleDragStart={handleDragStart}
@@ -51,7 +51,7 @@ describe('<ColumnSearch />', () => {
     const handleDragStart = jest.fn();
 
     render(
-      <ColumnSearch
+      <ColumnSearchList
         columnsData={columnsData}
         handleColumnClick={handleColumnClick}
         handleDragStart={handleDragStart}
@@ -69,7 +69,7 @@ describe('<ColumnSearch />', () => {
     const handleDragStart = jest.fn();
 
     render(
-      <ColumnSearch
+      <ColumnSearchList
         columnsData={columnsData}
         handleColumnClick={handleColumnClick}
         handleDragStart={handleDragStart}

@@ -1,0 +1,16 @@
+.wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;  
+  height: 34px; 
+}
+
+.vertical {
+  transform: rotate(90deg);
+  transform-origin: center;
+}
+
+.vertical > span {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}

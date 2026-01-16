@@ -3,6 +3,7 @@ import { useAuth } from "../../../context/authContext";
 import { useNode } from "../../../context/nodeContext";
 import { Navigate, Outlet } from "react-router-dom";
 
+// Protected route wrapper, pages requiring authentication and/or node selection use this
 const ProtectedRoute = ({ nodeRequired }) => {
   const { isAuthenticated, isLoading } = useAuth();
   const { selectedNodes } = useNode();

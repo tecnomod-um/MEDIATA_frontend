@@ -1,11 +1,9 @@
-@import '../../variables.css';
-
 .container {
   display: flex;
   width: 100vw;
   height: calc(100vh - 55px);
   overflow: hidden;
-  background-color: #ecebeb;
+  background-color: var(--background-color-1);
   transition: background-color 0.2s ease;
 }
 
@@ -33,7 +31,7 @@
 .rightPanel {
   width: 30vw;
   position: relative;
-  background-color: #ffffff;
+  background-color: var(--background-color-card);
   overflow: hidden;
 }
 
@@ -66,13 +64,13 @@
 .resizer {
   height: 100%;
   width: 8px;
-  background: #ccc;
+  background: var(--border-color);
   cursor: col-resize;
   transition: background 0.2s;
 }
 
 .resizer:hover {
-  background: #999;
+  background: var(--text-color-muted);
 }
 
 .connectionMessage {
@@ -81,10 +79,10 @@
   left: 50%;
   transform: translateX(-50%);
   background: var(--translucent-background-color);
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   padding: 8px 16px;
   border-radius: 4px;
-  font-size: 0.9em;
+  font-size: var(--font-size-base);
   z-index: 2;
   backdrop-filter: blur(2px);
 }
@@ -108,10 +106,10 @@
   bottom: 80px;
   left: 20px;
   background: rgba(40, 40, 40, 0.95);
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   padding: 12px 20px;
   border-radius: 8px;
-  font-size: 0.9em;
+  font-size: var(--font-size-base);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   display: none;
   z-index: 100;
@@ -139,9 +137,9 @@
   justify-content: center;
   cursor: pointer;
   padding: 0.6rem 1rem;
-  font-size: 0.9rem;
-  color: #fff;
-  background: var(--button-color-light);
+  font-size: var(--font-size-base);
+  color: var(--text-color-on-darkbg);
+  background: var(--button-color);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
   white-space: nowrap;
@@ -151,8 +149,8 @@
 }
 
 .controlBtn:hover {
-  background: var(--button-color-hover-light);
-  box-shadow: var(--button-color-shadow-light);
+  background: var(--button-color-hover);
+  box-shadow: var(--button-color-shadow);
 }
 
 .controlBtn:active {
@@ -162,7 +160,7 @@
 @container controls-container (max-width: 2200px) {
   .controlBtn {
     padding: 8px 12px;
-    font-size: 0.85em;
+    font-size: var(--font-size-sm);
     border-color: none;
   }
 }
@@ -247,7 +245,7 @@
     height: 30%;
     overflow-y: auto;
     overflow-x: hidden;
-    background-color: #fff;
+    background-color: var(--background-color-card);
     border-bottom: 2px solid #ccc;
   }
 
@@ -255,7 +253,7 @@
     display: flex;
     justify-content: center;
     gap: 1rem;
-    background-color: #f0f0f0;
+    background-color: var(--background-color-tertiary);
     padding: 0.5rem 0;
   }
 
@@ -263,13 +261,13 @@
     cursor: pointer;
     padding: 0.5rem 1rem;
     font-weight: 600;
-    background: #ddd;
-    border: 1px solid #ccc;
+    background: var(--border-color-secondary);
+    border: 1px solid var(--border-color);
     border-radius: 4px;
   }
 
   .activeTab {
-    background: #fff;
+    background: var(--background-color-card);
     border-bottom: 2px solid #333;
   }
 
@@ -278,7 +276,7 @@
     height: 70%;
     position: relative;
     overflow: hidden;
-    background-color: #fafafa;
+    background-color: var(--background-color-4);
   }
 
   .mobileWorkspace {
@@ -296,8 +294,8 @@
     padding: 0.5rem 1rem;
     font-weight: 600;
     width: 100px;
-    background-color: #333;
-    color: #fff;
+    background-color: var(--text-color-primary);
+    color: var(--text-color-on-darkbg);
     border: 1px solid #222;
     border-radius: 4px;
     cursor: pointer;
@@ -323,9 +321,8 @@
 }
 
 .toast {
-  /*top: 55px;*/
   background-color: var(--translucent-background-color) !important;
-  color: #fff !important;
+  color: var(--text-color-on-darkbg) !important;
   min-height: 40px !important;
   border-radius: 8px !important;
   box-shadow: none !important;

@@ -49,7 +49,7 @@
 
 .active .button {
   background-color: #505050;
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
 }
 
 .button:focus-visible {

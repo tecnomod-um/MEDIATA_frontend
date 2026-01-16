@@ -22,7 +22,7 @@ jest.mock("../../components/Common/FilePicker/filePicker", () => () => (
   <div data-testid="picker">FilePicker</div>
 ));
 
-jest.mock("../../components/Common/FilePicker/fileExplorer", () => {
+jest.mock("../../components/Common/FileExplorer/fileExplorer", () => {
   const React = require("react");
   return function MockFileExplorer(props) {
     mockFileExplorerProps = props;
@@ -124,7 +124,7 @@ test("opening a file (sync) shows statistics view and hides explorer", async () 
   await waitFor(() => expect(mockFileExplorerProps).toBeDefined());
 
   await act(async () => {
-    await mockFileExplorerProps.onOpenFile("file1.csv");
+    await mockFileExplorerProps.onFilesOpened([PROCESSED_ITEM]);
   });
 
   expect(await screen.findByTestId("tray")).toBeInTheDocument();
@@ -151,18 +151,17 @@ test("opening a file (async) polls and then shows statistics view", async () => 
 
   await waitFor(() => expect(mockFileExplorerProps).toBeDefined());
 
+  // FileExplorer (which is mocked) would handle the polling internally
+  // Here we just simulate the final callback after polling completes
   await act(async () => {
-    await mockFileExplorerProps.onOpenFile("file1.csv");
+    await mockFileExplorerProps.onFilesOpened([PROCESSED_ITEM]);
   });
 
+  // Discovery should show the results
   expect(await screen.findByTestId("tray")).toBeInTheDocument();
   expect(await screen.findByTestId("stats")).toBeInTheDocument();
-
-  await waitFor(() =>
-    expect(mockGetProcessSelectedDatasetsStatus).toHaveBeenCalled()
-  );
-
-  await waitFor(() =>
-    expect(mockGetProcessSelectedDatasetsResult).toHaveBeenCalledWith("job-123")
-  );
+  
+  // Note: The polling APIs (mockGetProcessSelectedDatasetsStatus, mockGetProcessSelectedDatasetsResult)
+  // would be called by FileExplorer internally, but since FileExplorer is mocked in this test,
+  // those calls don't happen. This test only verifies Discovery's response to onFilesOpened callback.
 });

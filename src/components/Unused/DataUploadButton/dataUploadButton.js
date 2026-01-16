@@ -1,3 +1,4 @@
+// Data upload button component (unused)
 import React, { useRef } from "react";
 import DataUploadButtonStyles from "./dataUploadButton.module.css";
 
