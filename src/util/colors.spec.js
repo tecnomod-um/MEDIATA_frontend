@@ -132,8 +132,11 @@ describe('Edge cases for color functions', () => {
     expect(lightenColor('#FF0000', 0)).toBe('#ff0000');
   });
 
-  it('lightenColor handles colors without hash', () => {
+  it('lightenColor returns input unchanged for non-hash colors', () => {
+    // lightenColor checks if color starts with '#' and returns it unchanged if not
     expect(lightenColor('FF0000', 50)).toBe('FF0000');
+    expect(lightenColor('rgb(0,0,0)', 20)).toBe('rgb(0,0,0)');
+    expect(lightenColor('blue', 30)).toBe('blue');
   });
 
   it('darkenColor clamps values at 255', () => {

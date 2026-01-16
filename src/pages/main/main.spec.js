@@ -113,14 +113,15 @@ describe('<Main />', () => {
     expect(window.scrollTo).toHaveBeenCalledWith({ top: 500, behavior: 'smooth' });
   });
 
-  it('handles resize event and updates scroll indicator', () => {
+  it('handles resize event correctly', () => {
     const { container } = renderWithRouter();
     window.scrollY = 0;
+    const originalHeight = window.innerHeight;
     Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
     fireEvent.resize(window);
-    // Scroll indicator visibility depends on internal state calculation
-    const indicator = container.querySelector('.scrollIndicator');
-    expect(indicator !== null || indicator === null).toBe(true); // Just verify it's rendered or not
+    // After resize, the component recalculates scroll indicator state
+    // Verify the component is still rendered correctly
+    expect(container.querySelector('.pageContainer')).toBeInTheDocument();
   });
 
   it('cleans up event listeners on unmount', () => {
