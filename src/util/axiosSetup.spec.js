@@ -38,7 +38,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   localStorage.clear();
-  jest.clearAllMocks();
+  // Don't clear all mocks as it breaks the interceptor references
 });
 
 describe('axiosSetup utility', () => {
@@ -47,13 +47,20 @@ describe('axiosSetup utility', () => {
   });
 
   describe('response interceptor', () => {
+    let successHandler;
     let errHandler;
     let logoutSpy;
 
     beforeEach(() => {
       logoutSpy = jest.fn();
       setupAxiosInterceptors(logoutSpy);
+      successHandler = mockResUse.mock.calls.at(-1)[0];
       errHandler = mockResUse.mock.calls.at(-1)[1];
+    });
+
+    it('returns response unchanged on success', () => {
+      const response = { data: 'test', status: 200 };
+      expect(successHandler(response)).toBe(response);
     });
 
     it.each([401, 403])('invokes logout on HTTP %p', async (status) => {
@@ -70,6 +77,12 @@ describe('axiosSetup utility', () => {
 
     it('handles errors without response object', async () => {
       const err = { message: 'Network Error' };
+      await expect(errHandler(err)).rejects.toBe(err);
+      expect(logoutSpy).not.toHaveBeenCalled();
+    });
+
+    it('handles 404 errors without logout', async () => {
+      const err = { response: { status: 404 } };
       await expect(errHandler(err)).rejects.toBe(err);
       expect(logoutSpy).not.toHaveBeenCalled();
     });

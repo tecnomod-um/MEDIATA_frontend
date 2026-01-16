@@ -3,7 +3,7 @@ jest.mock('distinct-colors', () => jest.fn());
 // eslint-disable-next-line import/no-commonjs
 const distinctColors = require('distinct-colors');
 // eslint-disable-next-line import/no-commonjs
-const { generateDistinctColors, darkenColor, lightenColor } = require('./colors.js');
+const { generateDistinctColors, generateColorList, darkenColor, lightenColor } = require('./colors.js');
 
 
 describe('generateDistinctColors', () => {
@@ -72,5 +72,85 @@ describe('Color Adjustment Behavior', () => {
 
   it('can "darken" using negative percentages', () => {
     expect(darkenColor('#808080', -50)).toBe('#010101');
+  });
+});
+
+describe('generateColorList', () => {
+  it('generates colors based on stats object length', () => {
+    const mockColors = [{ hex: () => '#FF0000' }, { hex: () => '#00FF00' }];
+    distinctColors.mockReturnValue(mockColors);
+    
+    const stats = { key1: 'value1', key2: 'value2' };
+    const result = generateColorList(stats);
+    
+    expect(distinctColors).toHaveBeenCalledWith({
+      count: 2,
+      chromaMin: 15,
+      chromaMax: 95,
+      lightMin: 65,
+      lightMax: 90
+    });
+    expect(result).toEqual(['#FF0000', '#00FF00', '#D3D3D3']);
+  });
+
+  it('handles null stats', () => {
+    distinctColors.mockReturnValue([]);
+    const result = generateColorList(null);
+    expect(result).toEqual(['#D3D3D3']);
+  });
+
+  it('handles undefined stats', () => {
+    distinctColors.mockReturnValue([]);
+    const result = generateColorList(undefined);
+    expect(result).toEqual(['#D3D3D3']);
+  });
+
+  it('handles empty stats object', () => {
+    distinctColors.mockReturnValue([]);
+    const result = generateColorList({});
+    expect(result).toEqual(['#D3D3D3']);
+  });
+
+  it('appends gray color to generated colors', () => {
+    const mockColors = [{ hex: () => '#FF0000' }];
+    distinctColors.mockReturnValue(mockColors);
+    const result = generateColorList({ key1: 'val' });
+    expect(result[result.length - 1]).toBe('#D3D3D3');
+  });
+});
+
+describe('Edge cases for color functions', () => {
+  it('darkenColor handles very small values', () => {
+    expect(darkenColor('#000001', -1)).toBe('#000000');
+  });
+
+  it('darkenColor handles lowercase hex', () => {
+    expect(darkenColor('#ff0000', 0)).toBe('#ff0000');
+  });
+
+  it('lightenColor handles uppercase hex', () => {
+    expect(lightenColor('#FF0000', 0)).toBe('#ff0000');
+  });
+
+  it('lightenColor handles colors without hash', () => {
+    expect(lightenColor('FF0000', 50)).toBe('FF0000');
+  });
+
+  it('darkenColor clamps values at 255', () => {
+    expect(darkenColor('#FFFFFF', 100)).toBe('#ffffff');
+  });
+
+  it('lightenColor clamps values at 255', () => {
+    expect(lightenColor('#FFFFFF', 100)).toBe('#ffffff');
+  });
+
+  it('darkenColor handles mid-range colors', () => {
+    const result = darkenColor('#7F7F7F', 10);
+    expect(result).toMatch(/^#[0-9a-f]{6}$/);
+  });
+
+  it('lightenColor handles mid-range colors', () => {
+    const result = lightenColor('#7F7F7F', 10);
+    expect(result).toMatch(/^#[0-9a-f]{6}$/);
   });
 });
