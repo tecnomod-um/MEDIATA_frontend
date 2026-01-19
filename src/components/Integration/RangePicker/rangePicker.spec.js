@@ -173,9 +173,8 @@ describe("<RangePicker />", () => {
     const rangeText = screen.getByText(/Selected range:/i);
     fireEvent.doubleClick(rangeText);
 
-    // Date inputs are not textboxes in the traditional sense
-    const container = screen.getByText(/Selected range:/i).closest('div');
-    expect(container).toBeInTheDocument();
+    // After double-click, the range display should still be visible
+    expect(screen.getByText(/Selected range:/i)).toBeInTheDocument();
   });
 
   it("ignores invalid date input", () => {

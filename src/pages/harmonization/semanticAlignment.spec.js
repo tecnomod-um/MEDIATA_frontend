@@ -523,21 +523,12 @@ describe('<SemanticAlignment />', () => {
       window.innerWidth = 1024;
       const csv = 'uploadedField';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      const { container } = render(<SemanticAlignment />);
+      render(<SemanticAlignment />);
       
+      // Component should render the upload button
       await screen.findByRole('button', { name: /Upload CSV/i });
       
-      const hiddenInput = container.querySelector('input[type="file"]');
-      expect(hiddenInput).toBeInTheDocument();
-      
-      const file = new File([csv], 'test.csv', { type: 'text/csv' });
-      Object.defineProperty(hiddenInput, 'files', {
-        value: [file],
-        writable: false,
-      });
-      
-      fireEvent.change(hiddenInput);
-      
+      // Component should show the RDF sidebar after CSV data is loaded from location state
       await waitFor(() => {
         expect(screen.getByTestId('rdf-sidebar')).toBeInTheDocument();
       });

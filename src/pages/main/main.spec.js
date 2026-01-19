@@ -101,25 +101,26 @@ describe('<Main />', () => {
 
   it('shows scroll indicator when not at bottom', () => {
     window.scrollY = 0;
-    const { container } = renderWithRouter();
-    expect(container.querySelector('.scrollIndicator')).toBeInTheDocument();
+    renderWithRouter();
+    expect(screen.getByRole('button', { name: /scroll down/i })).toBeInTheDocument();
   });
 
   it('handles scroll indicator click to scroll down', () => {
     window.scrollY = 0;
-    const { container } = renderWithRouter();
-    const indicator = container.querySelector('.scrollIndicator');
+    renderWithRouter();
+    const indicator = screen.getByRole('button', { name: /scroll down/i });
     fireEvent.click(indicator);
     expect(window.scrollTo).toHaveBeenCalledWith({ top: 500, behavior: 'smooth' });
   });
 
   it('handles resize event correctly', () => {
-    const { container } = renderWithRouter();
+    renderWithRouter();
     window.scrollY = 0;
     const originalHeight = window.innerHeight;
     Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
     fireEvent.resize(window);
-    expect(container.querySelector('.pageContainer')).toBeInTheDocument();
+    // After resize, component should still be rendered - check for a heading
+    expect(screen.getByRole('heading', { name: /Discovery and profiling/i })).toBeInTheDocument();
   });
 
   it('cleans up event listeners on unmount', () => {

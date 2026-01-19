@@ -53,30 +53,22 @@ jest.mock("react-switch", () => {
 describe("FileExplorer sub-components", () => {
   describe("<FileTypeIcon />", () => {
     it("renders CSV icon for .csv files", () => {
-      const { container } = render(<FileTypeIcon name="test.csv" />);
-      const svg = container.querySelector("svg");
-      expect(svg).toBeInTheDocument();
+      render(<FileTypeIcon name="test.csv" />);
       expect(screen.getByTitle('CSV')).toBeInTheDocument();
     });
 
     it("renders XLSX icon for .xlsx files", () => {
-      const { container } = render(<FileTypeIcon name="test.xlsx" />);
-      const svg = container.querySelector("svg");
-      expect(svg).toBeInTheDocument();
+      render(<FileTypeIcon name="test.xlsx" />);
       expect(screen.getByTitle('XLSX')).toBeInTheDocument();
     });
 
     it("renders XLSX icon for .xls files", () => {
-      const { container } = render(<FileTypeIcon name="test.xls" />);
-      const svg = container.querySelector("svg");
-      expect(svg).toBeInTheDocument();
+      render(<FileTypeIcon name="test.xls" />);
       expect(screen.getByTitle('XLSX')).toBeInTheDocument();
     });
 
     it("handles files without extensions", () => {
-      const { container } = render(<FileTypeIcon name="noextension" />);
-      const svg = container.querySelector("svg");
-      expect(svg).toBeInTheDocument();
+      render(<FileTypeIcon name="noextension" />);
       expect(screen.getByTitle('File')).toBeInTheDocument();
     });
   });
@@ -435,51 +427,46 @@ describe("FileExplorer sub-components", () => {
 
   describe("Additional FileTypeIcon tests", () => {
     it("renders JSON icon for .json files", () => {
-      const { container } = render(<FileTypeIcon name="data.json" />);
-      const svg = container.querySelector("svg");
-      expect(svg).toBeInTheDocument();
+      render(<FileTypeIcon name="data.json" />);
+      expect(screen.getByTitle('JSON')).toBeInTheDocument();
     });
 
     it("renders TXT icon for .txt files", () => {
-      const { container } = render(<FileTypeIcon name="readme.txt" />);
-      const svg = container.querySelector("svg");
-      expect(svg).toBeInTheDocument();
+      render(<FileTypeIcon name="readme.txt" />);
+      expect(screen.getByTitle('TXT')).toBeInTheDocument();
     });
 
     it("renders XML icon for .xml files", () => {
-      const { container } = render(<FileTypeIcon name="config.xml" />);
-      const svg = container.querySelector("svg");
-      expect(svg).toBeInTheDocument();
+      render(<FileTypeIcon name="config.xml" />);
+      // XML falls back to generic file icon
+      expect(screen.getByTitle('File')).toBeInTheDocument();
     });
 
     it("renders ZIP icon for .zip files", () => {
-      const { container } = render(<FileTypeIcon name="archive.zip" />);
-      const svg = container.querySelector("svg");
-      expect(svg).toBeInTheDocument();
+      render(<FileTypeIcon name="archive.zip" />);
+      // ZIP falls back to generic file icon
+      expect(screen.getByTitle('File')).toBeInTheDocument();
     });
 
     it("renders PDF icon for .pdf files", () => {
-      const { container } = render(<FileTypeIcon name="document.pdf" />);
-      const svg = container.querySelector("svg");
-      expect(svg).toBeInTheDocument();
+      render(<FileTypeIcon name="document.pdf" />);
+      // PDF falls back to generic file icon
+      expect(screen.getByTitle('File')).toBeInTheDocument();
     });
 
     it("handles uppercase extensions", () => {
-      const { container } = render(<FileTypeIcon name="TEST.CSV" />);
-      const svg = container.querySelector("svg");
-      expect(svg).toBeInTheDocument();
+      render(<FileTypeIcon name="TEST.CSV" />);
+      expect(screen.getByTitle('CSV')).toBeInTheDocument();
     });
 
     it("handles mixed case extensions", () => {
-      const { container } = render(<FileTypeIcon name="file.CsV" />);
-      const svg = container.querySelector("svg");
-      expect(svg).toBeInTheDocument();
+      render(<FileTypeIcon name="file.CsV" />);
+      expect(screen.getByTitle('CSV')).toBeInTheDocument();
     });
 
     it("renders default icon for unknown extensions", () => {
-      const { container } = render(<FileTypeIcon name="file.unknown" />);
-      const svg = container.querySelector("svg");
-      expect(svg).toBeInTheDocument();
+      render(<FileTypeIcon name="file.unknown" />);
+      expect(screen.getByTitle('File')).toBeInTheDocument();
     });
   });
 
