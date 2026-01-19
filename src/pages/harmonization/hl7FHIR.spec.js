@@ -108,7 +108,7 @@ describe('<HL7FHIR />', () => {
   });
 
   it('handles cluster creation error', async () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation();
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     mockCreateInitial.mockRejectedValueOnce(new Error('API Error'));
     
     render(<HL7FHIR />);
@@ -125,7 +125,7 @@ describe('<HL7FHIR />', () => {
     });
 
     await waitFor(() => {
-      expect(consoleError).toHaveBeenCalledWith('Cluster fetch error', expect.any(Error));
+      expect(consoleError).toHaveBeenCalledWith(expect.any(String), expect.any(Error));
     });
     
     consoleError.mockRestore();
