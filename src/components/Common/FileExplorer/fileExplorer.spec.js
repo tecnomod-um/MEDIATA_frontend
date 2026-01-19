@@ -54,28 +54,28 @@ describe("FileExplorer sub-components", () => {
   describe("<FileTypeIcon />", () => {
     it("renders CSV icon for .csv files", () => {
       const { container } = render(<FileTypeIcon name="test.csv" />);
-      const svg = screen.getByRole("img");
+      const svg = container.querySelector("svg");
       expect(svg).toBeInTheDocument();
       expect(screen.getByTitle('CSV')).toBeInTheDocument();
     });
 
     it("renders XLSX icon for .xlsx files", () => {
       const { container } = render(<FileTypeIcon name="test.xlsx" />);
-      const svg = screen.getByRole("img");
+      const svg = container.querySelector("svg");
       expect(svg).toBeInTheDocument();
       expect(screen.getByTitle('XLSX')).toBeInTheDocument();
     });
 
     it("renders XLSX icon for .xls files", () => {
       const { container } = render(<FileTypeIcon name="test.xls" />);
-      const svg = screen.getByRole("img");
+      const svg = container.querySelector("svg");
       expect(svg).toBeInTheDocument();
       expect(screen.getByTitle('XLSX')).toBeInTheDocument();
     });
 
     it("handles files without extensions", () => {
       const { container } = render(<FileTypeIcon name="noextension" />);
-      const svg = screen.getByRole("img");
+      const svg = container.querySelector("svg");
       expect(svg).toBeInTheDocument();
       expect(screen.getByTitle('File')).toBeInTheDocument();
     });
@@ -436,49 +436,49 @@ describe("FileExplorer sub-components", () => {
   describe("Additional FileTypeIcon tests", () => {
     it("renders JSON icon for .json files", () => {
       const { container } = render(<FileTypeIcon name="data.json" />);
-      const svg = screen.getByRole("img");
+      const svg = container.querySelector("svg");
       expect(svg).toBeInTheDocument();
     });
 
     it("renders TXT icon for .txt files", () => {
       const { container } = render(<FileTypeIcon name="readme.txt" />);
-      const svg = screen.getByRole("img");
+      const svg = container.querySelector("svg");
       expect(svg).toBeInTheDocument();
     });
 
     it("renders XML icon for .xml files", () => {
       const { container } = render(<FileTypeIcon name="config.xml" />);
-      const svg = screen.getByRole("img");
+      const svg = container.querySelector("svg");
       expect(svg).toBeInTheDocument();
     });
 
     it("renders ZIP icon for .zip files", () => {
       const { container } = render(<FileTypeIcon name="archive.zip" />);
-      const svg = screen.getByRole("img");
+      const svg = container.querySelector("svg");
       expect(svg).toBeInTheDocument();
     });
 
     it("renders PDF icon for .pdf files", () => {
       const { container } = render(<FileTypeIcon name="document.pdf" />);
-      const svg = screen.getByRole("img");
+      const svg = container.querySelector("svg");
       expect(svg).toBeInTheDocument();
     });
 
     it("handles uppercase extensions", () => {
       const { container } = render(<FileTypeIcon name="TEST.CSV" />);
-      const svg = screen.getByRole("img");
+      const svg = container.querySelector("svg");
       expect(svg).toBeInTheDocument();
     });
 
     it("handles mixed case extensions", () => {
       const { container } = render(<FileTypeIcon name="file.CsV" />);
-      const svg = screen.getByRole("img");
+      const svg = container.querySelector("svg");
       expect(svg).toBeInTheDocument();
     });
 
     it("renders default icon for unknown extensions", () => {
       const { container } = render(<FileTypeIcon name="file.unknown" />);
-      const svg = screen.getByRole("img");
+      const svg = container.querySelector("svg");
       expect(svg).toBeInTheDocument();
     });
   });

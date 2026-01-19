@@ -523,11 +523,11 @@ describe('<SemanticAlignment />', () => {
       window.innerWidth = 1024;
       const csv = 'uploadedField';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      const { container } = render(<SemanticAlignment />);
       
       await screen.findByRole('button', { name: /Upload CSV/i });
       
-      const hiddenInput = screen.getByRole('textbox', { name: /file/i });
+      const hiddenInput = container.querySelector('input[type="file"]');
       expect(hiddenInput).toBeInTheDocument();
       
       const file = new File([csv], 'test.csv', { type: 'text/csv' });

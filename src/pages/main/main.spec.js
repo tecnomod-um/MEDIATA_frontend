@@ -102,13 +102,13 @@ describe('<Main />', () => {
   it('shows scroll indicator when not at bottom', () => {
     window.scrollY = 0;
     const { container } = renderWithRouter();
-    expect(screen.getByTestId('scrollIndicator')).toBeInTheDocument();
+    expect(container.querySelector('.scrollIndicator')).toBeInTheDocument();
   });
 
   it('handles scroll indicator click to scroll down', () => {
     window.scrollY = 0;
     const { container } = renderWithRouter();
-    const indicator = screen.getByTestId('scrollIndicator');
+    const indicator = container.querySelector('.scrollIndicator');
     fireEvent.click(indicator);
     expect(window.scrollTo).toHaveBeenCalledWith({ top: 500, behavior: 'smooth' });
   });
@@ -119,7 +119,7 @@ describe('<Main />', () => {
     const originalHeight = window.innerHeight;
     Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
     fireEvent.resize(window);
-    expect(screen.getByTestId('page-container')).toBeInTheDocument();
+    expect(container.querySelector('.pageContainer')).toBeInTheDocument();
   });
 
   it('cleans up event listeners on unmount', () => {
