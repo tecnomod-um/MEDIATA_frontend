@@ -639,5 +639,60 @@ describe('<SemanticAlignment />', () => {
       
       expect(screen.getByTestId('element-detail')).toBeInTheDocument();
     });
+
+    it('handles tablet view', async () => {
+      window.innerWidth = 768;
+      window.dispatchEvent(new Event('resize'));
+      
+      const csv = 'tabletField';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      expect(await screen.findByTestId('element-detail')).toBeInTheDocument();
+    });
+
+    it('handles very narrow mobile view', async () => {
+      window.innerWidth = 280;
+      window.dispatchEvent(new Event('resize'));
+      
+      const csv = 'narrowField';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      expect(await screen.findByTestId('element-detail')).toBeInTheDocument();
+    });
+
+    it('handles wide desktop view', async () => {
+      window.innerWidth = 1920;
+      window.dispatchEvent(new Event('resize'));
+      
+      const csv = 'wideField';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      expect(await screen.findByTestId('element-detail')).toBeInTheDocument();
+    });
+
+    it('toggles view multiple times in mobile', async () => {
+      window.innerWidth = 320;
+      window.dispatchEvent(new Event('resize'));
+      
+      const csv = 'toggleField';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      expect(await screen.findByTestId('element-detail')).toBeInTheDocument();
+      
+      const workspaceBtn = screen.getByText(/Workspace/i);
+      fireEvent.click(workspaceBtn);
+      expect(screen.getByTestId('rdf-connection')).toBeInTheDocument();
+      
+      const detailsBtn = screen.getByText(/Details/i);
+      fireEvent.click(detailsBtn);
+      expect(screen.getByTestId('element-detail')).toBeInTheDocument();
+      
+      fireEvent.click(workspaceBtn);
+      expect(screen.getByTestId('rdf-connection')).toBeInTheDocument();
+    });
   });
 });

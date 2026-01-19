@@ -67,4 +67,120 @@ describe('jsonToCSV', () => {
     const input = [{ x: null, y: undefined }];
     expect(() => jsonToCSV(input)).toThrow();
   });
+
+  it('handles empty strings as values', () => {
+    const input = [{ name: '', value: '' }];
+    const csv = jsonToCSV(input);
+    const lines = csv.split('\n');
+    expect(lines[0]).toBe('name,value');
+    expect(lines[1]).toBe(',');
+  });
+
+  it('handles single column data', () => {
+    const input = [{ id: 1 }, { id: 2 }, { id: 3 }];
+    const csv = jsonToCSV(input);
+    const lines = csv.split('\n');
+    expect(lines[0]).toBe('id');
+    expect(lines[1]).toBe('1');
+    expect(lines[2]).toBe('2');
+    expect(lines[3]).toBe('3');
+  });
+
+  it('handles objects with numeric keys', () => {
+    const input = [{ 0: 'a', 1: 'b' }];
+    const csv = jsonToCSV(input);
+    expect(csv).toContain('0,1');
+    expect(csv).toContain('a,b');
+  });
+
+  it('handles special characters in keys', () => {
+    const input = [{ 'key-with-dash': 1, 'key_with_underscore': 2 }];
+    const csv = jsonToCSV(input);
+    expect(csv).toContain('key-with-dash');
+    expect(csv).toContain('key_with_underscore');
+  });
+
+  it('handles very long strings', () => {
+    const longString = 'a'.repeat(1000);
+    const input = [{ data: longString }];
+    const csv = jsonToCSV(input);
+    expect(csv).toContain(longString);
+  });
+
+  it('handles objects with many keys', () => {
+    const obj = {};
+    for (let i = 0; i < 50; i++) {
+      obj[`key${i}`] = i;
+    }
+    const input = [obj];
+    const csv = jsonToCSV(input);
+    const lines = csv.split('\n');
+    expect(lines[0].split(',').length).toBe(50);
+  });
+
+  it('handles mixed data types in same column', () => {
+    const input = [
+      { value: 123 },
+      { value: 'text' },
+      { value: true }
+    ];
+    const csv = jsonToCSV(input);
+    const lines = csv.split('\n');
+    expect(lines[1]).toBe('123');
+    expect(lines[2]).toBe('text');
+    expect(lines[3]).toBe('true');
+  });
+
+  it('handles objects with same keys in different order', () => {
+    const input = [
+      { a: 1, b: 2, c: 3 },
+      { c: 6, a: 4, b: 5 }
+    ];
+    const csv = jsonToCSV(input);
+    const lines = csv.split('\n');
+    expect(lines[0]).toBe('a,b,c');
+    expect(lines[1]).toBe('1,2,3');
+    expect(lines[2]).toBe('4,5,6');
+  });
+
+  it('handles zero as a valid value', () => {
+    const input = [{ count: 0, flag: false }];
+    const csv = jsonToCSV(input);
+    expect(csv).toContain('0');
+    expect(csv).toContain('false');
+  });
+
+  it('handles negative numbers', () => {
+    const input = [{ value: -123, decimal: -45.67 }];
+    const csv = jsonToCSV(input);
+    expect(csv).toContain('-123');
+    expect(csv).toContain('-45.67');
+  });
+
+  it('handles scientific notation', () => {
+    const input = [{ value: 1e10 }];
+    const csv = jsonToCSV(input);
+    expect(csv).toContain('10000000000');
+  });
+
+  it('handles unicode characters', () => {
+    const input = [{ text: '你好世界', emoji: '😀' }];
+    const csv = jsonToCSV(input);
+    expect(csv).toContain('你好世界');
+    expect(csv).toContain('😀');
+  });
+
+  it('preserves newlines in values', () => {
+    const input = [{ text: 'line1\nline2' }];
+    const csv = jsonToCSV(input);
+    expect(csv).toContain('line1\nline2');
+  });
+
+  it('handles single row with multiple columns', () => {
+    const input = [{ a: 1, b: 2, c: 3, d: 4, e: 5 }];
+    const csv = jsonToCSV(input);
+    const lines = csv.split('\n');
+    expect(lines[0]).toBe('a,b,c,d,e');
+    expect(lines[1]).toBe('1,2,3,4,5');
+  });
 });

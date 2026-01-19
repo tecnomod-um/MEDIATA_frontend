@@ -387,3 +387,101 @@ test("handles files with no fileName in results", async () => {
 
   expect(await screen.findByTestId("stats")).toBeInTheDocument();
 });
+
+test("handles multiple file selections", async () => {
+  const multipleResults = [
+    {
+      continuousFeatures: [{ name: "age", nodeId: 1 }],
+      categoricalFeatures: [],
+      dateFeatures: [],
+      fileName: "file1.csv",
+      nodeId: 1,
+      nodeName: "Node1"
+    },
+    {
+      continuousFeatures: [{ name: "score", nodeId: 1 }],
+      categoricalFeatures: [],
+      dateFeatures: [],
+      fileName: "file2.csv",
+      nodeId: 1,
+      nodeName: "Node1"
+    }
+  ];
+  
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  
+  render(<Discovery />);
+  await waitFor(() => expect(mockFileExplorerProps).toBeDefined());
+
+  await act(async () => {
+    await mockFileExplorerProps.onFilesOpened(multipleResults);
+  });
+
+  expect(await screen.findByTestId("stats")).toBeInTheDocument();
+});
+
+test("handles empty feature arrays", async () => {
+  const emptyFeaturesResult = {
+    continuousFeatures: [],
+    categoricalFeatures: [],
+    dateFeatures: [],
+    fileName: "empty.csv",
+    nodeId: 1,
+    nodeName: "Node1"
+  };
+  
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  
+  render(<Discovery />);
+  await waitFor(() => expect(mockFileExplorerProps).toBeDefined());
+
+  await act(async () => {
+    await mockFileExplorerProps.onFilesOpened([emptyFeaturesResult]);
+  });
+
+  expect(await screen.findByTestId("stats")).toBeInTheDocument();
+});
+
+test("handles files with all feature types", async () => {
+  const allFeaturesResult = {
+    continuousFeatures: [{ name: "age", nodeId: 1 }],
+    categoricalFeatures: [{ name: "gender", nodeId: 1 }],
+    dateFeatures: [{ name: "birthdate", nodeId: 1 }],
+    fileName: "complete.csv",
+    nodeId: 1,
+    nodeName: "Node1"
+  };
+  
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  
+  render(<Discovery />);
+  await waitFor(() => expect(mockFileExplorerProps).toBeDefined());
+
+  await act(async () => {
+    await mockFileExplorerProps.onFilesOpened([allFeaturesResult]);
+  });
+
+  expect(await screen.findByTestId("stats")).toBeInTheDocument();
+});
+
+test("handles very large feature arrays", async () => {
+  const largeResult = {
+    continuousFeatures: Array(100).fill(null).map((_, i) => ({ name: `cont${i}`, nodeId: 1 })),
+    categoricalFeatures: Array(50).fill(null).map((_, i) => ({ name: `cat${i}`, nodeId: 1 })),
+    dateFeatures: Array(10).fill(null).map((_, i) => ({ name: `date${i}`, nodeId: 1 })),
+    fileName: "large.csv",
+    nodeId: 1,
+    nodeName: "Node1"
+  };
+  
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  
+  render(<Discovery />);
+  await waitFor(() => expect(mockFileExplorerProps).toBeDefined());
+
+  await act(async () => {
+    await mockFileExplorerProps.onFilesOpened([largeResult]);
+  });
+
+  expect(await screen.findByTestId("stats")).toBeInTheDocument();
+});
