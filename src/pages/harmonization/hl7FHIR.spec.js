@@ -84,6 +84,8 @@ describe('<HL7FHIR />', () => {
     });
     await waitFor(() => {
       expect(listProps.selectedElement).toBeDefined();
+    });
+    await waitFor(() => {
       expect(listProps.selectedElement.id).toBe(0);
     });
   });
@@ -95,22 +97,25 @@ describe('<HL7FHIR />', () => {
     });
     await waitFor(() => {
       expect(listProps.onDragStart).toBeDefined();
+    });
+
+    await waitFor(() => {
       expect(listProps.onDragEnd).toBeDefined();
     });
 
     act(() => {
       listProps.onDragStart();
     });
-    
+
     act(() => {
       listProps.onDragEnd();
     });
   });
 
   it('handles cluster creation error', async () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => { });
     mockCreateInitial.mockRejectedValueOnce(new Error('API Error'));
-    
+
     render(<HL7FHIR />);
     await act(async () => {
       pickerProps.onFileUpload(new File(['dummy'], 'test.csv'));
@@ -127,7 +132,7 @@ describe('<HL7FHIR />', () => {
     await waitFor(() => {
       expect(consoleError).toHaveBeenCalledWith(expect.any(String), expect.any(Error));
     });
-    
+
     consoleError.mockRestore();
   });
 

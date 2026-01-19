@@ -294,7 +294,7 @@ describe("ColumnMapping", () => {
       />
     );
 
-    const dropTarget = screen.getByText(/status/i).closest('div');
+    const dropTarget = screen.getByRole("region", { name: /status/i });
     
     // Try to drop the same column again
     fireEvent.drop(dropTarget, { dataTransfer: makeDataTransfer(groups[0]) });
@@ -448,7 +448,7 @@ describe("ColumnMapping", () => {
       />
     );
 
-    const resizer = screen.queryByRole("separator") || document.querySelector('[class*="resizer"]');
+    const resizer = screen.queryByRole("separator") || screen.getByTestId("resizer");
     if (resizer) {
       fireEvent.mouseDown(resizer, { preventDefault: jest.fn() });
       fireEvent(window, new MouseEvent('mousemove', { clientY: 300 }));

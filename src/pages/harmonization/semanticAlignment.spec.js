@@ -527,7 +527,7 @@ describe('<SemanticAlignment />', () => {
       
       await screen.findByRole('button', { name: /Upload CSV/i });
       
-      const hiddenInput = document.querySelector('input[type="file"]');
+      const hiddenInput = screen.getByRole('textbox', { name: /file/i });
       expect(hiddenInput).toBeInTheDocument();
       
       const file = new File([csv], 'test.csv', { type: 'text/csv' });

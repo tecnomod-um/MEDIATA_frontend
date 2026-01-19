@@ -314,7 +314,7 @@ test("adjusts viewport width and toggles tool tray", async () => {
     window.dispatchEvent(new Event('resize'));
   });
 
-  await waitFor(() => {});
+  expect(await screen.findByTestId("explorer")).toBeInTheDocument();
 });
 
 test("handles viewport resize to mobile width", async () => {
@@ -328,7 +328,7 @@ test("handles viewport resize to mobile width", async () => {
     window.dispatchEvent(new Event('resize'));
   });
 
-  await waitFor(() => {});
+  expect(await screen.findByTestId("explorer")).toBeInTheDocument();
 });
 
 test("doesn't process location.state files more than once", async () => {

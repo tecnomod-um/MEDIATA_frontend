@@ -299,10 +299,13 @@ describe("<ElementDetailPanel />", () => {
       
       const inputs = await screen.findAllByRole("textbox");
       const ontoInput = inputs.find(i => i.value === "OldOnto");
+      let conditionMet = false;
       if (ontoInput) {
         fireEvent.change(ontoInput, { target: { value: "NewOnto" } });
-        expect(setElementFormValues).toHaveBeenCalled();
+        conditionMet = true;
       }
+      expect(conditionMet).toBe(true);
+      expect(setElementFormValues).toHaveBeenCalled();
     });
   });
 

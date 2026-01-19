@@ -256,9 +256,7 @@ describe('<Nodes />', () => {
     // Should still show the modal but potentially with error state
     await waitFor(() => {
       const display = screen.queryByTestId('metadata-display');
-      if (display) {
-        expect(display).toBeInTheDocument();
-      }
+      expect(display).toBeInTheDocument();
     });
   });
 

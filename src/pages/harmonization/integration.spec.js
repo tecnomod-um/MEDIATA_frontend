@@ -521,7 +521,7 @@ describe('Integration Page', () => {
     fetchElementFile.mockResolvedValue('col,a,b');
 
     render(<Integration />);
-    await waitFor(() => expect(screen.getByTestId('ColumnSearchList')).toBeInTheDocument());
+    await expect(screen.findByTestId('ColumnSearchList')).resolves.toBeInTheDocument();
   });
 
   test('renders SchemaTray when columns are processed', async () => {
@@ -531,7 +531,7 @@ describe('Integration Page', () => {
     fetchElementFile.mockResolvedValue('col,a,b');
 
     render(<Integration />);
-    await waitFor(() => expect(screen.getByTestId('SchemaTray')).toBeInTheDocument());
+    await expect(screen.findByTestId('SchemaTray')).resolves.toBeInTheDocument();
   });
 
   test('renders MappingsResult when columns are processed', async () => {
@@ -541,7 +541,7 @@ describe('Integration Page', () => {
     fetchElementFile.mockResolvedValue('col,a,b');
 
     render(<Integration />);
-    await waitFor(() => expect(screen.getByTestId('MappingsResult')).toBeInTheDocument());
+    await expect(screen.findByTestId('MappingsResult')).resolves.toBeInTheDocument();
   });
 
   test('handles concurrent file processing', async () => {

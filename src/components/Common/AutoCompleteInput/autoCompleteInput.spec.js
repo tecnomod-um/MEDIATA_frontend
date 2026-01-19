@@ -125,7 +125,7 @@ describe('AutocompleteInput', () => {
     fireEvent.keyDown(input, { key: 'ArrowDown' })
     
     // Check if list is visible
-    expect(screen.queryByRole('listbox')).toBeInTheDocument()
+    expect(screen.getByRole('listbox')).toBeInTheDocument()
   })
 
   it('handles Enter key to select suggestion', () => {
@@ -160,7 +160,7 @@ describe('AutocompleteInput', () => {
 
     const input = screen.getByRole('combobox')
     fireEvent.focus(input)
-    expect(screen.queryByRole('listbox')).toBeInTheDocument()
+    expect(screen.getByRole('listbox')).toBeInTheDocument()
     
     // Press Escape
     fireEvent.keyDown(input, { key: 'Escape' })

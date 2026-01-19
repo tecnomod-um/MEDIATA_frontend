@@ -174,7 +174,7 @@ describe("<RangePicker />", () => {
     fireEvent.doubleClick(rangeText);
 
     // Date inputs are not textboxes in the traditional sense
-    const container = screen.getByText(/Selected range:/i).closest('div');
+    const container = screen.getByRole('group', { name: /Selected range:/i });
     expect(container).toBeInTheDocument();
   });
 

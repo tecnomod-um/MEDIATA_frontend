@@ -102,13 +102,13 @@ describe('<Main />', () => {
   it('shows scroll indicator when not at bottom', () => {
     window.scrollY = 0;
     const { container } = renderWithRouter();
-    expect(container.querySelector('.scrollIndicator')).toBeInTheDocument();
+    expect(screen.getByTestId('scrollIndicator')).toBeInTheDocument();
   });
 
   it('handles scroll indicator click to scroll down', () => {
     window.scrollY = 0;
     const { container } = renderWithRouter();
-    const indicator = container.querySelector('.scrollIndicator');
+    const indicator = screen.getByTestId('scrollIndicator');
     fireEvent.click(indicator);
     expect(window.scrollTo).toHaveBeenCalledWith({ top: 500, behavior: 'smooth' });
   });
@@ -119,9 +119,7 @@ describe('<Main />', () => {
     const originalHeight = window.innerHeight;
     Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
     fireEvent.resize(window);
-    // After resize, the component recalculates scroll indicator state
-    // Verify the component is still rendered correctly
-    expect(container.querySelector('.pageContainer')).toBeInTheDocument();
+    expect(screen.getByTestId('page-container')).toBeInTheDocument();
   });
 
   it('cleans up event listeners on unmount', () => {
@@ -156,12 +154,12 @@ describe('<Main />', () => {
   it('has working link to tutorial', () => {
     renderWithRouter();
     const tutorialButton = screen.getByRole('button', { name: /Check the tutorial/i });
-    expect(tutorialButton.closest('a')).toHaveAttribute('href', '/tutorial');
+    expect(screen.getByRole('link', { name: /Check the tutorial/i })).toHaveAttribute('href', '/tutorial');
   });
 
   it('has working link to discovery', () => {
     renderWithRouter();
     const exploreButton = screen.getByRole('button', { name: /Explore your datasets/i });
-    expect(exploreButton.closest('a')).toHaveAttribute('href', '/discovery');
+    expect(screen.getByRole('link', { name: /Explore your datasets/i })).toHaveAttribute('href', '/discovery');
   });
 });

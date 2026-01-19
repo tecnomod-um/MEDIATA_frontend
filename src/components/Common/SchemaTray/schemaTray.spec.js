@@ -263,7 +263,7 @@ describe('SchemaTray • interaction details', () => {
     });
     
     // Tray should still be open
-    expect(screen.queryByText(/JSON Schema/i)).toBeInTheDocument();
+    expect(screen.getByText(/JSON Schema/i)).toBeInTheDocument();
   });
 
   it('prevents contracting with invalid JSON', async () => {
