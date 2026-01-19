@@ -527,4 +527,229 @@ describe('petitionHandler', () => {
       await expect(petitionHandler.uploadFile(new Blob())).rejects.toThrow('Test error');
     });
   });
+
+  describe('additional edge case tests', () => {
+    it('handles getNodeDatasets with empty response', async () => {
+      nodeAxiosInstance.get.mockResolvedValue({ data: [] });
+      const result = await petitionHandler.getNodeDatasets();
+      expect(result).toEqual([]);
+    });
+
+    it('handles getNodeDatasets with null response', async () => {
+      nodeAxiosInstance.get.mockResolvedValue({ data: null });
+      const result = await petitionHandler.getNodeDatasets();
+      expect(result).toBeNull();
+    });
+
+    it('handles getNodeList with pagination parameters', async () => {
+      axiosInstance.get.mockResolvedValue({ data: [{ nodeId: 'n1' }] });
+      await petitionHandler.getNodeList({ page: 2, limit: 10 });
+      expect(axiosInstance.get).toHaveBeenCalled();
+    });
+
+    it('handles uploadFile with large blob', async () => {
+      const largeBlob = new Blob([new Array(1024 * 1024).join('x')]);
+      nodeAxiosInstance.post.mockResolvedValue({ data: { success: true } });
+      const result = await petitionHandler.uploadFile(largeBlob, 'large.csv');
+      expect(result.data.success).toBe(true);
+    });
+
+    it('handles uploadFile with special characters in filename', async () => {
+      nodeAxiosInstance.post.mockResolvedValue({ data: { success: true } });
+      await petitionHandler.uploadFile(new Blob(), 'file-with-special_chars.csv');
+      expect(nodeAxiosInstance.post).toHaveBeenCalled();
+    });
+
+    it('handles fetchElementFile with empty nodeId', async () => {
+      nodeAxiosInstance.get.mockResolvedValue({ data: 'col,a,b' });
+      const result = await petitionHandler.fetchElementFile('', 'file.csv');
+      expect(result).toBe('col,a,b');
+    });
+
+    it('handles fetchElementFile with special characters in filename', async () => {
+      nodeAxiosInstance.get.mockResolvedValue({ data: 'col,a,b' });
+      await petitionHandler.fetchElementFile('node1', 'file with spaces.csv');
+      expect(nodeAxiosInstance.get).toHaveBeenCalled();
+    });
+
+    it('handles getNodeElements returning array with duplicates', async () => {
+      nodeAxiosInstance.get.mockResolvedValue({ data: ['a.csv', 'a.csv', 'b.csv'] });
+      const result = await petitionHandler.getNodeElements('node1');
+      expect(result).toEqual(['a.csv', 'a.csv', 'b.csv']);
+    });
+
+    it('handles deleteFile with array of filenames', async () => {
+      nodeAxiosInstance.delete.mockResolvedValue({ data: { success: true } });
+      await petitionHandler.deleteFile(['file1.csv', 'file2.csv']);
+      expect(nodeAxiosInstance.delete).toHaveBeenCalled();
+    });
+
+    it('handles renameFile with same source and target names', async () => {
+      nodeAxiosInstance.put.mockResolvedValue({ data: { success: true } });
+      await petitionHandler.renameFile('test.csv', 'test.csv');
+      expect(nodeAxiosInstance.put).toHaveBeenCalled();
+    });
+
+    it('handles cleanFile with all cleaning options enabled', async () => {
+      nodeAxiosInstance.post.mockResolvedValue({ data: { success: true } });
+      const options = {
+        removeDuplicates: true,
+        removeEmptyRows: true,
+        standardizeDates: true,
+        dateFormat: 'YYYY-MM-DD',
+        standardizeNumeric: true,
+        numericColumns: ['col1', 'col2'],
+        numericMode: 'replace'
+      };
+      await petitionHandler.cleanFile('test.csv', options);
+      expect(nodeAxiosInstance.post).toHaveBeenCalled();
+    });
+
+    it('handles cleanFile with no cleaning options', async () => {
+      nodeAxiosInstance.post.mockResolvedValue({ data: { success: true } });
+      await petitionHandler.cleanFile('test.csv', {});
+      expect(nodeAxiosInstance.post).toHaveBeenCalled();
+    });
+
+    it('handles getNodeInfo with missing nodeId', async () => {
+      axiosInstance.get.mockResolvedValue({ data: { token: 't1', nodeInfo: {} } });
+      await petitionHandler.getNodeInfo('');
+      expect(axiosInstance.get).toHaveBeenCalled();
+    });
+
+    it('handles nodeAuth with empty token', async () => {
+      nodeAxiosInstance.post.mockResolvedValue({ data: { jwtNodeToken: 'jwt' } });
+      await petitionHandler.nodeAuth('url', '');
+      expect(nodeAxiosInstance.post).toHaveBeenCalled();
+    });
+
+    it('handles setParseConfigs with empty configs array', async () => {
+      nodeAxiosInstance.post.mockResolvedValue({ data: { success: true } });
+      await petitionHandler.setParseConfigs([]);
+      expect(nodeAxiosInstance.post).toHaveBeenCalled();
+    });
+
+    it('handles setParseConfigs with multiple configs', async () => {
+      nodeAxiosInstance.post.mockResolvedValue({ data: { success: true } });
+      const configs = [
+        { nodeId: 'n1', fileName: 'f1.csv', config: {} },
+        { nodeId: 'n1', fileName: 'f2.csv', config: {} },
+      ];
+      await petitionHandler.setParseConfigs(configs);
+      expect(nodeAxiosInstance.post).toHaveBeenCalled();
+    });
+
+    it('handles fetchSchemaFromBackend with custom schema id', async () => {
+      nodeAxiosInstance.get.mockResolvedValue({ data: { schema: { test: 'data' } } });
+      await petitionHandler.fetchSchemaFromBackend('custom-schema-id');
+      expect(nodeAxiosInstance.get).toHaveBeenCalled();
+    });
+
+    it('handles getNodeMetadata with additional parameters', async () => {
+      axiosInstance.get.mockResolvedValue({ data: { metadata: 'data' } });
+      await petitionHandler.getNodeMetadata('node1', { includeStats: true });
+      expect(axiosInstance.get).toHaveBeenCalled();
+    });
+
+    it('handles downloadFile with special characters in filename', async () => {
+      nodeAxiosInstance.get.mockResolvedValue({ data: 'file content' });
+      await petitionHandler.downloadFile('file-with-special_chars.csv');
+      expect(nodeAxiosInstance.get).toHaveBeenCalled();
+    });
+
+    it('handles uploadFile with undefined filename', async () => {
+      nodeAxiosInstance.post.mockResolvedValue({ data: { success: true } });
+      await petitionHandler.uploadFile(new Blob());
+      expect(nodeAxiosInstance.post).toHaveBeenCalled();
+    });
+
+    it('handles deleteFile with empty filename', async () => {
+      nodeAxiosInstance.delete.mockResolvedValue({ data: { success: true } });
+      await petitionHandler.deleteFile('');
+      expect(nodeAxiosInstance.delete).toHaveBeenCalled();
+    });
+
+    it('handles renameFile with empty target name', async () => {
+      nodeAxiosInstance.put.mockResolvedValue({ data: { success: true } });
+      await petitionHandler.renameFile('old.csv', '');
+      expect(nodeAxiosInstance.put).toHaveBeenCalled();
+    });
+
+    it('handles cleanFile with undefined options', async () => {
+      nodeAxiosInstance.post.mockResolvedValue({ data: { success: true } });
+      await petitionHandler.cleanFile('test.csv');
+      expect(nodeAxiosInstance.post).toHaveBeenCalled();
+    });
+
+    it('handles network timeout errors', async () => {
+      const timeoutError = new Error('timeout');
+      timeoutError.code = 'ECONNABORTED';
+      axiosInstance.get.mockRejectedValue(timeoutError);
+      await expect(petitionHandler.getNodeList()).rejects.toThrow('timeout');
+    });
+
+    it('handles 401 unauthorized errors', async () => {
+      const authError = new Error('Unauthorized');
+      authError.response = { status: 401 };
+      axiosInstance.get.mockRejectedValue(authError);
+      await expect(petitionHandler.getNodeList()).rejects.toThrow('Unauthorized');
+    });
+
+    it('handles 403 forbidden errors', async () => {
+      const forbiddenError = new Error('Forbidden');
+      forbiddenError.response = { status: 403 };
+      axiosInstance.get.mockRejectedValue(forbiddenError);
+      await expect(petitionHandler.getNodeList()).rejects.toThrow('Forbidden');
+    });
+
+    it('handles 404 not found errors', async () => {
+      const notFoundError = new Error('Not Found');
+      notFoundError.response = { status: 404 };
+      axiosInstance.get.mockRejectedValue(notFoundError);
+      await expect(petitionHandler.getNodeList()).rejects.toThrow('Not Found');
+    });
+
+    it('handles 500 server errors', async () => {
+      const serverError = new Error('Internal Server Error');
+      serverError.response = { status: 500 };
+      axiosInstance.get.mockRejectedValue(serverError);
+      await expect(petitionHandler.getNodeList()).rejects.toThrow('Internal Server Error');
+    });
+
+    it('handles response with unexpected data structure', async () => {
+      axiosInstance.get.mockResolvedValue({ unexpected: 'structure' });
+      const result = await petitionHandler.getNodeList();
+      expect(result).toEqual({ unexpected: 'structure' });
+    });
+
+    it('handles concurrent requests to same endpoint', async () => {
+      axiosInstance.get.mockResolvedValue({ data: [{ nodeId: 'n1' }] });
+      const promises = [
+        petitionHandler.getNodeList(),
+        petitionHandler.getNodeList(),
+        petitionHandler.getNodeList()
+      ];
+      await Promise.all(promises);
+      expect(axiosInstance.get).toHaveBeenCalledTimes(3);
+    });
+
+    it('handles very long filenames', async () => {
+      const longFilename = 'a'.repeat(255) + '.csv';
+      nodeAxiosInstance.get.mockResolvedValue({ data: 'content' });
+      await petitionHandler.fetchElementFile('node1', longFilename);
+      expect(nodeAxiosInstance.get).toHaveBeenCalled();
+    });
+
+    it('handles unicode characters in filenames', async () => {
+      nodeAxiosInstance.get.mockResolvedValue({ data: 'content' });
+      await petitionHandler.fetchElementFile('node1', 'файл.csv');
+      expect(nodeAxiosInstance.get).toHaveBeenCalled();
+    });
+
+    it('handles emoji in filenames', async () => {
+      nodeAxiosInstance.get.mockResolvedValue({ data: 'content' });
+      await petitionHandler.fetchElementFile('node1', '📁file.csv');
+      expect(nodeAxiosInstance.get).toHaveBeenCalled();
+    });
+  });
 });

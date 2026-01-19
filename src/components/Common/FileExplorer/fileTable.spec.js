@@ -12,9 +12,9 @@ jest.mock('./fileTypeIcon', () => {
 
 describe('FileTable', () => {
   const mockFiles = [
-    { id: '1', name: 'file1.csv', size: 1024, modified: new Date('2024-01-01') },
-    { id: '2', name: 'file2.txt', size: 2048, modified: new Date('2024-01-02') },
-    { id: '3', name: 'file3.json', size: 512, modified: new Date('2024-01-03') },
+    { id: '1', name: 'file1.csv', size: 1024, modified: new Date('2024-01-01'), nodeId: 'node1' },
+    { id: '2', name: 'file2.txt', size: 2048, modified: new Date('2024-01-02'), nodeId: 'node1' },
+    { id: '3', name: 'file3.json', size: 512, modified: new Date('2024-01-03'), nodeId: 'node2' },
   ];
 
   const mockProps = {

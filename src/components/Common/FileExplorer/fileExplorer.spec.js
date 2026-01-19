@@ -432,4 +432,394 @@ describe("FileExplorer sub-components", () => {
       expect(getFileExtension("archive.ZIP")).toBe("zip");
     });
   });
+
+  describe("Additional FileTypeIcon tests", () => {
+    it("renders JSON icon for .json files", () => {
+      const { container } = render(<FileTypeIcon name="data.json" />);
+      const svg = container.querySelector("svg");
+      expect(svg).toBeInTheDocument();
+    });
+
+    it("renders TXT icon for .txt files", () => {
+      const { container } = render(<FileTypeIcon name="readme.txt" />);
+      const svg = container.querySelector("svg");
+      expect(svg).toBeInTheDocument();
+    });
+
+    it("renders XML icon for .xml files", () => {
+      const { container } = render(<FileTypeIcon name="config.xml" />);
+      const svg = container.querySelector("svg");
+      expect(svg).toBeInTheDocument();
+    });
+
+    it("renders ZIP icon for .zip files", () => {
+      const { container } = render(<FileTypeIcon name="archive.zip" />);
+      const svg = container.querySelector("svg");
+      expect(svg).toBeInTheDocument();
+    });
+
+    it("renders PDF icon for .pdf files", () => {
+      const { container } = render(<FileTypeIcon name="document.pdf" />);
+      const svg = container.querySelector("svg");
+      expect(svg).toBeInTheDocument();
+    });
+
+    it("handles uppercase extensions", () => {
+      const { container } = render(<FileTypeIcon name="TEST.CSV" />);
+      const svg = container.querySelector("svg");
+      expect(svg).toBeInTheDocument();
+    });
+
+    it("handles mixed case extensions", () => {
+      const { container } = render(<FileTypeIcon name="file.CsV" />);
+      const svg = container.querySelector("svg");
+      expect(svg).toBeInTheDocument();
+    });
+
+    it("renders default icon for unknown extensions", () => {
+      const { container } = render(<FileTypeIcon name="file.unknown" />);
+      const svg = container.querySelector("svg");
+      expect(svg).toBeInTheDocument();
+    });
+  });
+
+  describe("Additional FileToolbar tests", () => {
+    const toolbarProps = {
+      toolbarDisabled: false,
+      doOpenSelected: jest.fn(),
+      hasSelection: true,
+      onOpenFile: jest.fn(),
+      renamingName: null,
+      selectedCount: 1,
+      startRename: jest.fn(),
+      openCleanPanel: jest.fn(),
+      requestDelete: jest.fn(),
+      multiMode: false,
+      setMultiMode: jest.fn(),
+      busy: false,
+      load: jest.fn(),
+      onClose: jest.fn(),
+    };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it("shows correct button count when selection exists", () => {
+      render(<FileToolbar {...toolbarProps} />);
+      expect(screen.getByText("1 selected")).toBeInTheDocument();
+    });
+
+    it("shows multiple selection count", () => {
+      render(<FileToolbar {...toolbarProps} selectedCount={5} />);
+      expect(screen.getByText("5 selected")).toBeInTheDocument();
+    });
+
+    it("disables buttons when toolbarDisabled is true", () => {
+      render(<FileToolbar {...toolbarProps} toolbarDisabled={true} />);
+      const buttons = screen.getAllByRole("button");
+      buttons.forEach((button) => {
+        if (button.getAttribute('aria-label') !== 'Close') {
+          expect(button).toBeDisabled();
+        }
+      });
+    });
+
+    it("disables buttons when busy is true", () => {
+      render(<FileToolbar {...toolbarProps} busy={true} />);
+      const buttons = screen.getAllByRole("button");
+      buttons.forEach((button) => {
+        if (button.getAttribute('aria-label') !== 'Close') {
+          expect(button).toBeDisabled();
+        }
+      });
+    });
+
+    it("disables buttons when renamingName is set", () => {
+      render(<FileToolbar {...toolbarProps} renamingName="test.csv" />);
+      const buttons = screen.getAllByRole("button");
+      const disabledCount = buttons.filter(b => b.disabled).length;
+      expect(disabledCount).toBeGreaterThan(0);
+    });
+
+    it("calls load when refresh button is clicked", () => {
+      render(<FileToolbar {...toolbarProps} />);
+      const refreshBtn = screen.getByLabelText(/Refresh/i);
+      fireEvent.click(refreshBtn);
+      expect(toolbarProps.load).toHaveBeenCalled();
+    });
+
+    it("calls onClose when close button is clicked", () => {
+      render(<FileToolbar {...toolbarProps} />);
+      const closeBtn = screen.getByLabelText(/Close/i);
+      fireEvent.click(closeBtn);
+      expect(toolbarProps.onClose).toHaveBeenCalled();
+    });
+
+    it("shows multi-select toggle", () => {
+      render(<FileToolbar {...toolbarProps} />);
+      expect(screen.getByLabelText("switch")).toBeInTheDocument();
+    });
+
+    it("toggles multi-mode when switch is clicked", () => {
+      render(<FileToolbar {...toolbarProps} />);
+      const switchEl = screen.getByLabelText("switch");
+      fireEvent.click(switchEl);
+      expect(toolbarProps.setMultiMode).toHaveBeenCalledWith(true);
+    });
+
+    it("shows multi-mode as checked when multiMode is true", () => {
+      render(<FileToolbar {...toolbarProps} multiMode={true} />);
+      const switchEl = screen.getByLabelText("switch");
+      expect(switchEl.checked).toBe(true);
+    });
+
+    it("disables multi-mode switch when busy", () => {
+      render(<FileToolbar {...toolbarProps} busy={true} />);
+      const switchEl = screen.getByLabelText("switch");
+      expect(switchEl).toBeDisabled();
+    });
+
+    it("calls doOpenSelected when open button is clicked", () => {
+      render(<FileToolbar {...toolbarProps} />);
+      const openBtn = screen.getByLabelText(/Open/i);
+      fireEvent.click(openBtn);
+      expect(toolbarProps.doOpenSelected).toHaveBeenCalled();
+    });
+
+    it("calls startRename when rename button is clicked", () => {
+      render(<FileToolbar {...toolbarProps} />);
+      const renameBtn = screen.getByLabelText(/Rename/i);
+      fireEvent.click(renameBtn);
+      expect(toolbarProps.startRename).toHaveBeenCalled();
+    });
+
+    it("calls openCleanPanel when clean button is clicked", () => {
+      render(<FileToolbar {...toolbarProps} />);
+      const cleanBtn = screen.getByLabelText(/Clean/i);
+      fireEvent.click(cleanBtn);
+      expect(toolbarProps.openCleanPanel).toHaveBeenCalled();
+    });
+
+    it("calls requestDelete when delete button is clicked", () => {
+      render(<FileToolbar {...toolbarProps} />);
+      const deleteBtn = screen.getByLabelText(/Delete/i);
+      fireEvent.click(deleteBtn);
+      expect(toolbarProps.requestDelete).toHaveBeenCalled();
+    });
+
+    it("hides selection-dependent buttons when hasSelection is false", () => {
+      render(<FileToolbar {...toolbarProps} hasSelection={false} />);
+      expect(screen.queryByText("selected")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Additional DeleteConfirmation tests", () => {
+    const deleteProps = {
+      isOpen: true,
+      fileNames: ["file1.csv", "file2.txt"],
+      onConfirm: jest.fn(),
+      onCancel: jest.fn(),
+    };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it("renders with multiple file names", () => {
+      render(<DeleteConfirmation {...deleteProps} />);
+      expect(screen.getByText(/file1.csv/)).toBeInTheDocument();
+      expect(screen.getByText(/file2.txt/)).toBeInTheDocument();
+    });
+
+    it("renders with single file name", () => {
+      render(<DeleteConfirmation {...deleteProps} fileNames={["single.csv"]} />);
+      expect(screen.getByText(/single.csv/)).toBeInTheDocument();
+    });
+
+    it("calls onConfirm when confirm button is clicked", () => {
+      render(<DeleteConfirmation {...deleteProps} />);
+      const confirmBtn = screen.getByRole("button", { name: /Delete/i });
+      fireEvent.click(confirmBtn);
+      expect(deleteProps.onConfirm).toHaveBeenCalled();
+    });
+
+    it("calls onCancel when cancel button is clicked", () => {
+      render(<DeleteConfirmation {...deleteProps} />);
+      const cancelBtn = screen.getByRole("button", { name: /Cancel/i });
+      fireEvent.click(cancelBtn);
+      expect(deleteProps.onCancel).toHaveBeenCalled();
+    });
+
+    it("does not render when isOpen is false", () => {
+      render(<DeleteConfirmation {...deleteProps} isOpen={false} />);
+      expect(screen.queryByText(/Delete/i)).not.toBeInTheDocument();
+    });
+
+    it("shows appropriate message for multiple files", () => {
+      render(<DeleteConfirmation {...deleteProps} />);
+      expect(screen.getByText(/delete/i)).toBeInTheDocument();
+    });
+  });
+
+  describe("Additional CleanPanel tests", () => {
+    const cleanProps = {
+      isOpen: true,
+      onClose: jest.fn(),
+      onApply: jest.fn(),
+      fileName: "test.csv",
+    };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it("renders when isOpen is true", () => {
+      render(<CleanPanel {...cleanProps} />);
+      expect(screen.getByText(/test.csv/i)).toBeInTheDocument();
+    });
+
+    it("does not render when isOpen is false", () => {
+      render(<CleanPanel {...cleanProps} isOpen={false} />);
+      expect(screen.queryByText(/test.csv/i)).not.toBeInTheDocument();
+    });
+
+    it("calls onClose when close button is clicked", () => {
+      render(<CleanPanel {...cleanProps} />);
+      const closeBtn = screen.getByLabelText(/Close/i);
+      fireEvent.click(closeBtn);
+      expect(cleanProps.onClose).toHaveBeenCalled();
+    });
+
+    it("calls onApply with cleaning options when apply is clicked", () => {
+      render(<CleanPanel {...cleanProps} />);
+      const applyBtn = screen.getByRole("button", { name: /Apply/i });
+      fireEvent.click(applyBtn);
+      expect(cleanProps.onApply).toHaveBeenCalled();
+    });
+
+    it("toggles cleaning options", () => {
+      render(<CleanPanel {...cleanProps} />);
+      const switches = screen.getAllByLabelText("switch");
+      expect(switches.length).toBeGreaterThan(0);
+      fireEvent.click(switches[0]);
+      expect(switches[0].checked).toBe(true);
+    });
+
+    it("shows date format selector when standardize dates is enabled", () => {
+      render(<CleanPanel {...cleanProps} />);
+      const switches = screen.getAllByLabelText("switch");
+      const dateSwitch = switches.find((s) => 
+        s.parentElement?.textContent?.includes("Standardize")
+      );
+      if (dateSwitch) {
+        fireEvent.click(dateSwitch);
+      }
+      expect(screen.getByRole("button", { name: /Apply/i })).toBeInTheDocument();
+    });
+  });
+
+  describe("Additional FileTable tests", () => {
+    const tableProps = {
+      files: [
+        { id: '1', name: 'file1.csv', size: 1024, modified: new Date('2024-01-01'), nodeId: 'node1' },
+        { id: '2', name: 'file2.txt', size: 2048, modified: new Date('2024-01-02'), nodeId: 'node1' },
+      ],
+      selectedFiles: [],
+      onFileSelect: jest.fn(),
+      onFileDoubleClick: jest.fn(),
+      sortBy: 'name',
+      sortOrder: 'asc',
+    };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it("renders all files", () => {
+      render(<FileTable {...tableProps} />);
+      expect(screen.getByText("file1.csv")).toBeInTheDocument();
+      expect(screen.getByText("file2.txt")).toBeInTheDocument();
+    });
+
+    it("calls onFileSelect when file is clicked", () => {
+      render(<FileTable {...tableProps} />);
+      const file = screen.getByText("file1.csv").closest("tr");
+      fireEvent.click(file);
+      expect(tableProps.onFileSelect).toHaveBeenCalled();
+    });
+
+    it("calls onFileDoubleClick when file is double-clicked", () => {
+      render(<FileTable {...tableProps} />);
+      const file = screen.getByText("file1.csv").closest("tr");
+      fireEvent.doubleClick(file);
+      expect(tableProps.onFileDoubleClick).toHaveBeenCalled();
+    });
+
+    it("highlights selected files", () => {
+      render(<FileTable {...tableProps} selectedFiles={['1']} />);
+      const file = screen.getByText("file1.csv").closest("tr");
+      expect(file).toHaveClass(/selected/);
+    });
+
+    it("sorts files by name ascending", () => {
+      render(<FileTable {...tableProps} sortBy="name" sortOrder="asc" />);
+      const files = screen.getAllByRole("row").slice(1);
+      expect(files[0]).toHaveTextContent("file1.csv");
+    });
+
+    it("sorts files by name descending", () => {
+      render(<FileTable {...tableProps} sortBy="name" sortOrder="desc" />);
+      expect(screen.getByText("file2.txt")).toBeInTheDocument();
+    });
+
+    it("sorts files by size", () => {
+      render(<FileTable {...tableProps} sortBy="size" sortOrder="asc" />);
+      expect(screen.getByText("file1.csv")).toBeInTheDocument();
+    });
+
+    it("sorts files by modified date", () => {
+      render(<FileTable {...tableProps} sortBy="modified" sortOrder="asc" />);
+      expect(screen.getByText("file1.csv")).toBeInTheDocument();
+    });
+
+    it("handles empty file list", () => {
+      render(<FileTable {...tableProps} files={[]} />);
+      expect(screen.queryByText("file1.csv")).not.toBeInTheDocument();
+    });
+
+    it("handles files without size", () => {
+      const filesWithoutSize = [
+        { id: '1', name: 'file1.csv', modified: new Date('2024-01-01'), nodeId: 'node1' },
+      ];
+      render(<FileTable {...tableProps} files={filesWithoutSize} />);
+      expect(screen.getByText("file1.csv")).toBeInTheDocument();
+    });
+
+    it("handles files without modified date", () => {
+      const filesWithoutDate = [
+        { id: '1', name: 'file1.csv', size: 1024, nodeId: 'node1' },
+      ];
+      render(<FileTable {...tableProps} files={filesWithoutDate} />);
+      expect(screen.getByText("file1.csv")).toBeInTheDocument();
+    });
+
+    it("handles multiple file selections", () => {
+      render(<FileTable {...tableProps} selectedFiles={['1', '2']} />);
+      const file1 = screen.getByText("file1.csv").closest("tr");
+      const file2 = screen.getByText("file2.txt").closest("tr");
+      expect(file1).toHaveClass(/selected/);
+      expect(file2).toHaveClass(/selected/);
+    });
+
+    it("groups files by nodeId", () => {
+      const multiNodeFiles = [
+        { id: '1', name: 'file1.csv', size: 1024, modified: new Date(), nodeId: 'node1' },
+        { id: '2', name: 'file2.csv', size: 2048, modified: new Date(), nodeId: 'node2' },
+      ];
+      render(<FileTable {...tableProps} files={multiNodeFiles} />);
+      expect(screen.getByText("file1.csv")).toBeInTheDocument();
+      expect(screen.getByText("file2.csv")).toBeInTheDocument();
+    });
+  });
 });

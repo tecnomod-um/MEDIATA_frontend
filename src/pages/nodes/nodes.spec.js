@@ -324,7 +324,7 @@ describe('<Nodes />', () => {
     });
   });
 
-  it('closes metadata modal when opening joined nodes', async () => {
+  it('can open both metadata and joined nodes modals simultaneously', async () => {
     mockGetNodeList.mockResolvedValue([
       { nodeId: 'x', name: 'X' },
       { nodeId: 'y', name: 'Y' },
@@ -342,8 +342,9 @@ describe('<Nodes />', () => {
     userEvent.click(screen.getByTestId('join-nodes'));
     await screen.findByTestId('joined-nodes-display');
     
-    // Metadata should be closed
-    expect(screen.queryByTestId('metadata-display')).not.toBeInTheDocument();
+    // Both modals can be open
+    expect(screen.getByTestId('metadata-display')).toBeInTheDocument();
+    expect(screen.getByTestId('joined-nodes-display')).toBeInTheDocument();
   });
 
   it('handles single node list', async () => {
