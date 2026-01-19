@@ -44,11 +44,11 @@ jest.mock("../../Common/AutoCompleteInput/autoCompleteInput.js", () => (props) =
   />
 ));
 
-jest.mock("@mui/icons-material/Add", () => () => <span />);
-jest.mock("@mui/icons-material/Save", () => () => <span />);
-jest.mock("@mui/icons-material/Close", () => () => <span />);
-jest.mock("@mui/icons-material/InfoOutlined", () => () => <span />);
-jest.mock("@mui/icons-material/Description", () => () => <span />);
+jest.mock("@mui/icons-material/Add", () => () => <span data-testid="AddIcon" />);
+jest.mock("@mui/icons-material/Save", () => () => <span data-testid="SaveIcon" />);
+jest.mock("@mui/icons-material/Close", () => () => <span data-testid="CloseIcon" />);
+jest.mock("@mui/icons-material/InfoOutlined", () => () => <span data-testid="InfoOutlinedIcon" />);
+jest.mock("@mui/icons-material/Description", () => () => <span data-testid="DescriptionIcon" />);
 
 const makeDataTransfer = (payloadObj) => ({
   getData: jest.fn((type) => (type === "column" ? JSON.stringify(payloadObj) : "")),

@@ -80,7 +80,10 @@ jest.mock("../../context/nodeContext", () => ({
 
 jest.mock("react-router-dom", () => {
   const real = jest.requireActual("react-router-dom");
-  return { ...real, useLocation: () => ({ state: undefined }) };
+  return { 
+    ...real, 
+    useLocation: jest.fn(() => ({ state: undefined }))
+  };
 });
 
 const DATASETS_FIXTURE = ["file1.csv", "file2.csv"];
@@ -100,6 +103,8 @@ const PROCESSED_ITEM = {
 beforeEach(() => {
   jest.clearAllMocks();
   mockFileExplorerProps = undefined;
+  const { useLocation } = require("react-router-dom");
+  useLocation.mockReturnValue({ state: undefined });
 });
 
 test("initially fetches datasets and renders <FileExplorer>", async () => {

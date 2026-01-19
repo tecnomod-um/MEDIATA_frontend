@@ -570,8 +570,9 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
                       </>
                     ) : (
                       <div>
-                        <label>Value</label>
+                        <label htmlFor="continuous-value">Value</label>
                         <input
+                          id="continuous-value"
                           type="number"
                           className={FilterModalStyles.input}
                           onChange={(e) => setMinValue(e.target.value)}

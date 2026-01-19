@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import FilterModal from './filterModal';
 
@@ -30,37 +30,44 @@ jest.mock('react-datepicker', () => props => (
   />
 ));
 
-jest.mock('react-select', () => props => (
-  <select
-    data-testid={`mock-select-${props.inputId || 'default'}`}
-    id={props.inputId}
-    multiple={!!props.isMulti}
-    value={
-      props.isMulti
-        ? props.value?.map(v => v.value) || []
-        : props.value?.value || ''
-    }
-    onChange={e => {
-      if (props.isMulti) {
-        const vals = Array.from(e.target.selectedOptions).map(o => ({
-          value: o.value,
-          label: o.value,
-        }));
-        props.onChange(vals);
+jest.mock('react-select', () => props => {
+  const handleChange = (e) => {
+    if (props.isMulti) {
+      const selectedValues = Array.from(e.target.selectedOptions || e.target.options)
+        .filter(o => o.selected)
+        .map(o => ({ value: o.value, label: o.value }));
+      props.onChange(selectedValues.filter(v => v.value !== ''));
+    } else {
+      if (e.target.value === '') {
+        props.onChange(null);
       } else {
         props.onChange({ value: e.target.value, label: e.target.value });
       }
-    }}
-    disabled={props.isDisabled}
-  >
-    <option value="">--</option>
-    {props.options.map(o => (
-      <option key={o.value} value={o.value}>
-        {o.label}
-      </option>
-    ))}
-  </select>
-));
+    }
+  };
+
+  return (
+    <select
+      data-testid={`mock-select-${props.inputId || 'default'}`}
+      id={props.inputId}
+      multiple={!!props.isMulti}
+      value={
+        props.isMulti
+          ? props.value?.map(v => v.value) || []
+          : props.value?.value || ''
+      }
+      onChange={handleChange}
+      disabled={props.isDisabled}
+    >
+      <option value="">--</option>
+      {props.options.map(o => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </select>
+  );
+});
 
 const mockFilterMultipleFiles = jest.fn(async args => [
   { fileName: 'file.csv', filtered: true },
@@ -129,7 +136,7 @@ describe('<FilterModal /> comprehensive coverage', () => {
 
     it('initializes filter conditions for all features', () => {
       render(<FilterModal {...commonProps} />);
-      expect(screen.getByLabelText(/Select feature to filter/i)).toBeInTheDocument();
+      expect(screen.getByTestId('mock-select-feature-select')).toBeInTheDocument();
     });
 
     it('shows close button', () => {
@@ -169,42 +176,61 @@ describe('<FilterModal /> comprehensive coverage', () => {
       expect(catSelect).toBeInTheDocument();
     });
 
-    it('filters out already used categories', () => {
+    it('filters out already used categories', async () => {
       render(<FilterModal {...commonProps} />);
       const select = screen.getByTestId('mock-select-feature-select');
       fireEvent.change(select, { target: { value: 'Color (file.csv)' } });
       
+      await waitFor(() => {
+        const catSelects = screen.getAllByTestId(/mock-select/);
+        expect(catSelects.find(s => s.multiple)).toBeInTheDocument();
+      });
+      
       const catSelects = screen.getAllByTestId(/mock-select/);
       const catSelect = catSelects.find(s => s.multiple);
       
-      const redOpt = screen.getByRole('option', { name: 'red' });
-      redOpt.selected = true;
+      // For multi-select, we need to set selectedOptions manually  
+      const redOption = within(catSelect).getByRole('option', { name: 'red' });
+      redOption.selected = true;
+      
+      // Trigger change event
       fireEvent.change(catSelect);
       
       fireEvent.click(screen.getByRole('button', { name: /add filter/i }));
       
-      // After adding red, it shouldn't appear in options
-      expect(screen.getByText('red')).toBeInTheDocument();
+      // After adding red, it should appear as a filter criterion
+      await waitFor(() => {
+        expect(screen.getByText('red')).toBeInTheDocument();
+      });
     });
 
-    it('adds multiple categorical values', () => {
+    it('adds multiple categorical values', async () => {
       render(<FilterModal {...commonProps} />);
       const select = screen.getByTestId('mock-select-feature-select');
       fireEvent.change(select, { target: { value: 'Color (file.csv)' } });
       
+      await waitFor(() => {
+        const catSelects = screen.getAllByTestId(/mock-select/);
+        expect(catSelects.find(s => s.multiple)).toBeInTheDocument();
+      });
+      
       const catSelects = screen.getAllByTestId(/mock-select/);
       const catSelect = catSelects.find(s => s.multiple);
       
-      const redOpt = screen.getByRole('option', { name: 'red' });
-      const blueOpt = screen.getByRole('option', { name: 'blue' });
-      redOpt.selected = true;
-      blueOpt.selected = true;
+      // Select both 'red' and 'blue'
+      const redOption = within(catSelect).getByRole('option', { name: 'red' });
+      const blueOption = within(catSelect).getByRole('option', { name: 'blue' });
+      redOption.selected = true;
+      blueOption.selected = true;
+      
       fireEvent.change(catSelect);
       
       fireEvent.click(screen.getByRole('button', { name: /add filter/i }));
       
-      expect(screen.getByText('red')).toBeInTheDocument();
-      expect(screen.getByText('blue')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('red')).toBeInTheDocument();
+        expect(screen.getByText('blue')).toBeInTheDocument();
+      });
     });
 
     it('disables Add Filter when no category selected', () => {
@@ -216,20 +242,29 @@ describe('<FilterModal /> comprehensive coverage', () => {
       expect(addBtn).toBeDisabled();
     });
 
-    it('enables Add Filter when category selected', () => {
+    it('enables Add Filter when category selected', async () => {
       render(<FilterModal {...commonProps} />);
       const select = screen.getByTestId('mock-select-feature-select');
       fireEvent.change(select, { target: { value: 'Color (file.csv)' } });
       
+      await waitFor(() => {
+        const catSelects = screen.getAllByTestId(/mock-select/);
+        expect(catSelects.find(s => s.multiple)).toBeInTheDocument();
+      });
+      
       const catSelects = screen.getAllByTestId(/mock-select/);
       const catSelect = catSelects.find(s => s.multiple);
       
-      const redOpt = screen.getByRole('option', { name: 'red' });
-      redOpt.selected = true;
+      // Select 'red'
+      const redOption = within(catSelect).getByRole('option', { name: 'red' });
+      redOption.selected = true;
+      
       fireEvent.change(catSelect);
       
-      const addBtn = screen.getByRole('button', { name: /add filter/i });
-      expect(addBtn).toBeEnabled();
+      await waitFor(() => {
+        const addBtn = screen.getByRole('button', { name: /add filter/i });
+        expect(addBtn).toBeEnabled();
+      });
     });
   });
 
