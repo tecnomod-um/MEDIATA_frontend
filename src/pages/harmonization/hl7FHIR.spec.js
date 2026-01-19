@@ -66,4 +66,124 @@ describe('<HL7FHIR />', () => {
     expect(clusterProps.clusters).toHaveLength(1);
     expect(clusterProps.clusters[0].name).toBe('Cluster 1');
   });
+
+  it('parses CSV with integer type correctly', async () => {
+    render(<HL7FHIR />);
+    await act(async () => {
+      pickerProps.onFileUpload(new File(['dummy'], 'test.csv'));
+    });
+    await waitFor(() => {
+      expect(listProps.elements[0].type).toBe('integer');
+    });
+  });
+
+  it('selects first element after CSV upload', async () => {
+    render(<HL7FHIR />);
+    await act(async () => {
+      pickerProps.onFileUpload(new File(['dummy'], 'test.csv'));
+    });
+    await waitFor(() => {
+      expect(listProps.selectedElement).toBeDefined();
+      expect(listProps.selectedElement.id).toBe(0);
+    });
+  });
+
+  it('handles drag start and end', async () => {
+    render(<HL7FHIR />);
+    await act(async () => {
+      pickerProps.onFileUpload(new File(['dummy'], 'test.csv'));
+    });
+    await waitFor(() => {
+      expect(listProps.onDragStart).toBeDefined();
+      expect(listProps.onDragEnd).toBeDefined();
+    });
+
+    act(() => {
+      listProps.onDragStart();
+    });
+    
+    act(() => {
+      listProps.onDragEnd();
+    });
+  });
+
+  it('handles cluster creation error', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation();
+    mockCreateInitial.mockRejectedValueOnce(new Error('API Error'));
+    
+    render(<HL7FHIR />);
+    await act(async () => {
+      pickerProps.onFileUpload(new File(['dummy'], 'test.csv'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('create-btn')).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      screen.getByTestId('create-btn').click();
+    });
+
+    await waitFor(() => {
+      expect(consoleError).toHaveBeenCalledWith('Cluster fetch error', expect.any(Error));
+    });
+    
+    consoleError.mockRestore();
+  });
+
+  it('transforms backend response into clusters array', async () => {
+    mockCreateInitial.mockResolvedValueOnce({
+      'Cluster A': { attr1: 'desc1', attr2: 'desc2' },
+      'Cluster B': { attr3: 'desc3' }
+    });
+    
+    render(<HL7FHIR />);
+    await act(async () => {
+      pickerProps.onFileUpload(new File(['dummy'], 'test.csv'));
+    });
+
+    await act(async () => {
+      screen.getByTestId('create-btn').click();
+    });
+
+    await waitFor(() => {
+      expect(clusterProps.clusters).toHaveLength(2);
+      expect(clusterProps.clusters[0].name).toBe('Cluster A');
+      expect(clusterProps.clusters[0].elements).toHaveLength(2);
+      expect(clusterProps.clusters[1].name).toBe('Cluster B');
+    });
+  });
+
+  it('initializes form values after upload', async () => {
+    render(<HL7FHIR />);
+    await act(async () => {
+      pickerProps.onFileUpload(new File(['dummy'], 'test.csv'));
+    });
+    await waitFor(() => {
+      expect(listProps.elements[0].type).toBeDefined();
+    });
+  });
+
+  it('shows upload picker initially', () => {
+    render(<HL7FHIR />);
+    expect(screen.getByTestId('picker')).toBeInTheDocument();
+  });
+
+  it('handles CSV data parsing', async () => {
+    render(<HL7FHIR />);
+    await act(async () => {
+      pickerProps.onFileUpload(new File(['dummy'], 'test.csv'));
+    });
+    await waitFor(() => {
+      expect(listProps.elements.length).toBeGreaterThan(0);
+    });
+  });
+
+  it('shows list panel after CSV upload', async () => {
+    render(<HL7FHIR />);
+    await act(async () => {
+      pickerProps.onFileUpload(new File(['dummy'], 'test.csv'));
+    });
+    expect(await screen.findByTestId('list')).toBeInTheDocument();
+  });
 });

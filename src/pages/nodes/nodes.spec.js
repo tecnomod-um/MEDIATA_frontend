@@ -244,4 +244,118 @@ describe('<Nodes />', () => {
     expect(await screen.findByTestId('schema-tray')).toBeInTheDocument();
     expect(screen.getByTestId('toast-container')).toBeInTheDocument();
   });
+
+  it('handles metadata loading error gracefully', async () => {
+    mockGetNodeList.mockResolvedValue([{ nodeId: 'x', name: 'X' }]);
+    mockGetNodeMetadata.mockRejectedValueOnce(new Error('Metadata error'));
+
+    render(<Nodes />);
+    await screen.findByTestId('node-scene');
+    userEvent.click(screen.getByTestId('click-node'));
+    
+    await waitFor(() => {
+      expect(screen.queryByTestId('metadata-display')).toBeInTheDocument();
+    });
+  });
+
+  it('handles node auth error gracefully', async () => {
+    mockGetNodeList.mockResolvedValue([{ nodeId: 'x', name: 'X' }]);
+    mockGetNodeMetadata.mockResolvedValue({ metadata: {} });
+    mockGetNodeInfo.mockResolvedValue({
+      token: 'T',
+      nodeInfo: { serviceUrl: 'URL', id: 'x' },
+    });
+    mockNodeAuth.mockRejectedValueOnce(new Error('Auth failed'));
+
+    render(<Nodes />);
+    await screen.findByTestId('node-scene');
+    userEvent.click(screen.getByTestId('click-node'));
+    await screen.findByTestId('metadata-display');
+    userEvent.click(screen.getByTestId('access-node'));
+
+    // Should handle error without crashing
+    await waitFor(() => {
+      expect(mockNodeAuth).toHaveBeenCalled();
+    });
+  });
+
+  it('handles joined nodes with partial auth failure', async () => {
+    mockGetNodeList.mockResolvedValue([
+      { nodeId: 'x', name: 'X' },
+      { nodeId: 'y', name: 'Y' },
+    ]);
+    mockGetNodeInfo.mockImplementation((nodeId) =>
+      nodeId === 'x'
+        ? Promise.resolve({ token: 'T', nodeInfo: { serviceUrl: 'URL', id: 'x' } })
+        : Promise.reject(new Error('Failed for y'))
+    );
+
+    render(<Nodes />);
+    await screen.findByTestId('node-scene');
+    userEvent.click(screen.getByTestId('join-nodes'));
+    await screen.findByTestId('joined-nodes-display');
+    userEvent.click(screen.getByTestId('access-joined'));
+
+    // Should handle partial failure
+    await waitFor(() => {
+      expect(mockGetNodeInfo).toHaveBeenCalled();
+    });
+  });
+
+  it('shows loading state while fetching metadata', async () => {
+    mockGetNodeList.mockResolvedValue([{ nodeId: 'x', name: 'X' }]);
+    mockGetNodeMetadata.mockImplementation(() => 
+      new Promise(resolve => setTimeout(() => resolve({ metadata: 'DATA' }), 100))
+    );
+
+    render(<Nodes />);
+    await screen.findByTestId('node-scene');
+    userEvent.click(screen.getByTestId('click-node'));
+    
+    const metadataDisplay = await screen.findByTestId('metadata-display');
+    expect(metadataDisplay).toHaveAttribute('data-loading', 'true');
+
+    await waitFor(() => {
+      expect(metadataDisplay).toHaveAttribute('data-loading', 'false');
+    });
+  });
+
+  it('closes metadata modal when opening joined nodes', async () => {
+    mockGetNodeList.mockResolvedValue([
+      { nodeId: 'x', name: 'X' },
+      { nodeId: 'y', name: 'Y' },
+    ]);
+    mockGetNodeMetadata.mockResolvedValue({ metadata: 'DATA' });
+
+    render(<Nodes />);
+    await screen.findByTestId('node-scene');
+    
+    // Open metadata
+    userEvent.click(screen.getByTestId('click-node'));
+    await screen.findByTestId('metadata-display');
+    
+    // Open joined nodes
+    userEvent.click(screen.getByTestId('join-nodes'));
+    await screen.findByTestId('joined-nodes-display');
+    
+    // Metadata should be closed
+    expect(screen.queryByTestId('metadata-display')).not.toBeInTheDocument();
+  });
+
+  it('handles single node list', async () => {
+    mockGetNodeList.mockResolvedValueOnce([{ nodeId: 'single', name: 'Single' }]);
+
+    render(<Nodes />);
+    await screen.findByTestId('node-scene');
+    expect(toast.info).toHaveBeenCalled();
+  });
+
+  it('handles very long node names', async () => {
+    mockGetNodeList.mockResolvedValueOnce([
+      { nodeId: 'a', name: 'A'.repeat(100) },
+    ]);
+
+    render(<Nodes />);
+    await screen.findByTestId('node-scene');
+  });
 });
