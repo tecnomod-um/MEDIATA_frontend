@@ -94,7 +94,7 @@ describe("FileExplorer sub-components", () => {
     it("renders all toolbar buttons", () => {
       render(<FileToolbar {...defaultProps} />);
       expect(screen.getByRole("button", { name: /^Open$/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /^Rename$/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Rename file/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /Data cleaning/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /^Delete$/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /Refresh/i })).toBeInTheDocument();
@@ -108,7 +108,7 @@ describe("FileExplorer sub-components", () => {
 
     it("disables Rename button when selection count is not 1", () => {
       render(<FileToolbar {...defaultProps} selectedCount={2} />);
-      expect(screen.getByRole("button", { name: /^Rename$/i })).toBeDisabled();
+      expect(screen.getByRole("button", { name: /Rename file/i })).toBeDisabled();
     });
 
     it("shows multi-select mode pill when active", () => {

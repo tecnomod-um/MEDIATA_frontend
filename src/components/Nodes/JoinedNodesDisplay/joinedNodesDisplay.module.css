@@ -114,18 +114,24 @@
   min-width: 120px;
   padding: 6px 12px;
   background-color: var(--background-color-tertiary);
+  color: var(--text-color-primary);
   border: 1px solid var(--border-color);
   border-radius: 4px;
   cursor: pointer;
   font-size: var(--font-size-base);
   height: fit-content;
+  transition: background-color 0.2s ease;
+}
+
+.toggleButton:hover {
+  background-color: var(--background-color-hover);
 }
 
 .smallSpinner {
   width: 14px;
   height: 14px;
-  border: 2px solid #999;
-  border-top: 2px solid #555;
+  border: 2px solid var(--border-color-secondary);
+  border-top: 2px solid var(--text-color-secondary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -141,8 +147,8 @@
 .spinner {
   width: 24px;
   height: 24px;
-  border: 3px solid #ddd;
-  border-top: 3px solid #666;
+  border: 3px solid var(--border-color-secondary);
+  border-top: 3px solid var(--text-color-secondary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin-bottom: 8px;
@@ -164,9 +170,14 @@
   margin: 0.5rem 0;
 }
 
+.loadingText {
+  color: var(--text-color-secondary);
+  margin: 0;
+}
+
 .footer {
   padding: 15px 20px;
-  border-top: 1px solid #ddd;
+  border-top: 1px solid var(--border-color-secondary);
   text-align: center;
 }
 
