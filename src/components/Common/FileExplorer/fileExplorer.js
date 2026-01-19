@@ -40,11 +40,23 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
   const [filesLoaded, setFilesLoaded] = useState(false);
   const [listHeight, setListHeight] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+
+  const [numericColumnsText, setNumericColumnsText] = useState("");
+
   const heightRAF = useRef(null);
   const autoHeightTimer = useRef(null);
   const filesLoadedTimer = useRef(null);
   const modalContainerRef = useRef(null);
   const toolbarRef = useRef(null);
+
+  const cleanMeasureRef = useRef(null);
+  const [cleanOpenHeight, setCleanOpenHeight] = useState(0);
+
+  const measureCleanHeight = useCallback(() => {
+    const el = cleanMeasureRef.current;
+    if (!el) return 0;
+    return el.scrollHeight;
+  }, []);
 
   const getMaxListAvail = useCallback(() => {
     const modal = modalContainerRef.current;
@@ -144,6 +156,17 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
   }, [files]);
 
   const hasSelection = selected.size > 0;
+
+  useEffect(() => {
+    if (!showCleanPanel) setCleanOpenHeight(0);
+  }, [showCleanPanel]);
+  
+  useEffect(() => {
+    if (!hasSelection) {
+      setShowCleanPanel(false);
+      setCleanOpenHeight(0);
+    }
+  }, [hasSelection]);  
 
   const fileKey = (f) => `${f?.nodeId || "default"}::${f?.name || ""}`;
 
@@ -589,7 +612,6 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
     }
   };
 
-
   const doProcessSelected = async () => {
     if (busy) return;
     if (selected.size === 0) return;
@@ -622,10 +644,10 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
     toast.error("No handler: pass onFilesSelected or onFilesOpened.");
   };
 
-  const openCleanPanel = () => {
+  const toggleCleanPanel = () => {
     if (busy) return;
     if (!hasSelection) return;
-    setShowCleanPanel(true);
+    setShowCleanPanel((v) => !v);
   };
 
   const applyClean = async () => {
@@ -648,7 +670,26 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
         }
 
         setProcessingFiles((prev) => new Set([...prev, key]));
-        await cleanExplorerFile(category, file.name);
+        const numericColumns = String(numericColumnsText || "")
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        if (standardizeNumeric && numericColumns.length === 0) {
+          toast.error("Please specify numeric columns (comma-separated).");
+          setBusy(false);
+          return;
+        }
+        const cleaningOptions = {
+          removeDuplicates,
+          removeEmptyRows,
+          standardizeDates,
+          dateOutputFormat: selectedDateFormat,
+          standardizeNumeric,
+          numericColumns,
+          numericMode,
+        };
+
+        await cleanExplorerFile(category, file.name, cleaningOptions);
 
         setProcessingFiles((prev) => {
           const next = new Set(prev);
@@ -666,6 +707,10 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
       setBusy(false);
     }
   };
+
+  useEffect(() => {
+    if (!hasSelection) setShowCleanPanel(false);
+  }, [hasSelection]);
 
   const setSingle = (key, idx) => {
     setSelected(new Set([key]));
@@ -836,16 +881,26 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
               renamingName={renamingKey ? (findFileByKey(renamingKey)?.name || "") : null}
               selectedCount={selected.size}
               startRename={startRename}
-              openCleanPanel={openCleanPanel}
+              openCleanPanel={toggleCleanPanel}
               requestDelete={requestDelete}
               multiMode={multiMode}
               setMultiMode={setMultiMode}
               busy={busy}
               load={() => load(true)}
               onClose={onClose}
-            /></div>
-
+            />
+          </div>
           <div className={FileExplorerStyles.contentShell}>
+            <div
+              className={FileExplorerStyles.cleanSpace}
+              style={{
+                height: cleanOpenHeight,
+                transition: "height 260ms ease",
+                overflow: "hidden",
+                flex: "0 0 auto",
+              }}
+              aria-hidden="true"
+            />
             <CSSTransition in={filesLoaded} timeout={260} unmountOnExit classNames="">
               <div
                 ref={listWrapRef}
@@ -889,7 +944,6 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
                 )}
               </div>
             </CSSTransition>
-
             <CSSTransition
               in={showCleanPanel}
               timeout={260}
@@ -900,27 +954,45 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
                 exitActive: FileExplorerStyles.cleanExitActive,
               }}
               unmountOnExit
+              onEnter={() => {
+                requestAnimationFrame(() => {
+                  const h = measureCleanHeight();
+                  setCleanOpenHeight(h);
+                  animateWrapBy(h);
+                });
+              }}
+              onExit={() => {
+                const h = cleanOpenHeight;
+                setCleanOpenHeight(0);
+                animateWrapBy(-h);
+              }}
             >
-              <CleanPanel
-                show={showCleanPanel}
-                onClose={() => setShowCleanPanel(false)}
-                busy={busy}
-                removeDuplicates={removeDuplicates}
-                setRemoveDuplicates={setRemoveDuplicates}
-                removeEmptyRows={removeEmptyRows}
-                setRemoveEmptyRows={setRemoveEmptyRows}
-                standardizeDates={standardizeDates}
-                setStandardizeDates={setStandardizeDates}
-                selectedDateFormat={selectedDateFormat}
-                setSelectedDateFormat={setSelectedDateFormat}
-                dateFormats={dateFormats}
-                standardizeNumeric={standardizeNumeric}
-                setStandardizeNumeric={setStandardizeNumeric}
-                numericMode={numericMode}
-                setNumericMode={setNumericMode}
-                selectedCount={selected.size}
-                applyClean={applyClean}
-              />
+              <div className={FileExplorerStyles.cleanOverlayAbs}>
+                <div ref={cleanMeasureRef} className={FileExplorerStyles.cleanMeasure}>
+                  <CleanPanel
+                    show={showCleanPanel}
+                    onClose={() => setShowCleanPanel(false)}
+                    busy={busy}
+                    removeDuplicates={removeDuplicates}
+                    setRemoveDuplicates={setRemoveDuplicates}
+                    removeEmptyRows={removeEmptyRows}
+                    setRemoveEmptyRows={setRemoveEmptyRows}
+                    standardizeDates={standardizeDates}
+                    setStandardizeDates={setStandardizeDates}
+                    selectedDateFormat={selectedDateFormat}
+                    setSelectedDateFormat={setSelectedDateFormat}
+                    dateFormats={dateFormats}
+                    standardizeNumeric={standardizeNumeric}
+                    setStandardizeNumeric={setStandardizeNumeric}
+                    numericMode={numericMode}
+                    setNumericMode={setNumericMode}
+                    numericColumnsText={numericColumnsText}
+                    setNumericColumnsText={setNumericColumnsText}
+                    selectedCount={selected.size}
+                    applyClean={applyClean}
+                  />
+                </div>
+              </div>
             </CSSTransition>
           </div>
           <CSSTransition

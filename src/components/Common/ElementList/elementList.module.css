@@ -71,7 +71,7 @@
   border-radius: 4px 0 0 4px;
   text-align: left;
   transition: background-color 0.3s ease;
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
   cursor: pointer;
 }
 

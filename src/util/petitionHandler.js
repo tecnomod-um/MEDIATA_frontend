@@ -474,16 +474,11 @@ export const deleteExplorerFile = async (category, name) => {
   }
 };
 
-export const cleanExplorerFile = async (category, name) => {
-  try {
-    const response = await nodeAxiosInstance.post(
-      `/taniwha/api/files/clean`,
-      null,
-      { params: { category, name } }
-    );
-    return response.data;
-  } catch (error) {
-    console.error("Error calling clean placeholder:", error);
-    throw error;
-  }
+export const cleanExplorerFile = async (category, name, cleaningOptions) => {
+  const response = await nodeAxiosInstance.post(
+    `/taniwha/api/files/clean`,
+    cleaningOptions ?? null,
+    { params: { category, name } }
+  );
+  return response.data;
 };

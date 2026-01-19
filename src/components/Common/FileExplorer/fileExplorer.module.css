@@ -140,6 +140,7 @@
 .contentShell {
   position: relative;
   display: flex;
+  flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
   background: var(--background-color-card);
@@ -298,12 +299,6 @@
   border-color: rgba(75, 85, 99, 0.22);
 }
 
-.iconFile {
-  color: #4b5563;
-  background: rgba(75, 85, 99, 0.08);
-  border-color: rgba(75, 85, 99, 0.22);
-}
-
 .renameInline {
   width: min(520px, 100%);
   height: 30px;
@@ -328,238 +323,24 @@
   font-weight: 800;
 }
 
-.cleanPanel {
-  position: absolute;
-  top: 0;
-  right: 0;
-  height: 100%;
-  width: min(380px, 92vw);
-  background: var(--background-color-card);
-  border-left: 1px solid var(--background-color-1);
-  z-index: 7;
-
-  display: flex;
-  flex-direction: column;
-}
-
-.cleanOverlay {
-  position: absolute;
-  inset: 0;
-  z-index: 6;
-  background: transparent;
-}
-
-.cleanCloseIcon {
-  position: absolute !important;
-  top: 8px;
-  right: 8px;
-
-  width: 34px;
-  height: 34px;
-  border-radius: 10px !important;
-
-  border: 1px solid var(--background-color-1) !important;
-  background: var(--background-color-card) !important;
-  color: #222 !important;
-}
-
-.cleanCloseIcon:hover:not(:disabled) {
-  background: #f2f4f6 !important;
-}
-
-.cleanHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-
-  padding: 10px 12px;
-  background: #f7f9fb;
-  border-bottom: 1px solid var(--background-color-1);
-}
-
-.cleanHeaderLeft {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.cleanTitle {
-  font-weight: 1000;
-  color: var(--background-nav-and-headers-background-color);
-  line-height: 1.1;
-}
-
-.cleanSubtitle {
-  font-size: var(--font-size-sm);
-  color: var(--text-color-tertiary);
-  font-weight: 800;
-}
-
-.cleanClose {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-
-  border: 1px solid var(--background-color-1);
-  background: var(--background-color-card);
-  cursor: pointer;
-  font-weight: 1000;
-  font-size: var(--font-size-md);
-  line-height: 1;
-}
-
-.cleanBody {
-  padding: 46px 12px 12px 12px;
-  overflow: auto;
-  flex: 1 1 auto;
-}
-
-.cleanOption {
-  display: grid;
-  grid-template-columns: 48px 1fr;
-  gap: 10px;
-  align-items: center;
-
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.cleanOptionText {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.cleanLabel {
-  font-weight: 950;
-  color: #2f2f2f;
-}
-
-.cleanDesc {
-  font-size: var(--font-size-sm);
-  color: var(--text-color-tertiary);
-  line-height: 1.2;
-}
-
-.cleanOptionStack {
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.cleanInlineRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-left: 48px;
-  margin-top: 8px;
-}
-
-.cleanInlineLabel {
-  font-size: var(--font-size-sm);
-  font-weight: 900;
-  color: var(--text-color-secondary);
-}
-
-.select {
-  height: 32px;
-  border-radius: 8px;
-  border: 1px solid var(--background-color-1);
-  padding: 0 10px;
-  font-weight: 850;
-  background: var(--background-color-card);
-}
-
-.cleanNote {
-  margin-top: 10px;
-  font-size: var(--font-size-sm);
-  color: var(--text-color-tertiary);
-  line-height: 1.25;
-}
-
-.cleanFooter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-
-  padding: 10px 12px;
-  border-top: 1px solid var(--background-color-1);
-  background: var(--background-color-card);
-}
-
-.cleanFooterLeft {
-  font-size: var(--font-size-sm);
-  color: var(--text-color-secondary);
-  font-weight: 850;
-}
-
-.cleanFooterRight {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.cleanApply {
-  height: 34px;
-  padding: 0 12px;
-  border-radius: 8px;
-  border: none;
-
-  background-image: var(--button-gradient);
-  background-size: 300% 100%;
-  color: var(--text-color-on-darkbg);
-  font-weight: 950;
-  cursor: pointer;
-
-  box-shadow: var(--button-color-shadow);
-  transition: background-position 0.2s ease, transform 0.06s ease;
-}
-
-.cleanApply:hover:not(:disabled) {
-  background-position: 100% 0;
-}
-
-.cleanApply:active:not(:disabled) {
-  transform: translateY(1px);
-}
-
-.cleanApply:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.cleanCancel {
-  height: 34px;
-  padding: 0 12px;
-  border-radius: 8px;
-  border: 1px solid var(--background-color-1);
-  background: var(--background-color-card);
-  font-weight: 950;
-  cursor: pointer;
-}
-
 .cleanEnter {
-  transform: translateX(18px);
+  transform: translateY(-10px);
   opacity: 0;
 }
 
 .cleanEnterActive {
-  transform: translateX(0);
+  transform: translateY(0);
   opacity: 1;
   transition: transform 260ms ease, opacity 260ms ease;
 }
 
 .cleanExit {
-  transform: translateX(0);
+  transform: translateY(0);
   opacity: 1;
 }
 
 .cleanExitActive {
-  transform: translateX(18px);
+  transform: translateY(-10px);
   opacity: 0;
   transition: transform 220ms ease, opacity 220ms ease;
 }
@@ -589,11 +370,6 @@
   color: var(--text-color-primary);
 }
 
-.confirmText {
-  color: var(--text-color-secondary);
-  margin-bottom: 14px;
-}
-
 .confirmCloseIcon {
   position: absolute !important;
   top: 10px;
@@ -609,12 +385,6 @@
 
 .confirmCloseIcon:hover:not(:disabled) {
   background: var(--background-color-2) !important;
-}
-
-.confirmActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
 }
 
 .confirmCancelBtn,
@@ -640,23 +410,6 @@
   cursor: not-allowed;
 }
 
-.confirmCloseIcon {
-  position: absolute !important;
-  top: 10px;
-  right: 10px;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px !important;
-  border: 1px solid var(--background-color-1) !important;
-  background: var(--background-color-card) !important;
-  color: #222 !important;
-}
-
-.confirmCloseIcon:hover:not(:disabled) {
-  background: #f2f4f6 !important;
-}
-
-
 .confirmText {
   color: var(--text-color-primary);
   margin-bottom: 14px;
@@ -666,15 +419,6 @@
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-}
-
-.confirmCancelBtn,
-.confirmDeleteBtn {
-  height: 36px;
-  padding: 0 14px;
-  border-radius: 10px;
-  font-weight: 950;
-  cursor: pointer;
 }
 
 .confirmCancelBtn {
@@ -738,6 +482,7 @@
 .tableWrap {
   flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
   background: var(--background-color-card);
   overflow-y: auto;
   scrollbar-width: thin;
@@ -827,4 +572,308 @@
 
 .processingProgress :global(.MuiLinearProgress-root) {
   background-color: rgba(0, 0, 0, 0.08);
+}
+
+.cleanOverlayAbs {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  background: var(--background-color-card);
+  border-top: 1px solid var(--background-color-1);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cleanMeasure {
+  position: relative;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
+
+.cleanSpace {
+  width: 100%;
+}
+
+
+
+
+/* --- Clean panel layout (scroll + sticky footer) --- */
+.cleanPanel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--background-color-card);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* critical for scroll */
+}
+
+/* Optional header (small, not bold-heavy) */
+.cleanHeader {
+  flex: 0 0 auto;
+  padding: 14px 16px 10px 16px;
+  border-bottom: 1px solid var(--background-color-1);
+  background: var(--background-color-card);
+}
+
+.cleanHeaderText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cleanTitle {
+  font-size: 16px;
+  font-weight: 650;
+  color: var(--text-color-primary);
+}
+
+.cleanSubtitle {
+  font-size: 12.5px;
+  font-weight: 450;
+  color: var(--text-color-tertiary);
+}
+
+.cleanBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 10px 16px 14px 16px;
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.cleanBody::-webkit-scrollbar {
+  width: 10px;
+}
+
+.cleanBody::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 10px;
+  border: 2px solid var(--scrollbar-track);
+}
+
+.cleanBody::-webkit-scrollbar-track {
+  background-color: var(--scrollbar-track);
+  border-radius: 10px;
+}
+
+.cleanSection {
+  border: 1px solid var(--background-color-1);
+  border-radius: 12px;
+  background: var(--background-color-card);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+/* Rows */
+.cleanRow {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 12px;
+  padding: 12px;
+  align-items: flex-start;
+}
+
+.cleanRow+.cleanRow {
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.cleanSwitchCol {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 2px;
+}
+
+.cleanMainCol {
+  min-width: 0;
+}
+
+.cleanLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+  margin-bottom: 2px;
+}
+
+.cleanDesc {
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--text-color-secondary);
+  line-height: 1.35;
+}
+
+/* Inline field rows: label left, control right */
+.cleanFieldRow {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.cleanFieldLabel {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-color-secondary);
+}
+
+/* Shared control styling (select + input) */
+.cleanControl {
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--background-color-1);
+  padding: 0 12px;
+  background: var(--background-color-card);
+  color: var(--text-color-primary);
+  font-weight: 450;
+  width: 100%;
+}
+
+.cleanControl:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--button-color) 55%, var(--background-color-1));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--button-color) 18%, transparent);
+}
+
+.cleanControl:disabled {
+  opacity: 0.65;
+  background: color-mix(in srgb, var(--background-color-card) 70%, #f2f4f6 30%);
+  cursor: not-allowed;
+}
+
+.cleanLabelRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cleanInlineHint {
+  font-size: 12px;
+  color: var(--text-color-tertiary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  transition: opacity 180ms ease, max-width 180ms ease, transform 180ms ease;
+  will-change: opacity, max-width, transform;
+}
+
+.cleanInlineHintHide {
+  opacity: 0;
+  max-width: 0;
+  transform: translateY(-2px);
+  pointer-events: none;
+}
+
+.cleanInlineHintShow {
+  opacity: 1;
+  max-width: 520px;
+  transform: translateY(0);
+}
+
+.cleanFooter {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--background-color-1);
+  background: var(--background-color-card);
+}
+
+.cleanFooterLeft {
+  font-size: 12.5px;
+  font-weight: 450;
+  color: var(--text-color-secondary);
+}
+
+.cleanFooterRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Buttons: reduce bold */
+.cleanApply {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: none;
+  background-image: var(--button-gradient);
+  background-size: 300% 100%;
+  color: var(--text-color-on-darkbg);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--button-color-shadow);
+  transition: background-position 0.2s ease, transform 0.06s ease;
+}
+
+.cleanApply:hover:not(:disabled) {
+  background-position: 100% 0;
+}
+
+.cleanApply:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.cleanApply:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cleanCancel {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--background-color-1);
+  background: var(--background-color-card);
+  color: var(--text-color-primary);
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.cleanCancel:hover:not(:disabled) {
+  background: var(--background-color-2);
+}
+
+.cleanCancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cleanCloseIcon {
+  position: absolute !important;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+
+  width: 34px;
+  height: 34px;
+
+  border-radius: 999px !important;
+  border: none !important;
+  background: transparent !important;
+  color: var(--text-color-primary) !important;
+  padding: 0 !important;
+}
+
+.cleanCloseIcon:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text-color-primary) 10%, transparent) !important;
+}
+
+@media (max-width: 720px) {
+  .cleanFieldRow {
+    grid-template-columns: 1fr;
+  }
 }
