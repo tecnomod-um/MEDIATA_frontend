@@ -49,13 +49,13 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
 
   const [cleanSearch, setCleanSearch] = useState("");
   const cleanSearchNorm = useMemo(() => String(cleanSearch || "").trim().toLowerCase(), [cleanSearch]);
-  
-  // Simple wrapper component that hides filtered options
-  const FilterableOption = useCallback(({ label, desc, children }) => {
-    const shouldShow = !cleanSearchNorm || `${label} ${desc}`.toLowerCase().includes(cleanSearchNorm);
-    if (!shouldShow) return null;
-    return <>{children}</>;
-  }, [cleanSearchNorm]);
+  const matchClean = useCallback(
+    (label, desc = "") => {
+      if (!cleanSearchNorm) return true;
+      return `${label} ${desc}`.toLowerCase().includes(cleanSearchNorm);
+    },
+    [cleanSearchNorm]
+  );
 
   const dateFormats = useMemo(
     () => [
@@ -382,7 +382,8 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
 
       <div className={FileExplorerStyles.cleanBody}>
         <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Remove duplicates" desc="Keep only the first occurrence of identical rows.">
+
+          {matchClean("Remove duplicates", "Keep only the first occurrence of identical rows.") && (
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -401,9 +402,8 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                 <div className={FileExplorerStyles.cleanDesc}>Keep only the first occurrence of identical rows.</div>
               </ToggleRow>
             </div>
-          </FilterableOption>
-          
-          <FilterableOption label="Remove empty rows" desc="Drop rows where every cell is blank (or whitespace).">
+          )}
+          {matchClean("Remove empty rows", "Drop rows where every cell is blank (or whitespace).") && (
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -422,11 +422,11 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                 <div className={FileExplorerStyles.cleanDesc}>Drop rows where every cell is blank (or whitespace).</div>
               </ToggleRow>
             </div>
-          </FilterableOption>
+          )}
         </div>
 
         <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Trim whitespace" desc="Trim leading and trailing whitespace in all cells.">
+          {matchClean("Trim whitespace", "Trim leading and trailing whitespace in all cells.") && (
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -445,8 +445,8 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                 <div className={FileExplorerStyles.cleanDesc}>Trim leading and trailing whitespace in all cells.</div>
               </ToggleRow>
             </div>
-          </FilterableOption>
-          <FilterableOption label="Remove extra spaces" desc="Collapse repeated whitespace inside values.">
+          )}
+          {matchClean("Remove extra spaces", "Collapse repeated whitespace inside values.") && (
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -465,8 +465,8 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                 <div className={FileExplorerStyles.cleanDesc}>Collapse repeated whitespace inside values.</div>
               </ToggleRow>
             </div>
-          </FilterableOption>
-          <FilterableOption label="Remove line breaks" desc="Replace CR/LF sequences with spaces.">
+          )}
+          {matchClean("Remove line breaks", "Replace CR/LF sequences with spaces.") && (
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -485,8 +485,8 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                 <div className={FileExplorerStyles.cleanDesc}>Replace CR/LF sequences with spaces.</div>
               </ToggleRow>
             </div>
-          </FilterableOption>
-          <FilterableOption label="Normalize text" desc="General cleanup of whitespace (safe normalization).">
+          )}
+          {matchClean("Normalize text", "General cleanup of whitespace (safe normalization).") && (
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -505,8 +505,8 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                 <div className={FileExplorerStyles.cleanDesc}>General cleanup of whitespace (safe normalization).</div>
               </ToggleRow>
             </div>
-          </FilterableOption>
-          <FilterableOption label="Standardize case" desc="Convert text into a consistent casing.">
+          )}
+          {matchClean("Standardize case", "Convert text into a consistent casing.") && (
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -552,11 +552,11 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                 </div>
               </ToggleRow>
             </div>
-          </FilterableOption>
+          )}
         </div>
 
         <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Standardize case" desc="Convert text into a consistent casing.">
+          {matchClean("Standardize case", "Convert text into a consistent casing.") && (
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -581,8 +581,8 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                 </div>
               </ToggleRow>
             </div>
-          </FilterableOption>
-          <FilterableOption label="Remove punctuation" desc="Strip punctuation characters.">
+          )}
+          {matchClean("Remove punctuation", "Strip punctuation characters.") && (
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -601,8 +601,8 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                 <div className={FileExplorerStyles.cleanDesc}>Strip punctuation characters.</div>
               </ToggleRow>
             </div>
-          </FilterableOption>
-          <FilterableOption label="Remove non-printable characters" desc="Strip control/non-printable Unicode characters.">
+          )}
+          {matchClean("Remove non-printable characters", "Strip control/non-printable Unicode characters.") && (
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -625,8 +625,8 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                 <div className={FileExplorerStyles.cleanDesc}>Strip control/non-printable Unicode characters.</div>
               </ToggleRow>
             </div>
-          </FilterableOption>
-          <FilterableOption label="Fix encoding issues" desc="Attempt to repair common mojibake encoding problems.">
+          )}
+          {matchClean("Fix encoding issues", "Attempt to repair common mojibake encoding problems.") && (
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -645,8 +645,8 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                 <div className={FileExplorerStyles.cleanDesc}>Attempt to repair common mojibake encoding problems.</div>
               </ToggleRow>
             </div>
-          </FilterableOption>
-          <FilterableOption label="Normalize Unicode" desc="Normalize Unicode representation (NFC/NFD/NFKC/NFKD).">
+          )}
+          {matchClean("Normalize Unicode", "Normalize Unicode representation (NFC/NFD/NFKC/NFKD).") && (
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -692,11 +692,11 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                 </div>
               </ToggleRow>
             </div>
-          </FilterableOption>
+          )}
         </div>
 
         <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Standardize dates" desc="Convert recognized date values into a consistent output format.">
+          {matchClean("Standardize dates", "Convert recognized date values into a consistent output format.") && (
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -756,11 +756,11 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                 </div>
               </ToggleRow>
             </div>
-          </FilterableOption>
+          )}
         </div>
 
         <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Standardize numeric fields" desc="Coerce selected columns into a consistent numeric type.">
+          {matchClean("Standardize numeric fields", "Coerce selected columns into a consistent numeric type.") && (
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -855,11 +855,11 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                 )}
               </ToggleRow>
             </div>
-          </FilterableOption>
+          )}
         </div>
 
         <div className={FileExplorerStyles.cleanSection}>
-        <FilterableOption label="Fill missing values" desc="Fill blanks using statistical or rule-based strategies.">
+        {matchClean("Fill missing values", "Fill blanks using statistical or rule-based strategies.") && (
           <div className={FileExplorerStyles.cleanRow}>
             <div className={FileExplorerStyles.cleanSwitchCol}>
               <Switch
@@ -933,96 +933,90 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
               </div>
             </ToggleRow>
           </div>
-          </FilterableOption>
+          )}
         </div>
 
         <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Replace values" desc="Replace exact matches using a JSON object map (old_value → new_value).">
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.replaceValues}
-                  onChange={(v) => update("replaceValues", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
+        {matchClean("Replace values", "Replace exact matches using a JSON object map (old_value → new_value).") && (
+          <div className={FileExplorerStyles.cleanRow}>
+            <div className={FileExplorerStyles.cleanSwitchCol}>
+              <Switch
+                checked={opts.replaceValues}
+                onChange={(v) => update("replaceValues", v)}
+                height={20}
+                width={40}
+                handleDiameter={16}
+                offColor="#888"
+                onColor="#9ABDDC"
+                disabled={busy}
+              />
+            </div>
+
+            <ToggleRow busy={busy} checked={opts.replaceValues} onToggle={(v) => update("replaceValues", v)}>
+              <div className={FileExplorerStyles.cleanLabelRow}>
+                <div className={FileExplorerStyles.cleanLabel}>Replace values</div>
+                <span
+                  className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.replaceValues
+                    ? FileExplorerStyles.cleanInlineHintShow
+                    : FileExplorerStyles.cleanInlineHintHide
+                    }`}
+                  aria-hidden={!(busy || !opts.replaceValues)}
+                >
+                  (Turn on to provide map)
+                </span>
               </div>
 
-              <ToggleRow busy={busy} checked={opts.replaceValues} onToggle={(v) => update("replaceValues", v)}>
-                <div className={FileExplorerStyles.cleanLabelRow}>
-                  <div className={FileExplorerStyles.cleanLabel}>Replace values</div>
-                  <span
-                    className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.replaceValues
-                      ? FileExplorerStyles.cleanInlineHintShow
-                      : FileExplorerStyles.cleanInlineHintHide
-                      }`}
-                    aria-hidden={!(busy || !opts.replaceValues)}
-                  >
-                    (Turn on to provide map)
-                  </span>
-                </div>
-
-                <div className={FileExplorerStyles.cleanDesc}>
-                  Replace exact matches using a JSON object map (old_value → new_value).
-                </div>
-
-                <JsonMapEditor
-                  busy={busy}
-                  enabled={opts.replaceValues}
-                  label="Map"
-                  description="Replace exact matches (key → value)."
-                  valueText={replacementMapText}
-                  onChangeText={setReplacementMapText}
-                  allowEmpty={false}
-                  examples={[
-                    { name: "Common cleanup", value: { NA: "", N_A: "", null: "" } },
-                    { name: "Yes/No", value: { yes: "true", no: "false" } },
-                  ]}
-                />
-
-              </ToggleRow>
-            </div>
-          </FilterableOption>
-          
-          <FilterableOption label="Strip prefix" desc="Remove a fixed prefix if present.">
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.stripPrefix}
-                  onChange={(v) => update("stripPrefix", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
+              <div className={FileExplorerStyles.cleanDesc}>
+                Replace exact matches using a JSON object map (old_value → new_value).
               </div>
 
-              <ToggleRow busy={busy} checked={opts.stripPrefix} onToggle={(v) => update("stripPrefix", v)}>
-                <div className={FileExplorerStyles.cleanLabel}>Strip prefix</div>
-                <div className={FileExplorerStyles.cleanDesc}>Remove a fixed prefix if present.</div>
+              <JsonMapEditor
+                busy={busy}
+                enabled={opts.replaceValues}
+                label="Map"
+                description="Replace exact matches (key → value)."
+                valueText={replacementMapText}
+                onChangeText={setReplacementMapText}
+                allowEmpty={false}
+                examples={[
+                  { name: "Common cleanup", value: { NA: "", N_A: "", null: "" } },
+                  { name: "Yes/No", value: { yes: "true", no: "false" } },
+                ]}
+              />
 
-                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
-                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Prefix</div>
-                  <input
-                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                    value={opts.prefixToStrip}
-                    onChange={(e) => update("prefixToStrip", e.target.value)}
-                    disabled={busy || !opts.stripPrefix}
-                    placeholder="e.g. ID-"
-                  />
-                </div>
-              </ToggleRow>
+            </ToggleRow>
+          </div>
+        )}
+          <div className={FileExplorerStyles.cleanRow}>
+            <div className={FileExplorerStyles.cleanSwitchCol}>
+              <Switch
+                checked={opts.stripPrefix}
+                onChange={(v) => update("stripPrefix", v)}
+                height={20}
+                width={40}
+                handleDiameter={16}
+                offColor="#888"
+                onColor="#9ABDDC"
+                disabled={busy}
+              />
             </div>
-          </FilterableOption>
 
-          <FilterableOption label="Strip suffix" desc="Remove a fixed suffix if present.">
-            <div className={FileExplorerStyles.cleanRow}>
+            <ToggleRow busy={busy} checked={opts.stripPrefix} onToggle={(v) => update("stripPrefix", v)}>
+              <div className={FileExplorerStyles.cleanLabel}>Strip prefix</div>
+              <div className={FileExplorerStyles.cleanDesc}>Remove a fixed prefix if present.</div>
+
+              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Prefix</div>
+                <input
+                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                  value={opts.prefixToStrip}
+                  onChange={(e) => update("prefixToStrip", e.target.value)}
+                  disabled={busy || !opts.stripPrefix}
+                  placeholder="e.g. ID-"
+                />
+              </div>
+            </ToggleRow>
+          </div>
 
           <div className={FileExplorerStyles.cleanRow}>
             <div className={FileExplorerStyles.cleanSwitchCol}>
