@@ -1470,91 +1470,95 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
 
 
         <div className={FileExplorerStyles.cleanSection}>
-          <div className={FileExplorerStyles.cleanRow}>
-            <div className={FileExplorerStyles.cleanSwitchCol}>
-              <Switch
+          <FilterableOption label="Remove rows with pattern" desc="Remove rows where a column matches a regex." cleanSearchNorm={cleanSearchNorm}>
+            <div className={FileExplorerStyles.cleanRow}>
+              <div className={FileExplorerStyles.cleanSwitchCol}>
+                <Switch
+                  checked={opts.removeRowsWithPattern}
+                  onChange={(v) => update("removeRowsWithPattern", v)}
+                  height={20}
+                  width={40}
+                  handleDiameter={16}
+                  offColor="#888"
+                  onColor="#9ABDDC"
+                  disabled={busy}
+                />
+              </div>
+
+              <ToggleRow
+                busy={busy}
                 checked={opts.removeRowsWithPattern}
-                onChange={(v) => update("removeRowsWithPattern", v)}
-                height={20}
-                width={40}
-                handleDiameter={16}
-                offColor="#888"
-                onColor="#9ABDDC"
-                disabled={busy}
-              />
+                onToggle={(v) => update("removeRowsWithPattern", v)}
+              >
+                <div className={FileExplorerStyles.cleanLabelRow}>
+                  <div className={FileExplorerStyles.cleanLabel}>Remove rows with pattern</div>
+                </div>
+
+                <div className={FileExplorerStyles.cleanDesc}>
+                  Remove rows where a column matches a regex.
+                </div>
+
+                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Column</div>
+                  <input
+                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                    value={opts.rowFilterColumn}
+                    onChange={(e) => update("rowFilterColumn", e.target.value)}
+                    disabled={busy || !opts.removeRowsWithPattern}
+                  />
+                </div>
+
+                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
+                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Regex</div>
+                  <input
+                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                    value={opts.rowFilterPattern}
+                    onChange={(e) => update("rowFilterPattern", e.target.value)}
+                    disabled={busy || !opts.removeRowsWithPattern}
+                    placeholder="e.g. ^(test|dummy)$"
+                  />
+                </div>
+              </ToggleRow>
             </div>
-
-            <ToggleRow
-              busy={busy}
-              checked={opts.removeRowsWithPattern}
-              onToggle={(v) => update("removeRowsWithPattern", v)}
-            >
-              <div className={FileExplorerStyles.cleanLabelRow}>
-                <div className={FileExplorerStyles.cleanLabel}>Remove rows with pattern</div>
-              </div>
-
-              <div className={FileExplorerStyles.cleanDesc}>
-                Remove rows where a column matches a regex.
-              </div>
-
-              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
-                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Column</div>
-                <input
-                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                  value={opts.rowFilterColumn}
-                  onChange={(e) => update("rowFilterColumn", e.target.value)}
-                  disabled={busy || !opts.removeRowsWithPattern}
-                />
-              </div>
-
-              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
-                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Regex</div>
-                <input
-                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                  value={opts.rowFilterPattern}
-                  onChange={(e) => update("rowFilterPattern", e.target.value)}
-                  disabled={busy || !opts.removeRowsWithPattern}
-                  placeholder="e.g. ^(test|dummy)$"
-                />
-              </div>
-            </ToggleRow>
-          </div>
+          </FilterableOption>
         </div>
 
 
         <div className={FileExplorerStyles.cleanSection}>
-          <div className={FileExplorerStyles.cleanRow}>
-            <div className={FileExplorerStyles.cleanSwitchCol}>
-              <Switch
-                checked={opts.normalizeData}
-                onChange={(v) => update("normalizeData", v)}
-                height={20}
-                width={40}
-                handleDiameter={16}
-                offColor="#888"
-                onColor="#9ABDDC"
-                disabled={busy}
-              />
-            </div>
-
-            <ToggleRow busy={busy} checked={opts.normalizeData} onToggle={(v) => update("normalizeData", v)}>
-              <div className={FileExplorerStyles.cleanLabel}>Normalize data (min-max)</div>
-              <div className={FileExplorerStyles.cleanDesc}>
-                Scale values to [0,1] per selected column.
-              </div>
-
-              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
-                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Columns</div>
-                <input
-                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                  value={(opts.normalizeColumns || []).join(",")}
-                  onChange={(e) => update("normalizeColumns", toList(e.target.value))}
-                  disabled={busy || !opts.normalizeData}
-                  placeholder="colA,colB"
+          <FilterableOption label="Normalize data (min-max)" desc="Scale values to [0,1] per selected column." cleanSearchNorm={cleanSearchNorm}>
+            <div className={FileExplorerStyles.cleanRow}>
+              <div className={FileExplorerStyles.cleanSwitchCol}>
+                <Switch
+                  checked={opts.normalizeData}
+                  onChange={(v) => update("normalizeData", v)}
+                  height={20}
+                  width={40}
+                  handleDiameter={16}
+                  offColor="#888"
+                  onColor="#9ABDDC"
+                  disabled={busy}
                 />
               </div>
-            </ToggleRow>
-          </div>
+
+              <ToggleRow busy={busy} checked={opts.normalizeData} onToggle={(v) => update("normalizeData", v)}>
+                <div className={FileExplorerStyles.cleanLabel}>Normalize data (min-max)</div>
+                <div className={FileExplorerStyles.cleanDesc}>
+                  Scale values to [0,1] per selected column.
+                </div>
+
+                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
+                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Columns</div>
+                  <input
+                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                    value={(opts.normalizeColumns || []).join(",")}
+                    onChange={(e) => update("normalizeColumns", toList(e.target.value))}
+                    disabled={busy || !opts.normalizeData}
+                    placeholder="colA,colB"
+                  />
+                </div>
+              </ToggleRow>
+            </div>
+          </FilterableOption>
         </div>
 
 
@@ -1616,6 +1620,20 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
           </FilterableOption>
         </div>
       </div>
+
+      {cleanSearchNorm && (
+        <div 
+          style={{ 
+            fontStyle: 'italic', 
+            color: 'var(--text-color-secondary)', 
+            padding: '12px 0', 
+            textAlign: 'center' 
+          }} 
+          id="cleanPanelNoResults"
+        >
+          No steps match your search
+        </div>
+      )}
 
       <div className={FileExplorerStyles.cleanFooter}>
         <div className={FileExplorerStyles.cleanFooterLeft}>
