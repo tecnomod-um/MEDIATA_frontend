@@ -1059,395 +1059,413 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
             </div>
           </FilterableOption>
 
-          <div className={FileExplorerStyles.cleanRow}>
-            <div className={FileExplorerStyles.cleanSwitchCol}>
-              <Switch
-                checked={opts.padValues}
-                onChange={(v) => update("padValues", v)}
-                height={20}
-                width={40}
-                handleDiameter={16}
-                offColor="#888"
-                onColor="#9ABDDC"
-                disabled={busy}
-              />
+          <FilterableOption label="Pad values" desc="Pad strings to a minimum length." cleanSearchNorm={cleanSearchNorm}>
+            <div className={FileExplorerStyles.cleanRow}>
+              <div className={FileExplorerStyles.cleanSwitchCol}>
+                <Switch
+                  checked={opts.padValues}
+                  onChange={(v) => update("padValues", v)}
+                  height={20}
+                  width={40}
+                  handleDiameter={16}
+                  offColor="#888"
+                  onColor="#9ABDDC"
+                  disabled={busy}
+                />
+              </div>
+
+              <ToggleRow busy={busy} checked={opts.padValues} onToggle={(v) => update("padValues", v)}>
+                <div className={FileExplorerStyles.cleanLabelRow}>
+                  <div className={FileExplorerStyles.cleanLabel}>Pad values</div>
+                  <span
+                    className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.padValues ? FileExplorerStyles.cleanInlineHintShow : FileExplorerStyles.cleanInlineHintHide
+                      }`}
+                    aria-hidden={!(busy || !opts.padValues)}
+                  >
+                    (Turn on to configure)
+                  </span>
+                </div>
+
+                <div className={FileExplorerStyles.cleanDesc}>Pad strings to a minimum length.</div>
+
+                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Direction</div>
+                  <select
+                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                    value={opts.padDirection}
+                    onChange={(e) => update("padDirection", e.target.value)}
+                    disabled={busy || !opts.padValues}
+                  >
+                    <option value="left">Left</option>
+                    <option value="right">Right</option>
+                  </select>
+                </div>
+
+                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Length</div>
+                  <input
+                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                    type="number"
+                    min={1}
+                    value={opts.padLength}
+                    onChange={(e) => update("padLength", Number(e.target.value))}
+                    disabled={busy || !opts.padValues}
+                  />
+                </div>
+
+                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Character</div>
+                  <input
+                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                    value={opts.padCharacter}
+                    onChange={(e) => update("padCharacter", e.target.value)}
+                    disabled={busy || !opts.padValues}
+                    placeholder="Single character"
+                  />
+                </div>
+              </ToggleRow>
             </div>
-
-            <ToggleRow busy={busy} checked={opts.padValues} onToggle={(v) => update("padValues", v)}>
-              <div className={FileExplorerStyles.cleanLabelRow}>
-                <div className={FileExplorerStyles.cleanLabel}>Pad values</div>
-                <span
-                  className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.padValues ? FileExplorerStyles.cleanInlineHintShow : FileExplorerStyles.cleanInlineHintHide
-                    }`}
-                  aria-hidden={!(busy || !opts.padValues)}
-                >
-                  (Turn on to configure)
-                </span>
-              </div>
-
-              <div className={FileExplorerStyles.cleanDesc}>Pad strings to a minimum length.</div>
-
-              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
-                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Direction</div>
-                <select
-                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                  value={opts.padDirection}
-                  onChange={(e) => update("padDirection", e.target.value)}
-                  disabled={busy || !opts.padValues}
-                >
-                  <option value="left">Left</option>
-                  <option value="right">Right</option>
-                </select>
-              </div>
-
-              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
-                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Length</div>
-                <input
-                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                  type="number"
-                  min={1}
-                  value={opts.padLength}
-                  onChange={(e) => update("padLength", Number(e.target.value))}
-                  disabled={busy || !opts.padValues}
-                />
-              </div>
-
-              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
-                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Character</div>
-                <input
-                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                  value={opts.padCharacter}
-                  onChange={(e) => update("padCharacter", e.target.value)}
-                  disabled={busy || !opts.padValues}
-                  placeholder="Single character"
-                />
-              </div>
-            </ToggleRow>
-          </div>
+          </FilterableOption>
         </div>
 
         <div className={FileExplorerStyles.cleanSection}>
-          <div className={FileExplorerStyles.cleanRow}>
-            <div className={FileExplorerStyles.cleanSwitchCol}>
-              <Switch
-                checked={opts.convertDataTypes}
-                onChange={(v) => update("convertDataTypes", v)}
-                height={20}
-                width={40}
-                handleDiameter={16}
-                offColor="#888"
-                onColor="#9ABDDC"
-                disabled={busy}
-              />
+          <FilterableOption label="Convert data types" desc='Provide JSON map: column → type ("string","integer","float","boolean").' cleanSearchNorm={cleanSearchNorm}>
+            <div className={FileExplorerStyles.cleanRow}>
+              <div className={FileExplorerStyles.cleanSwitchCol}>
+                <Switch
+                  checked={opts.convertDataTypes}
+                  onChange={(v) => update("convertDataTypes", v)}
+                  height={20}
+                  width={40}
+                  handleDiameter={16}
+                  offColor="#888"
+                  onColor="#9ABDDC"
+                  disabled={busy}
+                />
+              </div>
+
+              <ToggleRow busy={busy} checked={opts.convertDataTypes} onToggle={(v) => update("convertDataTypes", v)}>
+                <div className={FileExplorerStyles.cleanLabelRow}>
+                  <div className={FileExplorerStyles.cleanLabel}>Convert data types</div>
+                  <span
+                    className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.convertDataTypes
+                      ? FileExplorerStyles.cleanInlineHintShow
+                      : FileExplorerStyles.cleanInlineHintHide
+                      }`}
+                    aria-hidden={!(busy || !opts.convertDataTypes)}
+                  >
+                    (Turn on to provide map)
+                  </span>
+                </div>
+
+                <div className={FileExplorerStyles.cleanDesc}>
+                  Provide JSON map: column → type (&quot;string&quot;,&quot;integer&quot;,&quot;float&quot;,&quot;boolean&quot;).
+                </div>
+
+                <JsonMapEditor
+                  busy={busy}
+                  enabled={opts.convertDataTypes}
+                  label="Map"
+                  description='Column → type ("string", "integer", "float", "boolean").'
+                  valueText={typeConversionMapText}
+                  onChangeText={setTypeConversionMapText}
+                  allowEmpty={false}
+                  examples={[
+                    { name: "Basic", value: { age: "integer", price: "float", active: "boolean" } },
+                    { name: "All strings", value: { id: "string", name: "string" } },
+                  ]}
+                />
+              </ToggleRow>
             </div>
+          </FilterableOption>
+        </div>
 
-            <ToggleRow busy={busy} checked={opts.convertDataTypes} onToggle={(v) => update("convertDataTypes", v)}>
-              <div className={FileExplorerStyles.cleanLabelRow}>
-                <div className={FileExplorerStyles.cleanLabel}>Convert data types</div>
-                <span
-                  className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.convertDataTypes
-                    ? FileExplorerStyles.cleanInlineHintShow
-                    : FileExplorerStyles.cleanInlineHintHide
-                    }`}
-                  aria-hidden={!(busy || !opts.convertDataTypes)}
-                >
-                  (Turn on to provide map)
-                </span>
+
+        <div className={FileExplorerStyles.cleanSection}>
+          <FilterableOption label="Extract email domain" desc='Adds a "_domain" column when an email is found.' cleanSearchNorm={cleanSearchNorm}>
+            <div className={FileExplorerStyles.cleanRow}>
+              <div className={FileExplorerStyles.cleanSwitchCol}>
+                <Switch
+                  checked={opts.extractEmailDomain}
+                  onChange={(v) => update("extractEmailDomain", v)}
+                  height={20}
+                  width={40}
+                  handleDiameter={16}
+                  offColor="#888"
+                  onColor="#9ABDDC"
+                  disabled={busy}
+                />
               </div>
+              <ToggleRow busy={busy} checked={opts.extractEmailDomain} onToggle={(v) => update("extractEmailDomain", v)}>
+                <div className={FileExplorerStyles.cleanLabel}>Extract email domain</div>
+                <div className={FileExplorerStyles.cleanDesc}>Adds a "_domain" column when an email is found.</div>
+              </ToggleRow>
+            </div>
+          </FilterableOption>
 
-              <div className={FileExplorerStyles.cleanDesc}>
-                Provide JSON map: column → type (&quot;string&quot;,&quot;integer&quot;,&quot;float&quot;,&quot;boolean&quot;).
+          <FilterableOption label="Validate emails" desc='Blank out invalid email values (when containing "@").' cleanSearchNorm={cleanSearchNorm}>
+            <div className={FileExplorerStyles.cleanRow}>
+              <div className={FileExplorerStyles.cleanSwitchCol}>
+                <Switch
+                  checked={opts.validateEmails}
+                  onChange={(v) => update("validateEmails", v)}
+                  height={20}
+                  width={40}
+                  handleDiameter={16}
+                  offColor="#888"
+                  onColor="#9ABDDC"
+                  disabled={busy}
+                />
               </div>
+              <ToggleRow busy={busy} checked={opts.validateEmails} onToggle={(v) => update("validateEmails", v)}>
+                <div className={FileExplorerStyles.cleanLabel}>Validate emails</div>
+                <div className={FileExplorerStyles.cleanDesc}>Blank out invalid email values (when containing "@").</div>
+              </ToggleRow>
+            </div>
+          </FilterableOption>
 
-              <JsonMapEditor
+          <FilterableOption label="Extract URL components" desc="Adds protocol/domain/path/query columns for URLs." cleanSearchNorm={cleanSearchNorm}>
+            <div className={FileExplorerStyles.cleanRow}>
+              <div className={FileExplorerStyles.cleanSwitchCol}>
+                <Switch
+                  checked={opts.extractURLComponents}
+                  onChange={(v) => update("extractURLComponents", v)}
+                  height={20}
+                  width={40}
+                  handleDiameter={16}
+                  offColor="#888"
+                  onColor="#9ABDDC"
+                  disabled={busy}
+                />
+              </div>
+              <ToggleRow
                 busy={busy}
-                enabled={opts.convertDataTypes}
-                label="Map"
-                description='Column → type ("string", "integer", "float", "boolean").'
-                valueText={typeConversionMapText}
-                onChangeText={setTypeConversionMapText}
-                allowEmpty={false}
-                examples={[
-                  { name: "Basic", value: { age: "integer", price: "float", active: "boolean" } },
-                  { name: "All strings", value: { id: "string", name: "string" } },
-                ]}
-              />
-            </ToggleRow>
-          </div>
-        </div>
-
-
-        <div className={FileExplorerStyles.cleanSection}>
-          <div className={FileExplorerStyles.cleanRow}>
-            <div className={FileExplorerStyles.cleanSwitchCol}>
-              <Switch
-                checked={opts.extractEmailDomain}
-                onChange={(v) => update("extractEmailDomain", v)}
-                height={20}
-                width={40}
-                handleDiameter={16}
-                offColor="#888"
-                onColor="#9ABDDC"
-                disabled={busy}
-              />
-            </div>
-            <ToggleRow busy={busy} checked={opts.extractEmailDomain} onToggle={(v) => update("extractEmailDomain", v)}>
-              <div className={FileExplorerStyles.cleanLabel}>Extract email domain</div>
-              <div className={FileExplorerStyles.cleanDesc}>Adds a “_domain” column when an email is found.</div>
-            </ToggleRow>
-          </div>
-
-          <div className={FileExplorerStyles.cleanRow}>
-            <div className={FileExplorerStyles.cleanSwitchCol}>
-              <Switch
-                checked={opts.validateEmails}
-                onChange={(v) => update("validateEmails", v)}
-                height={20}
-                width={40}
-                handleDiameter={16}
-                offColor="#888"
-                onColor="#9ABDDC"
-                disabled={busy}
-              />
-            </div>
-            <ToggleRow busy={busy} checked={opts.validateEmails} onToggle={(v) => update("validateEmails", v)}>
-              <div className={FileExplorerStyles.cleanLabel}>Validate emails</div>
-              <div className={FileExplorerStyles.cleanDesc}>Blank out invalid email values (when containing “@”).</div>
-            </ToggleRow>
-          </div>
-
-          <div className={FileExplorerStyles.cleanRow}>
-            <div className={FileExplorerStyles.cleanSwitchCol}>
-              <Switch
                 checked={opts.extractURLComponents}
-                onChange={(v) => update("extractURLComponents", v)}
-                height={20}
-                width={40}
-                handleDiameter={16}
-                offColor="#888"
-                onColor="#9ABDDC"
-                disabled={busy}
-              />
+                onToggle={(v) => update("extractURLComponents", v)}
+              >
+                <div className={FileExplorerStyles.cleanLabel}>Extract URL components</div>
+                <div className={FileExplorerStyles.cleanDesc}>Adds protocol/domain/path/query columns for URLs.</div>
+              </ToggleRow>
             </div>
-            <ToggleRow
-              busy={busy}
-              checked={opts.extractURLComponents}
-              onToggle={(v) => update("extractURLComponents", v)}
-            >
-              <div className={FileExplorerStyles.cleanLabel}>Extract URL components</div>
-              <div className={FileExplorerStyles.cleanDesc}>Adds protocol/domain/path/query columns for URLs.</div>
-            </ToggleRow>
-          </div>
+          </FilterableOption>
 
-          <div className={FileExplorerStyles.cleanRow}>
-            <div className={FileExplorerStyles.cleanSwitchCol}>
-              <Switch
-                checked={opts.normalizeURLs}
-                onChange={(v) => update("normalizeURLs", v)}
-                height={20}
-                width={40}
-                handleDiameter={16}
-                offColor="#888"
-                onColor="#9ABDDC"
-                disabled={busy}
-              />
-            </div>
-            <ToggleRow busy={busy} checked={opts.normalizeURLs} onToggle={(v) => update("normalizeURLs", v)}>
-              <div className={FileExplorerStyles.cleanLabel}>Normalize URLs</div>
-              <div className={FileExplorerStyles.cleanDesc}>Lowercase http(s) URLs and remove trailing slash.</div>
-            </ToggleRow>
-          </div>
-
-          <div className={FileExplorerStyles.cleanRow}>
-            <div className={FileExplorerStyles.cleanSwitchCol}>
-              <Switch
-                checked={opts.standardizePhoneNumbers}
-                onChange={(v) => update("standardizePhoneNumbers", v)}
-                height={20}
-                width={40}
-                handleDiameter={16}
-                offColor="#888"
-                onColor="#9ABDDC"
-                disabled={busy}
-              />
-            </div>
-            <ToggleRow
-              busy={busy}
-              checked={opts.standardizePhoneNumbers}
-              onToggle={(v) => update("standardizePhoneNumbers", v)}
-            >
-              <div className={FileExplorerStyles.cleanLabelRow}>
-                <div className={FileExplorerStyles.cleanLabel}>Standardize phone numbers</div>
-                <span
-                  className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.standardizePhoneNumbers
-                    ? FileExplorerStyles.cleanInlineHintShow
-                    : FileExplorerStyles.cleanInlineHintHide
-                    }`}
-                  aria-hidden={!(busy || !opts.standardizePhoneNumbers)}
-                >
-                  (Turn on to configure)
-                </span>
-              </div>
-
-              <div className={FileExplorerStyles.cleanDesc}>Normalize phone numbers into a consistent format.</div>
-
-              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
-                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Format</div>
-                <select
-                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                  value={opts.phoneFormat}
-                  onChange={(e) => update("phoneFormat", e.target.value)}
-                  disabled={busy || !opts.standardizePhoneNumbers}
-                >
-                  <option value="national">National</option>
-                  <option value="international">International</option>
-                  <option value="e164">E.164</option>
-                </select>
-              </div>
-
-              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
-                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Default country code</div>
-                <input
-                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                  value={opts.defaultCountryCode}
-                  onChange={(e) => update("defaultCountryCode", e.target.value)}
-                  disabled={busy || !opts.standardizePhoneNumbers}
-                  placeholder="+1"
+          <FilterableOption label="Normalize URLs" desc="Lowercase http(s) URLs and remove trailing slash." cleanSearchNorm={cleanSearchNorm}>
+            <div className={FileExplorerStyles.cleanRow}>
+              <div className={FileExplorerStyles.cleanSwitchCol}>
+                <Switch
+                  checked={opts.normalizeURLs}
+                  onChange={(v) => update("normalizeURLs", v)}
+                  height={20}
+                  width={40}
+                  handleDiameter={16}
+                  offColor="#888"
+                  onColor="#9ABDDC"
+                  disabled={busy}
                 />
               </div>
-            </ToggleRow>
-          </div>
+              <ToggleRow busy={busy} checked={opts.normalizeURLs} onToggle={(v) => update("normalizeURLs", v)}>
+                <div className={FileExplorerStyles.cleanLabel}>Normalize URLs</div>
+                <div className={FileExplorerStyles.cleanDesc}>Lowercase http(s) URLs and remove trailing slash.</div>
+              </ToggleRow>
+            </div>
+          </FilterableOption>
+
+          <FilterableOption label="Standardize phone numbers" desc="Normalize phone numbers into a consistent format." cleanSearchNorm={cleanSearchNorm}>
+            <div className={FileExplorerStyles.cleanRow}>
+              <div className={FileExplorerStyles.cleanSwitchCol}>
+                <Switch
+                  checked={opts.standardizePhoneNumbers}
+                  onChange={(v) => update("standardizePhoneNumbers", v)}
+                  height={20}
+                  width={40}
+                  handleDiameter={16}
+                  offColor="#888"
+                  onColor="#9ABDDC"
+                  disabled={busy}
+                />
+              </div>
+              <ToggleRow
+                busy={busy}
+                checked={opts.standardizePhoneNumbers}
+                onToggle={(v) => update("standardizePhoneNumbers", v)}
+              >
+                <div className={FileExplorerStyles.cleanLabelRow}>
+                  <div className={FileExplorerStyles.cleanLabel}>Standardize phone numbers</div>
+                  <span
+                    className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.standardizePhoneNumbers
+                      ? FileExplorerStyles.cleanInlineHintShow
+                      : FileExplorerStyles.cleanInlineHintHide
+                      }`}
+                    aria-hidden={!(busy || !opts.standardizePhoneNumbers)}
+                  >
+                    (Turn on to configure)
+                  </span>
+                </div>
+
+                <div className={FileExplorerStyles.cleanDesc}>Normalize phone numbers into a consistent format.</div>
+
+                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Format</div>
+                  <select
+                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                    value={opts.phoneFormat}
+                    onChange={(e) => update("phoneFormat", e.target.value)}
+                    disabled={busy || !opts.standardizePhoneNumbers}
+                  >
+                    <option value="national">National</option>
+                    <option value="international">International</option>
+                    <option value="e164">E.164</option>
+                  </select>
+                </div>
+
+                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Default country code</div>
+                  <input
+                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                    value={opts.defaultCountryCode}
+                    onChange={(e) => update("defaultCountryCode", e.target.value)}
+                    disabled={busy || !opts.standardizePhoneNumbers}
+                    placeholder="+1"
+                  />
+                </div>
+              </ToggleRow>
+            </div>
+          </FilterableOption>
         </div>
 
 
         <div className={FileExplorerStyles.cleanSection}>
-          <div className={FileExplorerStyles.cleanRow}>
-            <div className={FileExplorerStyles.cleanSwitchCol}>
-              <Switch
-                checked={opts.splitColumn}
-                onChange={(v) => update("splitColumn", v)}
-                height={20}
-                width={40}
-                handleDiameter={16}
-                offColor="#888"
-                onColor="#9ABDDC"
-                disabled={busy}
-              />
+          <FilterableOption label="Split column" desc="Split a column by delimiter into multiple columns." cleanSearchNorm={cleanSearchNorm}>
+            <div className={FileExplorerStyles.cleanRow}>
+              <div className={FileExplorerStyles.cleanSwitchCol}>
+                <Switch
+                  checked={opts.splitColumn}
+                  onChange={(v) => update("splitColumn", v)}
+                  height={20}
+                  width={40}
+                  handleDiameter={16}
+                  offColor="#888"
+                  onColor="#9ABDDC"
+                  disabled={busy}
+                />
+              </div>
+
+              <ToggleRow busy={busy} checked={opts.splitColumn} onToggle={(v) => update("splitColumn", v)}>
+                <div className={FileExplorerStyles.cleanLabelRow}>
+                  <div className={FileExplorerStyles.cleanLabel}>Split column</div>
+                  <span
+                    className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.splitColumn
+                      ? FileExplorerStyles.cleanInlineHintShow
+                      : FileExplorerStyles.cleanInlineHintHide}`}
+                    aria-hidden={!(busy || !opts.splitColumn)}
+                  >
+                    (Turn on to configure)
+                  </span>
+                </div>
+
+                <div className={FileExplorerStyles.cleanDesc}>
+                  Split a column by delimiter into multiple columns.
+                </div>
+
+                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Column</div>
+                  <input
+                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                    value={opts.columnToSplit}
+                    onChange={(e) => update("columnToSplit", e.target.value)}
+                    disabled={busy || !opts.splitColumn}
+                  />
+                </div>
+
+                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Delimiter</div>
+                  <input
+                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                    value={opts.splitDelimiter}
+                    onChange={(e) => update("splitDelimiter", e.target.value)}
+                    disabled={busy || !opts.splitColumn}
+                  />
+                </div>
+
+                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>New names</div>
+                  <input
+                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                    value={(opts.newColumnNames || []).join(",")}
+                    onChange={(e) => update("newColumnNames", toList(e.target.value))}
+                    disabled={busy || !opts.splitColumn}
+                    placeholder="Optional: colA,colB"
+                  />
+                </div>
+              </ToggleRow>
             </div>
+          </FilterableOption>
 
-            <ToggleRow busy={busy} checked={opts.splitColumn} onToggle={(v) => update("splitColumn", v)}>
-              <div className={FileExplorerStyles.cleanLabelRow}>
-                <div className={FileExplorerStyles.cleanLabel}>Split column</div>
-                <span
-                  className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.splitColumn
-                    ? FileExplorerStyles.cleanInlineHintShow
-                    : FileExplorerStyles.cleanInlineHintHide}`}
-                  aria-hidden={!(busy || !opts.splitColumn)}
-                >
-                  (Turn on to configure)
-                </span>
-              </div>
-
-              <div className={FileExplorerStyles.cleanDesc}>
-                Split a column by delimiter into multiple columns.
-              </div>
-
-              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
-                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Column</div>
-                <input
-                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                  value={opts.columnToSplit}
-                  onChange={(e) => update("columnToSplit", e.target.value)}
-                  disabled={busy || !opts.splitColumn}
+          <FilterableOption label="Merge columns" desc="Concatenate multiple columns into one." cleanSearchNorm={cleanSearchNorm}>
+            <div className={FileExplorerStyles.cleanRow}>
+              <div className={FileExplorerStyles.cleanSwitchCol}>
+                <Switch
+                  checked={opts.mergeColumns}
+                  onChange={(v) => update("mergeColumns", v)}
+                  height={20}
+                  width={40}
+                  handleDiameter={16}
+                  offColor="#888"
+                  onColor="#9ABDDC"
+                  disabled={busy}
                 />
               </div>
 
-              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
-                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Delimiter</div>
-                <input
-                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                  value={opts.splitDelimiter}
-                  onChange={(e) => update("splitDelimiter", e.target.value)}
-                  disabled={busy || !opts.splitColumn}
-                />
-              </div>
+              <ToggleRow busy={busy} checked={opts.mergeColumns} onToggle={(v) => update("mergeColumns", v)}>
+                <div className={FileExplorerStyles.cleanLabelRow}>
+                  <div className={FileExplorerStyles.cleanLabel}>Merge columns</div>
+                  <span
+                    className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.mergeColumns
+                      ? FileExplorerStyles.cleanInlineHintShow
+                      : FileExplorerStyles.cleanInlineHintHide}`}
+                    aria-hidden={!(busy || !opts.mergeColumns)}
+                  >
+                    (Turn on to configure)
+                  </span>
+                </div>
 
-              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
-                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>New names</div>
-                <input
-                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                  value={(opts.newColumnNames || []).join(",")}
-                  onChange={(e) => update("newColumnNames", toList(e.target.value))}
-                  disabled={busy || !opts.splitColumn}
-                  placeholder="Optional: colA,colB"
-                />
-              </div>
-            </ToggleRow>
-          </div>
+                <div className={FileExplorerStyles.cleanDesc}>
+                  Concatenate multiple columns into one.
+                </div>
 
-          <div className={FileExplorerStyles.cleanRow}>
-            <div className={FileExplorerStyles.cleanSwitchCol}>
-              <Switch
-                checked={opts.mergeColumns}
-                onChange={(v) => update("mergeColumns", v)}
-                height={20}
-                width={40}
-                handleDiameter={16}
-                offColor="#888"
-                onColor="#9ABDDC"
-                disabled={busy}
-              />
+                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Columns</div>
+                  <input
+                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                    value={(opts.columnsToMerge || []).join(",")}
+                    onChange={(e) => update("columnsToMerge", toList(e.target.value))}
+                    disabled={busy || !opts.mergeColumns}
+                    placeholder="colA,colB"
+                  />
+                </div>
+
+                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Delimiter</div>
+                  <input
+                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                    value={opts.mergeDelimiter}
+                    onChange={(e) => update("mergeDelimiter", e.target.value)}
+                    disabled={busy || !opts.mergeColumns}
+                  />
+                </div>
+
+                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>New column</div>
+                  <input
+                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                    value={opts.mergedColumnName}
+                    onChange={(e) => update("mergedColumnName", e.target.value)}
+                    disabled={busy || !opts.mergeColumns}
+                  />
+                </div>
+              </ToggleRow>
             </div>
-
-            <ToggleRow busy={busy} checked={opts.mergeColumns} onToggle={(v) => update("mergeColumns", v)}>
-              <div className={FileExplorerStyles.cleanLabelRow}>
-                <div className={FileExplorerStyles.cleanLabel}>Merge columns</div>
-                <span
-                  className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.mergeColumns
-                    ? FileExplorerStyles.cleanInlineHintShow
-                    : FileExplorerStyles.cleanInlineHintHide}`}
-                  aria-hidden={!(busy || !opts.mergeColumns)}
-                >
-                  (Turn on to configure)
-                </span>
-              </div>
-
-              <div className={FileExplorerStyles.cleanDesc}>
-                Concatenate multiple columns into one.
-              </div>
-
-              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
-                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Columns</div>
-                <input
-                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                  value={(opts.columnsToMerge || []).join(",")}
-                  onChange={(e) => update("columnsToMerge", toList(e.target.value))}
-                  disabled={busy || !opts.mergeColumns}
-                  placeholder="colA,colB"
-                />
-              </div>
-
-              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
-                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Delimiter</div>
-                <input
-                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                  value={opts.mergeDelimiter}
-                  onChange={(e) => update("mergeDelimiter", e.target.value)}
-                  disabled={busy || !opts.mergeColumns}
-                />
-              </div>
-
-              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
-                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>New column</div>
-                <input
-                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                  value={opts.mergedColumnName}
-                  onChange={(e) => update("mergedColumnName", e.target.value)}
-                  disabled={busy || !opts.mergeColumns}
-                />
-              </div>
-            </ToggleRow>
-          </div>
+          </FilterableOption>
         </div>
 
 
@@ -1541,59 +1559,61 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
 
 
         <div className={FileExplorerStyles.cleanSection}>
-          <div className={FileExplorerStyles.cleanRow}>
-            <div className={FileExplorerStyles.cleanSwitchCol}>
-              <Switch
+          <FilterableOption label="Merge similar values" desc="Fuzzy-merge similar strings using a similarity threshold." cleanSearchNorm={cleanSearchNorm}>
+            <div className={FileExplorerStyles.cleanRow}>
+              <div className={FileExplorerStyles.cleanSwitchCol}>
+                <Switch
+                  checked={opts.mergeSimilarValues}
+                  onChange={(v) => update("mergeSimilarValues", v)}
+                  height={20}
+                  width={40}
+                  handleDiameter={16}
+                  offColor="#888"
+                  onColor="#9ABDDC"
+                  disabled={busy}
+                />
+              </div>
+
+              <ToggleRow
+                busy={busy}
                 checked={opts.mergeSimilarValues}
-                onChange={(v) => update("mergeSimilarValues", v)}
-                height={20}
-                width={40}
-                handleDiameter={16}
-                offColor="#888"
-                onColor="#9ABDDC"
-                disabled={busy}
-              />
+                onToggle={(v) => update("mergeSimilarValues", v)}
+              >
+                <div className={FileExplorerStyles.cleanLabelRow}>
+                  <div className={FileExplorerStyles.cleanLabel}>Merge similar values</div>
+                </div>
+
+                <div className={FileExplorerStyles.cleanDesc}>
+                  Fuzzy-merge similar strings using a similarity threshold.
+                </div>
+
+                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
+                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Columns</div>
+                  <input
+                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                    value={(opts.fuzzyMatchColumns || []).join(",")}
+                    onChange={(e) => update("fuzzyMatchColumns", toList(e.target.value))}
+                    disabled={busy || !opts.mergeSimilarValues}
+                    placeholder="colA,colB"
+                  />
+                </div>
+
+                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
+                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Threshold</div>
+                  <input
+                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                    type="number"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={opts.mergeSimilarityThreshold}
+                    onChange={(e) => update("mergeSimilarityThreshold", Number(e.target.value))}
+                    disabled={busy || !opts.mergeSimilarValues}
+                  />
+                </div>
+              </ToggleRow>
             </div>
-
-            <ToggleRow
-              busy={busy}
-              checked={opts.mergeSimilarValues}
-              onToggle={(v) => update("mergeSimilarValues", v)}
-            >
-              <div className={FileExplorerStyles.cleanLabelRow}>
-                <div className={FileExplorerStyles.cleanLabel}>Merge similar values</div>
-              </div>
-
-              <div className={FileExplorerStyles.cleanDesc}>
-                Fuzzy-merge similar strings using a similarity threshold.
-              </div>
-
-              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
-                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Columns</div>
-                <input
-                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                  value={(opts.fuzzyMatchColumns || []).join(",")}
-                  onChange={(e) => update("fuzzyMatchColumns", toList(e.target.value))}
-                  disabled={busy || !opts.mergeSimilarValues}
-                  placeholder="colA,colB"
-                />
-              </div>
-
-              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
-                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Threshold</div>
-                <input
-                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                  type="number"
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  value={opts.mergeSimilarityThreshold}
-                  onChange={(e) => update("mergeSimilarityThreshold", Number(e.target.value))}
-                  disabled={busy || !opts.mergeSimilarValues}
-                />
-              </div>
-            </ToggleRow>
-          </div>
+          </FilterableOption>
         </div>
       </div>
 
