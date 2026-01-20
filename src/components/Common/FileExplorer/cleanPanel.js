@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Switch from "react-switch";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
@@ -6,6 +6,8 @@ import { toast } from "react-toastify";
 import { parseJsonObject } from "../../../util/parser";
 import FileExplorerStyles from "./fileExplorer.module.css";
 import JsonMapEditor from "./jsonMapEditor.js";
+
+const VisibleCountContext = React.createContext(null);
 
 function ToggleRow({ busy, checked, onToggle, children }) {
   const onClick = useCallback(
@@ -46,9 +48,13 @@ function ToggleRow({ busy, checked, onToggle, children }) {
 
 
 function FilterableOption({ label, desc, children, cleanSearchNorm }) {
+  const visibleCountRef = useContext(VisibleCountContext);
+  
   if (!cleanSearchNorm) return children;
   const searchText = `${label} ${desc || ""}`.toLowerCase();
   if (!searchText.includes(cleanSearchNorm)) return null;
+  
+  if (visibleCountRef) visibleCountRef.current++;
   return children;
 }
 
@@ -57,6 +63,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
 
   const [cleanSearch, setCleanSearch] = useState("");
   const cleanSearchNorm = useMemo(() => String(cleanSearch || "").trim().toLowerCase(), [cleanSearch]);
+  const visibleOptionsCount = useRef(0);
 
 
   const dateFormats = useMemo(
@@ -352,6 +359,9 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
 
   if (!show) return null;
 
+  // Reset visible count before each render
+  visibleOptionsCount.current = 0;
+
   return (
     <div className={FileExplorerStyles.cleanPanel} role="dialog" aria-label="Data cleaning">
       <IconButton
@@ -386,8 +396,9 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
 
 
 
-      <div className={FileExplorerStyles.cleanBody}>
-        <div className={FileExplorerStyles.cleanSection}>
+      <VisibleCountContext.Provider value={visibleOptionsCount}>
+        <div className={FileExplorerStyles.cleanBody}>
+          <div className={FileExplorerStyles.cleanSection}>
 
           <FilterableOption label="Remove duplicates" desc="Keep only the first occurrence of identical rows." cleanSearchNorm={cleanSearchNorm}>
             <div className={FileExplorerStyles.cleanRow}>
@@ -993,21 +1004,22 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
               </ToggleRow>
             </div>
           </FilterableOption>
-          <div className={FileExplorerStyles.cleanRow}>
-            <div className={FileExplorerStyles.cleanSwitchCol}>
-              <Switch
-                checked={opts.stripPrefix}
-                onChange={(v) => update("stripPrefix", v)}
-                height={20}
-                width={40}
-                handleDiameter={16}
-                offColor="#888"
-                onColor="#9ABDDC"
-                disabled={busy}
-              />
-            </div>
+          
+          <FilterableOption label="Strip prefix" desc="Remove a fixed prefix if present." cleanSearchNorm={cleanSearchNorm}>
+            <div className={FileExplorerStyles.cleanRow}>
+              <div className={FileExplorerStyles.cleanSwitchCol}>
+                <Switch
+                  checked={opts.stripPrefix}
+                  onChange={(v) => update("stripPrefix", v)}
+                  height={20}
+                  width={40}
+                  handleDiameter={16}
+                  offColor="#888"
+                  onColor="#9ABDDC"
+                  disabled={busy}
+                />
+              </div>
 
-            <FilterableOption label="Strip prefix" desc="Remove a fixed prefix if present." cleanSearchNorm={cleanSearchNorm}>
               <ToggleRow busy={busy} checked={opts.stripPrefix} onToggle={(v) => update("stripPrefix", v)}>
                 <div className={FileExplorerStyles.cleanLabel}>Strip prefix</div>
                 <div className={FileExplorerStyles.cleanDesc}>Remove a fixed prefix if present.</div>
@@ -1023,8 +1035,8 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                   />
                 </div>
               </ToggleRow>
-            </FilterableOption>
-          </div>
+            </div>
+          </FilterableOption>
 
           <FilterableOption label="Strip suffix" desc="Remove a fixed suffix if present." cleanSearchNorm={cleanSearchNorm}>
             <div className={FileExplorerStyles.cleanRow}>
@@ -1620,8 +1632,9 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
           </FilterableOption>
         </div>
       </div>
+      </VisibleCountContext.Provider>
 
-      {cleanSearchNorm && (
+      {cleanSearchNorm && visibleOptionsCount.current === 0 && (
         <div 
           style={{ 
             fontStyle: 'italic', 
