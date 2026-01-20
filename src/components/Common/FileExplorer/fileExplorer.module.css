@@ -622,10 +622,12 @@
   background: var(--background-color-card);
 }
 
-.cleanHeaderText {
+.cleanHeaderRow {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
 }
 
 .cleanTitle {
@@ -639,6 +641,7 @@
   font-weight: 450;
   color: var(--text-color-tertiary);
 }
+
 
 .cleanBody {
   flex: 1 1 auto;
@@ -1044,13 +1047,6 @@
   overflow: auto;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   white-space: pre;
-}
-
-.cleanHeaderRow2 {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
 }
 
 .cleanHeaderSearch {

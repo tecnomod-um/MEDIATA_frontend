@@ -20,31 +20,31 @@ jest.mock("react-switch", () => {
   };
 });
 
+// Mock JsonMapEditor
+jest.mock("./jsonMapEditor.js", () => {
+  return {
+    __esModule: true,
+    default: ({ busy, enabled, label, valueText, onChangeText }) => (
+      <div data-testid="json-map-editor">
+        <label>{label}</label>
+        <textarea
+          value={valueText}
+          onChange={(e) => onChangeText?.(e.target.value)}
+          disabled={busy || !enabled}
+          data-testid={`json-map-${label.toLowerCase()}`}
+        />
+      </div>
+    ),
+  };
+});
+
 describe('CleanPanel', () => {
   const defaultProps = {
     show: true,
     onClose: jest.fn(),
     busy: false,
-    removeDuplicates: false,
-    setRemoveDuplicates: jest.fn(),
-    removeEmptyRows: false,
-    setRemoveEmptyRows: jest.fn(),
-    standardizeDates: false,
-    setStandardizeDates: jest.fn(),
-    selectedDateFormat: 'YYYY-MM-DD',
-    setSelectedDateFormat: jest.fn(),
-    dateFormats: [
-      { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD' },
-      { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY' },
-    ],
-    standardizeNumeric: false,
-    setStandardizeNumeric: jest.fn(),
-    numericMode: 'double',
-    setNumericMode: jest.fn(),
-    numericColumnsText: '',
-    setNumericColumnsText: jest.fn(),
     selectedCount: 5,
-    applyClean: jest.fn(),
+    onApply: jest.fn(),
   };
 
   beforeEach(() => {
@@ -61,30 +61,89 @@ describe('CleanPanel', () => {
     expect(screen.getByRole('dialog', { name: /data cleaning/i })).toBeInTheDocument();
   });
 
-  it('displays correct title and subtitle', () => {
+  it('displays title and subtitle', () => {
     render(<CleanPanel {...defaultProps} />);
     expect(screen.getByText('Data cleaning')).toBeInTheDocument();
-    expect(screen.getByText(/Configure altering preprocessing steps/i)).toBeInTheDocument();
+    expect(screen.getByText(/Configure preprocessing steps/i)).toBeInTheDocument();
   });
 
-  it('displays selected count for multiple files', () => {
-    render(<CleanPanel {...defaultProps} selectedCount={3} />);
-    expect(screen.getByText(/Applying to the selected 3 files/i)).toBeInTheDocument();
+  it('displays search input in header row', () => {
+    render(<CleanPanel {...defaultProps} />);
+    const searchInput = screen.getByPlaceholderText(/search steps/i);
+    expect(searchInput).toBeInTheDocument();
+    expect(searchInput).toHaveAttribute('aria-label', 'Search cleaning steps');
   });
 
-  it('displays selected count for single file', () => {
-    render(<CleanPanel {...defaultProps} selectedCount={1} />);
-    expect(screen.getByText(/Applying to the selected file/i)).toBeInTheDocument();
+  it('filters options based on search input', () => {
+    render(<CleanPanel {...defaultProps} />);
+    const searchInput = screen.getByPlaceholderText(/search steps/i);
+    
+    // Initially, multiple options should be visible
+    expect(screen.getByText('Remove duplicates')).toBeInTheDocument();
+    expect(screen.getByText('Trim whitespace')).toBeInTheDocument();
+    expect(screen.getByText('Standardize dates')).toBeInTheDocument();
+    
+    // Search for "duplicate"
+    fireEvent.change(searchInput, { target: { value: 'duplicate' } });
+    
+    // Only "Remove duplicates" should be visible
+    expect(screen.getByText('Remove duplicates')).toBeInTheDocument();
+    expect(screen.queryByText('Trim whitespace')).not.toBeInTheDocument();
   });
 
-  it('displays enabled steps count', () => {
-    render(<CleanPanel {...defaultProps} removeDuplicates={true} standardizeDates={true} />);
-    expect(screen.getByText(/2 steps selected/i)).toBeInTheDocument();
+  it('filters options based on description text', () => {
+    render(<CleanPanel {...defaultProps} />);
+    const searchInput = screen.getByPlaceholderText(/search steps/i);
+    
+    // Search for a word from description
+    fireEvent.change(searchInput, { target: { value: 'whitespace' } });
+    
+    // Options with "whitespace" in description should be visible
+    expect(screen.getByText('Trim whitespace')).toBeInTheDocument();
+    expect(screen.getByText('Remove extra spaces')).toBeInTheDocument();
+    expect(screen.getByText('Normalize text')).toBeInTheDocument();
   });
 
-  it('displays singular step count', () => {
-    render(<CleanPanel {...defaultProps} removeDuplicates={true} />);
+  it('search is case-insensitive', () => {
+    render(<CleanPanel {...defaultProps} />);
+    const searchInput = screen.getByPlaceholderText(/search steps/i);
+    
+    fireEvent.change(searchInput, { target: { value: 'DATES' } });
+    expect(screen.getByText('Standardize dates')).toBeInTheDocument();
+    
+    fireEvent.change(searchInput, { target: { value: 'dAtEs' } });
+    expect(screen.getByText('Standardize dates')).toBeInTheDocument();
+  });
+
+  it('clears search filter when input is empty', () => {
+    render(<CleanPanel {...defaultProps} />);
+    const searchInput = screen.getByPlaceholderText(/search steps/i);
+    
+    // Apply filter
+    fireEvent.change(searchInput, { target: { value: 'duplicate' } });
+    expect(screen.queryByText('Trim whitespace')).not.toBeInTheDocument();
+    
+    // Clear filter
+    fireEvent.change(searchInput, { target: { value: '' } });
+    expect(screen.getByText('Trim whitespace')).toBeInTheDocument();
+  });
+
+  it('shows step count in footer', () => {
+    render(<CleanPanel {...defaultProps} />);
+    expect(screen.getByText(/0 steps selected/i)).toBeInTheDocument();
+  });
+
+  it('updates step count when options are toggled', () => {
+    render(<CleanPanel {...defaultProps} />);
+    const switches = screen.getAllByRole('switch');
+    
+    // Enable first option
+    fireEvent.click(switches[0]);
     expect(screen.getByText(/1 step selected/i)).toBeInTheDocument();
+    
+    // Enable second option
+    fireEvent.click(switches[1]);
+    expect(screen.getByText(/2 steps selected/i)).toBeInTheDocument();
   });
 
   it('calls onClose when close button is clicked', () => {
@@ -93,149 +152,123 @@ describe('CleanPanel', () => {
     expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('toggles remove duplicates switch', () => {
-    render(<CleanPanel {...defaultProps} />);
-    const switches = screen.getAllByRole('switch');
-    
-    fireEvent.click(switches[0]);
-    expect(defaultProps.setRemoveDuplicates).toHaveBeenCalledWith(true);
-  });
-
-  it('toggles remove empty rows switch', () => {
-    render(<CleanPanel {...defaultProps} />);
-    const switches = screen.getAllByRole('switch');
-    
-    fireEvent.click(switches[1]);
-    expect(defaultProps.setRemoveEmptyRows).toHaveBeenCalledWith(true);
-  });
-
-  it('toggles standardize dates switch', () => {
-    render(<CleanPanel {...defaultProps} />);
-    const switches = screen.getAllByRole('switch');
-    
-    fireEvent.click(switches[2]);
-    expect(defaultProps.setStandardizeDates).toHaveBeenCalledWith(true);
-  });
-
-  it('toggles standardize numeric switch', () => {
-    render(<CleanPanel {...defaultProps} />);
-    const switches = screen.getAllByRole('switch');
-    
-    fireEvent.click(switches[3]);
-    expect(defaultProps.setStandardizeNumeric).toHaveBeenCalledWith(true);
-  });
-
-  it('changes date format when select is changed', () => {
-    render(<CleanPanel {...defaultProps} standardizeDates={true} />);
-    const dateSelect = screen.getByDisplayValue('YYYY-MM-DD');
-    
-    fireEvent.change(dateSelect, { target: { value: 'MM/DD/YYYY' } });
-    expect(defaultProps.setSelectedDateFormat).toHaveBeenCalledWith('MM/DD/YYYY');
-  });
-
-  it('disables date format select when standardize dates is off', () => {
-    render(<CleanPanel {...defaultProps} standardizeDates={false} />);
-    const dateSelect = screen.getByDisplayValue('YYYY-MM-DD');
-    
-    expect(dateSelect).toBeDisabled();
-  });
-
-  it('shows hint when standardize dates is disabled', () => {
-    render(<CleanPanel {...defaultProps} standardizeDates={false} />);
-    expect(screen.getByText(/Turn on to select the output format/i)).toBeInTheDocument();
-  });
-
-  it('changes numeric mode when select is changed', () => {
-    render(<CleanPanel {...defaultProps} standardizeNumeric={true} />);
-    const numericSelect = screen.getByDisplayValue(/Convert to decimal/i);
-    
-    fireEvent.change(numericSelect, { target: { value: 'int_round' } });
-    expect(defaultProps.setNumericMode).toHaveBeenCalledWith('int_round');
-  });
-
-  it('disables numeric mode select when standardize numeric is off', () => {
-    render(<CleanPanel {...defaultProps} standardizeNumeric={false} />);
-    const numericSelect = screen.getByDisplayValue(/Convert to decimal/i);
-    
-    expect(numericSelect).toBeDisabled();
-  });
-
-  it('shows hint when standardize numeric is disabled', () => {
-    render(<CleanPanel {...defaultProps} standardizeNumeric={false} />);
-    expect(screen.getByText(/Turn on to choose mode and affected columns/i)).toBeInTheDocument();
-  });
-
-  it('changes numeric columns text input', () => {
-    render(<CleanPanel {...defaultProps} standardizeNumeric={true} />);
-    const columnsInput = screen.getByPlaceholderText(/Comma-separated/i);
-    
-    fireEvent.change(columnsInput, { target: { value: 'age,height' } });
-    expect(defaultProps.setNumericColumnsText).toHaveBeenCalledWith('age,height');
-  });
-
-  it('disables numeric columns input when standardize numeric is off', () => {
-    render(<CleanPanel {...defaultProps} standardizeNumeric={false} />);
-    const columnsInput = screen.getByPlaceholderText(/Comma-separated/i);
-    
-    expect(columnsInput).toBeDisabled();
-  });
-
-  it('calls applyClean when apply button is clicked', () => {
-    render(<CleanPanel {...defaultProps} />);
-    fireEvent.click(screen.getByTitle(/apply cleaning to selected files/i));
-    expect(defaultProps.applyClean).toHaveBeenCalledTimes(1);
-  });
-
   it('calls onClose when cancel button is clicked', () => {
     render(<CleanPanel {...defaultProps} />);
     fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
     expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('disables apply button when selectedCount is 0', () => {
-    render(<CleanPanel {...defaultProps} selectedCount={0} />);
-    const applyButton = screen.getByTitle(/apply cleaning to selected files/i);
+  it('disables apply button when no steps are selected', () => {
+    render(<CleanPanel {...defaultProps} />);
+    const applyButton = screen.getByTitle(/apply cleaning/i);
     expect(applyButton).toBeDisabled();
   });
 
-  it('disables all controls when busy is true', () => {
+  it('enables apply button when steps are selected', () => {
+    render(<CleanPanel {...defaultProps} />);
+    const switches = screen.getAllByRole('switch');
+    const applyButton = screen.getByTitle(/apply cleaning/i);
+    
+    // Enable a step
+    fireEvent.click(switches[0]);
+    expect(applyButton).not.toBeDisabled();
+  });
+
+  it('disables all controls when busy', () => {
     render(<CleanPanel {...defaultProps} busy={true} />);
     
-    const applyButton = screen.getByTitle(/apply cleaning to selected files/i);
-    const cancelButton = screen.getByRole('button', { name: /cancel/i });
+    const searchInput = screen.getByPlaceholderText(/search steps/i);
     const closeButton = screen.getByLabelText(/close/i);
+    const cancelButton = screen.getByRole('button', { name: /cancel/i });
+    const applyButton = screen.getByTitle(/apply cleaning/i);
     
-    expect(applyButton).toBeDisabled();
-    expect(cancelButton).toBeDisabled();
+    expect(searchInput).toBeDisabled();
     expect(closeButton).toBeDisabled();
+    expect(cancelButton).toBeDisabled();
+    expect(applyButton).toBeDisabled();
   });
 
-  it('renders all date format options', () => {
+  it('displays correct file count message for single file', () => {
+    render(<CleanPanel {...defaultProps} selectedCount={1} />);
+    expect(screen.getByText(/Applying to the selected file/i)).toBeInTheDocument();
+  });
+
+  it('displays correct file count message for multiple files', () => {
+    render(<CleanPanel {...defaultProps} selectedCount={3} />);
+    expect(screen.getByText(/Applying to the selected 3 files/i)).toBeInTheDocument();
+  });
+
+  it('toggles remove duplicates option', () => {
     render(<CleanPanel {...defaultProps} />);
-    expect(screen.getByText('YYYY-MM-DD')).toBeInTheDocument();
-    expect(screen.getByText('MM/DD/YYYY')).toBeInTheDocument();
+    const switches = screen.getAllByRole('switch');
+    
+    expect(switches[0]).not.toBeChecked();
+    fireEvent.click(switches[0]);
+    expect(switches[0]).toBeChecked();
   });
 
-  it('renders all numeric mode options', () => {
-    render(<CleanPanel {...defaultProps} />);
-    expect(screen.getByText(/Convert to decimal \(double\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/Convert to integer \(round\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/Convert to integer \(truncate\)/i)).toBeInTheDocument();
-  });
-
-  it('shows correct labels and descriptions', () => {
+  it('shows inline hints for expandable options when disabled', () => {
     render(<CleanPanel {...defaultProps} />);
     
+    // Check that hints are shown for disabled expandable options
+    expect(screen.getByText(/Turn on to select mode/i)).toBeInTheDocument();
+    expect(screen.getByText(/Turn on to select form/i)).toBeInTheDocument();
+    expect(screen.getByText(/Turn on to select the output format/i)).toBeInTheDocument();
+  });
+
+  it('calls onApply with correct payload when apply is clicked', () => {
+    render(<CleanPanel {...defaultProps} />);
+    const switches = screen.getAllByRole('switch');
+    
+    // Enable remove duplicates
+    fireEvent.click(switches[0]);
+    
+    // Click apply
+    const applyButton = screen.getByTitle(/apply cleaning/i);
+    fireEvent.click(applyButton);
+    
+    expect(defaultProps.onApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        removeDuplicates: true,
+        removeEmptyRows: false,
+      })
+    );
+  });
+
+  it('search works with trimmed whitespace', () => {
+    render(<CleanPanel {...defaultProps} />);
+    const searchInput = screen.getByPlaceholderText(/search steps/i);
+    
+    fireEvent.change(searchInput, { target: { value: '  duplicate  ' } });
     expect(screen.getByText('Remove duplicates')).toBeInTheDocument();
-    expect(screen.getByText(/Keep only the first occurrence of identical rows/i)).toBeInTheDocument();
+  });
+
+  it('handles complex search queries', () => {
+    render(<CleanPanel {...defaultProps} />);
+    const searchInput = screen.getByPlaceholderText(/search steps/i);
     
-    expect(screen.getByText('Remove empty rows')).toBeInTheDocument();
-    expect(screen.getByText(/Drop rows where every cell is blank/i)).toBeInTheDocument();
+    // Search for "email" - should find email-related options
+    fireEvent.change(searchInput, { target: { value: 'email' } });
+    expect(screen.getByText('Extract email domain')).toBeInTheDocument();
+    expect(screen.getByText('Validate emails')).toBeInTheDocument();
+  });
+
+  it('preserves enabled state when searching', () => {
+    render(<CleanPanel {...defaultProps} />);
+    const switches = screen.getAllByRole('switch');
+    const searchInput = screen.getByPlaceholderText(/search steps/i);
     
-    expect(screen.getByText('Standardize dates')).toBeInTheDocument();
-    expect(screen.getByText(/Convert recognized date columns/i)).toBeInTheDocument();
+    // Enable first option
+    fireEvent.click(switches[0]);
     
-    expect(screen.getByText('Standardize numeric fields')).toBeInTheDocument();
-    expect(screen.getByText(/Coerce selected columns into a consistent numeric type/i)).toBeInTheDocument();
+    // Apply search that hides the option
+    fireEvent.change(searchInput, { target: { value: 'dates' } });
+    
+    // Clear search
+    fireEvent.change(searchInput, { target: { value: '' } });
+    
+    // Option should still be enabled
+    const allSwitches = screen.getAllByRole('switch');
+    expect(allSwitches[0]).toBeChecked();
   });
 });

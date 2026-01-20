@@ -363,23 +363,19 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
       </IconButton>
 
       <div className={FileExplorerStyles.cleanHeader}>
-        <div className={FileExplorerStyles.cleanHeaderText}>
+        <div className={FileExplorerStyles.cleanHeaderRow}>
           <div className={FileExplorerStyles.cleanTitle}>Data cleaning</div>
-
-          <div className={FileExplorerStyles.cleanHeaderRow2}>
-            <div className={FileExplorerStyles.cleanSubtitle}>
-              Configure preprocessing steps for the selected file{selectedCount === 1 ? "" : "s"}.
-            </div>
-
-            <input
-              className={FileExplorerStyles.cleanHeaderSearch}
-              value={cleanSearch}
-              onChange={(e) => setCleanSearch(e.target.value)}
-              placeholder="Search steps…"
-              disabled={busy}
-              aria-label="Search cleaning steps"
-            />
-          </div>
+          <input
+            className={FileExplorerStyles.cleanHeaderSearch}
+            value={cleanSearch}
+            onChange={(e) => setCleanSearch(e.target.value)}
+            placeholder="Search steps…"
+            disabled={busy}
+            aria-label="Search cleaning steps"
+          />
+        </div>
+        <div className={FileExplorerStyles.cleanSubtitle}>
+          Configure preprocessing steps for the selected file{selectedCount === 1 ? "" : "s"}.
         </div>
       </div>
 
