@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Switch from "react-switch";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
@@ -64,6 +64,16 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
   const [cleanSearch, setCleanSearch] = useState("");
   const cleanSearchNorm = useMemo(() => String(cleanSearch || "").trim().toLowerCase(), [cleanSearch]);
   const visibleOptionsCount = useRef(0);
+  const [showNoResults, setShowNoResults] = useState(false);
+
+  // Update showNoResults after render based on actual visible count
+  useLayoutEffect(() => {
+    if (cleanSearchNorm) {
+      setShowNoResults(visibleOptionsCount.current === 0);
+    } else {
+      setShowNoResults(false);
+    }
+  }, [cleanSearchNorm, visibleOptionsCount.current]);
 
 
   const dateFormats = useMemo(
@@ -1634,13 +1644,17 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
       </div>
       </VisibleCountContext.Provider>
 
-      {cleanSearchNorm && visibleOptionsCount.current === 0 && (
+      {showNoResults && (
         <div 
           style={{ 
             fontStyle: 'italic', 
             color: 'var(--text-color-secondary)', 
-            padding: '12px 0', 
-            textAlign: 'center' 
+            padding: '40px 20px',
+            textAlign: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '200px'
           }} 
           id="cleanPanelNoResults"
         >
