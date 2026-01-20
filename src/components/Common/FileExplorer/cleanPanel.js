@@ -367,18 +367,18 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
       <div className={FileExplorerStyles.cleanHeader}>
         <div className={FileExplorerStyles.cleanHeaderRow}>
           <div className={FileExplorerStyles.cleanTitle}>Data cleaning</div>
-          <input
-            className={FileExplorerStyles.cleanHeaderSearch}
-            value={cleanSearch}
-            onChange={(e) => setCleanSearch(e.target.value)}
-            placeholder="Search steps…"
-            disabled={busy}
-            aria-label="Search cleaning steps"
-          />
         </div>
         <div className={FileExplorerStyles.cleanSubtitle}>
           Configure preprocessing steps for the selected file{selectedCount === 1 ? "" : "s"}.
         </div>
+        <input
+          className={FileExplorerStyles.cleanHeaderSearch}
+          value={cleanSearch}
+          onChange={(e) => setCleanSearch(e.target.value)}
+          placeholder="Search steps…"
+          disabled={busy}
+          aria-label="Search cleaning steps"
+        />
       </div>
 
 
@@ -1003,53 +1003,57 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
               />
             </div>
 
-            <ToggleRow busy={busy} checked={opts.stripPrefix} onToggle={(v) => update("stripPrefix", v)}>
-              <div className={FileExplorerStyles.cleanLabel}>Strip prefix</div>
-              <div className={FileExplorerStyles.cleanDesc}>Remove a fixed prefix if present.</div>
+            <FilterableOption label="Strip prefix" desc="Remove a fixed prefix if present." cleanSearchNorm={cleanSearchNorm}>
+              <ToggleRow busy={busy} checked={opts.stripPrefix} onToggle={(v) => update("stripPrefix", v)}>
+                <div className={FileExplorerStyles.cleanLabel}>Strip prefix</div>
+                <div className={FileExplorerStyles.cleanDesc}>Remove a fixed prefix if present.</div>
 
-              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
-                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Prefix</div>
-                <input
-                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                  value={opts.prefixToStrip}
-                  onChange={(e) => update("prefixToStrip", e.target.value)}
-                  disabled={busy || !opts.stripPrefix}
-                  placeholder="e.g. ID-"
-                />
-              </div>
-            </ToggleRow>
+                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Prefix</div>
+                  <input
+                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                    value={opts.prefixToStrip}
+                    onChange={(e) => update("prefixToStrip", e.target.value)}
+                    disabled={busy || !opts.stripPrefix}
+                    placeholder="e.g. ID-"
+                  />
+                </div>
+              </ToggleRow>
+            </FilterableOption>
           </div>
 
-          <div className={FileExplorerStyles.cleanRow}>
-            <div className={FileExplorerStyles.cleanSwitchCol}>
-              <Switch
-                checked={opts.stripSuffix}
-                onChange={(v) => update("stripSuffix", v)}
-                height={20}
-                width={40}
-                handleDiameter={16}
-                offColor="#888"
-                onColor="#9ABDDC"
-                disabled={busy}
-              />
+          <FilterableOption label="Strip suffix" desc="Remove a fixed suffix if present." cleanSearchNorm={cleanSearchNorm}>
+            <div className={FileExplorerStyles.cleanRow}>
+              <div className={FileExplorerStyles.cleanSwitchCol}>
+                <Switch
+                  checked={opts.stripSuffix}
+                  onChange={(v) => update("stripSuffix", v)}
+                  height={20}
+                  width={40}
+                  handleDiameter={16}
+                  offColor="#888"
+                  onColor="#9ABDDC"
+                  disabled={busy}
+                />
+              </div>
+
+              <ToggleRow busy={busy} checked={opts.stripSuffix} onToggle={(v) => update("stripSuffix", v)}>
+                <div className={FileExplorerStyles.cleanLabel}>Strip suffix</div>
+                <div className={FileExplorerStyles.cleanDesc}>Remove a fixed suffix if present.</div>
+
+                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Suffix</div>
+                  <input
+                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                    value={opts.suffixToStrip}
+                    onChange={(e) => update("suffixToStrip", e.target.value)}
+                    disabled={busy || !opts.stripSuffix}
+                    placeholder="e.g. _old"
+                  />
+                </div>
+              </ToggleRow>
             </div>
-
-            <ToggleRow busy={busy} checked={opts.stripSuffix} onToggle={(v) => update("stripSuffix", v)}>
-              <div className={FileExplorerStyles.cleanLabel}>Strip suffix</div>
-              <div className={FileExplorerStyles.cleanDesc}>Remove a fixed suffix if present.</div>
-
-              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
-                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Suffix</div>
-                <input
-                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                  value={opts.suffixToStrip}
-                  onChange={(e) => update("suffixToStrip", e.target.value)}
-                  disabled={busy || !opts.stripSuffix}
-                  placeholder="e.g. _old"
-                />
-              </div>
-            </ToggleRow>
-          </div>
+          </FilterableOption>
 
           <div className={FileExplorerStyles.cleanRow}>
             <div className={FileExplorerStyles.cleanSwitchCol}>
