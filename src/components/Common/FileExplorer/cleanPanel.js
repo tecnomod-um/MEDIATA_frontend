@@ -562,7 +562,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
         </div>
 
         <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Standardize case" desc="Convert text into a consistent casing." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Remove special characters" desc="Remove non alphanumeric symbols (keeps basic separators)." cleanSearchNorm={cleanSearchNorm}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
