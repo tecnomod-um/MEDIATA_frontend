@@ -366,20 +366,24 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
 
       <div className={FileExplorerStyles.cleanHeader}>
         <div className={FileExplorerStyles.cleanHeaderRow}>
-          <div className={FileExplorerStyles.cleanTitle}>Data cleaning</div>
+          <div className={FileExplorerStyles.cleanHeaderLeft}>
+            <div className={FileExplorerStyles.cleanTitle}>Data cleaning</div>
+            <div className={FileExplorerStyles.cleanSubtitle}>
+              Configure preprocessing steps for the selected file{selectedCount === 1 ? "" : "s"}.
+            </div>
+          </div>
+
+          <input
+            className={FileExplorerStyles.cleanHeaderSearch}
+            value={cleanSearch}
+            onChange={(e) => setCleanSearch(e.target.value)}
+            placeholder="Search steps…"
+            disabled={busy}
+            aria-label="Search cleaning steps"
+          />
         </div>
-        <div className={FileExplorerStyles.cleanSubtitle}>
-          Configure preprocessing steps for the selected file{selectedCount === 1 ? "" : "s"}.
-        </div>
-        <input
-          className={FileExplorerStyles.cleanHeaderSearch}
-          value={cleanSearch}
-          onChange={(e) => setCleanSearch(e.target.value)}
-          placeholder="Search steps…"
-          disabled={busy}
-          aria-label="Search cleaning steps"
-        />
       </div>
+
 
 
       <div className={FileExplorerStyles.cleanBody}>
@@ -861,134 +865,134 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
         </div>
 
         <div className={FileExplorerStyles.cleanSection}>
-        <FilterableOption label="Fill missing values" desc="Fill blanks using statistical or rule-based strategies." cleanSearchNorm={cleanSearchNorm}>
-          <div className={FileExplorerStyles.cleanRow}>
-            <div className={FileExplorerStyles.cleanSwitchCol}>
-              <Switch
-                checked={opts.fillMissingValues}
-                onChange={(v) => update("fillMissingValues", v)}
-                height={20}
-                width={40}
-                handleDiameter={16}
-                offColor="#888"
-                onColor="#9ABDDC"
-                disabled={busy}
-              />
-            </div>
-            <ToggleRow busy={busy} checked={opts.fillMissingValues} onToggle={(v) => update("fillMissingValues", v)}>
-              <div className={FileExplorerStyles.cleanLabelRow}>
-                <div className={FileExplorerStyles.cleanLabel}>Fill missing values</div>
-                <span
-                  className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.fillMissingValues
-                    ? FileExplorerStyles.cleanInlineHintShow
-                    : FileExplorerStyles.cleanInlineHintHide
-                    }`}
-                  aria-hidden={!(busy || !opts.fillMissingValues)}
-                >
-                  (Turn on to configure)
-                </span>
-              </div>
-
-              <div className={FileExplorerStyles.cleanDesc}>Fill blanks using statistical or rule-based strategies.</div>
-
-              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
-                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Strategy</div>
-                <select
-                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                  value={opts.fillStrategy}
-                  onChange={(e) => update("fillStrategy", e.target.value)}
-                  disabled={busy || !opts.fillMissingValues}
-
-                >
-                  <option value="mean">Mean</option>
-                  <option value="median">Median</option>
-                  <option value="mode">Mode</option>
-                  <option value="constant">Constant</option>
-                  <option value="forward">Forward fill</option>
-                  <option value="backward">Backward fill</option>
-                  <option value="interpolate">Interpolate</option>
-                </select>
-              </div>
-
-              {opts.fillMissingValues && opts.fillStrategy === "constant" && (
-                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
-                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Constant</div>
-                  <input
-                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                    value={opts.fillConstantValue}
-                    onChange={(e) => update("fillConstantValue", e.target.value)}
-                    disabled={busy}
-                    placeholder="Value to use for blanks"
-                  />
-                </div>
-              )}
-
-              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
-                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Columns</div>
-                <input
-                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                  value={(opts.fillColumns || []).join(",")}
-                  onChange={(e) => update("fillColumns", toList(e.target.value))}
-                  disabled={busy || !opts.fillMissingValues}
-                  placeholder="Blank = all columns; or list: colA,colB"
+          <FilterableOption label="Fill missing values" desc="Fill blanks using statistical or rule-based strategies." cleanSearchNorm={cleanSearchNorm}>
+            <div className={FileExplorerStyles.cleanRow}>
+              <div className={FileExplorerStyles.cleanSwitchCol}>
+                <Switch
+                  checked={opts.fillMissingValues}
+                  onChange={(v) => update("fillMissingValues", v)}
+                  height={20}
+                  width={40}
+                  handleDiameter={16}
+                  offColor="#888"
+                  onColor="#9ABDDC"
+                  disabled={busy}
                 />
               </div>
-            </ToggleRow>
-          </div>
+              <ToggleRow busy={busy} checked={opts.fillMissingValues} onToggle={(v) => update("fillMissingValues", v)}>
+                <div className={FileExplorerStyles.cleanLabelRow}>
+                  <div className={FileExplorerStyles.cleanLabel}>Fill missing values</div>
+                  <span
+                    className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.fillMissingValues
+                      ? FileExplorerStyles.cleanInlineHintShow
+                      : FileExplorerStyles.cleanInlineHintHide
+                      }`}
+                    aria-hidden={!(busy || !opts.fillMissingValues)}
+                  >
+                    (Turn on to configure)
+                  </span>
+                </div>
+
+                <div className={FileExplorerStyles.cleanDesc}>Fill blanks using statistical or rule-based strategies.</div>
+
+                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
+                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Strategy</div>
+                  <select
+                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                    value={opts.fillStrategy}
+                    onChange={(e) => update("fillStrategy", e.target.value)}
+                    disabled={busy || !opts.fillMissingValues}
+
+                  >
+                    <option value="mean">Mean</option>
+                    <option value="median">Median</option>
+                    <option value="mode">Mode</option>
+                    <option value="constant">Constant</option>
+                    <option value="forward">Forward fill</option>
+                    <option value="backward">Backward fill</option>
+                    <option value="interpolate">Interpolate</option>
+                  </select>
+                </div>
+
+                {opts.fillMissingValues && opts.fillStrategy === "constant" && (
+                  <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
+                    <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Constant</div>
+                    <input
+                      className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                      value={opts.fillConstantValue}
+                      onChange={(e) => update("fillConstantValue", e.target.value)}
+                      disabled={busy}
+                      placeholder="Value to use for blanks"
+                    />
+                  </div>
+                )}
+
+                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
+                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Columns</div>
+                  <input
+                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                    value={(opts.fillColumns || []).join(",")}
+                    onChange={(e) => update("fillColumns", toList(e.target.value))}
+                    disabled={busy || !opts.fillMissingValues}
+                    placeholder="Blank = all columns; or list: colA,colB"
+                  />
+                </div>
+              </ToggleRow>
+            </div>
           </FilterableOption>
         </div>
 
         <div className={FileExplorerStyles.cleanSection}>
-        <FilterableOption label="Replace values" desc="Replace exact matches using a JSON object map (old_value → new_value)." cleanSearchNorm={cleanSearchNorm}>
-          <div className={FileExplorerStyles.cleanRow}>
-            <div className={FileExplorerStyles.cleanSwitchCol}>
-              <Switch
-                checked={opts.replaceValues}
-                onChange={(v) => update("replaceValues", v)}
-                height={20}
-                width={40}
-                handleDiameter={16}
-                offColor="#888"
-                onColor="#9ABDDC"
-                disabled={busy}
-              />
+          <FilterableOption label="Replace values" desc="Replace exact matches using a JSON object map (old_value → new_value)." cleanSearchNorm={cleanSearchNorm}>
+            <div className={FileExplorerStyles.cleanRow}>
+              <div className={FileExplorerStyles.cleanSwitchCol}>
+                <Switch
+                  checked={opts.replaceValues}
+                  onChange={(v) => update("replaceValues", v)}
+                  height={20}
+                  width={40}
+                  handleDiameter={16}
+                  offColor="#888"
+                  onColor="#9ABDDC"
+                  disabled={busy}
+                />
+              </div>
+
+              <ToggleRow busy={busy} checked={opts.replaceValues} onToggle={(v) => update("replaceValues", v)}>
+                <div className={FileExplorerStyles.cleanLabelRow}>
+                  <div className={FileExplorerStyles.cleanLabel}>Replace values</div>
+                  <span
+                    className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.replaceValues
+                      ? FileExplorerStyles.cleanInlineHintShow
+                      : FileExplorerStyles.cleanInlineHintHide
+                      }`}
+                    aria-hidden={!(busy || !opts.replaceValues)}
+                  >
+                    (Turn on to provide map)
+                  </span>
+                </div>
+
+                <div className={FileExplorerStyles.cleanDesc}>
+                  Replace exact matches using a JSON object map (old_value → new_value).
+                </div>
+
+                <JsonMapEditor
+                  busy={busy}
+                  enabled={opts.replaceValues}
+                  label="Map"
+                  description="Replace exact matches (key → value)."
+                  valueText={replacementMapText}
+                  onChangeText={setReplacementMapText}
+                  allowEmpty={false}
+                  examples={[
+                    { name: "Common cleanup", value: { NA: "", N_A: "", null: "" } },
+                    { name: "Yes/No", value: { yes: "true", no: "false" } },
+                  ]}
+                />
+
+              </ToggleRow>
             </div>
-
-            <ToggleRow busy={busy} checked={opts.replaceValues} onToggle={(v) => update("replaceValues", v)}>
-              <div className={FileExplorerStyles.cleanLabelRow}>
-                <div className={FileExplorerStyles.cleanLabel}>Replace values</div>
-                <span
-                  className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.replaceValues
-                    ? FileExplorerStyles.cleanInlineHintShow
-                    : FileExplorerStyles.cleanInlineHintHide
-                    }`}
-                  aria-hidden={!(busy || !opts.replaceValues)}
-                >
-                  (Turn on to provide map)
-                </span>
-              </div>
-
-              <div className={FileExplorerStyles.cleanDesc}>
-                Replace exact matches using a JSON object map (old_value → new_value).
-              </div>
-
-              <JsonMapEditor
-                busy={busy}
-                enabled={opts.replaceValues}
-                label="Map"
-                description="Replace exact matches (key → value)."
-                valueText={replacementMapText}
-                onChangeText={setReplacementMapText}
-                allowEmpty={false}
-                examples={[
-                  { name: "Common cleanup", value: { NA: "", N_A: "", null: "" } },
-                  { name: "Yes/No", value: { yes: "true", no: "false" } },
-                ]}
-              />
-
-            </ToggleRow>
-          </div>
-        </FilterableOption>
+          </FilterableOption>
           <div className={FileExplorerStyles.cleanRow}>
             <div className={FileExplorerStyles.cleanSwitchCol}>
               <Switch
