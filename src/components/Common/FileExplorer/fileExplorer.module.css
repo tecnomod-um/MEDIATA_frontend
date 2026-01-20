@@ -673,7 +673,6 @@
   overflow: hidden;
 }
 
-/* Rows */
 .cleanRow {
   display: grid;
   grid-template-columns: 56px 1fr;
@@ -710,7 +709,6 @@
   line-height: 1.35;
 }
 
-/* Inline field rows: label left, control right */
 .cleanFieldRow {
   margin-top: 10px;
   display: grid;
@@ -725,7 +723,6 @@
   color: var(--text-color-secondary);
 }
 
-/* Shared control styling (select + input) */
 .cleanControl {
   height: 34px;
   border-radius: 10px;
@@ -804,7 +801,6 @@
   gap: 10px;
 }
 
-/* Buttons: reduce bold */
 .cleanApply {
   height: 36px;
   padding: 0 14px;
@@ -872,8 +868,210 @@
   background: color-mix(in srgb, var(--text-color-primary) 10%, transparent) !important;
 }
 
+.cleanCheckboxLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-color-secondary);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.cleanCheckboxLabel input[type="checkbox"] {
+  flex: 0 0 auto;
+}
+
 @media (max-width: 720px) {
   .cleanFieldRow {
     grid-template-columns: 1fr;
   }
+}
+
+.cleanPanel input[type="checkbox"] {
+  -webkit-appearance: checkbox;
+  appearance: checkbox;
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+.cleanPanel input[type="checkbox"] {
+  accent-color: var(--button-color);
+}
+
+.cleanMainColToggle {
+  cursor: pointer;
+}
+
+.cleanMainColToggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--button-color) 18%, transparent);
+  border-radius: 10px;
+}
+
+
+
+/* Add to fileExplorer.module.css */
+
+/* --- JSON map editor polish (uses existing theme vars) --- */
+.jsonMapTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.jsonMapMeta {
+  min-width: 0;
+  padding-top: 1px;
+}
+
+.jsonMapDesc {
+  font-size: 12.5px;
+  color: var(--text-color-secondary);
+  line-height: 1.35;
+  margin-bottom: 4px;
+}
+
+.jsonMapCount {
+  font-size: 12px;
+  color: var(--text-color-tertiary);
+}
+
+.jsonMapMuted {
+  font-size: 12px;
+  color: var(--text-color-tertiary);
+}
+
+.jsonMapError {
+  font-size: 12px;
+  color: var(--error-color);
+  font-weight: 600;
+}
+
+.jsonMapActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.jsonMapBody {
+  margin-top: 10px;
+}
+
+/* Raw JSON textarea */
+.jsonMapTextarea {
+  height: 160px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Table mode */
+.jsonMapTable {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.jsonMapHeaderRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 34px;
+  gap: 8px;
+  align-items: center;
+}
+
+.jsonMapHeaderCell {
+  font-size: 12px;
+  color: var(--text-color-tertiary);
+}
+
+.jsonMapRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 34px;
+  gap: 8px;
+  align-items: center;
+}
+
+.jsonMapIconBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--background-color-1);
+  background: var(--background-color-card);
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+}
+
+.jsonMapIconBtn:hover:not(:disabled) {
+  background: var(--background-color-2);
+  color: var(--text-color-primary);
+}
+
+.jsonMapIconBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.jsonMapEmpty {
+  font-size: 12px;
+  color: var(--text-color-tertiary);
+  padding: 2px 0;
+}
+
+.jsonMapFooter {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+/* JSON preview under the "Map" label (left column) */
+.jsonMapPreview {
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--background-color-1);
+  background: var(--background-color-3);
+  color: var(--text-color-primary);
+  font-size: 12px;
+  line-height: 1.35;
+  max-height: 220px;
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  white-space: pre;
+}
+
+.cleanHeaderRow2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cleanHeaderSearch {
+  height: 34px;
+  min-width: 240px;
+  max-width: 420px;
+  width: 40%;
+  border-radius: 10px;
+  border: 1px solid var(--background-color-1);
+  padding: 0 12px;
+  background: var(--background-color-card);
+  color: var(--text-color-primary);
+}
+
+.cleanHeaderSearch:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--button-color) 55%, var(--background-color-1));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--button-color) 18%, transparent);
+}
+
+.cleanHeaderSearch:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
