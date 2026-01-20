@@ -1071,3 +1071,12 @@
   opacity: 0.65;
   cursor: not-allowed;
 }
+
+/* Hide empty sections when all children are filtered out */
+.cleanSection:empty {
+  display: none;
+}
+
+.cleanSection:has(> .cleanRow:only-child:empty) {
+  display: none;
+}
