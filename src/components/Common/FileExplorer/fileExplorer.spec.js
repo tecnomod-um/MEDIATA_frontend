@@ -206,34 +206,18 @@ describe("FileExplorer sub-components", () => {
       show: true,
       onClose: jest.fn(),
       busy: false,
-      removeDuplicates: false,
-      setRemoveDuplicates: jest.fn(),
-      removeEmptyRows: false,
-      setRemoveEmptyRows: jest.fn(),
-      standardizeDates: false,
-      setStandardizeDates: jest.fn(),
-      selectedDateFormat: "YYYY-MM-DD",
-      setSelectedDateFormat: jest.fn(),
-      dateFormats: [
-        { value: "YYYY-MM-DD", label: "YYYY-MM-DD" },
-        { value: "DD/MM/YYYY", label: "DD/MM/YYYY" },
-      ],
-      standardizeNumeric: false,
-      setStandardizeNumeric: jest.fn(),
-      numericMode: "double",
-      setNumericMode: jest.fn(),
       selectedCount: 2,
-      applyClean: jest.fn(),
+      onApply: jest.fn(),
     };
 
     it("renders when show is true", () => {
       render(<CleanPanel {...defaultProps} />);
-      expect(screen.getByRole("dialog", { name: /Data cleaning/i })).toBeInTheDocument();
+      expect(screen.getByText(/Data cleaning/i)).toBeInTheDocument();
     });
 
     it("does not render when show is false", () => {
       const { container } = render(<CleanPanel {...defaultProps} show={false} />);
-      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(container.firstChild).toBeNull();
     });
 
     it("renders all cleaning options", () => {
@@ -244,24 +228,24 @@ describe("FileExplorer sub-components", () => {
       expect(screen.getByText(/Standardize numeric fields/i)).toBeInTheDocument();
     });
 
-    it("calls applyClean when Apply button is clicked", () => {
-      const applyClean = jest.fn();
-      render(<CleanPanel {...defaultProps} applyClean={applyClean} />);
-      fireEvent.click(screen.getByRole("button", { name: /^Apply$/i }));
-      expect(applyClean).toHaveBeenCalled();
+    it("calls onApply when Apply button is clicked with at least one option enabled", () => {
+      const onApply = jest.fn();
+      render(<CleanPanel {...defaultProps} onApply={onApply} />);
+      
+      // Enable at least one cleaning option
+      const switches = screen.getAllByRole("switch");
+      fireEvent.click(switches[0]);
+      
+      // Click Apply button
+      const applyButton = screen.getByTitle(/apply cleaning/i);
+      fireEvent.click(applyButton);
+      expect(onApply).toHaveBeenCalled();
     });
 
     it("disables Apply button when no files are selected", () => {
       render(<CleanPanel {...defaultProps} selectedCount={0} />);
-      expect(screen.getByRole("button", { name: /^Apply$/i })).toBeDisabled();
-    });
-
-    it("changes date format when select is changed", () => {
-      const setSelectedDateFormat = jest.fn();
-      render(<CleanPanel {...defaultProps} setSelectedDateFormat={setSelectedDateFormat} standardizeDates={true} />);
-      const select = screen.getByDisplayValue("YYYY-MM-DD");
-      fireEvent.change(select, { target: { value: "DD/MM/YYYY" } });
-      expect(setSelectedDateFormat).toHaveBeenCalledWith("DD/MM/YYYY");
+      const applyButton = screen.getByTitle(/apply cleaning/i);
+      expect(applyButton).toBeDisabled();
     });
   });
 

@@ -130,6 +130,7 @@ describe('CleanPanel', () => {
 
   it('shows step count in footer', () => {
     render(<CleanPanel {...defaultProps} />);
+    // Step count is embedded in longer message: "Applying to the selected X files, Y steps selected"
     expect(screen.getByText(/0 steps selected/i)).toBeInTheDocument();
   });
 
@@ -139,10 +140,12 @@ describe('CleanPanel', () => {
     
     // Enable first option
     fireEvent.click(switches[0]);
+    // Step count appears in: "Applying to the selected 5 files, 1 step selected"
     expect(screen.getByText(/1 step selected/i)).toBeInTheDocument();
     
     // Enable second option
     fireEvent.click(switches[1]);
+    // Step count appears in: "Applying to the selected 5 files, 2 steps selected"
     expect(screen.getByText(/2 steps selected/i)).toBeInTheDocument();
   });
 
@@ -160,6 +163,7 @@ describe('CleanPanel', () => {
 
   it('disables apply button when no steps are selected', () => {
     render(<CleanPanel {...defaultProps} />);
+    // Button is disabled when enabledCount === 0 (no cleaning options enabled)
     const applyButton = screen.getByTitle(/apply cleaning/i);
     expect(applyButton).toBeDisabled();
   });
@@ -169,8 +173,13 @@ describe('CleanPanel', () => {
     const switches = screen.getAllByRole('switch');
     const applyButton = screen.getByTitle(/apply cleaning/i);
     
+    // Initially disabled
+    expect(applyButton).toBeDisabled();
+    
     // Enable a step
     fireEvent.click(switches[0]);
+    
+    // Now enabled because at least one cleaning option is selected
     expect(applyButton).not.toBeDisabled();
   });
 
