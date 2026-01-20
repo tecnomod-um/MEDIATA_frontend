@@ -937,86 +937,92 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
         </div>
 
         <div className={FileExplorerStyles.cleanSection}>
-        {matchClean("Replace values", "Replace exact matches using a JSON object map (old_value → new_value).") && (
-          <div className={FileExplorerStyles.cleanRow}>
-            <div className={FileExplorerStyles.cleanSwitchCol}>
-              <Switch
-                checked={opts.replaceValues}
-                onChange={(v) => update("replaceValues", v)}
-                height={20}
-                width={40}
-                handleDiameter={16}
-                offColor="#888"
-                onColor="#9ABDDC"
-                disabled={busy}
-              />
-            </div>
-
-            <ToggleRow busy={busy} checked={opts.replaceValues} onToggle={(v) => update("replaceValues", v)}>
-              <div className={FileExplorerStyles.cleanLabelRow}>
-                <div className={FileExplorerStyles.cleanLabel}>Replace values</div>
-                <span
-                  className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.replaceValues
-                    ? FileExplorerStyles.cleanInlineHintShow
-                    : FileExplorerStyles.cleanInlineHintHide
-                    }`}
-                  aria-hidden={!(busy || !opts.replaceValues)}
-                >
-                  (Turn on to provide map)
-                </span>
-              </div>
-
-              <div className={FileExplorerStyles.cleanDesc}>
-                Replace exact matches using a JSON object map (old_value → new_value).
-              </div>
-
-              <JsonMapEditor
-                busy={busy}
-                enabled={opts.replaceValues}
-                label="Map"
-                description="Replace exact matches (key → value)."
-                valueText={replacementMapText}
-                onChangeText={setReplacementMapText}
-                allowEmpty={false}
-                examples={[
-                  { name: "Common cleanup", value: { NA: "", N_A: "", null: "" } },
-                  { name: "Yes/No", value: { yes: "true", no: "false" } },
-                ]}
-              />
-
-            </ToggleRow>
-          </div>
-        )}
-          <div className={FileExplorerStyles.cleanRow}>
-            <div className={FileExplorerStyles.cleanSwitchCol}>
-              <Switch
-                checked={opts.stripPrefix}
-                onChange={(v) => update("stripPrefix", v)}
-                height={20}
-                width={40}
-                handleDiameter={16}
-                offColor="#888"
-                onColor="#9ABDDC"
-                disabled={busy}
-              />
-            </div>
-
-            <ToggleRow busy={busy} checked={opts.stripPrefix} onToggle={(v) => update("stripPrefix", v)}>
-              <div className={FileExplorerStyles.cleanLabel}>Strip prefix</div>
-              <div className={FileExplorerStyles.cleanDesc}>Remove a fixed prefix if present.</div>
-
-              <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
-                <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Prefix</div>
-                <input
-                  className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                  value={opts.prefixToStrip}
-                  onChange={(e) => update("prefixToStrip", e.target.value)}
-                  disabled={busy || !opts.stripPrefix}
-                  placeholder="e.g. ID-"
+          <FilterableOption label="Replace values" desc="Replace exact matches using a JSON object map (old_value → new_value).">
+            <div className={FileExplorerStyles.cleanRow}>
+              <div className={FileExplorerStyles.cleanSwitchCol}>
+                <Switch
+                  checked={opts.replaceValues}
+                  onChange={(v) => update("replaceValues", v)}
+                  height={20}
+                  width={40}
+                  handleDiameter={16}
+                  offColor="#888"
+                  onColor="#9ABDDC"
+                  disabled={busy}
                 />
               </div>
-            </ToggleRow>
-          </div>
+
+              <ToggleRow busy={busy} checked={opts.replaceValues} onToggle={(v) => update("replaceValues", v)}>
+                <div className={FileExplorerStyles.cleanLabelRow}>
+                  <div className={FileExplorerStyles.cleanLabel}>Replace values</div>
+                  <span
+                    className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.replaceValues
+                      ? FileExplorerStyles.cleanInlineHintShow
+                      : FileExplorerStyles.cleanInlineHintHide
+                      }`}
+                    aria-hidden={!(busy || !opts.replaceValues)}
+                  >
+                    (Turn on to provide map)
+                  </span>
+                </div>
+
+                <div className={FileExplorerStyles.cleanDesc}>
+                  Replace exact matches using a JSON object map (old_value → new_value).
+                </div>
+
+                <JsonMapEditor
+                  busy={busy}
+                  enabled={opts.replaceValues}
+                  label="Map"
+                  description="Replace exact matches (key → value)."
+                  valueText={replacementMapText}
+                  onChangeText={setReplacementMapText}
+                  allowEmpty={false}
+                  examples={[
+                    { name: "Common cleanup", value: { NA: "", N_A: "", null: "" } },
+                    { name: "Yes/No", value: { yes: "true", no: "false" } },
+                  ]}
+                />
+
+              </ToggleRow>
+            </div>
+          </FilterableOption>
+          
+          <FilterableOption label="Strip prefix" desc="Remove a fixed prefix if present.">
+            <div className={FileExplorerStyles.cleanRow}>
+              <div className={FileExplorerStyles.cleanSwitchCol}>
+                <Switch
+                  checked={opts.stripPrefix}
+                  onChange={(v) => update("stripPrefix", v)}
+                  height={20}
+                  width={40}
+                  handleDiameter={16}
+                  offColor="#888"
+                  onColor="#9ABDDC"
+                  disabled={busy}
+                />
+              </div>
+
+              <ToggleRow busy={busy} checked={opts.stripPrefix} onToggle={(v) => update("stripPrefix", v)}>
+                <div className={FileExplorerStyles.cleanLabel}>Strip prefix</div>
+                <div className={FileExplorerStyles.cleanDesc}>Remove a fixed prefix if present.</div>
+
+                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Prefix</div>
+                  <input
+                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                    value={opts.prefixToStrip}
+                    onChange={(e) => update("prefixToStrip", e.target.value)}
+                    disabled={busy || !opts.stripPrefix}
+                    placeholder="e.g. ID-"
+                  />
+                </div>
+              </ToggleRow>
+            </div>
+          </FilterableOption>
+
+          <FilterableOption label="Strip suffix" desc="Remove a fixed suffix if present.">
+            <div className={FileExplorerStyles.cleanRow}>
 
           <div className={FileExplorerStyles.cleanRow}>
             <div className={FileExplorerStyles.cleanSwitchCol}>
