@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Switch from "react-switch";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
@@ -6,8 +6,6 @@ import { toast } from "react-toastify";
 import { parseJsonObject } from "../../../util/parser";
 import FileExplorerStyles from "./fileExplorer.module.css";
 import JsonMapEditor from "./jsonMapEditor.js";
-
-const VisibleCountContext = React.createContext(null);
 
 function ToggleRow({ busy, checked, onToggle, children }) {
   const onClick = useCallback(
@@ -47,9 +45,7 @@ function ToggleRow({ busy, checked, onToggle, children }) {
 }
 
 
-function FilterableOption({ label, desc, children, cleanSearchNorm }) {
-  const visibleCountRef = useContext(VisibleCountContext);
-  
+function FilterableOption({ label, desc, children, cleanSearchNorm, visibleCountRef }) {
   if (!cleanSearchNorm) return children;
   const searchText = `${label} ${desc || ""}`.toLowerCase();
   if (!searchText.includes(cleanSearchNorm)) return null;
@@ -406,11 +402,10 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
 
 
 
-      <VisibleCountContext.Provider value={visibleOptionsCount}>
         <div className={FileExplorerStyles.cleanBody}>
           <div className={FileExplorerStyles.cleanSection}>
 
-          <FilterableOption label="Remove duplicates" desc="Keep only the first occurrence of identical rows." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Remove duplicates" desc="Keep only the first occurrence of identical rows." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -430,7 +425,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
               </ToggleRow>
             </div>
           </FilterableOption>
-          <FilterableOption label="Remove empty rows" desc="Drop rows where every cell is blank (or whitespace)." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Remove empty rows" desc="Drop rows where every cell is blank (or whitespace)." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -453,7 +448,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
         </div>
 
         <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Trim whitespace" desc="Trim leading and trailing whitespace in all cells." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Trim whitespace" desc="Trim leading and trailing whitespace in all cells." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -473,7 +468,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
               </ToggleRow>
             </div>
           </FilterableOption>
-          <FilterableOption label="Remove extra spaces" desc="Collapse repeated whitespace inside values." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Remove extra spaces" desc="Collapse repeated whitespace inside values." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -493,7 +488,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
               </ToggleRow>
             </div>
           </FilterableOption>
-          <FilterableOption label="Remove line breaks" desc="Replace CR/LF sequences with spaces." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Remove line breaks" desc="Replace CR/LF sequences with spaces." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -513,7 +508,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
               </ToggleRow>
             </div>
           </FilterableOption>
-          <FilterableOption label="Normalize text" desc="General cleanup of whitespace (safe normalization)." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Normalize text" desc="General cleanup of whitespace (safe normalization)." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -533,7 +528,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
               </ToggleRow>
             </div>
           </FilterableOption>
-          <FilterableOption label="Standardize case" desc="Convert text into a consistent casing." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Standardize case" desc="Convert text into a consistent casing." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -583,7 +578,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
         </div>
 
         <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Remove special characters" desc="Remove non alphanumeric symbols (keeps basic separators)." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Remove special characters" desc="Remove non alphanumeric symbols (keeps basic separators)." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -609,7 +604,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
               </ToggleRow>
             </div>
           </FilterableOption>
-          <FilterableOption label="Remove punctuation" desc="Strip punctuation characters." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Remove punctuation" desc="Strip punctuation characters." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -629,7 +624,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
               </ToggleRow>
             </div>
           </FilterableOption>
-          <FilterableOption label="Remove non-printable characters" desc="Strip control/non-printable Unicode characters." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Remove non-printable characters" desc="Strip control/non-printable Unicode characters." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -653,7 +648,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
               </ToggleRow>
             </div>
           </FilterableOption>
-          <FilterableOption label="Fix encoding issues" desc="Attempt to repair common mojibake encoding problems." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Fix encoding issues" desc="Attempt to repair common mojibake encoding problems." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -673,7 +668,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
               </ToggleRow>
             </div>
           </FilterableOption>
-          <FilterableOption label="Normalize Unicode" desc="Normalize Unicode representation (NFC/NFD/NFKC/NFKD)." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Normalize Unicode" desc="Normalize Unicode representation (NFC/NFD/NFKC/NFKD)." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -723,7 +718,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
         </div>
 
         <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Standardize dates" desc="Convert recognized date values into a consistent output format." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Standardize dates" desc="Convert recognized date values into a consistent output format." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -787,7 +782,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
         </div>
 
         <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Standardize numeric fields" desc="Coerce selected columns into a consistent numeric type." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Standardize numeric fields" desc="Coerce selected columns into a consistent numeric type." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -886,7 +881,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
         </div>
 
         <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Fill missing values" desc="Fill blanks using statistical or rule-based strategies." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Fill missing values" desc="Fill blanks using statistical or rule-based strategies." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -964,7 +959,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
         </div>
 
         <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Replace values" desc="Replace exact matches using a JSON object map (old_value → new_value)." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Replace values" desc="Replace exact matches using a JSON object map (old_value → new_value)." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -1015,7 +1010,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
             </div>
           </FilterableOption>
           
-          <FilterableOption label="Strip prefix" desc="Remove a fixed prefix if present." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Strip prefix" desc="Remove a fixed prefix if present." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -1048,7 +1043,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
             </div>
           </FilterableOption>
 
-          <FilterableOption label="Strip suffix" desc="Remove a fixed suffix if present." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Strip suffix" desc="Remove a fixed suffix if present." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -1081,7 +1076,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
             </div>
           </FilterableOption>
 
-          <FilterableOption label="Pad values" desc="Pad strings to a minimum length." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Pad values" desc="Pad strings to a minimum length." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -1246,7 +1241,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
             </div>
           </FilterableOption>
 
-          <FilterableOption label="Extract URL components" desc="Adds protocol/domain/path/query columns for URLs." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Extract URL components" desc="Adds protocol/domain/path/query columns for URLs." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -1271,7 +1266,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
             </div>
           </FilterableOption>
 
-          <FilterableOption label="Normalize URLs" desc="Lowercase http(s) URLs and remove trailing slash." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Normalize URLs" desc="Lowercase http(s) URLs and remove trailing slash." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -1292,7 +1287,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
             </div>
           </FilterableOption>
 
-          <FilterableOption label="Standardize phone numbers" desc="Normalize phone numbers into a consistent format." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Standardize phone numbers" desc="Normalize phone numbers into a consistent format." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -1357,7 +1352,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
 
 
         <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Split column" desc="Split a column by delimiter into multiple columns." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Split column" desc="Split a column by delimiter into multiple columns." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -1423,7 +1418,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
             </div>
           </FilterableOption>
 
-          <FilterableOption label="Merge columns" desc="Concatenate multiple columns into one." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Merge columns" desc="Concatenate multiple columns into one." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -1492,7 +1487,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
 
 
         <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Remove rows with pattern" desc="Remove rows where a column matches a regex." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Remove rows with pattern" desc="Remove rows where a column matches a regex." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -1547,7 +1542,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
 
 
         <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Normalize data (min-max)" desc="Scale values to [0,1] per selected column." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Normalize data (min-max)" desc="Scale values to [0,1] per selected column." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -1585,7 +1580,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
 
 
         <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Merge similar values" desc="Fuzzy-merge similar strings using a similarity threshold." cleanSearchNorm={cleanSearchNorm}>
+          <FilterableOption label="Merge similar values" desc="Fuzzy-merge similar strings using a similarity threshold." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
             <div className={FileExplorerStyles.cleanRow}>
               <div className={FileExplorerStyles.cleanSwitchCol}>
                 <Switch
@@ -1642,7 +1637,6 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
           </FilterableOption>
         </div>
       </div>
-      </VisibleCountContext.Provider>
 
       {showNoResults && (
         <div 
