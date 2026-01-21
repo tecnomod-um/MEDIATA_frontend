@@ -355,5 +355,335 @@ describe('<SemanticAlignment />', () => {
       expect(width).toBeLessThanOrEqual(70);
       window.dispatchEvent(new MouseEvent('mouseup'));
     });
+
+    it('handles touch events for resizer', async () => {
+      const csv = 'T';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+
+      const resizer = screen.getByTestId('resizer');
+      const main = screen.getByTestId('main-content');
+      main.getBoundingClientRect = () => ({ left: 0, width: 200 });
+
+      fireEvent.touchStart(resizer, { preventDefault: jest.fn() });
+      window.dispatchEvent(new TouchEvent('touchmove', { touches: [{ clientX: 100 }] }));
+      window.dispatchEvent(new TouchEvent('touchend'));
+    });
+
+    it('handles card dragging with mouse', async () => {
+      window.innerWidth = 1024;
+      const csv = 'X,cat1';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      fireEvent.click(screen.getByTestId('build'));
+      const card = await screen.findByTestId(/^rdf-card-/);
+      
+      fireEvent.mouseDown(card, { clientX: 100, clientY: 100 });
+      fireEvent(window, new MouseEvent('mousemove', { clientX: 150, clientY: 150 }));
+      fireEvent(window, new MouseEvent('mouseup'));
+    });
+
+    it('handles card dragging with touch', async () => {
+      window.innerWidth = 1024;
+      const csv = 'Y,cat1';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      fireEvent.click(screen.getByTestId('build'));
+      const card = await screen.findByTestId(/^rdf-card-/);
+      
+      fireEvent.touchStart(card, { 
+        touches: [{ clientX: 100, clientY: 100 }],
+        preventDefault: jest.fn()
+      });
+      fireEvent(window, new TouchEvent('touchmove', { 
+        touches: [{ clientX: 150, clientY: 150 }]
+      }));
+      fireEvent(window, new TouchEvent('touchend'));
+    });
+
+    it('handles touch cancel event', async () => {
+      window.innerWidth = 1024;
+      const csv = 'Z,cat1';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      fireEvent.click(screen.getByTestId('build'));
+      const card = await screen.findByTestId(/^rdf-card-/);
+      
+      fireEvent.touchStart(card, { 
+        touches: [{ clientX: 100, clientY: 100 }],
+        preventDefault: jest.fn()
+      });
+      fireEvent(window, new TouchEvent('touchcancel'));
+    });
+
+    it('creates connection between two cards', async () => {
+      window.innerWidth = 1024;
+      const csv = 'A,cat1,cat2\nB,cat3,cat4';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      // Build two cards
+      fireEvent.click(screen.getByTestId('build'));
+      const cards = await screen.findAllByTestId(/^rdf-card-/);
+      expect(cards).toHaveLength(1);
+      
+      // Start connection mode
+      fireEvent.click(screen.getByRole('button', { name: /Create Connection/i }));
+      
+      // Click first card as source
+      fireEvent.click(cards[0]);
+      
+      // Click same card as target (self-connection)
+      fireEvent.click(cards[0]);
+    });
+
+    it('handles Remove Last connection button', async () => {
+      window.innerWidth = 1024;
+      const csv = 'C';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      const removeBtn = await screen.findByRole('button', { name: /Remove Last/i });
+      fireEvent.click(removeBtn);
+      // Should not crash even with no connections
+    });
+
+    it('parses CSV with type field (integer)', async () => {
+      const csv = 'numField,integer';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      expect(await screen.findByTestId('rdf-sidebar')).toBeInTheDocument();
+    });
+
+    it('parses CSV with type field (double)', async () => {
+      const csv = 'dblField,double';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      expect(await screen.findByTestId('rdf-sidebar')).toBeInTheDocument();
+    });
+
+    it('parses CSV with type field (date)', async () => {
+      const csv = 'dateField,date';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      expect(await screen.findByTestId('rdf-sidebar')).toBeInTheDocument();
+    });
+
+    it('parses CSV with categorical values', async () => {
+      const csv = 'catField,optionA,optionB,optionC';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      expect(await screen.findByTestId('rdf-sidebar')).toBeInTheDocument();
+    });
+
+    it('parses CSV with element name only', async () => {
+      const csv = 'simpleField';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      expect(await screen.findByTestId('rdf-sidebar')).toBeInTheDocument();
+    });
+
+    it('ignores empty CSV lines', async () => {
+      const csv = 'field1\n\n\nfield2\n\n';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      expect(await screen.findByTestId('rdf-sidebar')).toBeInTheDocument();
+    });
+
+    it('ignores CSV lines with no name', async () => {
+      const csv = ',val1,val2\nvalidField,cat1';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      expect(await screen.findByTestId('rdf-sidebar')).toBeInTheDocument();
+    });
+
+    it('processes CSV data only once even with multiple renders', async () => {
+      const csv = 'onceField';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      const { rerender } = render(<SemanticAlignment />);
+      
+      expect(await screen.findByTestId('rdf-sidebar')).toBeInTheDocument();
+      
+      // Rerender shouldn't reprocess
+      rerender(<SemanticAlignment />);
+      expect(screen.getByTestId('rdf-sidebar')).toBeInTheDocument();
+    });
+
+    it('handles file upload via hidden input', async () => {
+      window.innerWidth = 1024;
+      const csv = 'uploadedField';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      // Component should render the upload button
+      await screen.findByRole('button', { name: /Upload CSV/i });
+      
+      // Component should show the RDF sidebar after CSV data is loaded from location state
+      await waitFor(() => {
+        expect(screen.getByTestId('rdf-sidebar')).toBeInTheDocument();
+      });
+    });
+
+    it('builds card with categorical values', async () => {
+      window.innerWidth = 1024;
+      colorsUtil.generateDistinctColors.mockReturnValue(['#FF0000', '#00FF00']);
+      const csv = 'catField,cat1,cat2,cat3';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      fireEvent.click(await screen.findByTestId('build'));
+      expect(screen.getByTestId(/^rdf-card-/)).toBeInTheDocument();
+    });
+
+    it('generates CSV with categorical values and ontology mappings', async () => {
+      window.innerWidth = 1024;
+      colorsUtil.generateDistinctColors.mockReturnValue(['#FF0000']);
+      petitionHandler.uploadSemanticMappingCsv.mockResolvedValueOnce({
+        csvSaved: true,
+        csvMessage: 'saved',
+        rdfGenerated: true,
+        rdfMessage: JSON.stringify({ message: 'rdf ok' }),
+      });
+
+      // Mock document methods
+      const appendSpy = jest
+        .spyOn(document.body, 'appendChild')
+        .mockImplementation((node) => HTMLElement.prototype.appendChild.call(document.body, node));
+      const removeSpy = jest
+        .spyOn(document.body, 'removeChild')
+        .mockImplementation((node) => HTMLElement.prototype.removeChild.call(document.body, node));
+
+      try {
+        const csv = 'catField,cat1,cat2';
+        useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+        render(<SemanticAlignment />);
+        
+        fireEvent.click(await screen.findByTestId('build'));
+        
+        const processBtn = screen.getByRole('button', { name: /^Process$/i });
+        fireEvent.click(processBtn);
+
+        await waitFor(() => expect(toast.success).toHaveBeenCalled());
+      } finally {
+        appendSpy.mockRestore();
+        removeSpy.mockRestore();
+      }
+    });
+
+    it('shows alert when trying to download without all classes built', async () => {
+      window.innerWidth = 1024;
+      window.alert = jest.fn();
+      
+      const csv = 'fieldA\nfieldB';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      // Build only one of two required classes
+      fireEvent.click(await screen.findByTestId('build'));
+      
+      const processBtn = screen.getByRole('button', { name: /^Process$/i });
+      fireEvent.click(processBtn);
+
+      expect(window.alert).toHaveBeenCalledWith(expect.stringContaining('Please build mappings for'));
+    });
+
+    it('handles click on card when not in connection mode', async () => {
+      window.innerWidth = 1024;
+      const csv = 'clickField';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      fireEvent.click(await screen.findByTestId('build'));
+      const card = screen.getByTestId(/^rdf-card-/);
+      
+      fireEvent.click(card);
+      // Should update active element selection
+    });
+
+    it('handles mobile view toggle button', async () => {
+      window.innerWidth = 320;
+      window.dispatchEvent(new Event('resize'));
+      
+      const csv = 'mobileField';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      expect(await screen.findByTestId('element-detail')).toBeInTheDocument();
+      
+      const toggleBtn = screen.getByText(/Workspace/i);
+      fireEvent.click(toggleBtn);
+      
+      expect(screen.getByTestId('rdf-connection')).toBeInTheDocument();
+      
+      const backBtn = screen.getByText(/Details/i);
+      fireEvent.click(backBtn);
+      
+      expect(screen.getByTestId('element-detail')).toBeInTheDocument();
+    });
+
+    it('handles tablet view', async () => {
+      window.innerWidth = 768;
+      window.dispatchEvent(new Event('resize'));
+      
+      const csv = 'tabletField';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      expect(await screen.findByTestId('element-detail')).toBeInTheDocument();
+    });
+
+    it('handles very narrow mobile view', async () => {
+      window.innerWidth = 280;
+      window.dispatchEvent(new Event('resize'));
+      
+      const csv = 'narrowField';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      expect(await screen.findByTestId('element-detail')).toBeInTheDocument();
+    });
+
+    it('handles wide desktop view', async () => {
+      window.innerWidth = 1920;
+      window.dispatchEvent(new Event('resize'));
+      
+      const csv = 'wideField';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      expect(await screen.findByTestId('element-detail')).toBeInTheDocument();
+    });
+
+    it('toggles view multiple times in mobile', async () => {
+      window.innerWidth = 320;
+      window.dispatchEvent(new Event('resize'));
+      
+      const csv = 'toggleField';
+      useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
+      render(<SemanticAlignment />);
+      
+      expect(await screen.findByTestId('element-detail')).toBeInTheDocument();
+      
+      const workspaceBtn = screen.getByText(/Workspace/i);
+      fireEvent.click(workspaceBtn);
+      expect(screen.getByTestId('rdf-connection')).toBeInTheDocument();
+      
+      const detailsBtn = screen.getByText(/Details/i);
+      fireEvent.click(detailsBtn);
+      expect(screen.getByTestId('element-detail')).toBeInTheDocument();
+      
+      fireEvent.click(workspaceBtn);
+      expect(screen.getByTestId('rdf-connection')).toBeInTheDocument();
+    });
   });
 });

@@ -26,7 +26,7 @@ const MetadataDisplay = ({ isOpen, metadata, loadingMetadata, accessingNode, hea
           {loadingMetadata ? (
             <div className={MetadataDisplayStyles.placeholderContainer}>
               <div className={MetadataDisplayStyles.spinner} />
-              <p>Loading metadata...</p>
+              <p className={MetadataDisplayStyles.loadingText}>Loading metadata...</p>
             </div>
           ) : !metadata ? (
             <div className={MetadataDisplayStyles.placeholderContainer}>

@@ -527,4 +527,5 @@ describe('petitionHandler', () => {
       await expect(petitionHandler.uploadFile(new Blob())).rejects.toThrow('Test error');
     });
   });
+
 });

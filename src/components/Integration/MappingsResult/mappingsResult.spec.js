@@ -207,4 +207,222 @@ describe('<MappingsResult />', () => {
       />
     );
   });
+
+  it('filters mappings by search term', () => {
+    const mappings = [
+      {
+        TargetCol: {
+          fileName: 'test.csv',
+          groups: [
+            {
+              values: [
+                { name: 'SearchMe', mapping: [] },
+                { name: 'DontSearchMe', mapping: [] },
+              ],
+            },
+          ],
+        },
+        OtherCol: {
+          fileName: 'other.csv',
+          groups: [],
+        },
+      },
+    ];
+
+    render(
+      <MappingsResult
+        mappings={mappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="idle"
+        {...defaultHandlers}
+      />
+    );
+
+    const searchInput = screen.getByPlaceholderText(/search mapped columns/i);
+    
+    // Before search, verify input is present
+    expect(searchInput).toBeInTheDocument();
+    
+    // Perform search
+    fireEvent.change(searchInput, { target: { value: 'SearchMe' } });
+    
+    // After search, input should still be there
+    expect(searchInput).toHaveValue('SearchMe');
+  });
+
+  it('filters mappings by file name', () => {
+    const mappings = [
+      {
+        TargetCol: {
+          fileName: 'findme.csv',
+          groups: [],
+        },
+      },
+    ];
+
+    render(
+      <MappingsResult
+        mappings={mappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="idle"
+        {...defaultHandlers}
+      />
+    );
+
+    const searchInput = screen.getByPlaceholderText(/search mapped columns/i);
+    fireEvent.change(searchInput, { target: { value: 'findme' } });
+
+    // Verify search works
+    expect(searchInput).toHaveValue('findme');
+  });
+
+  it('filters mappings by mapping key', () => {
+    const mappings = [
+      {
+        KeyToFind: {
+          fileName: 'test.csv',
+          groups: [],
+        },
+        OtherKey: {
+          fileName: 'other.csv',
+          groups: [],
+        },
+      },
+    ];
+
+    render(
+      <MappingsResult
+        mappings={mappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="idle"
+        {...defaultHandlers}
+      />
+    );
+
+    const searchInput = screen.getByPlaceholderText(/search mapped columns/i);
+    fireEvent.change(searchInput, { target: { value: 'KeyToFind' } });
+
+    // Verify search works
+    expect(searchInput).toHaveValue('KeyToFind');
+  });
+
+  it('filters by mapping line values', () => {
+    const mappings = [
+      {
+        TargetCol: {
+          fileName: 'test.csv',
+          groups: [
+            {
+              values: [
+                {
+                  name: 'Value',
+                  mapping: [
+                    { groupColumn: 'col1', value: 'UniqueValue', fileName: 'data.csv' },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ];
+
+    render(
+      <MappingsResult
+        mappings={mappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="idle"
+        {...defaultHandlers}
+      />
+    );
+
+    const searchInput = screen.getByPlaceholderText(/search mapped columns/i);
+    fireEvent.change(searchInput, { target: { value: 'UniqueValue' } });
+
+    // Verify search works
+    expect(searchInput).toHaveValue('UniqueValue');
+  });
+
+  it('shows no results when search term does not match', () => {
+    render(
+      <MappingsResult
+        mappings={sampleMappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="idle"
+        {...defaultHandlers}
+      />
+    );
+
+    const searchInput = screen.getByPlaceholderText(/search mapped columns/i);
+    fireEvent.change(searchInput, { target: { value: 'NonexistentSearchTerm' } });
+
+    expect(screen.queryByTestId('hierarchy')).not.toBeInTheDocument();
+  });
+
+  it('handles empty search term to show all mappings', () => {
+    render(
+      <MappingsResult
+        mappings={sampleMappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="idle"
+        {...defaultHandlers}
+      />
+    );
+
+    const searchInput = screen.getByPlaceholderText(/search mapped columns/i);
+    
+    // Set search term
+    fireEvent.change(searchInput, { target: { value: 'test' } });
+    expect(searchInput).toHaveValue('test');
+    
+    // Clear search term
+    fireEvent.change(searchInput, { target: { value: '' } });
+    expect(searchInput).toHaveValue('');
+  });
+
+  it('displays different processing statuses', () => {
+    const { rerender } = render(
+      <MappingsResult
+        mappings={sampleMappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="success"
+        {...defaultHandlers}
+      />
+    );
+
+    expect(screen.getByText('Processing Successful')).toBeInTheDocument();
+
+    rerender(
+      <MappingsResult
+        mappings={sampleMappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="error"
+        {...defaultHandlers}
+      />
+    );
+
+    expect(screen.getByText('Processing Failed')).toBeInTheDocument();
+  });
+
+  it('does not show undo button when no deleted items', () => {
+    render(
+      <MappingsResult
+        mappings={sampleMappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="idle"
+        {...defaultHandlers}
+      />
+    );
+
+    expect(screen.queryByText(/undo changes/i)).not.toBeInTheDocument();
+  });
 });

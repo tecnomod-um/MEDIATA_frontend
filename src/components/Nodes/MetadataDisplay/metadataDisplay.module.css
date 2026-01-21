@@ -68,6 +68,11 @@
   margin: 0;
 }
 
+.loadingText {
+  color: var(--text-color-secondary);
+  margin: 0;
+}
+
 .footer {
   padding: 15px;
   border-top: 1px solid var(--border-color-secondary);
@@ -223,4 +228,44 @@
 
 .closeBtn:hover {
   background-color: rgba(255, 255, 255, 0.2);
+}
+
+.modalContent,
+.body,
+.datasetCard,
+.distributionCard {
+  color: var(--text-color-primary);
+}
+
+.contextLine {
+  color: var(--text-color-secondary);
+}
+
+.distributionCard h6,
+.datasetTitle,
+.datasetCard h6 {
+  color: var(--text-color-primary);
+}
+
+.fieldLabel {
+  color: var(--text-color-secondary);
+}
+
+.muted {
+  color: var(--text-color-muted);
+}
+
+.datasetCard a,
+.distributionCard a,
+.body a {
+  color: var(--heading-color);
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.datasetCard a:visited,
+.distributionCard a:visited,
+.body a:visited {
+  color: var(--heading-color);
 }

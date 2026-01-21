@@ -151,7 +151,13 @@ function Main() {
           </div>
         </div>
         {showScrollIndicator && (
-          <div className={MainStyles.scrollIndicator} onClick={handleScrollClick}>
+          <div 
+            className={MainStyles.scrollIndicator} 
+            onClick={handleScrollClick}
+            role="button"
+            aria-label="Scroll down"
+            tabIndex={0}
+          >
             <div className={MainStyles.arrow} />
           </div>
         )}

@@ -40,24 +40,38 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
   const [filesLoaded, setFilesLoaded] = useState(false);
   const [listHeight, setListHeight] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+
   const heightRAF = useRef(null);
   const autoHeightTimer = useRef(null);
   const filesLoadedTimer = useRef(null);
   const modalContainerRef = useRef(null);
   const toolbarRef = useRef(null);
 
+  const cleanMeasureRef = useRef(null);
+  const [cleanOpenHeight, setCleanOpenHeight] = useState(0);
+  const [showCleanPanel, setShowCleanPanel] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const measureCleanHeight = useCallback(() => {
+    const modal = modalContainerRef.current;
+    if (!modal) return 0;
+
+    const toolbarH = toolbarRef.current?.getBoundingClientRect().height ?? 0;
+    const modalH = modal.getBoundingClientRect().height;
+    return Math.max(0, modalH - toolbarH);
+  }, []);
+
+
   const getMaxListAvail = useCallback(() => {
     const modal = modalContainerRef.current;
     if (!modal) return Infinity;
 
-    const cs = window.getComputedStyle(modal);
-    const maxH = cs.maxHeight && cs.maxHeight !== "none"
-      ? parseFloat(cs.maxHeight)
-      : modal.getBoundingClientRect().height;
-
     const toolbarH = toolbarRef.current?.getBoundingClientRect().height ?? 0;
-    return Math.max(0, maxH - toolbarH);
+    const modalH = modal.getBoundingClientRect().height;
+
+    return Math.max(0, modalH - toolbarH);
   }, []);
+
 
   const animateWrapBy = useCallback((delta) => {
     const el = listWrapRef.current;
@@ -79,20 +93,19 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
         setListHeight(target);
 
         autoHeightTimer.current = window.setTimeout(() => {
-          if (predictedContent <= maxAvail + 1) setListHeight("auto");
-          else setListHeight(maxAvail);
-
+          const maxAvail2 = getMaxListAvail();
+          const content2 = el.scrollHeight;
+          if (content2 <= maxAvail2 + 1) setListHeight("auto");
+          else setListHeight(maxAvail2);
           setIsAnimating(false);
         }, 260);
       });
     });
   }, [getMaxListAvail]);
 
-
   const animateWrapToContent = useCallback(() => {
     const el = listWrapRef.current;
     if (!el) return;
-
     if (heightRAF.current) cancelAnimationFrame(heightRAF.current);
     if (autoHeightTimer.current) clearTimeout(autoHeightTimer.current);
 
@@ -110,16 +123,6 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
 
   const listWrapRef = useRef(null);
   const modalNodeRef = useRef(null);
-
-  const [showCleanPanel, setShowCleanPanel] = useState(false);
-  const [removeDuplicates, setRemoveDuplicates] = useState(false);
-  const [removeEmptyRows, setRemoveEmptyRows] = useState(false);
-  const [standardizeDates, setStandardizeDates] = useState(false);
-  const [selectedDateFormat, setSelectedDateFormat] = useState("YYYY-MM-DD");
-  const [standardizeNumeric, setStandardizeNumeric] = useState(false);
-  const [numericMode, setNumericMode] = useState("double");
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
   const didApplyPreselectRef = useRef(false);
   const didAutoProcessRef = useRef(false);
 
@@ -144,6 +147,17 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
   }, [files]);
 
   const hasSelection = selected.size > 0;
+
+  useEffect(() => {
+    if (!showCleanPanel) setCleanOpenHeight(0);
+  }, [showCleanPanel]);
+
+  useEffect(() => {
+    if (!hasSelection) {
+      setShowCleanPanel(false);
+      setCleanOpenHeight(0);
+    }
+  }, [hasSelection]);
 
   const fileKey = (f) => `${f?.nodeId || "default"}::${f?.name || ""}`;
 
@@ -589,7 +603,6 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
     }
   };
 
-
   const doProcessSelected = async () => {
     if (busy) return;
     if (selected.size === 0) return;
@@ -622,50 +635,44 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
     toast.error("No handler: pass onFilesSelected or onFilesOpened.");
   };
 
-  const openCleanPanel = () => {
+  const toggleCleanPanel = () => {
     if (busy) return;
     if (!hasSelection) return;
-    setShowCleanPanel(true);
+    setShowCleanPanel((v) => !v);
   };
 
-  const applyClean = async () => {
-    if (busy) return;
-    if (selected.size === 0) return;
+  const applyClean = async (cleaningOptions) => {
+    if (busy || selected.size === 0) return;
 
     setBusy(true);
     setError(null);
-    setProcessingFiles(new Set());
 
     try {
       const keys = Array.from(selected);
+
       for (const key of keys) {
         const file = findFileByKey(key);
         if (!file) continue;
-
-        if (nodes && nodes.length > 0) {
-          const node = nodes.find((nd) => nd.nodeId === file.nodeId);
+        if (nodes?.length) {
+          const node = nodes.find((n) => n.nodeId === file.nodeId);
           if (node?.serviceUrl) updateNodeAxiosBaseURL(node.serviceUrl);
         }
-
-        setProcessingFiles((prev) => new Set([...prev, key]));
-        await cleanExplorerFile(category, file.name);
-
-        setProcessingFiles((prev) => {
-          const next = new Set(prev);
-          next.delete(key);
-          return next;
-        });
+        await cleanExplorerFile(category, file.name, cleaningOptions);
       }
 
       setShowCleanPanel(false);
       await load(true);
     } catch (e) {
       notifyError(e, "Clean failed");
-      setProcessingFiles(new Set());
     } finally {
       setBusy(false);
     }
   };
+
+
+  useEffect(() => {
+    if (!hasSelection) setShowCleanPanel(false);
+  }, [hasSelection]);
 
   const setSingle = (key, idx) => {
     setSelected(new Set([key]));
@@ -836,16 +843,26 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
               renamingName={renamingKey ? (findFileByKey(renamingKey)?.name || "") : null}
               selectedCount={selected.size}
               startRename={startRename}
-              openCleanPanel={openCleanPanel}
+              openCleanPanel={toggleCleanPanel}
               requestDelete={requestDelete}
               multiMode={multiMode}
               setMultiMode={setMultiMode}
               busy={busy}
               load={() => load(true)}
               onClose={onClose}
-            /></div>
-
+            />
+          </div>
           <div className={FileExplorerStyles.contentShell}>
+            <div
+              className={FileExplorerStyles.cleanSpace}
+              style={{
+                height: cleanOpenHeight,
+                transition: "height 260ms ease",
+                overflow: "hidden",
+                flex: "0 0 auto",
+              }}
+              aria-hidden="true"
+            />
             <CSSTransition in={filesLoaded} timeout={260} unmountOnExit classNames="">
               <div
                 ref={listWrapRef}
@@ -889,7 +906,6 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
                 )}
               </div>
             </CSSTransition>
-
             <CSSTransition
               in={showCleanPanel}
               timeout={260}
@@ -900,27 +916,31 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
                 exitActive: FileExplorerStyles.cleanExitActive,
               }}
               unmountOnExit
+              onEnter={() => {
+                requestAnimationFrame(() => {
+                  const h = measureCleanHeight();
+                  setCleanOpenHeight(h);
+                  animateWrapBy(h);
+                });
+              }}
+
+              onExit={() => {
+                const h = cleanOpenHeight;
+                setCleanOpenHeight(0);
+                animateWrapBy(-h);
+              }}
             >
-              <CleanPanel
-                show={showCleanPanel}
-                onClose={() => setShowCleanPanel(false)}
-                busy={busy}
-                removeDuplicates={removeDuplicates}
-                setRemoveDuplicates={setRemoveDuplicates}
-                removeEmptyRows={removeEmptyRows}
-                setRemoveEmptyRows={setRemoveEmptyRows}
-                standardizeDates={standardizeDates}
-                setStandardizeDates={setStandardizeDates}
-                selectedDateFormat={selectedDateFormat}
-                setSelectedDateFormat={setSelectedDateFormat}
-                dateFormats={dateFormats}
-                standardizeNumeric={standardizeNumeric}
-                setStandardizeNumeric={setStandardizeNumeric}
-                numericMode={numericMode}
-                setNumericMode={setNumericMode}
-                selectedCount={selected.size}
-                applyClean={applyClean}
-              />
+              <div className={FileExplorerStyles.cleanOverlayAbs}>
+                <div ref={cleanMeasureRef} className={FileExplorerStyles.cleanMeasure}>
+                  <CleanPanel
+                    show={showCleanPanel}
+                    busy={busy}
+                    selectedCount={selected.size}
+                    onClose={() => setShowCleanPanel(false)}
+                    onApply={applyClean}
+                  />
+                </div>
+              </div>
             </CSSTransition>
           </div>
           <CSSTransition

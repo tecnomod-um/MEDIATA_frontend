@@ -53,31 +53,23 @@ jest.mock("react-switch", () => {
 describe("FileExplorer sub-components", () => {
   describe("<FileTypeIcon />", () => {
     it("renders CSV icon for .csv files", () => {
-      const { container } = render(<FileTypeIcon name="test.csv" />);
-      const svg = container.querySelector("svg");
-      expect(svg).toBeInTheDocument();
-      expect(svg.closest('span')).toHaveAttribute('title', 'CSV');
+      render(<FileTypeIcon name="test.csv" />);
+      expect(screen.getByTitle('CSV')).toBeInTheDocument();
     });
 
     it("renders XLSX icon for .xlsx files", () => {
-      const { container } = render(<FileTypeIcon name="test.xlsx" />);
-      const svg = container.querySelector("svg");
-      expect(svg).toBeInTheDocument();
-      expect(svg.closest('span')).toHaveAttribute('title', 'XLSX');
+      render(<FileTypeIcon name="test.xlsx" />);
+      expect(screen.getByTitle('XLSX')).toBeInTheDocument();
     });
 
     it("renders XLSX icon for .xls files", () => {
-      const { container } = render(<FileTypeIcon name="test.xls" />);
-      const svg = container.querySelector("svg");
-      expect(svg).toBeInTheDocument();
-      expect(svg.closest('span')).toHaveAttribute('title', 'XLSX');
+      render(<FileTypeIcon name="test.xls" />);
+      expect(screen.getByTitle('XLSX')).toBeInTheDocument();
     });
 
     it("handles files without extensions", () => {
-      const { container } = render(<FileTypeIcon name="noextension" />);
-      const svg = container.querySelector("svg");
-      expect(svg).toBeInTheDocument();
-      expect(svg.closest('span')).toHaveAttribute('title', 'File'); // defaults to generic file
+      render(<FileTypeIcon name="noextension" />);
+      expect(screen.getByTitle('File')).toBeInTheDocument();
     });
   });
 
@@ -102,7 +94,7 @@ describe("FileExplorer sub-components", () => {
     it("renders all toolbar buttons", () => {
       render(<FileToolbar {...defaultProps} />);
       expect(screen.getByRole("button", { name: /^Open$/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /^Rename$/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Rename file/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /Data cleaning/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /^Delete$/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /Refresh/i })).toBeInTheDocument();
@@ -116,7 +108,7 @@ describe("FileExplorer sub-components", () => {
 
     it("disables Rename button when selection count is not 1", () => {
       render(<FileToolbar {...defaultProps} selectedCount={2} />);
-      expect(screen.getByRole("button", { name: /^Rename$/i })).toBeDisabled();
+      expect(screen.getByRole("button", { name: /Rename file/i })).toBeDisabled();
     });
 
     it("shows multi-select mode pill when active", () => {
@@ -161,7 +153,7 @@ describe("FileExplorer sub-components", () => {
           busy={false}
         />
       );
-      expect(container.firstChild).toBeNull();
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
 
     it("pluralizes file count correctly", () => {
@@ -214,29 +206,13 @@ describe("FileExplorer sub-components", () => {
       show: true,
       onClose: jest.fn(),
       busy: false,
-      removeDuplicates: false,
-      setRemoveDuplicates: jest.fn(),
-      removeEmptyRows: false,
-      setRemoveEmptyRows: jest.fn(),
-      standardizeDates: false,
-      setStandardizeDates: jest.fn(),
-      selectedDateFormat: "YYYY-MM-DD",
-      setSelectedDateFormat: jest.fn(),
-      dateFormats: [
-        { value: "YYYY-MM-DD", label: "YYYY-MM-DD" },
-        { value: "DD/MM/YYYY", label: "DD/MM/YYYY" },
-      ],
-      standardizeNumeric: false,
-      setStandardizeNumeric: jest.fn(),
-      numericMode: "double",
-      setNumericMode: jest.fn(),
       selectedCount: 2,
-      applyClean: jest.fn(),
+      onApply: jest.fn(),
     };
 
     it("renders when show is true", () => {
       render(<CleanPanel {...defaultProps} />);
-      expect(screen.getByRole("dialog", { name: /Data cleaning/i })).toBeInTheDocument();
+      expect(screen.getByText(/Data cleaning/i)).toBeInTheDocument();
     });
 
     it("does not render when show is false", () => {
@@ -252,24 +228,24 @@ describe("FileExplorer sub-components", () => {
       expect(screen.getByText(/Standardize numeric fields/i)).toBeInTheDocument();
     });
 
-    it("calls applyClean when Apply button is clicked", () => {
-      const applyClean = jest.fn();
-      render(<CleanPanel {...defaultProps} applyClean={applyClean} />);
-      fireEvent.click(screen.getByRole("button", { name: /^Apply$/i }));
-      expect(applyClean).toHaveBeenCalled();
+    it("calls onApply when Apply button is clicked with at least one option enabled", () => {
+      const onApply = jest.fn();
+      render(<CleanPanel {...defaultProps} onApply={onApply} />);
+      
+      // Enable at least one cleaning option
+      const switches = screen.getAllByRole("switch");
+      fireEvent.click(switches[0]);
+      
+      // Click Apply button
+      const applyButton = screen.getByTitle(/apply cleaning/i);
+      fireEvent.click(applyButton);
+      expect(onApply).toHaveBeenCalled();
     });
 
     it("disables Apply button when no files are selected", () => {
       render(<CleanPanel {...defaultProps} selectedCount={0} />);
-      expect(screen.getByRole("button", { name: /^Apply$/i })).toBeDisabled();
-    });
-
-    it("changes date format when select is changed", () => {
-      const setSelectedDateFormat = jest.fn();
-      render(<CleanPanel {...defaultProps} setSelectedDateFormat={setSelectedDateFormat} standardizeDates={true} />);
-      const select = screen.getByDisplayValue("YYYY-MM-DD");
-      fireEvent.change(select, { target: { value: "DD/MM/YYYY" } });
-      expect(setSelectedDateFormat).toHaveBeenCalledWith("DD/MM/YYYY");
+      const applyButton = screen.getByTitle(/apply cleaning/i);
+      expect(applyButton).toBeDisabled();
     });
   });
 
@@ -367,4 +343,115 @@ describe("FileExplorer sub-components", () => {
       expect(cancelRename).toHaveBeenCalled();
     });
   });
+
+  // Additional tests for utility functions used by FileExplorer
+  describe("Utility Functions", () => {
+    it("handles formatBytes correctly", () => {
+      const { formatBytes } = require("./fileUtils");
+      expect(formatBytes(0)).toBe("0 B");
+      expect(formatBytes(1023)).toBe("1023 B");
+      expect(formatBytes(1024)).toContain("KB");
+      expect(formatBytes(1048576)).toContain("MB");
+      expect(formatBytes(1073741824)).toContain("GB");
+      expect(formatBytes(-1)).toBe("—");
+      expect(formatBytes("invalid")).toBe("—");
+      expect(formatBytes(null)).toBe("0 B"); // Number(null) = 0
+      expect(formatBytes(undefined)).toBe("—"); // Number(undefined) = NaN
+      expect(formatBytes(Infinity)).toBe("—");
+      // Test edge cases for formatting
+      expect(formatBytes(1536)).toBe("1.50 KB"); // 1.5 KB
+      expect(formatBytes(10240)).toBe("10.0 KB"); // 10 KB
+      expect(formatBytes(102400)).toBe("100 KB"); // 100 KB
+    });
+
+    it("handles formatDateTime correctly", () => {
+      const { formatDateTime } = require("./fileUtils");
+      expect(formatDateTime(0)).toBe("—");
+      expect(formatDateTime(-1)).toBe("—");
+      expect(formatDateTime(null)).toBe("—"); // Number(null) = 0
+      expect(formatDateTime(undefined)).toBe("—"); // Number(undefined) = NaN
+      const validTime = Date.now();
+      expect(formatDateTime(validTime)).not.toBe("—");
+      expect(formatDateTime(validTime)).toContain("/");
+      expect(formatDateTime(1609459200000)).not.toBe("—"); // Valid timestamp
+    });
+
+    it("handles isFileNew correctly", () => {
+      const { isFileNew } = require("./fileUtils");
+      const newFile = { createdAtMs: Date.now() - 30000 }; // 30 seconds ago
+      const oldFile = { createdAtMs: Date.now() - 120000 }; // 2 minutes ago
+      const noTimeFile = {};
+      
+      expect(isFileNew(newFile, 60000)).toBe(true);
+      expect(isFileNew(oldFile, 60000)).toBe(false);
+      expect(isFileNew(noTimeFile, 60000)).toBe(false);
+      expect(isFileNew({ createdAtMs: 0 }, 60000)).toBe(false);
+      expect(isFileNew({ createdAtMs: null }, 60000)).toBe(false);
+      // Test with custom threshold
+      expect(isFileNew(newFile, 20000)).toBe(false); // 30s ago is not new with 20s threshold
+      expect(isFileNew(newFile, 40000)).toBe(true); // 30s ago is new with 40s threshold
+    });
+
+    it("handles getFileExtension correctly", () => {
+      const { getFileExtension } = require("./fileUtils");
+      expect(getFileExtension("test.csv")).toBe("csv");
+      expect(getFileExtension("test.CSV")).toBe("csv");
+      expect(getFileExtension("test.XLSX")).toBe("xlsx");
+      expect(getFileExtension("test.xlsx")).toBe("xlsx");
+      expect(getFileExtension("noext")).toBe("");
+      expect(getFileExtension("file.tar.gz")).toBe("gz");
+      expect(getFileExtension("")).toBe("");
+      expect(getFileExtension(null)).toBe("");
+      expect(getFileExtension(undefined)).toBe("");
+      expect(getFileExtension(".hidden")).toBe("hidden");
+      expect(getFileExtension("file.PDF")).toBe("pdf");
+      expect(getFileExtension("archive.ZIP")).toBe("zip");
+    });
+  });
+
+  describe("Additional FileTypeIcon tests", () => {
+    it("renders JSON icon for .json files", () => {
+      render(<FileTypeIcon name="data.json" />);
+      expect(screen.getByTitle('JSON')).toBeInTheDocument();
+    });
+
+    it("renders TXT icon for .txt files", () => {
+      render(<FileTypeIcon name="readme.txt" />);
+      expect(screen.getByTitle('TXT')).toBeInTheDocument();
+    });
+
+    it("renders XML icon for .xml files", () => {
+      render(<FileTypeIcon name="config.xml" />);
+      // XML falls back to generic file icon
+      expect(screen.getByTitle('File')).toBeInTheDocument();
+    });
+
+    it("renders ZIP icon for .zip files", () => {
+      render(<FileTypeIcon name="archive.zip" />);
+      // ZIP falls back to generic file icon
+      expect(screen.getByTitle('File')).toBeInTheDocument();
+    });
+
+    it("renders PDF icon for .pdf files", () => {
+      render(<FileTypeIcon name="document.pdf" />);
+      // PDF falls back to generic file icon
+      expect(screen.getByTitle('File')).toBeInTheDocument();
+    });
+
+    it("handles uppercase extensions", () => {
+      render(<FileTypeIcon name="TEST.CSV" />);
+      expect(screen.getByTitle('CSV')).toBeInTheDocument();
+    });
+
+    it("handles mixed case extensions", () => {
+      render(<FileTypeIcon name="file.CsV" />);
+      expect(screen.getByTitle('CSV')).toBeInTheDocument();
+    });
+
+    it("renders default icon for unknown extensions", () => {
+      render(<FileTypeIcon name="file.unknown" />);
+      expect(screen.getByTitle('File')).toBeInTheDocument();
+    });
+  });
+
 });

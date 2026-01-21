@@ -127,4 +127,233 @@ describe("<EntryTable />", () => {
     });
     expect(headers).toHaveLength(2);
   });
+
+  it("handles keyboard navigation with Enter key", () => {
+    const onRowSelect = jest.fn();
+    render(
+      <EntryTable
+        filteredLists={filteredLists}
+        minCellWidth={50}
+        onRowSelect={onRowSelect}
+        selectedEntry={selectedEntry}
+        type={type}
+      />
+    );
+
+    const table = screen.getByRole("table");
+    const [, tbody] = within(table).getAllByRole("rowgroup");
+    const bodyRows = within(tbody).getAllByRole("row");
+    
+    fireEvent.keyDown(bodyRows[1], { key: 'Enter' });
+    expect(onRowSelect).toHaveBeenCalledWith({ featureName: "bar", type: "myType" });
+  });
+
+  it("handles keyboard navigation with Space key", () => {
+    const onRowSelect = jest.fn();
+    render(
+      <EntryTable
+        filteredLists={filteredLists}
+        minCellWidth={50}
+        onRowSelect={onRowSelect}
+        selectedEntry={selectedEntry}
+        type={type}
+      />
+    );
+
+    const table = screen.getByRole("table");
+    const [, tbody] = within(table).getAllByRole("rowgroup");
+    const bodyRows = within(tbody).getAllByRole("row");
+    
+    fireEvent.keyDown(bodyRows[0], { key: ' ' });
+    expect(onRowSelect).toHaveBeenCalledWith({ featureName: "foo", type: "myType" });
+  });
+
+  it("ignores other key presses", () => {
+    const onRowSelect = jest.fn();
+    render(
+      <EntryTable
+        filteredLists={filteredLists}
+        minCellWidth={50}
+        onRowSelect={onRowSelect}
+        selectedEntry={selectedEntry}
+        type={type}
+      />
+    );
+
+    const table = screen.getByRole("table");
+    const [, tbody] = within(table).getAllByRole("rowgroup");
+    const bodyRows = within(tbody).getAllByRole("row");
+    
+    fireEvent.keyDown(bodyRows[0], { key: 'a' });
+    expect(onRowSelect).not.toHaveBeenCalled();
+  });
+
+  it("handles empty filteredLists", () => {
+    const onRowSelect = jest.fn();
+    render(
+      <EntryTable
+        filteredLists={{}}
+        minCellWidth={50}
+        onRowSelect={onRowSelect}
+        selectedEntry={null}
+        type={type}
+      />
+    );
+
+    const table = screen.getByRole("table");
+    expect(table).toBeInTheDocument();
+  });
+
+  it("handles null filteredLists", () => {
+    const onRowSelect = jest.fn();
+    render(
+      <EntryTable
+        filteredLists={null}
+        minCellWidth={50}
+        onRowSelect={onRowSelect}
+        selectedEntry={null}
+        type={type}
+      />
+    );
+
+    const table = screen.getByRole("table");
+    expect(table).toBeInTheDocument();
+  });
+
+  it("handles undefined filteredLists", () => {
+    const onRowSelect = jest.fn();
+    render(
+      <EntryTable
+        filteredLists={undefined}
+        minCellWidth={50}
+        onRowSelect={onRowSelect}
+        selectedEntry={null}
+        type={type}
+      />
+    );
+
+    const table = screen.getByRole("table");
+    expect(table).toBeInTheDocument();
+  });
+
+  it("handles large number of rows correctly", () => {
+    const largeLists = {
+      Name: Array.from({ length: 20 }, (_, i) => `item${i}`),
+      Value: Array.from({ length: 20 }, (_, i) => `${i * 10}`),
+    };
+    const onRowSelect = jest.fn();
+    render(
+      <EntryTable
+        filteredLists={largeLists}
+        minCellWidth={50}
+        onRowSelect={onRowSelect}
+        selectedEntry={null}
+        type={type}
+      />
+    );
+
+    const table = screen.getByRole("table");
+    const [, tbody] = within(table).getAllByRole("rowgroup");
+    const bodyRows = within(tbody).getAllByRole("row");
+    
+    expect(bodyRows.length).toBeGreaterThanOrEqual(8);
+  });
+
+  it("does not mark any row as selected when selectedEntry is null", () => {
+    const onRowSelect = jest.fn();
+    render(
+      <EntryTable
+        filteredLists={filteredLists}
+        minCellWidth={50}
+        onRowSelect={onRowSelect}
+        selectedEntry={null}
+        type={type}
+      />
+    );
+
+    const table = screen.getByRole("table");
+    const [, tbody] = within(table).getAllByRole("rowgroup");
+    const bodyRows = within(tbody).getAllByRole("row");
+
+    bodyRows.slice(0, 2).forEach((row) => {
+      expect(row).not.toHaveClass("selectedRow");
+    });
+  });
+
+  it("does not mark row as selected when type does not match", () => {
+    const onRowSelect = jest.fn();
+    const differentTypeEntry = { featureName: "foo", type: "differentType" };
+    render(
+      <EntryTable
+        filteredLists={filteredLists}
+        minCellWidth={50}
+        onRowSelect={onRowSelect}
+        selectedEntry={differentTypeEntry}
+        type={type}
+      />
+    );
+
+    const table = screen.getByRole("table");
+    const [, tbody] = within(table).getAllByRole("rowgroup");
+    const bodyRows = within(tbody).getAllByRole("row");
+
+    expect(bodyRows[0]).not.toHaveClass("selectedRow");
+  });
+
+  it("marks row with aria-selected when selected", () => {
+    const onRowSelect = jest.fn();
+    render(
+      <EntryTable
+        filteredLists={filteredLists}
+        minCellWidth={50}
+        onRowSelect={onRowSelect}
+        selectedEntry={selectedEntry}
+        type={type}
+      />
+    );
+
+    const table = screen.getByRole("table");
+    const [, tbody] = within(table).getAllByRole("rowgroup");
+    const bodyRows = within(tbody).getAllByRole("row");
+
+    expect(bodyRows[0]).toHaveAttribute("aria-selected", "true");
+    expect(bodyRows[1]).toHaveAttribute("aria-selected", "false");
+  });
+
+  it("all data rows have tabIndex", () => {
+    const onRowSelect = jest.fn();
+    render(
+      <EntryTable
+        filteredLists={filteredLists}
+        minCellWidth={50}
+        onRowSelect={onRowSelect}
+        selectedEntry={selectedEntry}
+        type={type}
+      />
+    );
+
+    const table = screen.getByRole("table");
+    const [, tbody] = within(table).getAllByRole("rowgroup");
+    const bodyRows = within(tbody).getAllByRole("row");
+
+    bodyRows.slice(0, 2).forEach((row) => {
+      expect(row).toHaveAttribute("tabIndex", "0");
+    });
+  });
+
+  it("has correct aria-label on table", () => {
+    const onRowSelect = jest.fn();
+    render(
+      <EntryTable
+        filteredLists={filteredLists}
+        minCellWidth={50}
+        onRowSelect={onRowSelect}
+        selectedEntry={selectedEntry}
+        type={type}
+      />
+    );
+
+    const table = screen.getByRole("table", { name: /data statistics table/i });
+    expect(table).toBeInTheDocument();
+  });
 });

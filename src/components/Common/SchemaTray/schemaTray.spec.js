@@ -197,4 +197,256 @@ describe('SchemaTray • interaction details', () => {
       expect(screen.getByText(/^Schema$/i)).toBeInTheDocument()
     })
   })
-})
+
+  it('saves draft on Ctrl+S when expanded', async () => {
+    const schema = { title: 'Test' };
+    renderTray({ externalSchema: schema });
+    openTray();
+    
+    const expandBtn = screen.getByRole('button', { name: /Expand/i });
+    fireEvent.click(expandBtn);
+    
+    const textarea = screen.getByRole('textbox');
+    fireEvent.change(textarea, { target: { value: JSON.stringify({ title: 'Updated' }) } });
+    
+    fireEvent.keyDown(window, { key: 's', ctrlKey: true });
+    
+    await waitFor(() => {
+      expect(saveSchemaToBackend).toHaveBeenCalledWith({ title: 'Updated' });
+    });
+  });
+
+  it('saves draft on Meta+S (Mac) when expanded', async () => {
+    const schema = { title: 'Test' };
+    renderTray({ externalSchema: schema });
+    openTray();
+    
+    const expandBtn = screen.getByRole('button', { name: /Expand/i });
+    fireEvent.click(expandBtn);
+    
+    const textarea = screen.getByRole('textbox');
+    fireEvent.change(textarea, { target: { value: JSON.stringify({ title: 'MetaUpdated' }) } });
+    
+    fireEvent.keyDown(window, { key: 'S', metaKey: true });
+    
+    await waitFor(() => {
+      expect(saveSchemaToBackend).toHaveBeenCalledWith({ title: 'MetaUpdated' });
+    });
+  });
+
+  it('does not save on Ctrl+S when not expanded', () => {
+    const schema = { title: 'Test' };
+    renderTray({ externalSchema: schema });
+    openTray();
+    
+    fireEvent.keyDown(window, { key: 's', ctrlKey: true });
+    
+    expect(saveSchemaToBackend).not.toHaveBeenCalled();
+  });
+
+  it('prevents closing tray with invalid JSON', async () => {
+    const schema = { title: 'Valid' };
+    const setError = jest.fn();
+    renderTray({ externalSchema: schema, setError });
+    openTray();
+    
+    const expandBtn = screen.getByRole('button', { name: /Expand/i });
+    fireEvent.click(expandBtn);
+    
+    const textarea = screen.getByRole('textbox');
+    fireEvent.change(textarea, { target: { value: 'invalid json {' } });
+    
+    fireEvent.mouseDown(document.body);
+    
+    await waitFor(() => {
+      expect(setError).toHaveBeenCalledWith(expect.stringContaining('Invalid JSON'));
+    });
+    
+    // Tray should still be open
+    expect(screen.getByText(/JSON Schema/i)).toBeInTheDocument();
+  });
+
+  it('prevents contracting with invalid JSON', async () => {
+    const schema = { title: 'Valid' };
+    const setError = jest.fn();
+    renderTray({ externalSchema: schema, setError });
+    openTray();
+    
+    const expandBtn = screen.getByRole('button', { name: /Expand/i });
+    fireEvent.click(expandBtn);
+    
+    const textarea = screen.getByRole('textbox');
+    fireEvent.change(textarea, { target: { value: 'bad json' } });
+    
+    const contractBtn = screen.getByRole('button', { name: /Contract/i });
+    fireEvent.click(contractBtn);
+    
+    await waitFor(() => {
+      expect(setError).toHaveBeenCalledWith(expect.stringContaining('Invalid JSON'));
+    });
+    
+    // Should still be expanded
+    expect(screen.getByRole('button', { name: /Contract/i })).toBeInTheDocument();
+  });
+
+  it('shows error when file upload contains invalid JSON', async () => {
+    const setError = jest.fn();
+    renderTray({ setError });
+    openTray();
+
+    const file = new File(['{}'], 'schema.json', { type: 'application/json' });
+    file.__content = 'not valid json {';
+
+    const input = screen.getByLabelText(/Upload JSON File/i);
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(setError).toHaveBeenCalledWith('Invalid JSON file.');
+    });
+  });
+
+  it('handles reduced mode prop', () => {
+    renderTray({ reduced: true });
+    openTray();
+    // Should still render basic functionality
+    expect(screen.getByText(/JSON Schema/i)).toBeInTheDocument();
+  });
+
+  it('calls onSchemaChange when schema changes via upload', async () => {
+    const onSchemaChange = jest.fn();
+    renderTray({ onSchemaChange });
+    openTray();
+
+    const file = new File(['{}'], 'schema.json', { type: 'application/json' });
+    file.__content = JSON.stringify({ title: 'Uploaded' });
+
+    const input = screen.getByLabelText(/Upload JSON File/i);
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(onSchemaChange).toHaveBeenCalledWith({ title: 'Uploaded' });
+    });
+  });
+
+  it('calls onSchemaChange when schema changes via URL fetch', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ title: 'FromURL' }),
+    });
+
+    const onSchemaChange = jest.fn();
+    renderTray({ onSchemaChange });
+    openTray();
+
+    fireEvent.change(screen.getByPlaceholderText(/Enter schema URL/i), {
+      target: { value: 'https://example.com/schema' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Fetch/i }));
+
+    await waitFor(() => {
+      expect(onSchemaChange).toHaveBeenCalledWith({ title: 'FromURL' });
+    });
+  });
+
+  it('clears schema on null onSchemaChange when fetch fails', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: false });
+
+    const onSchemaChange = jest.fn();
+    renderTray({ onSchemaChange });
+    openTray();
+
+    fireEvent.change(screen.getByPlaceholderText(/Enter schema URL/i), {
+      target: { value: 'bad-url' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Fetch/i }));
+
+    await waitFor(() => {
+      expect(onSchemaChange).toHaveBeenCalledWith(null);
+    });
+  });
+
+  it('handles error when removing schema fails', async () => {
+    const setError = jest.fn();
+    removeSchemaFromBackend.mockRejectedValue(new Error('Delete failed'));
+    
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    
+    renderTray({ externalSchema: { title: 'x' }, setError });
+    openTray();
+    
+    fireEvent.click(screen.getByText(/Remove Schema/i));
+    
+    await waitFor(() => {
+      expect(setError).toHaveBeenCalledWith('Failed to remove schema from server.');
+    });
+    
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('handles backend fetch error gracefully', async () => {
+    const setError = jest.fn();
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    fetchSchemaFromBackend.mockRejectedValue(new Error('Network error'));
+
+    renderTray({ nodesFetched: true, setError });
+    
+    await waitFor(() => {
+      expect(setError).toHaveBeenCalledWith('Failed fetching schema from backend');
+    });
+    
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('does not fetch from backend if externalSchema is provided', async () => {
+    renderTray({ externalSchema: { title: 'External' }, nodesFetched: true });
+    
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    expect(fetchSchemaFromBackend).not.toHaveBeenCalled();
+  });
+
+  it('does not fetch from backend if nodes are not fetched', async () => {
+    renderTray({ nodesFetched: false });
+    
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    expect(fetchSchemaFromBackend).not.toHaveBeenCalled();
+  });
+
+  it('formats schema object correctly for display', () => {
+    const schema = { properties: { field1: { type: 'string' } } };
+    renderTray({ externalSchema: schema });
+    openTray();
+    
+    const expandBtn = screen.getByRole('button', { name: /Expand/i });
+    fireEvent.click(expandBtn);
+    
+    const textarea = screen.getByRole('textbox');
+    expect(textarea.value).toContain('properties');
+    expect(textarea.value).toContain('field1');
+  });
+
+  it('handles string schema in getFormattedSchema', () => {
+    const schema = '{"simple":"string"}';
+    renderTray({ externalSchema: schema });
+    openTray();
+    
+    const expandBtn = screen.getByRole('button', { name: /Expand/i });
+    fireEvent.click(expandBtn);
+    
+    const textarea = screen.getByRole('textbox');
+    expect(textarea.value).toContain('simple');
+  });
+
+  it('handles invalid schema string in getFormattedSchema', () => {
+    const schema = 'not json {';
+    renderTray({ externalSchema: schema });
+    openTray();
+    
+    const expandBtn = screen.getByRole('button', { name: /Expand/i });
+    fireEvent.click(expandBtn);
+    
+    const textarea = screen.getByRole('textbox');
+    expect(textarea.value).toBe(schema);
+  });
+});

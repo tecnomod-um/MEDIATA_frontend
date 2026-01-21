@@ -63,7 +63,7 @@ const JoinedNodeCard = ({ node }) => {
           {loadingMetadata ? (
             <div className={JoinedNodesDisplayStyles.loadingContainer}>
               <div className={JoinedNodesDisplayStyles.spinner} />
-              <p>Loading datasets...</p>
+              <p className={JoinedNodesDisplayStyles.loadingText}>Loading datasets...</p>
             </div>
           ) : metadata && Array.isArray(metadata.dataset) && metadata.dataset.length > 0 ? (
             metadata.dataset.map((ds, idx) => (

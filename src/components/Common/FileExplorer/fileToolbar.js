@@ -18,21 +18,18 @@ function FileToolbar({ toolbarDisabled, doOpenSelected, hasSelection, onOpenFile
             !hasOpenHandler ||
             !!renamingName
           }
-
           title="Open (Enter / double-click)"
         >
           Open
         </button>
-
         <button
           className={FileExplorerStyles.tbBtn}
           onClick={startRename}
           disabled={toolbarDisabled || selectedCount !== 1}
-          title="Rename (F2)"
+          title="Rename file (F2)"
         >
-          Rename
+          Rename file
         </button>
-
         <button
           className={FileExplorerStyles.tbBtn}
           onClick={openCleanPanel}

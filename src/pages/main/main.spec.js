@@ -98,4 +98,69 @@ describe('<Main />', () => {
     );
     expect(screen.queryByTestId('scrollIndicator')).toBeNull();
   });
+
+  it('shows scroll indicator when not at bottom', () => {
+    window.scrollY = 0;
+    renderWithRouter();
+    expect(screen.getByRole('button', { name: /scroll down/i })).toBeInTheDocument();
+  });
+
+  it('handles scroll indicator click to scroll down', () => {
+    window.scrollY = 0;
+    renderWithRouter();
+    const indicator = screen.getByRole('button', { name: /scroll down/i });
+    fireEvent.click(indicator);
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 500, behavior: 'smooth' });
+  });
+
+  it('handles resize event correctly', () => {
+    renderWithRouter();
+    window.scrollY = 0;
+    const originalHeight = window.innerHeight;
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
+    fireEvent.resize(window);
+    // After resize, component should still be rendered - check for a heading
+    expect(screen.getByRole('heading', { name: /Discovery and profiling/i })).toBeInTheDocument();
+  });
+
+  it('cleans up event listeners on unmount', () => {
+    const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener');
+    const { unmount } = renderWithRouter();
+    unmount();
+    expect(removeEventListenerSpy).toHaveBeenCalledWith('scroll', expect.any(Function));
+    expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
+    removeEventListenerSpy.mockRestore();
+  });
+
+  it('renders all feature cards with correct content', () => {
+    renderWithRouter();
+    expect(screen.getByText('Discovery and profiling')).toBeInTheDocument();
+    expect(screen.getByText('Integration made easy')).toBeInTheDocument();
+    expect(screen.getByText('Health standards ready')).toBeInTheDocument();
+  });
+
+  it('renders feature descriptions correctly', () => {
+    renderWithRouter();
+    expect(screen.getByText(/Scan and search across local clinical files/i)).toBeInTheDocument();
+    expect(screen.getByText(/Bring in heterogeneous spreadsheets/i)).toBeInTheDocument();
+    expect(screen.getByText(/Map local fields to common healthcare terminologies/i)).toBeInTheDocument();
+  });
+
+  it('renders security section with correct heading', () => {
+    renderWithRouter();
+    expect(screen.getByText(/Access your data securely/i)).toBeInTheDocument();
+    expect(screen.getByText(/MEDIATA is built with security and privacy/i)).toBeInTheDocument();
+  });
+
+  it('has working link to tutorial', () => {
+    renderWithRouter();
+    const tutorialButton = screen.getByRole('button', { name: /Check the tutorial/i });
+    expect(screen.getByRole('link', { name: /Check the tutorial/i })).toHaveAttribute('href', '/tutorial');
+  });
+
+  it('has working link to discovery', () => {
+    renderWithRouter();
+    const exploreButton = screen.getByRole('button', { name: /Explore your datasets/i });
+    expect(screen.getByRole('link', { name: /Explore your datasets/i })).toHaveAttribute('href', '/discovery');
+  });
 });
