@@ -449,4 +449,66 @@ describe('SchemaTray • interaction details', () => {
     const textarea = screen.getByRole('textbox');
     expect(textarea.value).toBe(schema);
   });
+
+  it('prevents closing tray with close button when JSON is invalid', async () => {
+    const schema = { title: 'Valid' };
+    const setError = jest.fn();
+    renderTray({ externalSchema: schema, setError });
+    openTray();
+    
+    const expandBtn = screen.getByRole('button', { name: /Expand/i });
+    fireEvent.click(expandBtn);
+    
+    const textarea = screen.getByRole('textbox');
+    fireEvent.change(textarea, { target: { value: 'invalid json' } });
+    
+    const closeBtn = screen.getByLabelText(/Close/i);
+    fireEvent.click(closeBtn);
+    
+    await waitFor(() => {
+      expect(setError).toHaveBeenCalledWith(expect.stringContaining('Invalid JSON'));
+    });
+    
+    // Tray should still be open
+    expect(screen.getByText(/JSON Schema/i)).toBeInTheDocument();
+  });
+
+  it('closes tray successfully with close button when JSON is valid', async () => {
+    const schema = { title: 'Valid' };
+    renderTray({ externalSchema: schema });
+    openTray();
+    
+    const expandBtn = screen.getByRole('button', { name: /Expand/i });
+    fireEvent.click(expandBtn);
+    
+    const textarea = screen.getByRole('textbox');
+    fireEvent.change(textarea, { target: { value: JSON.stringify({ title: 'Updated' }) } });
+    
+    const closeBtn = screen.getByLabelText(/Close/i);
+    fireEvent.click(closeBtn);
+    
+    await waitFor(() => {
+      expect(saveSchemaToBackend).toHaveBeenCalledWith({ title: 'Updated' });
+    });
+    
+    // Tray should be closed
+    await waitFor(() => {
+      expect(screen.getByText(/^Schema$/i)).toBeInTheDocument();
+    });
+  });
+
+  it('clears error when editing text in expanded mode', async () => {
+    const schema = { title: 'Valid' };
+    const setError = jest.fn();
+    renderTray({ externalSchema: schema, setError, error: 'Some error' });
+    openTray();
+    
+    const expandBtn = screen.getByRole('button', { name: /Expand/i });
+    fireEvent.click(expandBtn);
+    
+    const textarea = screen.getByRole('textbox');
+    fireEvent.change(textarea, { target: { value: JSON.stringify({ title: 'New' }) } });
+    
+    expect(setError).toHaveBeenCalledWith('');
+  });
 });

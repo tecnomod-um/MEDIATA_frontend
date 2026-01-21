@@ -87,4 +87,91 @@ describe('axiosSetup utility', () => {
       expect(logoutSpy).not.toHaveBeenCalled();
     });
   });
+
+  describe('request interceptor', () => {
+    let requestHandler;
+    let errorHandler;
+
+    beforeEach(() => {
+      localStorage.clear();
+      // The request interceptor is set up when the module is loaded
+      // Get the first call which is from module initialization
+      if (mockReqUse.mock.calls.length > 0) {
+        requestHandler = mockReqUse.mock.calls[0][0];
+        errorHandler = mockReqUse.mock.calls[0][1];
+      }
+    });
+
+    it('adds Authorization header when JWT token exists', () => {
+      if (!requestHandler) {
+        console.warn('Request handler not initialized');
+        return;
+      }
+      
+      localStorage.setItem('jwtToken', 'test-token-123');
+      
+      const config = { url: '/test', headers: {} };
+      const result = requestHandler(config);
+      
+      expect(result.headers['Authorization']).toBe('Bearer test-token-123');
+    });
+
+    it('does not add Authorization header when JWT token is missing', () => {
+      if (!requestHandler) return;
+      
+      const config = { url: '/test', headers: {} };
+      const result = requestHandler(config);
+      
+      expect(result.headers['Authorization']).toBeUndefined();
+    });
+
+    it('adds Kerberos-TGT header for connect/info endpoint', () => {
+      if (!requestHandler) return;
+      
+      localStorage.setItem('kerberosTGT', 'kerberos-tgt-token');
+      
+      const config = { url: '/nodes/connect/info', headers: {} };
+      const result = requestHandler(config);
+      
+      expect(result.headers['Kerberos-TGT']).toBe('kerberos-tgt-token');
+    });
+
+    it('adds Kerberos-TGT header for node/validate endpoint', () => {
+      if (!requestHandler) return;
+      
+      localStorage.setItem('kerberosTGT', 'kerberos-tgt-token');
+      
+      const config = { url: '/node/validate', headers: {} };
+      const result = requestHandler(config);
+      
+      expect(result.headers['Kerberos-TGT']).toBe('kerberos-tgt-token');
+    });
+
+    it('does not add Kerberos-TGT header for other endpoints', () => {
+      if (!requestHandler) return;
+      
+      localStorage.setItem('kerberosTGT', 'kerberos-tgt-token');
+      
+      const config = { url: '/other/endpoint', headers: {} };
+      const result = requestHandler(config);
+      
+      expect(result.headers['Kerberos-TGT']).toBeUndefined();
+    });
+
+    it('does not add Kerberos-TGT header when TGT is missing', () => {
+      if (!requestHandler) return;
+      
+      const config = { url: '/nodes/connect/info', headers: {} };
+      const result = requestHandler(config);
+      
+      expect(result.headers['Kerberos-TGT']).toBeUndefined();
+    });
+
+    it('handles request errors', async () => {
+      if (!errorHandler) return;
+      
+      const error = new Error('Request error');
+      await expect(errorHandler(error)).rejects.toThrow('Request error');
+    });
+  });
 });

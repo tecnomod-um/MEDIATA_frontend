@@ -256,4 +256,25 @@ describe('ScrollSidebar • props & lifecycle details', () => {
     unmount()
     expect(cancelSpy).toHaveBeenCalledWith(123)
   })
+
+  it('handles scrollToId gracefully when element does not exist', () => {
+    const sections = ['existing-section']
+    mountSectionEls(sections, { 'existing-section': 0 })
+
+    render(<ScrollSidebar sections={sections} />)
+    
+    // Clicking a button that tries to scroll to a non-existent element
+    // We need to manually call the scrollToId function by clicking on a section
+    const existingButton = screen.getByRole('button', { name: 'existing section' })
+    
+    // Remove the element from the DOM to simulate it not existing
+    const el = document.getElementById('existing-section')
+    el.remove()
+    
+    // Click should not throw error when element doesn't exist
+    fireEvent.click(existingButton)
+    
+    // Verify scrollTo was not called because element doesn't exist
+    expect(window.scrollTo).not.toHaveBeenCalled()
+  })
 })

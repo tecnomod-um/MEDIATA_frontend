@@ -586,4 +586,80 @@ describe("<RangePicker />", () => {
     // Should clamp to [0, 10]
     expect(onRangeChange).toHaveBeenCalled();
   });
+
+  it("handles range completely inside unavailable with no next available range", () => {
+    const onRangeChange = jest.fn();
+    render(
+      <RangePicker
+        min={0}
+        max={20}
+        type="integer"
+        onRangeChange={onRangeChange}
+        unavailableRanges={[[0, 10], [12, 20]]}
+      />
+    );
+
+    const rangeText = screen.getByText(/Selected range:/i);
+    fireEvent.doubleClick(rangeText);
+
+    const inputs = screen.getAllByRole("spinbutton");
+    // Try to set range inside unavailable area when no available ranges exist
+    fireEvent.change(inputs[0], { target: { value: "5" } });
+    fireEvent.change(inputs[1], { target: { value: "8" } });
+
+    // Should fall back to [min, min]
+    expect(screen.getByText(/Selected range:/i)).toBeInTheDocument();
+  });
+
+  it("handles invalid date input in handleInputChange", () => {
+    const onRangeChange = jest.fn();
+    const min = Date.parse("2020-01-01");
+    const max = Date.parse("2020-01-10");
+
+    render(
+      <RangePicker
+        min={min}
+        max={max}
+        type="date"
+        onRangeChange={onRangeChange}
+        unavailableRanges={[]}
+      />
+    );
+
+    const rangeText = screen.getByText(/Selected range:/i);
+    fireEvent.doubleClick(rangeText);
+
+    const inputs = screen.getAllByDisplayValue(/2020-01-01/);
+    const originalValue = inputs[0].value;
+    // Try to input an invalid date
+    fireEvent.change(inputs[0], { target: { value: "not-a-date" } });
+
+    // Range should remain unchanged (invalid input is ignored)
+    expect(inputs[0].value).toBe(originalValue);
+  });
+
+  it("handles valid date input in handleInputChange", () => {
+    const onRangeChange = jest.fn();
+    const min = Date.parse("2020-01-01");
+    const max = Date.parse("2020-01-10");
+
+    render(
+      <RangePicker
+        min={min}
+        max={max}
+        type="date"
+        onRangeChange={onRangeChange}
+        unavailableRanges={[]}
+      />
+    );
+
+    const rangeText = screen.getByText(/Selected range:/i);
+    fireEvent.doubleClick(rangeText);
+
+    const inputs = screen.getAllByDisplayValue(/2020-01-01/);
+    fireEvent.change(inputs[0], { target: { value: "2020-01-05" } });
+
+    // The input should now have the new value
+    expect(inputs[0].value).toBe("2020-01-05");
+  });
 });

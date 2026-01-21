@@ -89,4 +89,21 @@ describe('<ContinuousChart />', () => {
       />
     );
   });
+
+  it('handles keyboard events with Enter key', () => {
+    const onClick = jest.fn();
+    
+    render(
+      <ContinuousChart
+        feature={FEATURE}
+        showOutliers={true}
+        onClick={onClick}
+      />
+    );
+
+    const container = screen.getByRole('button', { name: /Chart for ValueDist/i });
+    fireEvent.keyDown(container, { key: 'Enter' });
+    
+    expect(onClick).toHaveBeenCalled();
+  });
 });

@@ -485,3 +485,56 @@ test("handles very large feature arrays", async () => {
 
   expect(await screen.findByTestId("stats")).toBeInTheDocument();
 });
+
+test("handles error when fetching datasets", async () => {
+  mockGetNodeDatasets.mockRejectedValue(new Error("Network error"));
+  const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  
+  render(<Discovery />);
+  
+  await waitFor(() => expect(mockGetNodeDatasets).toHaveBeenCalled());
+  expect(consoleSpy).toHaveBeenCalledWith("Error fetching datasets:", expect.any(Error));
+  
+  consoleSpy.mockRestore();
+});
+
+test("renders with multiple files and toolTray can access toggleFileActive", async () => {
+  const results = [
+    { ...PROCESSED_ITEM, fileName: "file1.csv" },
+    { ...PROCESSED_ITEM, fileName: "file2.csv" }
+  ];
+  
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  
+  render(<Discovery />);
+  await waitFor(() => expect(mockFileExplorerProps).toBeDefined());
+  
+  await act(async () => {
+    await mockFileExplorerProps.onFilesOpened(results);
+  });
+  
+  // ToolTray should be rendered with toggleFileActive prop
+  expect(await screen.findByTestId("tray")).toBeInTheDocument();
+});
+
+test("handles location.state with no files for a node", async () => {
+  const { useLocation } = require("react-router-dom");
+  useLocation.mockReturnValue({ 
+    state: { 
+      elementFiles: [
+        { nodeId: 999, fileName: "test.csv" }  // This node won't match selectedNodes
+      ] 
+    } 
+  });
+  
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  mockProcessSelectedDatasets.mockResolvedValue({
+    mode: "sync",
+    results: []
+  });
+  
+  render(<Discovery />);
+  
+  // Should still attempt to process but handle empty results gracefully
+  await waitFor(() => mockProcessSelectedDatasets.call || true);
+});

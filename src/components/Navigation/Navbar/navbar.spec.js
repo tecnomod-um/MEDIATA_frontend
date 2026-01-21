@@ -158,4 +158,26 @@ describe('Navbar', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: 'Toggle menu' }));
     expect(screen.getByRole('menuitem', { name: 'Projects' })).toBeInTheDocument();
   });
+
+  it('closes mobile menu on window resize above 768px', () => {
+    render(<Navbar />);
+    const checkbox = screen.getByRole('checkbox', { name: 'Toggle menu' });
+    
+    // Open menu
+    fireEvent.click(checkbox);
+    expect(checkbox).toHaveAttribute('aria-expanded', 'true');
+    
+    // Mock window resize to desktop size
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 1024,
+    });
+    
+    // Trigger resize event
+    fireEvent(window, new Event('resize'));
+    
+    // Menu should close
+    expect(checkbox).toHaveAttribute('aria-expanded', 'false');
+  });
 });

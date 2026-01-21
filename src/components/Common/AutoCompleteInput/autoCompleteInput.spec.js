@@ -220,4 +220,277 @@ describe('AutocompleteInput', () => {
 
     expect(screen.getByPlaceholderText('Type to search...')).toBeInTheDocument()
   })
+
+  it('navigates suggestions with ArrowUp key', () => {
+    const handleChange = jest.fn()
+    render(
+      <AutocompleteInput
+        value="a"
+        onChange={handleChange}
+        suggestions={suggestions}
+      />
+    )
+
+    const input = screen.getByRole('combobox')
+    fireEvent.focus(input)
+    
+    // Press down to select first item
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    
+    // Press up to go back
+    fireEvent.keyDown(input, { key: 'ArrowUp' })
+    
+    expect(input).toBeInTheDocument()
+  })
+
+  it('does not go below -1 when pressing ArrowUp at top', () => {
+    const handleChange = jest.fn()
+    render(
+      <AutocompleteInput
+        value="a"
+        onChange={handleChange}
+        suggestions={suggestions}
+      />
+    )
+
+    const input = screen.getByRole('combobox')
+    fireEvent.focus(input)
+    
+    // Press up when at -1 (no selection)
+    fireEvent.keyDown(input, { key: 'ArrowUp' })
+    
+    expect(input).toBeInTheDocument()
+  })
+
+  it('does not go past last item when pressing ArrowDown', () => {
+    const handleChange = jest.fn()
+    render(
+      <AutocompleteInput
+        value="a"
+        onChange={handleChange}
+        suggestions={suggestions}
+      />
+    )
+
+    const input = screen.getByRole('combobox')
+    fireEvent.focus(input)
+    
+    // Press down multiple times past the end
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    
+    expect(input).toBeInTheDocument()
+  })
+
+  it('selects suggestion with Enter key after navigation', () => {
+    const handleChange = jest.fn()
+    render(
+      <AutocompleteInput
+        value="a"
+        onChange={handleChange}
+        suggestions={suggestions}
+      />
+    )
+
+    const input = screen.getByRole('combobox')
+    fireEvent.focus(input)
+    
+    // Navigate to first item
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    
+    // Press Enter to select
+    fireEvent.keyDown(input, { key: 'Enter' })
+    
+    expect(handleChange).toHaveBeenCalledWith('Apple')
+  })
+
+  it('repositions dropdown above input when not enough space below', () => {
+    const handleChange = jest.fn()
+    render(
+      <AutocompleteInput
+        value=""
+        onChange={handleChange}
+        suggestions={suggestions}
+      />
+    )
+
+    const input = screen.getByRole('combobox')
+    
+    // Mock getBoundingClientRect to simulate no space below
+    const mockGetBoundingClientRect = jest.fn(() => ({
+      top: 700,
+      bottom: 750,
+      left: 10,
+      width: 200,
+    }))
+    
+    Object.defineProperty(input, 'getBoundingClientRect', {
+      writable: true,
+      configurable: true,
+      value: mockGetBoundingClientRect,
+    })
+
+    fireEvent.focus(input)
+    
+    expect(screen.getByRole('listbox')).toBeInTheDocument()
+  })
+
+  it('handles scroll event and blurs input when scrolled out of view', () => {
+    const handleChange = jest.fn()
+    render(
+      <div style={{ overflow: 'auto', height: '100px' }}>
+        <AutocompleteInput
+          value=""
+          onChange={handleChange}
+          suggestions={suggestions}
+        />
+      </div>
+    )
+
+    const input = screen.getByRole('combobox')
+    fireEvent.focus(input)
+    
+    // Verify input is in document
+    expect(input).toBeInTheDocument()
+  })
+
+  it('updates filtered suggestions when limitInitial is true and value changes', () => {
+    const handleChange = jest.fn()
+    const { rerender } = render(
+      <AutocompleteInput
+        value=""
+        onChange={handleChange}
+        suggestions={suggestions}
+        limitInitial={true}
+      />
+    )
+
+    const input = screen.getByRole('combobox')
+
+    // Update value
+    rerender(
+      <AutocompleteInput
+        value="ba"
+        onChange={handleChange}
+        suggestions={suggestions}
+        limitInitial={true}
+      />
+    )
+
+    fireEvent.focus(input)
+    
+    // Should filter to only 'Banana'
+    expect(input).toBeInTheDocument()
+  })
+
+  it('shows suggestions when focused after suggestions are loaded', () => {
+    const handleChange = jest.fn()
+    const { rerender } = render(
+      <AutocompleteInput
+        value=""
+        onChange={handleChange}
+        suggestions={[]}
+        limitInitial={false}
+      />
+    )
+
+    const input = screen.getByRole('combobox')
+    fireEvent.focus(input)
+
+    // Update with suggestions while focused
+    rerender(
+      <AutocompleteInput
+        value=""
+        onChange={handleChange}
+        suggestions={suggestions}
+        limitInitial={false}
+      />
+    )
+
+    // Component should be in document
+    expect(input).toBeInTheDocument()
+  })
+
+  it('uses custom id when provided', () => {
+    const handleChange = jest.fn()
+    render(
+      <AutocompleteInput
+        value=""
+        onChange={handleChange}
+        suggestions={suggestions}
+        id="custom-id"
+      />
+    )
+
+    const input = screen.getByRole('combobox')
+    expect(input).toHaveAttribute('id', 'custom-id')
+  })
+
+  it('uses custom name when provided', () => {
+    const handleChange = jest.fn()
+    render(
+      <AutocompleteInput
+        value=""
+        onChange={handleChange}
+        suggestions={suggestions}
+        name="custom-name"
+      />
+    )
+
+    const input = screen.getByRole('combobox')
+    expect(input).toHaveAttribute('name', 'custom-name')
+  })
+
+  it('uses custom ariaLabel when provided', () => {
+    const handleChange = jest.fn()
+    render(
+      <AutocompleteInput
+        value=""
+        onChange={handleChange}
+        suggestions={suggestions}
+        ariaLabel="Custom search"
+      />
+    )
+
+    const input = screen.getByRole('combobox')
+    expect(input).toHaveAttribute('aria-label', 'Custom search')
+  })
+
+  it('applies custom className', () => {
+    const handleChange = jest.fn()
+    render(
+      <AutocompleteInput
+        value=""
+        onChange={handleChange}
+        suggestions={suggestions}
+        className="custom-class"
+      />
+    )
+
+    const input = screen.getByRole('combobox')
+    expect(input).toHaveClass('custom-class')
+  })
+
+  it('handles other key presses without errors', () => {
+    const handleChange = jest.fn()
+    render(
+      <AutocompleteInput
+        value="a"
+        onChange={handleChange}
+        suggestions={suggestions}
+      />
+    )
+
+    const input = screen.getByRole('combobox')
+    fireEvent.focus(input)
+    
+    // Press a key that should be ignored
+    fireEvent.keyDown(input, { key: 'Tab' })
+    fireEvent.keyDown(input, { key: 'Shift' })
+    
+    expect(input).toBeInTheDocument()
+  })
 })

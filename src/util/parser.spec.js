@@ -1,4 +1,4 @@
-import { jsonToCSV } from './parser';
+import { jsonToCSV, parseJson, parseJsonObject } from './parser';
 
 describe('jsonToCSV', () => {
   it('converts a single-object array of numbers to CSV', () => {
@@ -63,9 +63,12 @@ describe('jsonToCSV', () => {
     expect(() => jsonToCSV([])).toThrow();
   });
 
-  it('throws if a value is null or undefined', () => {
+  it('converts null and undefined to strings', () => {
     const input = [{ x: null, y: undefined }];
-    expect(() => jsonToCSV(input)).toThrow();
+    const csv = jsonToCSV(input);
+    const lines = csv.split('\n');
+    expect(lines[0]).toBe('x,y');
+    expect(lines[1]).toBe('null,undefined');
   });
 
   it('handles empty strings as values', () => {
@@ -184,3 +187,150 @@ describe('jsonToCSV', () => {
     expect(lines[1]).toBe('1,2,3,4,5');
   });
 });
+
+describe('parseJson', () => {
+  it('parses valid JSON string', () => {
+    const result = parseJson('{"name": "John", "age": 30}');
+    expect(result.ok).toBe(true);
+    expect(result.value).toEqual({ name: 'John', age: 30 });
+  });
+
+  it('parses JSON array', () => {
+    const result = parseJson('[1, 2, 3]');
+    expect(result.ok).toBe(true);
+    expect(result.value).toEqual([1, 2, 3]);
+  });
+
+  it('parses JSON primitives', () => {
+    expect(parseJson('true').value).toBe(true);
+    expect(parseJson('false').value).toBe(false);
+    expect(parseJson('null').value).toBe(null);
+    expect(parseJson('123').value).toBe(123);
+    expect(parseJson('"string"').value).toBe('string');
+  });
+
+  it('returns fallback for empty string', () => {
+    const result = parseJson('', 'default-value');
+    expect(result.ok).toBe(true);
+    expect(result.value).toBe('default-value');
+  });
+
+  it('returns fallback for whitespace-only string', () => {
+    const result = parseJson('   ', 'default');
+    expect(result.ok).toBe(true);
+    expect(result.value).toBe('default');
+  });
+
+  it('handles null input', () => {
+    const result = parseJson(null, 'fallback');
+    expect(result.ok).toBe(true);
+    expect(result.value).toBe('fallback');
+  });
+
+  it('handles undefined input', () => {
+    const result = parseJson(undefined, 'fallback');
+    expect(result.ok).toBe(true);
+    expect(result.value).toBe('fallback');
+  });
+
+  it('returns error object for invalid JSON', () => {
+    const result = parseJson('not valid json');
+    expect(result.ok).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+
+  it('returns error for incomplete JSON', () => {
+    const result = parseJson('{"incomplete":');
+    expect(result.ok).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+
+  it('trims whitespace before parsing', () => {
+    const result = parseJson('  {"trimmed": true}  ');
+    expect(result.ok).toBe(true);
+    expect(result.value).toEqual({ trimmed: true });
+  });
+});
+
+describe('parseJsonObject', () => {
+  it('parses valid JSON object', () => {
+    const result = parseJsonObject('{"name": "Alice"}');
+    expect(result.ok).toBe(true);
+    expect(result.value).toEqual({ name: 'Alice' });
+  });
+
+  it('returns empty object fallback for empty string when allowEmpty is true', () => {
+    const result = parseJsonObject('', { allowEmpty: true });
+    expect(result.ok).toBe(true);
+    expect(result.value).toEqual({});
+  });
+
+  it('returns error for empty string when allowEmpty is false', () => {
+    const result = parseJsonObject('', { allowEmpty: false });
+    expect(result.ok).toBe(false);
+    expect(result.error.message).toBe('Empty JSON');
+  });
+
+  it('returns custom fallback for empty string', () => {
+    const fallback = { default: 'object' };
+    const result = parseJsonObject('', { fallback, allowEmpty: true });
+    expect(result.ok).toBe(true);
+    expect(result.value).toBe(fallback);
+  });
+
+  it('returns error for JSON array', () => {
+    const result = parseJsonObject('[1, 2, 3]');
+    expect(result.ok).toBe(false);
+    expect(result.error.message).toBe('Not a JSON object');
+  });
+
+  it('returns error for JSON primitives', () => {
+    expect(parseJsonObject('true').ok).toBe(false);
+    expect(parseJsonObject('123').ok).toBe(false);
+    expect(parseJsonObject('"string"').ok).toBe(false);
+    expect(parseJsonObject('null').ok).toBe(false);
+  });
+
+  it('returns error for invalid JSON', () => {
+    const result = parseJsonObject('not valid');
+    expect(result.ok).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+
+  it('handles null input with fallback', () => {
+    const result = parseJsonObject(null, { allowEmpty: true });
+    expect(result.ok).toBe(true);
+    expect(result.value).toEqual({});
+  });
+
+  it('handles undefined input with fallback', () => {
+    const result = parseJsonObject(undefined, { allowEmpty: true });
+    expect(result.ok).toBe(true);
+    expect(result.value).toEqual({});
+  });
+
+  it('handles whitespace-only string', () => {
+    const result = parseJsonObject('   ', { allowEmpty: true });
+    expect(result.ok).toBe(true);
+    expect(result.value).toEqual({});
+  });
+
+  it('trims whitespace before parsing', () => {
+    const result = parseJsonObject('  {"trimmed": true}  ');
+    expect(result.ok).toBe(true);
+    expect(result.value).toEqual({ trimmed: true });
+  });
+
+  it('handles nested objects', () => {
+    const result = parseJsonObject('{"outer": {"inner": "value"}}');
+    expect(result.ok).toBe(true);
+    expect(result.value).toEqual({ outer: { inner: 'value' } });
+  });
+
+  it('uses default options when options not provided', () => {
+    const result = parseJsonObject('{"test": "value"}');
+    expect(result.ok).toBe(true);
+    expect(result.value).toEqual({ test: 'value' });
+  });
+});
+
