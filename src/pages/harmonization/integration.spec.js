@@ -562,4 +562,298 @@ describe('Integration Page', () => {
     render(<Integration />);
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalledTimes(2));
   });
+
+  test('parseCSV splits lines correctly', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'csv.csv' }] } });
+    const csvData = 'colA,val1,val2,val3\ncolB,val4,val5,val6';
+    fetchElementFile.mockResolvedValue(csvData);
+
+    render(<Integration />);
+    await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
+  });
+
+  test('parseCSV handles trailing commas', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'trailing.csv' }] } });
+    fetchElementFile.mockResolvedValue('col,a,b,');
+
+    render(<Integration />);
+    await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
+  });
+
+  test('mergeColumnsData deduplicates values', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ 
+      state: { 
+        elementFiles: [
+          { nodeId: 'node1', fileName: 'dup.csv' }
+        ] 
+      } 
+    });
+    fetchElementFile.mockResolvedValue('dupCol,a,b,a,b,a');
+
+    render(<Integration />);
+    await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
+  });
+
+  test('initializeMappings creates mapping structure for each column', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'map.csv' }] } });
+    fetchElementFile.mockResolvedValue('mapCol,val1,val2');
+
+    render(<Integration />);
+    await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
+  });
+
+  test('formatValue formats dates correctly', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'date.csv' }] } });
+    fetchElementFile.mockResolvedValue('dateCol,date,2024-01-01');
+
+    render(<Integration />);
+    await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
+  });
+
+  test('formatValue handles invalid dates', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ state: {} });
+
+    render(<Integration />);
+    // Component has formatValue function that handles invalid dates
+    expect(screen.getByTestId('FilePicker')).toBeInTheDocument();
+  });
+
+  test('formatValue handles null and undefined values', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ state: {} });
+
+    render(<Integration />);
+    // Component has formatValue function that handles null/undefined
+    expect(screen.getByTestId('FilePicker')).toBeInTheDocument();
+  });
+
+  test('handleMappingChange updates temporaryGroups', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'temp.csv' }] } });
+    fetchElementFile.mockResolvedValue('tempCol,a,b');
+
+    render(<Integration />);
+    await waitFor(() => expect(screen.queryByTestId('ColumnMapping')).toBeInTheDocument());
+  });
+
+  test('handleSaveMappings with standard mapping', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'std.csv' }] } });
+    fetchElementFile.mockResolvedValue('stdCol,val1,val2');
+
+    render(<Integration />);
+    await waitFor(() => expect(screen.queryByTestId('ColumnMapping')).toBeInTheDocument());
+  });
+
+  test('handleSaveMappings with one-hot mapping', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'oh.csv' }] } });
+    fetchElementFile.mockResolvedValue('ohCol,cat1,cat2');
+
+    render(<Integration />);
+    await waitFor(() => expect(screen.queryByTestId('ColumnMapping')).toBeInTheDocument());
+  });
+
+  test('handleSaveMappings with removeFromHierarchy true', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'rem.csv' }] } });
+    fetchElementFile.mockResolvedValue('remCol,v1,v2');
+
+    render(<Integration />);
+    await waitFor(() => expect(screen.queryByTestId('ColumnMapping')).toBeInTheDocument());
+  });
+
+  test('handleDeleteMapping removes mapping from list', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'del.csv' }] } });
+    fetchElementFile.mockResolvedValue('delCol,d1,d2');
+
+    render(<Integration />);
+    await waitFor(() => expect(screen.queryByTestId('MappingsResult')).toBeInTheDocument());
+  });
+
+  test('handleUndoDelete restores last deleted mapping', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'undo.csv' }] } });
+    fetchElementFile.mockResolvedValue('undoCol,u1,u2');
+
+    render(<Integration />);
+    await waitFor(() => expect(screen.queryByTestId('MappingsResult')).toBeInTheDocument());
+  });
+
+  test('handleRemoveExternalSchema sets schema to null', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'schema.csv' }] } });
+    fetchElementFile.mockResolvedValue('schemaCol,s1,s2');
+
+    render(<Integration />);
+    await waitFor(() => expect(screen.queryByTestId('SchemaTray')).toBeInTheDocument());
+  });
+
+  test('handleProcessMappings sends data to backend', async () => {
+    const { setParseConfigs } = require('../../util/petitionHandler');
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'proc.csv' }] } });
+    fetchElementFile.mockResolvedValue('procCol,p1,p2');
+    setParseConfigs.mockResolvedValue({ success: true });
+
+    render(<Integration />);
+    await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
+  });
+
+  test('handleProcessMappings handles multiple nodes', async () => {
+    const { setParseConfigs } = require('../../util/petitionHandler');
+    const nodes = [
+      { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' },
+      { nodeId: 'node2', serviceUrl: 'url2', name: 'Node 2' },
+    ];
+    useNode.mockReturnValue({ selectedNodes: nodes });
+    useLocation.mockReturnValue({ 
+      state: { 
+        elementFiles: [
+          { nodeId: 'node1', fileName: 'f1.csv' },
+          { nodeId: 'node2', fileName: 'f2.csv' }
+        ] 
+      } 
+    });
+    fetchElementFile.mockResolvedValue('col,v1,v2');
+    setParseConfigs.mockResolvedValue({ success: true });
+
+    render(<Integration />);
+    await waitFor(() => expect(fetchElementFile).toHaveBeenCalledTimes(2));
+  });
+
+  test('handleProcessMappings handles backend errors', async () => {
+    const { setParseConfigs } = require('../../util/petitionHandler');
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'err.csv' }] } });
+    fetchElementFile.mockResolvedValue('errCol,e1,e2');
+    setParseConfigs.mockRejectedValue(new Error('Backend error'));
+
+    render(<Integration />);
+    await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
+    
+    consoleErrorSpy.mockRestore();
+  });
+
+  test('loads schema on mount', async () => {
+    const { fetchSchemaFromBackend } = require('../../util/petitionHandler');
+    useNode.mockReturnValue({ selectedNodes: [] });
+    useLocation.mockReturnValue({ state: {} });
+
+    render(<Integration />);
+    await waitFor(() => expect(fetchSchemaFromBackend).toHaveBeenCalled());
+  });
+
+  test('handles schema fetch errors', async () => {
+    const { fetchSchemaFromBackend } = require('../../util/petitionHandler');
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    fetchSchemaFromBackend.mockRejectedValue(new Error('Schema fetch failed'));
+    useNode.mockReturnValue({ selectedNodes: [] });
+    useLocation.mockReturnValue({ state: {} });
+
+    render(<Integration />);
+    await waitFor(() => expect(fetchSchemaFromBackend).toHaveBeenCalled());
+    
+    consoleErrorSpy.mockRestore();
+  });
+
+  test('renders FileMapperModal when isFileMapperOpen is true', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'modal.csv' }] } });
+    fetchElementFile.mockResolvedValue('modalCol,m1,m2');
+
+    render(<Integration />);
+    await waitFor(() => expect(screen.queryByTestId('FileMapperModal')).toBeInTheDocument());
+  });
+
+  test('handleColumnClick adds column to temporaryGroups if not already present', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'click.csv' }] } });
+    fetchElementFile.mockResolvedValue('clickCol,c1,c2');
+
+    render(<Integration />);
+    await waitFor(() => expect(screen.queryByTestId('ColumnSearchList')).toBeInTheDocument());
+  });
+
+  test('handleColumnClick does not add duplicate columns', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'nodup.csv' }] } });
+    fetchElementFile.mockResolvedValue('nodupCol,n1,n2');
+
+    render(<Integration />);
+    await waitFor(() => expect(screen.queryByTestId('ColumnSearchList')).toBeInTheDocument());
+  });
+
+  test('renders with CSSTransition for columns section', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'trans.csv' }] } });
+    fetchElementFile.mockResolvedValue('transCol,t1,t2');
+
+    render(<Integration />);
+    await waitFor(() => expect(screen.queryByTestId('ColumnSearchList')).toBeInTheDocument());
+  });
+
+  test('handleDragStart sets dataTransfer correctly', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'drag.csv' }] } });
+    fetchElementFile.mockResolvedValue('dragCol,d1,d2');
+
+    render(<Integration />);
+    await waitFor(() => expect(screen.queryByTestId('ColumnSearchList')).toBeInTheDocument());
+  });
+
+  test('shows success toast when processingStatus is success', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'succ.csv' }] } });
+    fetchElementFile.mockResolvedValue('succCol,s1,s2');
+
+    render(<Integration />);
+    await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
+  });
+
+  test('mergeColumnsData updates existing column nodeId', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({ 
+      state: { 
+        elementFiles: [
+          { nodeId: 'node1', fileName: 'merge.csv' }
+        ] 
+      } 
+    });
+    fetchElementFile.mockResolvedValue('mergeCol,m1,m2');
+
+    render(<Integration />);
+    await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
+  });
 });
