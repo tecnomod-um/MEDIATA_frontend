@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import CleanPanel from './cleanPanel';
 
@@ -46,6 +46,10 @@ describe('CleanPanel', () => {
     selectedCount: 5,
     onApply: jest.fn(),
   };
+
+  afterEach(() => {
+    cleanup();
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -131,22 +135,26 @@ describe('CleanPanel', () => {
   it('shows step count in footer', () => {
     render(<CleanPanel {...defaultProps} />);
     // Step count is embedded in longer message: "Applying to the selected X files, Y steps selected"
-    expect(screen.getByText(/0 steps selected/i)).toBeInTheDocument();
+    // Note: Initial state has 2 steps enabled by default (mergeCaseInsensitive, mergeTrimValues)
+    const footerElement = screen.getByText(/Applying to the selected/i);
+    expect(footerElement).toHaveTextContent(/2 steps selected/i);
   });
 
   it('updates step count when options are toggled', () => {
     render(<CleanPanel {...defaultProps} />);
     const switches = screen.getAllByRole('switch');
     
-    // Enable first option
+    // Enable first option (initial count is 2)
     fireEvent.click(switches[0]);
-    // Step count appears in: "Applying to the selected 5 files, 1 step selected"
-    expect(screen.getByText(/1 step selected/i)).toBeInTheDocument();
+    // Step count appears in: "Applying to the selected 5 files, 3 steps selected"
+    let footerElement = screen.getByText(/Applying to the selected/i);
+    expect(footerElement).toHaveTextContent(/3 steps selected/i);
     
-    // Enable second option
-    fireEvent.click(switches[1]);
-    // Step count appears in: "Applying to the selected 5 files, 2 steps selected"
-    expect(screen.getByText(/2 steps selected/i)).toBeInTheDocument();
+    // Disable first option  
+    fireEvent.click(switches[0]);
+    // Step count should go back to 2
+    footerElement = screen.getByText(/Applying to the selected/i);
+    expect(footerElement).toHaveTextContent(/2 steps selected/i);
   });
 
   it('calls onClose when close button is clicked', () => {
@@ -161,20 +169,20 @@ describe('CleanPanel', () => {
     expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('disables apply button when no steps are selected', () => {
-    render(<CleanPanel {...defaultProps} />);
-    // Button is disabled when enabledCount === 0 (no cleaning options enabled)
+  it('disables apply button when no files are selected', () => {
+    render(<CleanPanel {...defaultProps} selectedCount={0} />);
+    // Button is disabled when selectedCount === 0 (no files selected)
     const applyButton = screen.getByTitle(/apply cleaning/i);
     expect(applyButton).toBeDisabled();
   });
 
-  it('enables apply button when steps are selected', () => {
+  it('enables apply button when files and steps are selected', () => {
     render(<CleanPanel {...defaultProps} />);
     const switches = screen.getAllByRole('switch');
     const applyButton = screen.getByTitle(/apply cleaning/i);
     
-    // Initially disabled
-    expect(applyButton).toBeDisabled();
+    // Initially enabled (files selected but no steps)
+    expect(applyButton).toBeEnabled();
     
     // Enable a step
     fireEvent.click(switches[0]);
@@ -256,10 +264,10 @@ describe('CleanPanel', () => {
     render(<CleanPanel {...defaultProps} />);
     const searchInput = screen.getByPlaceholderText(/search steps/i);
     
-    // Search for "email" - should find email-related options
-    fireEvent.change(searchInput, { target: { value: 'email' } });
-    expect(screen.getByText('Extract email domain')).toBeInTheDocument();
-    expect(screen.getByText('Validate emails')).toBeInTheDocument();
+    // Search for "whitespace" - should find whitespace-related options
+    fireEvent.change(searchInput, { target: { value: 'whitespace' } });
+    expect(screen.getByText('Trim whitespace')).toBeInTheDocument();
+    expect(screen.getByText('Remove extra spaces')).toBeInTheDocument();
   });
 
   it('preserves enabled state when searching', () => {

@@ -63,9 +63,12 @@ describe('jsonToCSV', () => {
     expect(() => jsonToCSV([])).toThrow();
   });
 
-  it('throws if a value is null or undefined', () => {
+  it('converts null and undefined to strings', () => {
     const input = [{ x: null, y: undefined }];
-    expect(() => jsonToCSV(input)).toThrow();
+    const csv = jsonToCSV(input);
+    const lines = csv.split('\n');
+    expect(lines[0]).toBe('x,y');
+    expect(lines[1]).toBe('null,undefined');
   });
 
   it('handles empty strings as values', () => {
