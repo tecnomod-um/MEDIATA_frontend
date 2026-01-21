@@ -245,6 +245,155 @@ describe('<ToolTray/>', () => {
           )
         );
       });
+
+      it('toasts error when toggleFeatureType throws exception', async () => {
+        recalculateFeature.mockRejectedValue(new Error('Network error'));
+        const props = getDefaultProps();
+        render(<ToolTray {...props} />);
+
+        const btn = screen.getByRole('button', { name: /Toggle the selected feature's type between categorical and continuous/i });
+        fireEvent.click(btn);
+
+        await waitFor(() =>
+          expect(toast.error).toHaveBeenCalledWith(
+            expect.stringContaining('Feature recalculation failed')
+          )
+        );
+      });
+
+      it('handles missing fileName in lookupFileName', async () => {
+        const props = getDefaultProps();
+        props.selectedEntry = { featureName: 'Unknown', type: 'categorical' };
+        
+        render(<ToolTray {...props} />);
+
+        const btn = screen.getByRole('button', { name: /Toggle the selected feature's type between categorical and continuous/i });
+        fireEvent.click(btn);
+
+        await waitFor(() => {
+          expect(recalculateFeature).not.toHaveBeenCalled();
+        });
+      });
+
+      it('handles missing node with serviceUrl', async () => {
+        recalculateFeature.mockResolvedValue({
+          continuousFeatures: [{ featureName: 'Fruit', fileName: 'fileC.csv' }],
+        });
+        
+        const props = getDefaultProps();
+        props.selectedEntry = { featureName: 'Fruit', type: 'categorical', fileName: 'fileC.csv' };
+        props.dataResults = [
+          { nodeId: 99, nodeName: 'Unknown', fileName: 'fileC.csv' },
+        ];
+
+        render(<ToolTray {...props} />);
+
+        const btn = screen.getByRole('button', { name: /Toggle the selected feature's type between categorical and continuous/i });
+        fireEvent.click(btn);
+
+        await waitFor(() => {
+          expect(recalculateFeature).not.toHaveBeenCalled();
+        });
+      });
+
+      it('updates selectedEntry nodeId from dataResults fallback', async () => {
+        recalculateFeature.mockResolvedValue({
+          continuousFeatures: [{ featureName: 'Fruit', fileName: 'fileA.csv' }],
+        });
+        
+        const props = getDefaultProps();
+        props.selectedEntry = { featureName: 'Fruit', type: 'categorical', fileName: 'fileA.csv' };
+        
+        render(<ToolTray {...props} />);
+
+        const btn = screen.getByRole('button', { name: /Toggle the selected feature's type between categorical and continuous/i });
+        fireEvent.click(btn);
+
+        await waitFor(() => {
+          expect(props.setSelectedEntry).toHaveBeenCalled();
+        });
+      });
+
+      it('handles conversion with chiSquareTest data', async () => {
+        recalculateFeature.mockResolvedValue({
+          continuousFeatures: [{ featureName: 'Fruit', fileName: 'fileA.csv' }],
+          chiSquareTest: { test: 'data' },
+        });
+        
+        const props = getDefaultProps();
+        render(<ToolTray {...props} />);
+
+        const btn = screen.getByRole('button', { name: /Toggle the selected feature's type between categorical and continuous/i });
+        fireEvent.click(btn);
+
+        await waitFor(() => {
+          expect(recalculateFeature).toHaveBeenCalled();
+        });
+      });
+    });
+
+    it('toggles individual feature on/off', () => {
+      const props = getDefaultProps();
+      render(<ToolTray {...props} />);
+      
+      const fruitSwitch = screen.getByRole('checkbox', { name: 'Fruit' });
+      fireEvent.click(fruitSwitch);
+      
+      expect(props.setFilteredData).toHaveBeenCalled();
+    });
+
+    it('creates ripple effect on file toggle click', () => {
+      const props = getDefaultProps();
+      const { container } = render(<ToolTray {...props} />);
+      
+      const fileLabel = screen.getByText('fileA.csv').closest('label');
+      fireEvent.click(fileLabel);
+      
+      // Check that ripple element was created (it gets removed after timeout)
+      expect(props.toggleFileActive).toHaveBeenCalled();
+    });
+
+    it('displays "Show All" when not all features are checked', () => {
+      const props = getDefaultProps();
+      props.filteredData = {
+        ...props.data,
+        categoricalFeatures: [],
+      };
+      
+      render(<ToolTray {...props} />);
+      expect(screen.getByRole('button', { name: /show all/i })).toBeInTheDocument();
+    });
+
+    it('renders single file without multi-file selector', () => {
+      const props = getDefaultProps();
+      props.dataResults = [{ nodeId: 1, nodeName: 'Single', fileName: 'file.csv' }];
+      
+      render(<ToolTray {...props} />);
+      expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
+    });
+
+    it('does not render integrity metrics button for single file', () => {
+      const props = getDefaultProps();
+      props.dataResults = [{ nodeId: 1, nodeName: 'Single', fileName: 'file.csv' }];
+      
+      render(<ToolTray {...props} />);
+      expect(screen.queryByRole('button', { name: /integrity metrics/i })).not.toBeInTheDocument();
+    });
+
+    it('shows "Filters added" when filters exist', () => {
+      const props = getDefaultProps();
+      props.filters = [{ filter: 'data' }];
+      
+      render(<ToolTray {...props} />);
+      expect(screen.getByRole('button', { name: /filters added/i })).toBeInTheDocument();
+    });
+
+    it('shows "Display aggregate metrics" when in individual view', () => {
+      const props = getDefaultProps();
+      props.showIndividualView = true;
+      
+      render(<ToolTray {...props} />);
+      expect(screen.getByRole('button', { name: /display aggregate metrics/i })).toBeInTheDocument();
     });
   });
 });

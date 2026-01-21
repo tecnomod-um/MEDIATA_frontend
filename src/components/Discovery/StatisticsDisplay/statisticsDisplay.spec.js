@@ -196,4 +196,217 @@ describe("<StatisticsDisplay />", () => {
     fireEvent.click(screen.getByLabelText("Close preview"));
     expect(screen.queryByRole("dialog", { name: "Chart preview" })).toBeNull();
   });
+
+  test("double-click on categorical chart opens preview", () => {
+    render(
+      <StatisticsDisplay
+        data={data}
+        showOutliers={false}
+        setSelectedEntry={setSelectedEntry}
+        selectedEntry={null}
+      />
+    );
+
+    const catChart = screen.getByLabelText("Overview Categorical chart for C");
+    fireEvent.doubleClick(catChart);
+
+    expect(screen.getByRole("dialog", { name: "Chart preview" })).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Preview Categorical chart for C")
+    ).toBeInTheDocument();
+  });
+
+  test("double-click on date chart opens preview", () => {
+    render(
+      <StatisticsDisplay
+        data={data}
+        showOutliers={true}
+        setSelectedEntry={setSelectedEntry}
+        selectedEntry={null}
+      />
+    );
+
+    const dateChart = screen.getByLabelText("Overview Date chart for D");
+    fireEvent.doubleClick(dateChart);
+
+    expect(screen.getByRole("dialog", { name: "Chart preview" })).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Preview Date chart for D")
+    ).toBeInTheDocument();
+  });
+
+  test("does not open preview on mobile (small window)", () => {
+    // Mock window.innerWidth
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 500,
+    });
+
+    render(
+      <StatisticsDisplay
+        data={data}
+        showOutliers={true}
+        setSelectedEntry={setSelectedEntry}
+        selectedEntry={null}
+      />
+    );
+
+    const cont = screen.getByLabelText("Overview Continuous chart for B");
+    fireEvent.doubleClick(cont);
+
+    // Preview should not open on mobile
+    expect(screen.queryByRole("dialog", { name: "Chart preview" })).not.toBeInTheDocument();
+
+    // Restore window.innerWidth
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 1024,
+    });
+  });
+
+  test("clicking categorical chart calls setSelectedEntry", () => {
+    render(
+      <StatisticsDisplay
+        data={data}
+        showOutliers={false}
+        setSelectedEntry={setSelectedEntry}
+        selectedEntry={null}
+      />
+    );
+
+    const catChart = screen.getByLabelText("Overview Categorical chart for C");
+    fireEvent.click(catChart);
+    expect(setSelectedEntry).toHaveBeenCalledWith({
+      type: "categorical",
+      featureName: "C",
+    });
+  });
+
+  test("clicking date chart calls setSelectedEntry", () => {
+    render(
+      <StatisticsDisplay
+        data={data}
+        showOutliers={false}
+        setSelectedEntry={setSelectedEntry}
+        selectedEntry={null}
+      />
+    );
+
+    const dateChart = screen.getByLabelText("Overview Date chart for D");
+    fireEvent.click(dateChart);
+    expect(setSelectedEntry).toHaveBeenCalledWith({
+      type: "continuous",
+      featureName: "D",
+    });
+  });
+
+  test("marks categorical chart as selected", () => {
+    render(
+      <StatisticsDisplay
+        data={data}
+        showOutliers={false}
+        setSelectedEntry={setSelectedEntry}
+        selectedEntry={{ type: "categorical", featureName: "C" }}
+      />
+    );
+
+    const catChart = screen.getByLabelText("Overview Categorical chart for C");
+    expect(catChart).toHaveAttribute("data-selected", "true");
+  });
+
+  test("marks date chart as selected", () => {
+    render(
+      <StatisticsDisplay
+        data={data}
+        showOutliers={false}
+        setSelectedEntry={setSelectedEntry}
+        selectedEntry={{ type: "continuous", featureName: "D" }}
+      />
+    );
+
+    const dateChart = screen.getByLabelText("Overview Date chart for D");
+    expect(dateChart).toHaveAttribute("data-selected", "true");
+  });
+
+  test("formats missing entries correctly with percentage", () => {
+    const dataWithMissing = {
+      continuousFeatures: [
+        { featureName: "A", count: 100, mean: 1, stdDev: 0.1, min: 0, qrt1: 0.5, median: 1, qrt3: 1.5, max: 2, missingValuesCount: 25 },
+      ],
+      categoricalFeatures: [],
+      dateFeatures: [],
+    };
+
+    render(
+      <StatisticsDisplay
+        data={dataWithMissing}
+        showOutliers={false}
+        setSelectedEntry={setSelectedEntry}
+        selectedEntry={null}
+      />
+    );
+
+    const searches = screen.getAllByRole("table");
+    const contResult = JSON.parse(searches[0].getAttribute("data-result"));
+    expect(contResult["Missing Entries"]).toEqual(["25 (25.00%)"]);
+  });
+
+  test("formats missing entries as 0 (0%) when no missing values", () => {
+    const dataNoMissing = {
+      continuousFeatures: [
+        { featureName: "A", count: 100, mean: 1, stdDev: 0.1, min: 0, qrt1: 0.5, median: 1, qrt3: 1.5, max: 2, missingValuesCount: 0 },
+      ],
+      categoricalFeatures: [],
+      dateFeatures: [],
+    };
+
+    render(
+      <StatisticsDisplay
+        data={dataNoMissing}
+        showOutliers={false}
+        setSelectedEntry={setSelectedEntry}
+        selectedEntry={null}
+      />
+    );
+
+    const searches = screen.getAllByRole("table");
+    const contResult = JSON.parse(searches[0].getAttribute("data-result"));
+    expect(contResult["Missing Entries"]).toEqual(["0 (0%)"]);
+  });
+
+  test("handles date features with stdDev", () => {
+    const dataWithDateStdDev = {
+      continuousFeatures: [],
+      categoricalFeatures: [],
+      dateFeatures: [
+        { 
+          featureName: "DateWithStdDev", 
+          count: 10, 
+          earliestDate: "2020-01-01", 
+          q1: "2020-01-02", 
+          median: "2020-01-03", 
+          q3: "2020-01-04", 
+          latestDate: "2020-01-05", 
+          missingValuesCount: 0,
+          stdDev: 5.5,
+          mean: "2020-01-03"
+        },
+      ],
+    };
+
+    render(
+      <StatisticsDisplay
+        data={dataWithDateStdDev}
+        showOutliers={false}
+        setSelectedEntry={setSelectedEntry}
+        selectedEntry={null}
+      />
+    );
+
+    const searches = screen.getAllByRole("table");
+    const contResult = JSON.parse(searches[0].getAttribute("data-result"));
+    expect(contResult["Std. Dev."]).toContain("5.50");
+  });
 });

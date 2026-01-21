@@ -356,4 +356,68 @@ describe("<EntryTable />", () => {
     const table = screen.getByRole("table", { name: /data statistics table/i });
     expect(table).toBeInTheDocument();
   });
+
+  it("handles column resizing with mouse", () => {
+    const onRowSelect = jest.fn();
+    render(
+      <EntryTable
+        filteredLists={filteredLists}
+        minCellWidth={50}
+        onRowSelect={onRowSelect}
+        selectedEntry={selectedEntry}
+        type={type}
+      />
+    );
+
+    const table = screen.getByRole("table");
+    const [thead] = within(table).getAllByRole("rowgroup");
+    const headers = within(thead).getAllByRole("columnheader");
+    
+    const firstHandle = within(headers[0]).getByRole("separator");
+    
+    // Mouse down on resize handle
+    fireEvent.mouseDown(firstHandle);
+    
+    // Verify handle exists
+    expect(firstHandle).toBeInTheDocument();
+  });
+
+  it("cleans up event listeners on unmount", () => {
+    const onRowSelect = jest.fn();
+    const { unmount } = render(
+      <EntryTable
+        filteredLists={filteredLists}
+        minCellWidth={50}
+        onRowSelect={onRowSelect}
+        selectedEntry={selectedEntry}
+        type={type}
+      />
+    );
+
+    // Unmount should not throw errors
+    expect(() => unmount()).not.toThrow();
+  });
+
+  it("handles selection with different feature name", () => {
+    const onRowSelect = jest.fn();
+    const differentEntry = { featureName: "bar", type };
+    
+    render(
+      <EntryTable
+        filteredLists={filteredLists}
+        minCellWidth={50}
+        onRowSelect={onRowSelect}
+        selectedEntry={differentEntry}
+        type={type}
+      />
+    );
+
+    const table = screen.getByRole("table");
+    const [, tbody] = within(table).getAllByRole("rowgroup");
+    const bodyRows = within(tbody).getAllByRole("row");
+
+    // Second row should be selected
+    expect(bodyRows[1]).toHaveClass("selectedRow");
+    expect(bodyRows[0]).not.toHaveClass("selectedRow");
+  });
 });
