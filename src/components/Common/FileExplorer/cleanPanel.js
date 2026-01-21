@@ -402,7 +402,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
 
 
 
-        <div className={FileExplorerStyles.cleanBody}>
+      <div className={FileExplorerStyles.cleanBody}>
           {showNoResults ? (
             <div className={FileExplorerStyles.cleanNoResults} id="cleanPanelNoResults">
               No steps match your search
@@ -411,156 +411,156 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
             <>
               <div className={FileExplorerStyles.cleanSection}>
 
-          <FilterableOption label="Remove duplicates" desc="Keep only the first occurrence of identical rows." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.removeDuplicates}
-                  onChange={(v) => update("removeDuplicates", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
+                <FilterableOption label="Remove duplicates" desc="Keep only the first occurrence of identical rows." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.removeDuplicates}
+                        onChange={(v) => update("removeDuplicates", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
+                    <ToggleRow busy={busy} checked={opts.removeDuplicates} onToggle={(v) => update("removeDuplicates", v)}>
+                      <div className={FileExplorerStyles.cleanLabel}>Remove duplicates</div>
+                      <div className={FileExplorerStyles.cleanDesc}>Keep only the first occurrence of identical rows.</div>
+                    </ToggleRow>
+                  </div>
+                </FilterableOption>
+                <FilterableOption label="Remove empty rows" desc="Drop rows where every cell is blank (or whitespace)." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.removeEmptyRows}
+                        onChange={(v) => update("removeEmptyRows", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
+                    <ToggleRow busy={busy} checked={opts.removeEmptyRows} onToggle={(v) => update("removeEmptyRows", v)}>
+                      <div className={FileExplorerStyles.cleanLabel}>Remove empty rows</div>
+                      <div className={FileExplorerStyles.cleanDesc}>Drop rows where every cell is blank (or whitespace).</div>
+                    </ToggleRow>
+                  </div>
+                </FilterableOption>
               </div>
-              <ToggleRow busy={busy} checked={opts.removeDuplicates} onToggle={(v) => update("removeDuplicates", v)}>
-                <div className={FileExplorerStyles.cleanLabel}>Remove duplicates</div>
-                <div className={FileExplorerStyles.cleanDesc}>Keep only the first occurrence of identical rows.</div>
-              </ToggleRow>
-            </div>
-          </FilterableOption>
-          <FilterableOption label="Remove empty rows" desc="Drop rows where every cell is blank (or whitespace)." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.removeEmptyRows}
-                  onChange={(v) => update("removeEmptyRows", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
-              <ToggleRow busy={busy} checked={opts.removeEmptyRows} onToggle={(v) => update("removeEmptyRows", v)}>
-                <div className={FileExplorerStyles.cleanLabel}>Remove empty rows</div>
-                <div className={FileExplorerStyles.cleanDesc}>Drop rows where every cell is blank (or whitespace).</div>
-              </ToggleRow>
-            </div>
-          </FilterableOption>
-        </div>
 
-        <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Trim whitespace" desc="Trim leading and trailing whitespace in all cells." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.trimWhitespace}
-                  onChange={(v) => update("trimWhitespace", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
-              <ToggleRow busy={busy} checked={opts.trimWhitespace} onToggle={(v) => update("trimWhitespace", v)}>
-                <div className={FileExplorerStyles.cleanLabel}>Trim whitespace</div>
-                <div className={FileExplorerStyles.cleanDesc}>Trim leading and trailing whitespace in all cells.</div>
-              </ToggleRow>
-            </div>
-          </FilterableOption>
-          <FilterableOption label="Remove extra spaces" desc="Collapse repeated whitespace inside values." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.removeExtraSpaces}
-                  onChange={(v) => update("removeExtraSpaces", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
-              <ToggleRow busy={busy} checked={opts.removeExtraSpaces} onToggle={(v) => update("removeExtraSpaces", v)}>
-                <div className={FileExplorerStyles.cleanLabel}>Remove extra spaces</div>
-                <div className={FileExplorerStyles.cleanDesc}>Collapse repeated whitespace inside values.</div>
-              </ToggleRow>
-            </div>
-          </FilterableOption>
-          <FilterableOption label="Remove line breaks" desc="Replace CR/LF sequences with spaces." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.removeLineBreaks}
-                  onChange={(v) => update("removeLineBreaks", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
-              <ToggleRow busy={busy} checked={opts.removeLineBreaks} onToggle={(v) => update("removeLineBreaks", v)}>
-                <div className={FileExplorerStyles.cleanLabel}>Remove line breaks</div>
-                <div className={FileExplorerStyles.cleanDesc}>Replace CR/LF sequences with spaces.</div>
-              </ToggleRow>
-            </div>
-          </FilterableOption>
-          <FilterableOption label="Normalize text" desc="General cleanup of whitespace (safe normalization)." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.normalizeText}
-                  onChange={(v) => update("normalizeText", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
-              <ToggleRow busy={busy} checked={opts.normalizeText} onToggle={(v) => update("normalizeText", v)}>
-                <div className={FileExplorerStyles.cleanLabel}>Normalize text</div>
-                <div className={FileExplorerStyles.cleanDesc}>General cleanup of whitespace (safe normalization).</div>
-              </ToggleRow>
-            </div>
-          </FilterableOption>
-          <FilterableOption label="Standardize case" desc="Convert text into a consistent casing." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.standardizeCase}
-                  onChange={(v) => update("standardizeCase", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
-              <ToggleRow busy={busy} checked={opts.standardizeCase} onToggle={(v) => update("standardizeCase", v)}>
-                <div className={FileExplorerStyles.cleanLabelRow}>
-                  <div className={FileExplorerStyles.cleanLabel}>Standardize case</div>
-                  <span
-                    className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.standardizeCase
-                      ? FileExplorerStyles.cleanInlineHintShow
-                      : FileExplorerStyles.cleanInlineHintHide
-                      }`}
-                    aria-hidden={!(busy || !opts.standardizeCase)}
-                  >
-                    (Turn on to select mode)
-                  </span>
-                </div>
+              <div className={FileExplorerStyles.cleanSection}>
+                <FilterableOption label="Trim whitespace" desc="Trim leading and trailing whitespace in all cells." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.trimWhitespace}
+                        onChange={(v) => update("trimWhitespace", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
+                    <ToggleRow busy={busy} checked={opts.trimWhitespace} onToggle={(v) => update("trimWhitespace", v)}>
+                      <div className={FileExplorerStyles.cleanLabel}>Trim whitespace</div>
+                      <div className={FileExplorerStyles.cleanDesc}>Trim leading and trailing whitespace in all cells.</div>
+                    </ToggleRow>
+                  </div>
+                </FilterableOption>
+                <FilterableOption label="Remove extra spaces" desc="Collapse repeated whitespace inside values." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.removeExtraSpaces}
+                        onChange={(v) => update("removeExtraSpaces", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
+                    <ToggleRow busy={busy} checked={opts.removeExtraSpaces} onToggle={(v) => update("removeExtraSpaces", v)}>
+                      <div className={FileExplorerStyles.cleanLabel}>Remove extra spaces</div>
+                      <div className={FileExplorerStyles.cleanDesc}>Collapse repeated whitespace inside values.</div>
+                    </ToggleRow>
+                  </div>
+                </FilterableOption>
+                <FilterableOption label="Remove line breaks" desc="Replace CR/LF sequences with spaces." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.removeLineBreaks}
+                        onChange={(v) => update("removeLineBreaks", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
+                    <ToggleRow busy={busy} checked={opts.removeLineBreaks} onToggle={(v) => update("removeLineBreaks", v)}>
+                      <div className={FileExplorerStyles.cleanLabel}>Remove line breaks</div>
+                      <div className={FileExplorerStyles.cleanDesc}>Replace CR/LF sequences with spaces.</div>
+                    </ToggleRow>
+                  </div>
+                </FilterableOption>
+                <FilterableOption label="Normalize text" desc="General cleanup of whitespace (safe normalization)." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.normalizeText}
+                        onChange={(v) => update("normalizeText", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
+                    <ToggleRow busy={busy} checked={opts.normalizeText} onToggle={(v) => update("normalizeText", v)}>
+                      <div className={FileExplorerStyles.cleanLabel}>Normalize text</div>
+                      <div className={FileExplorerStyles.cleanDesc}>General cleanup of whitespace (safe normalization).</div>
+                    </ToggleRow>
+                  </div>
+                </FilterableOption>
+                <FilterableOption label="Standardize case" desc="Convert text into a consistent casing." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.standardizeCase}
+                        onChange={(v) => update("standardizeCase", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
+                    <ToggleRow busy={busy} checked={opts.standardizeCase} onToggle={(v) => update("standardizeCase", v)}>
+                      <div className={FileExplorerStyles.cleanLabelRow}>
+                        <div className={FileExplorerStyles.cleanLabel}>Standardize case</div>
+                        <span
+                          className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.standardizeCase
+                            ? FileExplorerStyles.cleanInlineHintShow
+                            : FileExplorerStyles.cleanInlineHintHide
+                            }`}
+                          aria-hidden={!(busy || !opts.standardizeCase)}
+                        >
+                          (Turn on to select mode)
+                        </span>
+                      </div>
 
                       <div className={FileExplorerStyles.cleanDesc}>Convert text into a consistent casing.</div>
 
@@ -583,124 +583,124 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                 </FilterableOption>
               </div>
 
-        <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Remove special characters" desc="Remove non alphanumeric symbols (keeps basic separators)." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.removeSpecialCharacters}
-                  onChange={(v) => update("removeSpecialCharacters", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
-              <ToggleRow
-                busy={busy}
-                checked={opts.removeSpecialCharacters}
-                onToggle={(v) => update("removeSpecialCharacters", v)}
-              >
-                <div className={FileExplorerStyles.cleanLabel}>Remove special characters</div>
-                <div className={FileExplorerStyles.cleanDesc}>
-                  Remove non alphanumeric symbols (keeps basic separators).
-                </div>
-              </ToggleRow>
-            </div>
-          </FilterableOption>
-          <FilterableOption label="Remove punctuation" desc="Strip punctuation characters." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.removePunctuation}
-                  onChange={(v) => update("removePunctuation", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
-              <ToggleRow busy={busy} checked={opts.removePunctuation} onToggle={(v) => update("removePunctuation", v)}>
-                <div className={FileExplorerStyles.cleanLabel}>Remove punctuation</div>
-                <div className={FileExplorerStyles.cleanDesc}>Strip punctuation characters.</div>
-              </ToggleRow>
-            </div>
-          </FilterableOption>
-          <FilterableOption label="Remove non-printable characters" desc="Strip control/non-printable Unicode characters." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.removeNonPrintableChars}
-                  onChange={(v) => update("removeNonPrintableChars", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
-              <ToggleRow
-                busy={busy}
-                checked={opts.removeNonPrintableChars}
-                onToggle={(v) => update("removeNonPrintableChars", v)}
-              >
-                <div className={FileExplorerStyles.cleanLabel}>Remove non-printable characters</div>
-                <div className={FileExplorerStyles.cleanDesc}>Strip control/non-printable Unicode characters.</div>
-              </ToggleRow>
-            </div>
-          </FilterableOption>
-          <FilterableOption label="Fix encoding issues" desc="Attempt to repair common mojibake encoding problems." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.fixEncoding}
-                  onChange={(v) => update("fixEncoding", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
-              <ToggleRow busy={busy} checked={opts.fixEncoding} onToggle={(v) => update("fixEncoding", v)}>
-                <div className={FileExplorerStyles.cleanLabel}>Fix encoding issues</div>
-                <div className={FileExplorerStyles.cleanDesc}>Attempt to repair common mojibake encoding problems.</div>
-              </ToggleRow>
-            </div>
-          </FilterableOption>
-          <FilterableOption label="Normalize Unicode" desc="Normalize Unicode representation (NFC/NFD/NFKC/NFKD)." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.normalizeUnicode}
-                  onChange={(v) => update("normalizeUnicode", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
-              <ToggleRow busy={busy} checked={opts.normalizeUnicode} onToggle={(v) => update("normalizeUnicode", v)}>
-                <div className={FileExplorerStyles.cleanLabelRow}>
-                  <div className={FileExplorerStyles.cleanLabel}>Normalize Unicode</div>
-                  <span
-                    className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.normalizeUnicode
-                      ? FileExplorerStyles.cleanInlineHintShow
-                      : FileExplorerStyles.cleanInlineHintHide
-                      }`}
-                    aria-hidden={!(busy || !opts.normalizeUnicode)}
-                  >
-                    (Turn on to select form)
-                  </span>
-                </div>
+              <div className={FileExplorerStyles.cleanSection}>
+                <FilterableOption label="Remove special characters" desc="Remove non alphanumeric symbols (keeps basic separators)." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.removeSpecialCharacters}
+                        onChange={(v) => update("removeSpecialCharacters", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
+                    <ToggleRow
+                      busy={busy}
+                      checked={opts.removeSpecialCharacters}
+                      onToggle={(v) => update("removeSpecialCharacters", v)}
+                    >
+                      <div className={FileExplorerStyles.cleanLabel}>Remove special characters</div>
+                      <div className={FileExplorerStyles.cleanDesc}>
+                        Remove non alphanumeric symbols (keeps basic separators).
+                      </div>
+                    </ToggleRow>
+                  </div>
+                </FilterableOption>
+                <FilterableOption label="Remove punctuation" desc="Strip punctuation characters." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.removePunctuation}
+                        onChange={(v) => update("removePunctuation", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
+                    <ToggleRow busy={busy} checked={opts.removePunctuation} onToggle={(v) => update("removePunctuation", v)}>
+                      <div className={FileExplorerStyles.cleanLabel}>Remove punctuation</div>
+                      <div className={FileExplorerStyles.cleanDesc}>Strip punctuation characters.</div>
+                    </ToggleRow>
+                  </div>
+                </FilterableOption>
+                <FilterableOption label="Remove non-printable characters" desc="Strip control/non-printable Unicode characters." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.removeNonPrintableChars}
+                        onChange={(v) => update("removeNonPrintableChars", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
+                    <ToggleRow
+                      busy={busy}
+                      checked={opts.removeNonPrintableChars}
+                      onToggle={(v) => update("removeNonPrintableChars", v)}
+                    >
+                      <div className={FileExplorerStyles.cleanLabel}>Remove non-printable characters</div>
+                      <div className={FileExplorerStyles.cleanDesc}>Strip control/non-printable Unicode characters.</div>
+                    </ToggleRow>
+                  </div>
+                </FilterableOption>
+                <FilterableOption label="Fix encoding issues" desc="Attempt to repair common mojibake encoding problems." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.fixEncoding}
+                        onChange={(v) => update("fixEncoding", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
+                    <ToggleRow busy={busy} checked={opts.fixEncoding} onToggle={(v) => update("fixEncoding", v)}>
+                      <div className={FileExplorerStyles.cleanLabel}>Fix encoding issues</div>
+                      <div className={FileExplorerStyles.cleanDesc}>Attempt to repair common mojibake encoding problems.</div>
+                    </ToggleRow>
+                  </div>
+                </FilterableOption>
+                <FilterableOption label="Normalize Unicode" desc="Normalize Unicode representation (NFC/NFD/NFKC/NFKD)." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.normalizeUnicode}
+                        onChange={(v) => update("normalizeUnicode", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
+                    <ToggleRow busy={busy} checked={opts.normalizeUnicode} onToggle={(v) => update("normalizeUnicode", v)}>
+                      <div className={FileExplorerStyles.cleanLabelRow}>
+                        <div className={FileExplorerStyles.cleanLabel}>Normalize Unicode</div>
+                        <span
+                          className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.normalizeUnicode
+                            ? FileExplorerStyles.cleanInlineHintShow
+                            : FileExplorerStyles.cleanInlineHintHide
+                            }`}
+                          aria-hidden={!(busy || !opts.normalizeUnicode)}
+                        >
+                          (Turn on to select form)
+                        </span>
+                      </div>
 
                       <div className={FileExplorerStyles.cleanDesc}>Normalize Unicode representation (NFC/NFD/NFKC/NFKD).</div>
 
@@ -723,32 +723,32 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                 </FilterableOption>
               </div>
 
-        <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Standardize dates" desc="Convert recognized date values into a consistent output format." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.standardizeDates}
-                  onChange={(v) => update("standardizeDates", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
-              <ToggleRow busy={busy} checked={opts.standardizeDates} onToggle={(v) => update("standardizeDates", v)}>
-                <div className={FileExplorerStyles.cleanLabelRow}>
-                  <div className={FileExplorerStyles.cleanLabel}>Standardize dates</div>
-                  <span
-                    className={`${FileExplorerStyles.cleanInlineHint} ${dateDisabled ? FileExplorerStyles.cleanInlineHintShow : FileExplorerStyles.cleanInlineHintHide
-                      }`}
-                    aria-hidden={!dateDisabled}
-                  >
-                    (Turn on to select the output format)
-                  </span>
-                </div>
+              <div className={FileExplorerStyles.cleanSection}>
+                <FilterableOption label="Standardize dates" desc="Convert recognized date values into a consistent output format." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.standardizeDates}
+                        onChange={(v) => update("standardizeDates", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
+                    <ToggleRow busy={busy} checked={opts.standardizeDates} onToggle={(v) => update("standardizeDates", v)}>
+                      <div className={FileExplorerStyles.cleanLabelRow}>
+                        <div className={FileExplorerStyles.cleanLabel}>Standardize dates</div>
+                        <span
+                          className={`${FileExplorerStyles.cleanInlineHint} ${dateDisabled ? FileExplorerStyles.cleanInlineHintShow : FileExplorerStyles.cleanInlineHintHide
+                            }`}
+                          aria-hidden={!dateDisabled}
+                        >
+                          (Turn on to select the output format)
+                        </span>
+                      </div>
 
                       <div className={FileExplorerStyles.cleanDesc}>
                         Convert recognized date values into a consistent output format.
@@ -787,32 +787,32 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                 </FilterableOption>
               </div>
 
-        <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Standardize numeric fields" desc="Coerce selected columns into a consistent numeric type." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.standardizeNumeric}
-                  onChange={(v) => update("standardizeNumeric", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
-              <ToggleRow busy={busy} checked={opts.standardizeNumeric} onToggle={(v) => update("standardizeNumeric", v)}>
-                <div className={FileExplorerStyles.cleanLabelRow}>
-                  <div className={FileExplorerStyles.cleanLabel}>Standardize numeric fields</div>
-                  <span
-                    className={`${FileExplorerStyles.cleanInlineHint} ${numericDisabled ? FileExplorerStyles.cleanInlineHintShow : FileExplorerStyles.cleanInlineHintHide
-                      }`}
-                    aria-hidden={!numericDisabled}
-                  >
-                    (Turn on to choose mode and columns)
-                  </span>
-                </div>
+              <div className={FileExplorerStyles.cleanSection}>
+                <FilterableOption label="Standardize numeric fields" desc="Coerce selected columns into a consistent numeric type." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.standardizeNumeric}
+                        onChange={(v) => update("standardizeNumeric", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
+                    <ToggleRow busy={busy} checked={opts.standardizeNumeric} onToggle={(v) => update("standardizeNumeric", v)}>
+                      <div className={FileExplorerStyles.cleanLabelRow}>
+                        <div className={FileExplorerStyles.cleanLabel}>Standardize numeric fields</div>
+                        <span
+                          className={`${FileExplorerStyles.cleanInlineHint} ${numericDisabled ? FileExplorerStyles.cleanInlineHintShow : FileExplorerStyles.cleanInlineHintHide
+                            }`}
+                          aria-hidden={!numericDisabled}
+                        >
+                          (Turn on to choose mode and columns)
+                        </span>
+                      </div>
 
                       <div className={FileExplorerStyles.cleanDesc}>Coerce selected columns into a consistent numeric type.</div>
 
@@ -886,34 +886,34 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                 </FilterableOption>
               </div>
 
-        <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Fill missing values" desc="Fill blanks using statistical or rule-based strategies." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.fillMissingValues}
-                  onChange={(v) => update("fillMissingValues", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
-              <ToggleRow busy={busy} checked={opts.fillMissingValues} onToggle={(v) => update("fillMissingValues", v)}>
-                <div className={FileExplorerStyles.cleanLabelRow}>
-                  <div className={FileExplorerStyles.cleanLabel}>Fill missing values</div>
-                  <span
-                    className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.fillMissingValues
-                      ? FileExplorerStyles.cleanInlineHintShow
-                      : FileExplorerStyles.cleanInlineHintHide
-                      }`}
-                    aria-hidden={!(busy || !opts.fillMissingValues)}
-                  >
-                    (Turn on to configure)
-                  </span>
-                </div>
+              <div className={FileExplorerStyles.cleanSection}>
+                <FilterableOption label="Fill missing values" desc="Fill blanks using statistical or rule-based strategies." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.fillMissingValues}
+                        onChange={(v) => update("fillMissingValues", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
+                    <ToggleRow busy={busy} checked={opts.fillMissingValues} onToggle={(v) => update("fillMissingValues", v)}>
+                      <div className={FileExplorerStyles.cleanLabelRow}>
+                        <div className={FileExplorerStyles.cleanLabel}>Fill missing values</div>
+                        <span
+                          className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.fillMissingValues
+                            ? FileExplorerStyles.cleanInlineHintShow
+                            : FileExplorerStyles.cleanInlineHintHide
+                            }`}
+                          aria-hidden={!(busy || !opts.fillMissingValues)}
+                        >
+                          (Turn on to configure)
+                        </span>
+                      </div>
 
                       <div className={FileExplorerStyles.cleanDesc}>Fill blanks using statistical or rule-based strategies.</div>
 
@@ -964,21 +964,21 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                 </FilterableOption>
               </div>
 
-        <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Replace values" desc="Replace exact matches using a JSON object map (old_value → new_value)." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.replaceValues}
-                  onChange={(v) => update("replaceValues", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
+              <div className={FileExplorerStyles.cleanSection}>
+                <FilterableOption label="Replace values" desc="Replace exact matches using a JSON object map (old_value → new_value)." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.replaceValues}
+                        onChange={(v) => update("replaceValues", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
 
                     <ToggleRow busy={busy} checked={opts.replaceValues} onToggle={(v) => update("replaceValues", v)}>
                       <div className={FileExplorerStyles.cleanLabelRow}>
@@ -1012,24 +1012,24 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                         ]}
                       />
 
-              </ToggleRow>
-            </div>
-          </FilterableOption>
-          
-          <FilterableOption label="Strip prefix" desc="Remove a fixed prefix if present." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.stripPrefix}
-                  onChange={(v) => update("stripPrefix", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
+                    </ToggleRow>
+                  </div>
+                </FilterableOption>
+
+                <FilterableOption label="Strip prefix" desc="Remove a fixed prefix if present." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.stripPrefix}
+                        onChange={(v) => update("stripPrefix", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
 
                     <ToggleRow busy={busy} checked={opts.stripPrefix} onToggle={(v) => update("stripPrefix", v)}>
                       <div className={FileExplorerStyles.cleanLabel}>Strip prefix</div>
@@ -1049,20 +1049,20 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                   </div>
                 </FilterableOption>
 
-          <FilterableOption label="Strip suffix" desc="Remove a fixed suffix if present." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.stripSuffix}
-                  onChange={(v) => update("stripSuffix", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
+                <FilterableOption label="Strip suffix" desc="Remove a fixed suffix if present." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.stripSuffix}
+                        onChange={(v) => update("stripSuffix", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
 
                     <ToggleRow busy={busy} checked={opts.stripSuffix} onToggle={(v) => update("stripSuffix", v)}>
                       <div className={FileExplorerStyles.cleanLabel}>Strip suffix</div>
@@ -1082,20 +1082,20 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                   </div>
                 </FilterableOption>
 
-          <FilterableOption label="Pad values" desc="Pad strings to a minimum length." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.padValues}
-                  onChange={(v) => update("padValues", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
+                <FilterableOption label="Pad values" desc="Pad strings to a minimum length." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.padValues}
+                        onChange={(v) => update("padValues", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
 
                     <ToggleRow busy={busy} checked={opts.padValues} onToggle={(v) => update("padValues", v)}>
                       <div className={FileExplorerStyles.cleanLabelRow}>
@@ -1246,83 +1246,83 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                   </div>
                 </FilterableOption>
 
-          <FilterableOption label="Extract URL components" desc="Adds protocol/domain/path/query columns for URLs." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.extractURLComponents}
-                  onChange={(v) => update("extractURLComponents", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
-              <ToggleRow
-                busy={busy}
-                checked={opts.extractURLComponents}
-                onToggle={(v) => update("extractURLComponents", v)}
-              >
-                <div className={FileExplorerStyles.cleanLabel}>Extract URL components</div>
-                <div className={FileExplorerStyles.cleanDesc}>Adds protocol/domain/path/query columns for URLs.</div>
-              </ToggleRow>
-            </div>
-          </FilterableOption>
+                <FilterableOption label="Extract URL components" desc="Adds protocol/domain/path/query columns for URLs." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.extractURLComponents}
+                        onChange={(v) => update("extractURLComponents", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
+                    <ToggleRow
+                      busy={busy}
+                      checked={opts.extractURLComponents}
+                      onToggle={(v) => update("extractURLComponents", v)}
+                    >
+                      <div className={FileExplorerStyles.cleanLabel}>Extract URL components</div>
+                      <div className={FileExplorerStyles.cleanDesc}>Adds protocol/domain/path/query columns for URLs.</div>
+                    </ToggleRow>
+                  </div>
+                </FilterableOption>
 
-          <FilterableOption label="Normalize URLs" desc="Lowercase http(s) URLs and remove trailing slash." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.normalizeURLs}
-                  onChange={(v) => update("normalizeURLs", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
-              <ToggleRow busy={busy} checked={opts.normalizeURLs} onToggle={(v) => update("normalizeURLs", v)}>
-                <div className={FileExplorerStyles.cleanLabel}>Normalize URLs</div>
-                <div className={FileExplorerStyles.cleanDesc}>Lowercase http(s) URLs and remove trailing slash.</div>
-              </ToggleRow>
-            </div>
-          </FilterableOption>
+                <FilterableOption label="Normalize URLs" desc="Lowercase http(s) URLs and remove trailing slash." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.normalizeURLs}
+                        onChange={(v) => update("normalizeURLs", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
+                    <ToggleRow busy={busy} checked={opts.normalizeURLs} onToggle={(v) => update("normalizeURLs", v)}>
+                      <div className={FileExplorerStyles.cleanLabel}>Normalize URLs</div>
+                      <div className={FileExplorerStyles.cleanDesc}>Lowercase http(s) URLs and remove trailing slash.</div>
+                    </ToggleRow>
+                  </div>
+                </FilterableOption>
 
-          <FilterableOption label="Standardize phone numbers" desc="Normalize phone numbers into a consistent format." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.standardizePhoneNumbers}
-                  onChange={(v) => update("standardizePhoneNumbers", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
-              <ToggleRow
-                busy={busy}
-                checked={opts.standardizePhoneNumbers}
-                onToggle={(v) => update("standardizePhoneNumbers", v)}
-              >
-                <div className={FileExplorerStyles.cleanLabelRow}>
-                  <div className={FileExplorerStyles.cleanLabel}>Standardize phone numbers</div>
-                  <span
-                    className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.standardizePhoneNumbers
-                      ? FileExplorerStyles.cleanInlineHintShow
-                      : FileExplorerStyles.cleanInlineHintHide
-                      }`}
-                    aria-hidden={!(busy || !opts.standardizePhoneNumbers)}
-                  >
-                    (Turn on to configure)
-                  </span>
-                </div>
+                <FilterableOption label="Standardize phone numbers" desc="Normalize phone numbers into a consistent format." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.standardizePhoneNumbers}
+                        onChange={(v) => update("standardizePhoneNumbers", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
+                    <ToggleRow
+                      busy={busy}
+                      checked={opts.standardizePhoneNumbers}
+                      onToggle={(v) => update("standardizePhoneNumbers", v)}
+                    >
+                      <div className={FileExplorerStyles.cleanLabelRow}>
+                        <div className={FileExplorerStyles.cleanLabel}>Standardize phone numbers</div>
+                        <span
+                          className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.standardizePhoneNumbers
+                            ? FileExplorerStyles.cleanInlineHintShow
+                            : FileExplorerStyles.cleanInlineHintHide
+                            }`}
+                          aria-hidden={!(busy || !opts.standardizePhoneNumbers)}
+                        >
+                          (Turn on to configure)
+                        </span>
+                      </div>
 
                       <div className={FileExplorerStyles.cleanDesc}>Normalize phone numbers into a consistent format.</div>
 
@@ -1340,37 +1340,36 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                         </select>
                       </div>
 
-                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
-                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Default country code</div>
-                  <input
-                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                    value={opts.defaultCountryCode}
-                    onChange={(e) => update("defaultCountryCode", e.target.value)}
-                    disabled={busy || !opts.standardizePhoneNumbers}
-                    placeholder="+1"
-                  />
-                </div>
-              </ToggleRow>
-            </div>
-          </FilterableOption>
-        </div>
-
-
-        <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Split column" desc="Split a column by delimiter into multiple columns." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.splitColumn}
-                  onChange={(v) => update("splitColumn", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
+                      <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                        <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Default country code</div>
+                        <input
+                          className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                          value={opts.defaultCountryCode}
+                          onChange={(e) => update("defaultCountryCode", e.target.value)}
+                          disabled={busy || !opts.standardizePhoneNumbers}
+                          placeholder="+1"
+                        />
+                      </div>
+                    </ToggleRow>
+                  </div>
+                </FilterableOption>
               </div>
+
+              <div className={FileExplorerStyles.cleanSection}>
+                <FilterableOption label="Split column" desc="Split a column by delimiter into multiple columns." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.splitColumn}
+                        onChange={(v) => update("splitColumn", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
 
                     <ToggleRow busy={busy} checked={opts.splitColumn} onToggle={(v) => update("splitColumn", v)}>
                       <div className={FileExplorerStyles.cleanLabelRow}>
@@ -1423,20 +1422,20 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                   </div>
                 </FilterableOption>
 
-          <FilterableOption label="Merge columns" desc="Concatenate multiple columns into one." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.mergeColumns}
-                  onChange={(v) => update("mergeColumns", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
-              </div>
+                <FilterableOption label="Merge columns" desc="Concatenate multiple columns into one." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.mergeColumns}
+                        onChange={(v) => update("mergeColumns", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
 
                     <ToggleRow busy={busy} checked={opts.mergeColumns} onToggle={(v) => update("mergeColumns", v)}>
                       <div className={FileExplorerStyles.cleanLabelRow}>
@@ -1476,36 +1475,35 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                         />
                       </div>
 
-                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
-                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>New column</div>
-                  <input
-                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                    value={opts.mergedColumnName}
-                    onChange={(e) => update("mergedColumnName", e.target.value)}
-                    disabled={busy || !opts.mergeColumns}
-                  />
-                </div>
-              </ToggleRow>
-            </div>
-          </FilterableOption>
-        </div>
-
-
-        <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Remove rows with pattern" desc="Remove rows where a column matches a regex." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.removeRowsWithPattern}
-                  onChange={(v) => update("removeRowsWithPattern", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
+                      <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                        <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>New column</div>
+                        <input
+                          className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                          value={opts.mergedColumnName}
+                          onChange={(e) => update("mergedColumnName", e.target.value)}
+                          disabled={busy || !opts.mergeColumns}
+                        />
+                      </div>
+                    </ToggleRow>
+                  </div>
+                </FilterableOption>
               </div>
+
+              <div className={FileExplorerStyles.cleanSection}>
+                <FilterableOption label="Remove rows with pattern" desc="Remove rows where a column matches a regex." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.removeRowsWithPattern}
+                        onChange={(v) => update("removeRowsWithPattern", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
 
                     <ToggleRow
                       busy={busy}
@@ -1530,37 +1528,36 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                         />
                       </div>
 
-                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
-                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Regex</div>
-                  <input
-                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                    value={opts.rowFilterPattern}
-                    onChange={(e) => update("rowFilterPattern", e.target.value)}
-                    disabled={busy || !opts.removeRowsWithPattern}
-                    placeholder="e.g. ^(test|dummy)$"
-                  />
-                </div>
-              </ToggleRow>
-            </div>
-          </FilterableOption>
-        </div>
-
-
-        <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Normalize data (min-max)" desc="Scale values to [0,1] per selected column." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.normalizeData}
-                  onChange={(v) => update("normalizeData", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
+                      <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
+                        <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Regex</div>
+                        <input
+                          className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                          value={opts.rowFilterPattern}
+                          onChange={(e) => update("rowFilterPattern", e.target.value)}
+                          disabled={busy || !opts.removeRowsWithPattern}
+                          placeholder="e.g. ^(test|dummy)$"
+                        />
+                      </div>
+                    </ToggleRow>
+                  </div>
+                </FilterableOption>
               </div>
+
+              <div className={FileExplorerStyles.cleanSection}>
+                <FilterableOption label="Normalize data (min-max)" desc="Scale values to [0,1] per selected column." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.normalizeData}
+                        onChange={(v) => update("normalizeData", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
 
                     <ToggleRow busy={busy} checked={opts.normalizeData} onToggle={(v) => update("normalizeData", v)}>
                       <div className={FileExplorerStyles.cleanLabel}>Normalize data (min-max)</div>
@@ -1568,37 +1565,36 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                         Scale values to [0,1] per selected column.
                       </div>
 
-                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
-                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Columns</div>
-                  <input
-                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                    value={(opts.normalizeColumns || []).join(",")}
-                    onChange={(e) => update("normalizeColumns", toList(e.target.value))}
-                    disabled={busy || !opts.normalizeData}
-                    placeholder="colA,colB"
-                  />
-                </div>
-              </ToggleRow>
-            </div>
-          </FilterableOption>
-        </div>
-
-
-        <div className={FileExplorerStyles.cleanSection}>
-          <FilterableOption label="Merge similar values" desc="Fuzzy-merge similar strings using a similarity threshold." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
-            <div className={FileExplorerStyles.cleanRow}>
-              <div className={FileExplorerStyles.cleanSwitchCol}>
-                <Switch
-                  checked={opts.mergeSimilarValues}
-                  onChange={(v) => update("mergeSimilarValues", v)}
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                  disabled={busy}
-                />
+                      <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
+                        <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Columns</div>
+                        <input
+                          className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                          value={(opts.normalizeColumns || []).join(",")}
+                          onChange={(e) => update("normalizeColumns", toList(e.target.value))}
+                          disabled={busy || !opts.normalizeData}
+                          placeholder="colA,colB"
+                        />
+                      </div>
+                    </ToggleRow>
+                  </div>
+                </FilterableOption>
               </div>
+
+              <div className={FileExplorerStyles.cleanSection}>
+                <FilterableOption label="Merge similar values" desc="Fuzzy-merge similar strings using a similarity threshold." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.mergeSimilarValues}
+                        onChange={(v) => update("mergeSimilarValues", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
 
                     <ToggleRow
                       busy={busy}
@@ -1624,42 +1620,26 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                         />
                       </div>
 
-                <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
-                  <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Threshold</div>
-                  <input
-                    className={FileExplorerStyles.cleanControl} data-no-row-toggle
-                    type="number"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={opts.mergeSimilarityThreshold}
-                    onChange={(e) => update("mergeSimilarityThreshold", Number(e.target.value))}
-                    disabled={busy || !opts.mergeSimilarValues}
-                  />
-                </div>
-              </ToggleRow>
-            </div>
-          </FilterableOption>
+                      <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
+                        <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Threshold</div>
+                        <input
+                          className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                          type="number"
+                          min={0}
+                          max={1}
+                          step={0.01}
+                          value={opts.mergeSimilarityThreshold}
+                          onChange={(e) => update("mergeSimilarityThreshold", Number(e.target.value))}
+                          disabled={busy || !opts.mergeSimilarValues}
+                        />
+                      </div>
+                    </ToggleRow>
+                  </div>
+                </FilterableOption>
+              </div>
+            </>
+          )}
         </div>
-      </div>
-
-      {showNoResults && (
-        <div 
-          style={{ 
-            fontStyle: 'italic', 
-            color: 'var(--text-color-secondary)', 
-            padding: '40px 20px',
-            textAlign: 'center',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '200px'
-          }} 
-          id="cleanPanelNoResults"
-        >
-          No steps match your search
-        </div>
-      )}
 
       <div className={FileExplorerStyles.cleanFooter}>
         <div className={FileExplorerStyles.cleanFooterLeft}>
