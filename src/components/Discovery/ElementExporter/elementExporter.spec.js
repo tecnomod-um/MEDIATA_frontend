@@ -153,4 +153,54 @@ describe('<ElementExporter />', () => {
       expect(toast.error).toHaveBeenCalledWith('Failed to upload file file.csv: oops');
     });
   });
+
+  it('handles feature name without file label', async () => {
+    const dataWithoutLabel = {
+      categoricalFeatures: [
+        { featureName: 'SimpleName', fileName: 'file.csv', categoryCounts: { A: 2 } },
+      ],
+      continuousFeatures: [],
+      dateFeatures: [],
+      omittedFeatures: [],
+    };
+
+    saveDatasetElements.mockResolvedValue({});
+
+    render(
+      <ElementExporter
+        dataResults={dataResults}
+        activeFileIndices={[true]}
+        combinedData={dataWithoutLabel}
+        filteredData={dataWithoutLabel}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Upload Elements'));
+
+    await waitFor(() => {
+      expect(saveDatasetElements).toHaveBeenCalled();
+    });
+  });
+
+  it('handles missing serviceUrl for node', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const dataResultsNoService = [{ fileName: 'file.csv', nodeId: 'unknown' }];
+
+    render(
+      <ElementExporter
+        dataResults={dataResultsNoService}
+        activeFileIndices={[true]}
+        combinedData={combinedData}
+        filteredData={filteredData}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Upload Elements'));
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('No serviceUrl found'));
+    });
+
+    consoleErrorSpy.mockRestore();
+  });
 });
