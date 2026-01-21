@@ -1091,3 +1091,16 @@
 .cleanSection:has(> .cleanRow:only-child:empty) {
   display: none;
 }
+
+.cleanNoResults {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  font-style: italic;
+  color: var(--text-color-secondary);
+  padding: 40px 20px;
+}
