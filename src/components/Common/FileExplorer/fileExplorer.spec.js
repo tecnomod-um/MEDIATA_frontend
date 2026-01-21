@@ -1,11 +1,37 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import FileExplorer from "./fileExplorer";
 import FileTypeIcon from "./fileTypeIcon";
 import FileToolbar from "./fileToolbar";
 import DeleteConfirmation from "./deleteConfirmation";
 import CleanPanel from "./cleanPanel";
 import FileTable from "./fileTable";
+import * as petitionHandler from "../../../util/petitionHandler";
+
+// Mock petition handler
+jest.mock("../../../util/petitionHandler", () => ({
+  listExplorerFiles: jest.fn(),
+  renameExplorerFile: jest.fn(),
+  deleteExplorerFile: jest.fn(),
+  cleanExplorerFile: jest.fn(),
+  processSelectedDatasets: jest.fn(),
+  getProcessSelectedDatasetsStatus: jest.fn(),
+  getProcessSelectedDatasetsResult: jest.fn(),
+}));
+
+// Mock node axios setup
+jest.mock("../../../util/nodeAxiosSetup", () => ({
+  updateNodeAxiosBaseURL: jest.fn(),
+}));
+
+// Mock react-toastify
+jest.mock("react-toastify", () => ({
+  toast: {
+    error: jest.fn(),
+    success: jest.fn(),
+  },
+}));
 
 // Mock the CSS module
 jest.mock("./fileExplorer.module.css", () => new Proxy({}, { get: (_, k) => String(k) }), {
@@ -48,6 +74,109 @@ jest.mock("react-switch", () => {
       />
     ),
   };
+});
+
+// Mock react-transition-group  
+jest.mock("react-transition-group", () => ({
+  CSSTransition: ({ in: inProp, children }) => (inProp ? <>{children}</> : null),
+}));
+
+describe("FileExplorer Main Component", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    petitionHandler.listExplorerFiles.mockResolvedValue([
+      {
+        name: "file1.csv",
+        sizeBytes: 1024,
+        createdAtMs: Date.now() - 50000,
+        lastModifiedAtMs: Date.now() - 30000,
+      },
+      {
+        name: "file2.xlsx",
+        sizeBytes: 2048,
+        createdAtMs: Date.now() - 100000,
+        lastModifiedAtMs: Date.now() - 50000,
+      },
+    ]);
+  });
+
+  test("renders FileExplorer with nodes", async () => {
+    const nodes = [{ nodeId: "node1", serviceUrl: "http://test.com", name: "Test Node" }];
+    render(<FileExplorer nodes={nodes} category="clinical" isOpen={true} />);
+    
+    await waitFor(() => {
+      expect(petitionHandler.listExplorerFiles).toHaveBeenCalled();
+    });
+  });
+
+  test("loads files on mount", async () => {
+    const nodes = [{ nodeId: "node1", serviceUrl: "http://test.com", name: "Test Node" }];
+    render(<FileExplorer nodes={nodes} category="clinical" isOpen={true} />);
+    
+    await waitFor(() => {
+      expect(screen.queryByText("file1.csv")).toBeInTheDocument();
+    });
+  });
+
+  test("calls listExplorerFiles even with empty nodes array", async () => {
+    render(<FileExplorer nodes={[]} category="clinical" isOpen={true} />);
+    
+    await waitFor(() => {
+      expect(petitionHandler.listExplorerFiles).toHaveBeenCalledWith("clinical");
+    });
+  });
+
+  test("calls listExplorerFiles with correct parameters", async () => {
+    const nodes = [
+      { nodeId: "node1", serviceUrl: "http://test1.com", name: "Node 1" },
+      { nodeId: "node2", serviceUrl: "http://test2.com", name: "Node 2" },
+    ];
+    render(<FileExplorer nodes={nodes} category="clinical" isOpen={true} />);
+    
+    await waitFor(() => {
+      expect(petitionHandler.listExplorerFiles).toHaveBeenCalledWith("clinical");
+    });
+  });
+
+  test("handles API error gracefully", async () => {
+    petitionHandler.listExplorerFiles.mockRejectedValue(new Error("API Error"));
+    const nodes = [{ nodeId: "node1", serviceUrl: "http://test.com", name: "Test Node" }];
+    
+    render(<FileExplorer nodes={nodes} category="clinical" isOpen={true} />);
+    
+    await waitFor(() => {
+      expect(petitionHandler.listExplorerFiles).toHaveBeenCalled();
+    });
+  });
+
+  test("does not load when isOpen is false", () => {
+    const nodes = [{ nodeId: "node1", serviceUrl: "http://test.com", name: "Test Node" }];
+    render(<FileExplorer nodes={nodes} category="clinical" isOpen={false} />);
+    
+    expect(petitionHandler.listExplorerFiles).not.toHaveBeenCalled();
+  });
+
+  test("handles pre-selected files", async () => {
+    const nodes = [{ nodeId: "node1", serviceUrl: "http://test.com", name: "Test Node" }];
+    const preSelectedFiles = { node1: ["file1.csv"] };
+    
+    render(<FileExplorer nodes={nodes} category="clinical" isOpen={true} preSelectedFiles={preSelectedFiles} />);
+    
+    await waitFor(() => {
+      expect(petitionHandler.listExplorerFiles).toHaveBeenCalled();
+    });
+  });
+
+  test("calls onFilesOpened when provided", async () => {
+    const onFilesOpened = jest.fn();
+    const nodes = [{ nodeId: "node1", serviceUrl: "http://test.com", name: "Test Node" }];
+    
+    render(<FileExplorer nodes={nodes} category="clinical" isOpen={true} onFilesOpened={onFilesOpened} />);
+    
+    await waitFor(() => {
+      expect(petitionHandler.listExplorerFiles).toHaveBeenCalled();
+    });
+  });
 });
 
 describe("FileExplorer sub-components", () => {
