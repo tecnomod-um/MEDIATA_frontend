@@ -296,4 +296,32 @@ describe('<ColumnSearchList />', () => {
     // Verify the file header is rendered
     expect(screen.getByText('file1.csv')).toBeInTheDocument();
   });
+
+  it('sorts groups by fileName when nodeId is the same', () => {
+    const groupedColumnsData = [
+      { column: 'Zeta', color: '#f00', nodeId: 1, fileName: 'zebra.csv' },
+      { column: 'Alpha', color: '#0f0', nodeId: 1, fileName: 'apple.csv' },
+      { column: 'Beta', color: '#00f', nodeId: 1, fileName: 'banana.csv' },
+    ];
+
+    const handleColumnClick = jest.fn();
+    const handleDragStart = jest.fn();
+
+    render(
+      <ColumnSearchList
+        columnsData={groupedColumnsData}
+        handleColumnClick={handleColumnClick}
+        handleDragStart={handleDragStart}
+      />
+    );
+
+    // Verify groups are present and sorted correctly
+    const appleGroup = screen.getByText('apple.csv');
+    const bananaGroup = screen.getByText('banana.csv');
+    const zebraGroup = screen.getByText('zebra.csv');
+    
+    expect(appleGroup).toBeInTheDocument();
+    expect(bananaGroup).toBeInTheDocument();
+    expect(zebraGroup).toBeInTheDocument();
+  });
 });

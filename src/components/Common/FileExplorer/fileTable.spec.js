@@ -258,6 +258,28 @@ describe("<FileTable />", () => {
     expect(mockCallbacks.cancelRename).toHaveBeenCalled();
   });
 
+  it("calls setRenameDraft when typing in rename input", () => {
+    const key = "default::test.csv";
+    const renameInputRef = { current: null };
+    
+    render(
+      <FileTable
+        sorted={[singleFile]}
+        selected={new Set()}
+        busy={false}
+        longPressFired={{ current: false }}
+        renamingKey={key}
+        renameInputRef={renameInputRef}
+        renameDraft="newname.csv"
+        {...mockCallbacks}
+      />
+    );
+
+    const input = screen.getByDisplayValue("newname.csv");
+    fireEvent.change(input, { target: { value: "modified.csv" } });
+    expect(mockCallbacks.setRenameDraft).toHaveBeenCalledWith("modified.csv");
+  });
+
   it("commits rename on blur", () => {
     const key = "default::test.csv";
     const renameInputRef = { current: null };

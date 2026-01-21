@@ -173,4 +173,25 @@ describe('ElementList', () => {
     const btn = screen.getByText('First')
     expect(btn).toHaveAttribute('draggable', 'false')
   })
+
+  it('handles items without id property using index as fallback key', () => {
+    const itemsWithoutId = [
+      { label: 'No ID 1', categories: ['Cat1'] },
+      { label: 'No ID 2', categories: ['Cat2'] },
+    ]
+    
+    const onSelect = jest.fn()
+    render(
+      <ElementList
+        items={itemsWithoutId}
+        onSelect={onSelect}
+      />
+    )
+    
+    expect(screen.getByText('No ID 1')).toBeInTheDocument()
+    expect(screen.getByText('No ID 2')).toBeInTheDocument()
+    
+    fireEvent.click(screen.getByText('No ID 1'))
+    expect(onSelect).toHaveBeenCalledWith(0, null)
+  })
 })

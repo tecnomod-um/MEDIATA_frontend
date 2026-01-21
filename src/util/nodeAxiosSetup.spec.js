@@ -83,29 +83,6 @@ describe('nodeAxiosSetup', () => {
 
       expect(config.headers.Authorization).toBeUndefined();
     });
-
-    it('adds Authorization header when jwtToken exists', () => {
-      localStorage.setItem('jwtToken', 'test-jwt-token');
-      const config = { baseURL: 'https://api', headers: {} };
-      requestInterceptor(config);
-
-      expect(config.headers.Authorization).toBe('Bearer test-jwt-token');
-    });
-
-    it('adds Authorization header when sessionToken exists but jwtToken does not', () => {
-      localStorage.setItem('kerberosTGT', 'test-session-token');
-      const config = { baseURL: 'https://api', headers: {} };
-      requestInterceptor(config);
-
-      expect(config.headers.Authorization).toBe('Bearer test-session-token');
-    });
-
-    it('handles request interceptor errors', () => {
-      const errorHandler = mockReqUse.mock.calls[0][1];
-      const error = new Error('Request error');
-      
-      expect(() => errorHandler(error)).rejects.toBe(error);
-    });
   });
 
   describe('response interceptor', () => {

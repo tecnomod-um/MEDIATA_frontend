@@ -107,7 +107,7 @@ describe("<CategoricalChart />", () => {
     );
   });
 
-  it('adds "Other" category when there are many categories', () => {
+  it('adds "Other" category when there are many categories in overview mode', () => {
     const featWithMany = {
       featureName: "ManyCategories",
       categoryCounts: {
@@ -118,12 +118,13 @@ describe("<CategoricalChart />", () => {
       missingValuesCount: 0,
     };
     
-    render(<CategoricalChart feature={featWithMany} />);
+    // Must use inOverview prop to trigger grouping (TOP_N_OVERVIEW = 8)
+    render(<CategoricalChart feature={featWithMany} inOverview={true} />);
     const data = JSON.parse(
       screen.getByTestId("mock-bar").getAttribute("data-data")
     );
     
-    // Should group smaller categories into "Other"
+    // Should group categories beyond top 8 into "Other"
     expect(data.labels).toContain("Other");
   });
 
@@ -145,5 +146,29 @@ describe("<CategoricalChart />", () => {
     fireEvent.keyDown(container, { key: " " });
     
     expect(onClick).toHaveBeenCalled();
+  });
+
+  it("configures tooltip footer when categories are grouped", () => {
+    const featWithMany = {
+      featureName: "ManyCategories",
+      categoryCounts: {
+        A: 100, B: 90, C: 80, D: 70, E: 60,
+        F: 50, G: 40, H: 30, I: 20, J: 10,
+        K: 5, L: 4, M: 3, N: 2, O: 1
+      },
+      missingValuesCount: 0,
+    };
+    
+    render(<CategoricalChart feature={featWithMany} inOverview={true} />);
+    const bar = screen.getByTestId("mock-bar");
+    const options = JSON.parse(bar.getAttribute("data-options"));
+    
+    // Should have tooltip configured
+    expect(options.plugins).toBeDefined();
+    expect(options.plugins.tooltip).toBeDefined();
+    
+    // Title should indicate grouped categories  
+    const title = options.plugins.title.text;
+    expect(title).toContain("grouped");
   });
 });
