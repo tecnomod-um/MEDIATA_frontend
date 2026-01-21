@@ -177,6 +177,120 @@ describe("FileExplorer Main Component", () => {
       expect(petitionHandler.listExplorerFiles).toHaveBeenCalled();
     });
   });
+
+  test("renders without onClose prop", async () => {
+    const nodes = [{ nodeId: "node1", serviceUrl: "http://test.com", name: "Test Node" }];
+    render(<FileExplorer nodes={nodes} category="clinical" isOpen={true} />);
+    
+    await waitFor(() => {
+      expect(petitionHandler.listExplorerFiles).toHaveBeenCalled();
+    });
+  });
+
+  test("renders with onOpenFile callback", async () => {
+    const onOpenFile = jest.fn();
+    const nodes = [{ nodeId: "node1", serviceUrl: "http://test.com", name: "Test Node" }];
+    render(<FileExplorer nodes={nodes} category="clinical" isOpen={true} onOpenFile={onOpenFile} />);
+    
+    await waitFor(() => {
+      expect(petitionHandler.listExplorerFiles).toHaveBeenCalled();
+    });
+  });
+
+  test("renders with onFilesSelected callback", async () => {
+    const onFilesSelected = jest.fn();
+    const nodes = [{ nodeId: "node1", serviceUrl: "http://test.com", name: "Test Node" }];
+    render(<FileExplorer nodes={nodes} category="clinical" isOpen={true} onFilesSelected={onFilesSelected} />);
+    
+    await waitFor(() => {
+      expect(petitionHandler.listExplorerFiles).toHaveBeenCalled();
+    });
+  });
+
+  test("renders with autoProcess enabled", async () => {
+    const nodes = [{ nodeId: "node1", serviceUrl: "http://test.com", name: "Test Node" }];
+    render(<FileExplorer nodes={nodes} category="clinical" isOpen={true} autoProcess={true} />);
+    
+    await waitFor(() => {
+      expect(petitionHandler.listExplorerFiles).toHaveBeenCalled();
+    });
+  });
+
+  test("handles multiple file loading calls", async () => {
+    const nodes = [{ nodeId: "node1", serviceUrl: "http://test.com", name: "Test Node" }];
+    const { rerender } = render(<FileExplorer nodes={nodes} category="clinical" isOpen={true} />);
+    
+    await waitFor(() => {
+      expect(petitionHandler.listExplorerFiles).toHaveBeenCalledTimes(1);
+    });
+
+    // Rerender with same props shouldn't trigger reload
+    rerender(<FileExplorer nodes={nodes} category="clinical" isOpen={true} />);
+    
+    // Should still be 1 call
+    expect(petitionHandler.listExplorerFiles).toHaveBeenCalledTimes(1);
+  });
+
+  test("displays files after successful load", async () => {
+    const nodes = [{ nodeId: "node1", serviceUrl: "http://test.com", name: "Test Node" }];
+    render(<FileExplorer nodes={nodes} category="clinical" isOpen={true} />);
+    
+    await waitFor(() => {
+      expect(screen.queryByText("file1.csv")).toBeInTheDocument();
+      expect(screen.queryByText("file2.xlsx")).toBeInTheDocument();
+    });
+  });
+
+  test("handles nodes changing from empty to populated", async () => {
+    const { rerender } = render(<FileExplorer nodes={[]} category="clinical" isOpen={true} />);
+    
+    await waitFor(() => {
+      expect(petitionHandler.listExplorerFiles).toHaveBeenCalledTimes(1);
+    });
+
+    const nodes = [{ nodeId: "node1", serviceUrl: "http://test.com", name: "Test Node" }];
+    rerender(<FileExplorer nodes={nodes} category="clinical" isOpen={true} />);
+    
+    await waitFor(() => {
+      expect(petitionHandler.listExplorerFiles).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  test("handles category change", async () => {
+    const nodes = [{ nodeId: "node1", serviceUrl: "http://test.com", name: "Test Node" }];
+    const { rerender } = render(<FileExplorer nodes={nodes} category="clinical" isOpen={true} />);
+    
+    await waitFor(() => {
+      expect(petitionHandler.listExplorerFiles).toHaveBeenCalledWith("clinical");
+    });
+
+    rerender(<FileExplorer nodes={nodes} category="research" isOpen={true} />);
+    
+    await waitFor(() => {
+      expect(petitionHandler.listExplorerFiles).toHaveBeenCalledWith("research");
+    });
+  });
+
+  test("handles opening and closing", () => {
+    const nodes = [{ nodeId: "node1", serviceUrl: "http://test.com", name: "Test Node" }];
+    const { rerender } = render(<FileExplorer nodes={nodes} category="clinical" isOpen={false} />);
+    
+    expect(petitionHandler.listExplorerFiles).not.toHaveBeenCalled();
+
+    rerender(<FileExplorer nodes={nodes} category="clinical" isOpen={true} />);
+    
+    expect(petitionHandler.listExplorerFiles).toHaveBeenCalled();
+  });
+
+  test("renders with onClose callback", async () => {
+    const onClose = jest.fn();
+    const nodes = [{ nodeId: "node1", serviceUrl: "http://test.com", name: "Test Node" }];
+    render(<FileExplorer nodes={nodes} category="clinical" isOpen={true} onClose={onClose} />);
+    
+    await waitFor(() => {
+      expect(petitionHandler.listExplorerFiles).toHaveBeenCalled();
+    });
+  });
 });
 
 describe("FileExplorer sub-components", () => {
