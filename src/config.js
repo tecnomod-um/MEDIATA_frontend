@@ -1,9 +1,6 @@
 // Application configuration settings
 const config = {
-  // Development
-  // backendUrl: "http://localhost:8092/taniwha",
-  // Production
-  backendUrl: "https://semantics.inf.um.es/taniwha-ws/",
+  backendUrl: (process.env.REACT_APP_BACKEND_URL || "https://semantics.inf.um.es/taniwha-ws/"),
   chunkSize: 1024 * 1024,
   debounceDelay: 500,
   pollingInterval: 10000,
