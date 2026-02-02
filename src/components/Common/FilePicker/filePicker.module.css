@@ -214,7 +214,7 @@
   width: var(--spinner-size-sm);
   height: var(--spinner-size-sm);
   border: var(--spinner-border-width-sm) solid var(--spinner-border-top);
-  border-top: var(--spinner-border-width-sm) solid #AECCE4;
+  border-top: var(--spinner-border-width-sm) solid var(--spinner-accent-color);
   border-radius: 50%;
   animation: spin var(--spinner-duration-fast) linear infinite;
 }

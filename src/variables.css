@@ -163,6 +163,9 @@
   --spinner-duration-normal: 1s;
   --spinner-duration-slow: 1.2s;
   
+  /* Accent color for spinner highlights */
+  --spinner-accent-color: #AECCE4;
+  
   /* Border colors - use theme-aware variables */
   --spinner-border-base-light: rgba(255, 255, 255, 0.3);
   --spinner-border-top-light: var(--text-color-on-darkbg-light);
