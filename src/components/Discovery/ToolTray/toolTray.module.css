@@ -247,26 +247,16 @@
 }
 
 .toggleFeatureTypeButton:hover .iconSpin {
-  animation: spinReverse 1s linear infinite;
-}
-
-@keyframes spinReverse {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(-360deg);
-  }
+  animation: spinReverse var(--spinner-duration-normal) linear infinite;
 }
 
 .spinner {
-  width: 17px;
-  height: 17px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top: 3px solid var(--tooltray-text-color);
+  width: var(--spinner-size-sm);
+  height: var(--spinner-size-sm);
+  border: var(--spinner-border-width-md) solid var(--spinner-border-base);
+  border-top: var(--spinner-border-width-md) solid var(--tooltray-text-color);
   border-radius: 50%;
-  animation: spinReverse 1s linear infinite;
+  animation: spinReverse var(--spinner-duration-normal) linear infinite;
 }
 
 .featuresList {

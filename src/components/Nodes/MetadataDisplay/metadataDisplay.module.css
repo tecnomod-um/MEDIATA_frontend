@@ -190,23 +190,13 @@
 }
 
 .spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid var(--border-color-secondary);
-  border-top: 3px solid var(--text-color-secondary);
+  width: var(--spinner-size-lg);
+  height: var(--spinner-size-lg);
+  border: var(--spinner-border-width-md) solid var(--spinner-border-base-secondary);
+  border-top: var(--spinner-border-width-md) solid var(--spinner-border-top-secondary);
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: spin var(--spinner-duration-fast) linear infinite;
   margin-bottom: 15px;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
 }
 
 .closeBtn {

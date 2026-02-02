@@ -144,6 +144,31 @@
   --transition-duration-slow: 500ms;
   --transition-ease: cubic-bezier(0.25, 0.8, 0.25, 1);
 
+  /* Spinner Variables */
+  /* Sizes */
+  --spinner-size-xs: 14px;
+  --spinner-size-sm: 16px;
+  --spinner-size-md: 24px;
+  --spinner-size-lg: 36px;
+  --spinner-size-xl: 64px;
+  
+  /* Border widths */
+  --spinner-border-width-sm: 2px;
+  --spinner-border-width-md: 3px;
+  --spinner-border-width-lg: 4px;
+  --spinner-border-width-xl: 8px;
+  
+  /* Animation durations */
+  --spinner-duration-fast: 0.8s;
+  --spinner-duration-normal: 1s;
+  --spinner-duration-slow: 1.2s;
+  
+  /* Border colors - use theme-aware variables */
+  --spinner-border-base-light: rgba(255, 255, 255, 0.3);
+  --spinner-border-top-light: var(--text-color-on-darkbg-light);
+  --spinner-border-base-secondary-light: var(--border-color-secondary-light);
+  --spinner-border-top-secondary-light: var(--text-color-secondary-light);
+  
   /* Shadows */
   --box-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
   --box-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
@@ -281,6 +306,12 @@
   --box-shadow-lg-dark: 0 5px 15px rgba(0, 0, 0, 0.5);
   --box-shadow-xl-dark: 0 14px 40px rgba(0, 0, 0, 0.7);
 
+  /* Spinner Variables (dark theme) */
+  --spinner-border-base-dark: rgba(255, 255, 255, 0.15);
+  --spinner-border-top-dark: var(--text-color-on-darkbg-dark);
+  --spinner-border-base-secondary-dark: var(--border-color-secondary-dark);
+  --spinner-border-top-secondary-dark: var(--text-color-secondary-dark);
+
   /* ==================== ACTIVE THEME (defaults to light) ==================== */
   
   /* Background Colors */
@@ -387,6 +418,12 @@
   --box-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
   --box-shadow-lg: 0 5px 15px rgba(0, 0, 0, 0.2);
   --box-shadow-xl: 0 14px 40px rgba(0, 0, 0, 0.35);
+
+  /* Spinner Variables (active theme - defaults to light) */
+  --spinner-border-base: var(--spinner-border-base-light);
+  --spinner-border-top: var(--spinner-border-top-light);
+  --spinner-border-base-secondary: var(--spinner-border-base-secondary-light);
+  --spinner-border-top-secondary: var(--spinner-border-top-secondary-light);
 }
 
 /* Dark mode class */
@@ -517,6 +554,12 @@ body.dark-mode {
   --box-shadow-md: var(--box-shadow-md-dark);
   --box-shadow-lg: var(--box-shadow-lg-dark);
   --box-shadow-xl: var(--box-shadow-xl-dark);
+
+  /* Spinner Variables (dark mode) */
+  --spinner-border-base: var(--spinner-border-base-dark);
+  --spinner-border-top: var(--spinner-border-top-dark);
+  --spinner-border-base-secondary: var(--spinner-border-base-secondary-dark);
+  --spinner-border-top-secondary: var(--spinner-border-top-secondary-dark);
 }
 
 /* TODO
@@ -789,3 +832,27 @@ body.dark-mode {
 
    ============================================================================
 */
+
+/* ============================================================================
+   STANDARDIZED ANIMATIONS
+   ============================================================================ */
+
+/* Standard spinner animation (clockwise rotation) */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Reverse spinner animation (counterclockwise rotation) */
+@keyframes spinReverse {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(-360deg);
+  }
+}

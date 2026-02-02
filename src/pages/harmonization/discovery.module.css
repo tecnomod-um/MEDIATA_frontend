@@ -106,23 +106,13 @@
 }
 
 .spinner {
-  width: 64px;
-  height: 64px;
-  border: 8px solid #ddd;
-  border-top: 8px solid #AECCE4;
+  width: var(--spinner-size-xl);
+  height: var(--spinner-size-xl);
+  border: var(--spinner-border-width-xl) solid var(--spinner-border-base-secondary);
+  border-top: var(--spinner-border-width-xl) solid #AECCE4;
   border-radius: 50%;
-  animation: spin 1.2s linear infinite;
+  animation: spin var(--spinner-duration-slow) linear infinite;
   margin-bottom: 1rem;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
 }
 
 .loadingText {
