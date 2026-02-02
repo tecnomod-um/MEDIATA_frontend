@@ -219,6 +219,11 @@
   animation: spin var(--spinner-duration-fast) linear infinite;
 }
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .noFiles {
   font-style: italic;
   color: var(--text-color-muted);
@@ -565,6 +570,11 @@
   border: var(--spinner-border-width-sm) solid var(--border-color);
   border-top-color: var(--text-color-primary);
   animation: spin var(--spinner-duration-fast) linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .errorState {

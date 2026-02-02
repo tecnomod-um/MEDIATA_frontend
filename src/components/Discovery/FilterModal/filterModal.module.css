@@ -385,6 +385,11 @@
   margin-right: 8px;
 }
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 :global(.react-select__control) {
   min-height: 38px;
   border-radius: 8px;

@@ -259,6 +259,11 @@
   animation: spinReverse var(--spinner-duration-normal) linear infinite;
 }
 
+@keyframes spinReverse {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-360deg); }
+}
+
 .featuresList {
   background-color: var(--tooltray-section-bg);
   padding: 10px;
