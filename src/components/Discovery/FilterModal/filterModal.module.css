@@ -23,7 +23,7 @@
   justify-content: space-between;
   align-items: center;
   text-align: center;
-  border-bottom: 1px solid #e1e1e1;
+  border-bottom: 1px solid var(--border-color-dark);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -310,7 +310,7 @@
   max-height: 50px;
   opacity: 1;
   padding: 5px;
-  border-bottom: 1px solid #e1e1e1;
+  border-bottom: 1px solid var(--border-color-dark);
 }
 
 .logicalOperatorButton {
@@ -375,24 +375,19 @@
 }
 
 .spinner {
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid #ffffff;
+  border: var(--spinner-border-width-sm) solid var(--spinner-border-base);
+  border-top: var(--spinner-border-width-sm) solid var(--spinner-border-top);
   border-radius: 50%;
-  width: 16px;
-  height: 16px;
-  animation: spin 1s linear infinite;
+  width: var(--spinner-size-sm);
+  height: var(--spinner-size-sm);
+  animation: spin var(--spinner-duration-normal) linear infinite;
   display: inline-block;
   margin-right: 8px;
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 :global(.react-select__control) {
