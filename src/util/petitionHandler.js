@@ -3,6 +3,16 @@ import nodeAxiosInstance, { updateNodeAxiosBaseURL } from "./nodeAxiosSetup";
 // API request handlers for all backend and node petitions
 
 /* System petitions */
+// Fetch the list of projects
+export const getProjectList = async () => {
+  try {
+    const response = await axiosInstance.get(`/api/projects/list`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Fetch the list of nodes
 export const getNodeList = async () => {
   try {

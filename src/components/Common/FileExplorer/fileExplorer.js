@@ -8,6 +8,7 @@ import FileTable from "./fileTable";
 import { toast } from "react-toastify";
 import CleanPanel from "./cleanPanel";
 import DeleteConfirmation from "./deleteConfirmation";
+import { useNavigate } from "react-router-dom";
 import { formatBytes, formatDateTime, isFileNew } from "./fileUtils";
 
 const notifyError = (e, fallback) => {
@@ -61,17 +62,20 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
     return Math.max(0, modalH - toolbarH);
   }, []);
 
+  const navigate = useNavigate();
 
   const getMaxListAvail = useCallback(() => {
     const modal = modalContainerRef.current;
     if (!modal) return Infinity;
 
     const toolbarH = toolbarRef.current?.getBoundingClientRect().height ?? 0;
-    const modalH = modal.getBoundingClientRect().height;
 
-    return Math.max(0, modalH - toolbarH);
+    const cs = window.getComputedStyle(modal);
+    const maxH = parseFloat(cs.maxHeight);
+    const modalMaxH = Number.isFinite(maxH) && maxH > 0 ? maxH : modal.getBoundingClientRect().height;
+
+    return Math.max(0, modalMaxH - toolbarH);
   }, []);
-
 
   const animateWrapBy = useCallback((delta) => {
     const el = listWrapRef.current;
@@ -850,6 +854,8 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
               busy={busy}
               load={() => load(true)}
               onClose={onClose}
+              onBack={() => navigate("/nodes")}
+              category={category}
             />
           </div>
           <div className={FileExplorerStyles.contentShell}>

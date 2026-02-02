@@ -1,27 +1,37 @@
 import React from "react";
 import IconButton from "@mui/material/IconButton";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import FileExplorerStyles from "./fileExplorer.module.css";
 
-// Controls of the file explorer
-function FileToolbar({ toolbarDisabled, doOpenSelected, hasSelection, onOpenFile, onFilesSelected, onFilesOpened, renamingName, selectedCount, startRename, openCleanPanel, requestDelete, multiMode, setMultiMode, busy, load, onClose }) {
+function FileToolbar({ toolbarDisabled, doOpenSelected, hasSelection, onOpenFile, onFilesSelected, onFilesOpened, renamingName, selectedCount, startRename, openCleanPanel, requestDelete, multiMode, setMultiMode, busy, load, onClose, onBack, category }) {
   const hasOpenHandler = Boolean(onOpenFile || onFilesSelected || onFilesOpened);
+
   return (
     <div className={FileExplorerStyles.toolbar}>
       <div className={FileExplorerStyles.toolbarGroup}>
+        {onBack ? (
+          <IconButton
+            className={FileExplorerStyles.backIconBtn}
+            onClick={onBack}
+            disabled={busy || toolbarDisabled}
+            aria-label="Back to nodes"
+            title="Back to nodes"
+            size="small"
+          >
+            <ArrowBackIcon fontSize="small" />
+          </IconButton>
+        ) : null}
+
         <button
           className={FileExplorerStyles.tbBtn}
           onClick={doOpenSelected}
-          disabled={
-            toolbarDisabled ||
-            !hasSelection ||
-            !hasOpenHandler ||
-            !!renamingName
-          }
+          disabled={toolbarDisabled || !hasSelection || !hasOpenHandler || !!renamingName}
           title="Open (Enter / double-click)"
         >
           Open
         </button>
+
         <button
           className={FileExplorerStyles.tbBtn}
           onClick={startRename}
@@ -30,15 +40,16 @@ function FileToolbar({ toolbarDisabled, doOpenSelected, hasSelection, onOpenFile
         >
           Rename file
         </button>
-        <button
-          className={FileExplorerStyles.tbBtn}
-          onClick={openCleanPanel}
-          disabled={toolbarDisabled || !hasSelection}
-          title="Data cleaning"
-        >
-          Data cleaning
-        </button>
-
+        {category === "DATASETS" ? (
+          <button
+            className={FileExplorerStyles.tbBtn}
+            onClick={openCleanPanel}
+            disabled={toolbarDisabled || !hasSelection}
+            title="Data cleaning"
+          >
+            Data cleaning
+          </button>
+        ) : null}
         <button
           className={`${FileExplorerStyles.tbBtn} ${FileExplorerStyles.tbDanger}`}
           onClick={requestDelete}
@@ -47,6 +58,7 @@ function FileToolbar({ toolbarDisabled, doOpenSelected, hasSelection, onOpenFile
         >
           Delete
         </button>
+
         <span className={FileExplorerStyles.toolbarMeta}>
           {multiMode ? (
             <button
@@ -61,6 +73,7 @@ function FileToolbar({ toolbarDisabled, doOpenSelected, hasSelection, onOpenFile
           ) : null}
         </span>
       </div>
+
       <div className={FileExplorerStyles.toolbarGroup}>
         <IconButton
           className={FileExplorerStyles.refreshIconBtn}

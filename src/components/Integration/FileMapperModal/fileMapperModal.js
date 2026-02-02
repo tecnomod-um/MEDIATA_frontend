@@ -341,7 +341,7 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                 'Apply'
               )}
             </button>
-
+          {/*
             <button
               ref={cleanButtonRef}
               className={FileMapperModalStyles.cleanButton}
@@ -358,7 +358,7 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                 Data cleaning
               </span>
             </button>
-
+  */}
             <CSSTransition
               in={showCleanMenu}
               timeout={350}

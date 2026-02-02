@@ -1104,3 +1104,21 @@
   color: var(--text-color-secondary);
   padding: 40px 20px;
 }
+
+.backIconBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--text-color-on-darkbg) !important;
+  padding: 0 !important;
+}
+
+.backIconBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.16) !important;
+}
+
+.backIconBtn:disabled {
+  opacity: 0.55;
+}

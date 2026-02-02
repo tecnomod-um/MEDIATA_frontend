@@ -10,6 +10,7 @@ import ColumnMapping from "../../components/Integration/ColumnMapping/columnMapp
 import ColumnSearchList from "../../components/Integration/ColumnSearchList/columnSearchList";
 import FileMapperModal from "../../components/Integration/FileMapperModal/fileMapperModal";
 import FilePicker from "../../components/Common/FilePicker/filePicker";
+import FileExplorer from "../../components/Common/FileExplorer/fileExplorer";
 import SchemaTray from "../../components/Common/SchemaTray/schemaTray";
 import MappingsResult from "../../components/Integration/MappingsResult/mappingsResult";
 import { generateDistinctColors } from "../../util/colors";
@@ -395,6 +396,38 @@ function Integration() {
     setSchema(null);
   };
 
+// same preselect shape used in Discovery
+let preSelected = {};
+if (location.state?.elementFiles?.length) {
+  location.state.elementFiles.forEach(({ nodeId, fileName }) => {
+    if (!preSelected[nodeId]) preSelected[nodeId] = [];
+    preSelected[nodeId].push(fileName);
+  });
+}
+
+// FileExplorer callback -> normalize selection -> call your existing processor
+const handleFilesOpened = useCallback(
+  (payload) => {
+    // Support either shape:
+    // A) { [nodeId]: [fileName,...] }
+    // B) [ { nodeId, fileName }, ... ]
+    let nodeMapping = {};
+
+    if (Array.isArray(payload)) {
+      payload.forEach(({ nodeId, fileName }) => {
+        if (!nodeMapping[nodeId]) nodeMapping[nodeId] = [];
+        nodeMapping[nodeId].push(fileName);
+      });
+    } else if (payload && typeof payload === "object") {
+      nodeMapping = payload;
+    }
+
+    handleProcessSelectedElements(nodeMapping);
+  },
+  [handleProcessSelectedElements]
+);
+
+
   return (
     <div className={IntegrationStyles.pageContainer}>
       <FileMapperModal
@@ -405,15 +438,24 @@ function Integration() {
         nodes={selectedNodes}
         onSend={handleProcessMappings}
       />
-      {!columnsData.length && (
+      {/*!columnsData.length && (
         <FilePicker
           files={elementFileList}
           onFilesSelected={handleProcessSelectedElements}
           isProcessing={processingStatus === "processing"}
           modalTitle="Select dataset elements to map"
         />
+      )*/}
+      {!columnsData.length && (
+        <FileExplorer
+          nodes={selectedNodes}
+          category="DATASET_ELEMENTS"
+          isOpen={true}
+          preSelectedFiles={preSelected}
+          autoProcess={!!location.state?.elementFiles?.length}
+          onFilesOpened={handleFilesOpened}
+        />
       )}
-
       <div className={IntegrationStyles.mappingContainer}>
         <CSSTransition
           in={!!columnsData.length}

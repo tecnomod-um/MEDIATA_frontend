@@ -232,6 +232,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: var(--font-size-base);
+  color: var(--text-color-primary)
 }
 
 .nodeSubtitle {

@@ -64,13 +64,30 @@
   padding: 10px;
   border-radius: 5px;
   margin-bottom: 10px;
-  max-height: 40%;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .multiFileSelector p {
   margin: 0 0 8px 0;
   font-weight: bold;
   font-size: var(--font-size-base);
+}
+
+.nodeGroup {
+  margin-bottom: 10px;
+}
+
+.nodeGroupTitle {
+  margin: 0 0 6px 0;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--tooltray-text-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .filesRow {
@@ -163,6 +180,23 @@
   background: var(--tooltray-section-bg);
 }
 
+.multiFileSelector::-webkit-scrollbar {
+  width: 6px;
+}
+
+.multiFileSelector::-webkit-scrollbar-thumb {
+  background: var(--tooltray-button-hover);
+  border-radius: 3px;
+}
+
+.multiFileSelector::-webkit-scrollbar-thumb:hover {
+  background: var(--tooltray-button-bg);
+}
+
+.multiFileSelector::-webkit-scrollbar-track {
+  background: var(--tooltray-section-bg);
+}
+
 .topSection {
   background-color: var(--tooltray-section-bg);
   padding: 10px;
@@ -241,10 +275,10 @@
   overflow-y: auto;
   max-height: 300px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  flex-grow: 1;
+  flex: 1 1 0;
+  min-height: 0;
   font-size: var(--font-size-sm);
   border-radius: 5px;
-  min-height: 40px;
 }
 
 .featuresList ul {
@@ -270,6 +304,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .featuresList::-webkit-scrollbar {
@@ -345,17 +380,6 @@
 .buttonContainer button:hover {
   background-color: var(--tooltray-button-hover);
 }
-
-.nodeGroup {
-  margin-bottom: 10px;
-}
-
-.nodeGroupTitle {
-  font-size: var(--font-size-base);
-  font-weight: bold;
-  color: var(--tooltray-text-color);
-}
-
 
 .searchContainer {
   margin-top: 2px;
