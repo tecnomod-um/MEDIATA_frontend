@@ -4,6 +4,7 @@ import { DragControls } from "three/examples/jsm/controls/DragControls";
 import Node from "../Node/node";
 import Connections from "./connections";
 
+// Draggable node interactions in 3D scene
 const DraggableNodes = ({ nodes, onNodeClick, onJoinNodesDoubleClick }) => {
   const { camera, gl, viewport } = useThree();
   const controls = useRef(null);
@@ -207,13 +208,18 @@ const DraggableNodes = ({ nodes, onNodeClick, onJoinNodesDoubleClick }) => {
 
   useEffect(() => {
     if (groupRef.current) {
-      const draggableObjects = groupRef.current.children?.filter((child) => child.userData && child.userData.nodeId);
-      controls.current = new DragControls(
-        draggableObjects,
-        camera,
-        gl.domElement
-      );
-
+      const draggableObjects = [];
+      groupRef.current.traverse((obj) => {
+        if (obj.userData?.nodeId) draggableObjects.push(obj);
+      });
+      const byId = new Map();
+      for (const obj of draggableObjects) {
+        if (!byId.has(obj.userData.nodeId)) byId.set(obj.userData.nodeId, obj);
+      }
+      const rootsOnly = Array.from(byId.values());
+      
+      controls.current = new DragControls(rootsOnly, camera, gl.domElement);
+      controls.current.recursive = false;
       controls.current.addEventListener("dragstart", (event) => {
         const nodeId = event.object.userData.nodeId;
         setDraggedNodeId(nodeId);

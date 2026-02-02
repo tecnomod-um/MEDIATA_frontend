@@ -31,7 +31,7 @@ describe('FilePicker', () => {
     ).toBeInTheDocument()
 
     const confirm = screen.getByRole('button', {
-      name: /Process Selected Files/,
+      name: /Process selected files/i,
     })
     expect(confirm).toBeDisabled()
 
@@ -52,7 +52,7 @@ describe('FilePicker', () => {
     const f2 = screen.getByText('f2.txt')
     expect(f2).toHaveClass('selected')
     expect(
-      screen.getByRole('button', { name: /Process Selected Files/ })
+      screen.getByRole('button', { name: /Process selected files/i })
     ).toBeEnabled()
   })
 
@@ -85,7 +85,7 @@ describe('FilePicker', () => {
     act(() => jest.advanceTimersByTime(50))
 
     const confirm = screen.getByRole('button', {
-      name: 'Process Selected Files',
+      name: /Process selected files/i,
     })
     expect(confirm).toBeDisabled()
 

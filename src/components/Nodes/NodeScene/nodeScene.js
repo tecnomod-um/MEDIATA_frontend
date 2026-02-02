@@ -2,10 +2,10 @@ import React, { useState, useCallback } from "react";
 import { Canvas } from "@react-three/fiber";
 import DraggableNodes from "./draggableNodes";
 
+// Three.js canvas scene for displaying interactive nodes
 const NodeScene = ({ nodes, onNodeClick, onJoinNodesDoubleClick }) => {
   const [contextLost, setContextLost] = useState(false);
 
-  // Memoized event handlers
   const handleContextLost = useCallback((event) => {
     event.preventDefault();
     setContextLost(true);
@@ -23,7 +23,6 @@ const NodeScene = ({ nodes, onNodeClick, onJoinNodesDoubleClick }) => {
       shadows
       camera={{ position: [0, 0, 15], fov: 50 }}
       onCreated={({ gl }) => {
-        // Limit pixel ratio to reduce rendering overhead
         gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         gl.domElement.addEventListener("webglcontextlost", handleContextLost, false);
         gl.domElement.addEventListener("webglcontextrestored", handleContextRestored, false);
@@ -38,6 +37,6 @@ const NodeScene = ({ nodes, onNodeClick, onJoinNodesDoubleClick }) => {
       />
     </Canvas>
   );
-};
+}
 
 export default NodeScene;

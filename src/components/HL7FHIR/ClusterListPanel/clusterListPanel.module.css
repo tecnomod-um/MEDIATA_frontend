@@ -1,7 +1,5 @@
-@import '../../../variables.css';
-
 .wrapper {
-  background-color: #ffffff;
+  background-color: var(--background-color-card);
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   padding: 16px;
@@ -22,7 +20,7 @@
 }
 
 .title {
-  font-size: 1.25rem;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--text-primary-color);
   margin: 0;
@@ -37,7 +35,7 @@
   border: none;
   padding: 6px 10px;
   border-radius: 6px;
-  font-size: 0.9rem;
+  font-size: var(--font-size-base);
   cursor: pointer;
   transition: background 0.2s ease, transform 0.1s ease;
 }
@@ -53,21 +51,16 @@
   margin: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  /* never show horizontal scroll */
   flex: 1;
-
-  /* hide thumb by default… */
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
   transition: scrollbar-color 0.2s ease;
 }
 
 .list:hover {
-  /* …show just the thumb on hover */
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 }
 
-/* WebKit custom scrollbar */
 .list::-webkit-scrollbar {
   width: 6px;
   background: transparent;
@@ -87,15 +80,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #ffffff !important;
+  background-color: var(--background-color-card) !important;
   border-radius: 8px;
   margin-bottom: 8px;
   padding: 10px 14px;
   cursor: pointer;
   position: relative;
   z-index: 20;
-  
-  /* subtle resting shadow so it’s not completely flat */
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   transition:
     transform 0.2s ease,
@@ -103,7 +94,6 @@
     background 0.2s ease;
 }
 
-/* alternating row shading for a bit of texture */
 .item:nth-child(odd) {
   background: rgba(var(--surface-rgb), 0.95);
 }
@@ -120,7 +110,6 @@
   outline: none;
 }
 
-/* focus ring accent for keyboard users */
 .item:focus-visible {
   outline: 2px solid var(--accent-color);
 }
@@ -132,13 +121,13 @@
 
 .count {
   background: var(--accent-color);
-  font-size: 0.85rem;
+  font-size: var(--font-size-sm);
   padding: 2px 8px;
   border-radius: 12px;
 }
 
 .instructions {
-  font-size: 0.85rem;
+  font-size: var(--font-size-sm);
   color: var(--text-secondary-color);
   margin-top: 12px;
   text-align: center;

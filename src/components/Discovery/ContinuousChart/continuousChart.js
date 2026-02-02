@@ -5,6 +5,7 @@ import { Chart as ChartJS, registerables } from "chart.js";
 
 ChartJS.register(...registerables);
 
+// Display for the continuous features' histogram
 const ContinuousChart = React.memo(
   ({ feature, showOutliers, onClick, onDoubleClick, isSelected, inOverview }) => {
     const chartRef = useRef(null);

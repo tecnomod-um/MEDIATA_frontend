@@ -1,3 +1,4 @@
+// Drag and drop overlay component (unused)
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import { CSSTransition } from "react-transition-group";

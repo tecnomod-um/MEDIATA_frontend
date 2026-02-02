@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { logError } from "../../../util/petitionHandler";
 
+// Error boundary, catches React errors
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);

@@ -1,0 +1,59 @@
+
+.exportContainer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+}
+
+.exportButton,
+.smallGreenButton {
+    flex-shrink: 0;
+}
+
+.exportButton {
+    background-color: #444;
+    color: var(--text-color-on-darkbg);
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px 0 0 5px;
+    cursor: pointer;
+    flex-grow: 1;
+    text-align: center;
+    font-size: var(--font-size-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 80%;
+    transition: background-color 0.3s ease;
+    box-sizing: border-box;
+}
+
+.smallGreenButton {
+    background-color: #28a745 !important;
+    color: var(--text-color-on-darkbg);
+    padding: 10px 20px;
+    border: none;
+    border-radius: 0 5px 5px 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-base);
+    transition: background-color 0.3s ease;
+    box-sizing: border-box;
+    max-width: 10%;
+    background-color: #218838;
+}
+
+
+.exportButton {
+    padding: 10px 20px !important;
+    border-radius: 5px 0 0 5px !important;
+    flex-grow: 1 !important;
+}
+
+.smallGreenButton {
+    padding: 10px 20px !important;
+    border-radius: 0 5px 5px 0 !important;
+}

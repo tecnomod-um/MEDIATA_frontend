@@ -1,9 +1,8 @@
-@import '../../../variables.css';
 
 .detailPanel {
   display: flex;
   flex-direction: column;
-  background-color: #fafafa;
+  background-color: var(--background-color-4);
   border-radius: 10px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   padding: 0;
@@ -12,7 +11,7 @@
 }
 
 .headerRow {
-  background: var(--tooltray-background-color-light);
+  background: var(--tooltray-background-color);
   padding: 12px 16px;
   position: relative;
   min-height: 52px;
@@ -20,8 +19,8 @@
 
 .detailTitle {
   margin: 0;
-  font-size: 1.4em;
-  color: #fff;
+  font-size: var(--font-size-xl);
+  color: var(--text-color-on-darkbg);
   text-align: center;
   width: calc(100% - 140px);
   position: absolute;
@@ -40,7 +39,7 @@
 
 .buildClassBtn {
   background-color: var(--button-add-value-color);
-  color: #fff;
+  color: var(--text-color-on-darkbg);
   border: none;
   padding: 8px 14px;
   border-radius: 4px;
@@ -69,22 +68,22 @@
 }
 
 .formField label {
-  background-color: var(--tooltray-background-color-light);
-  color: #fff;
+  background-color: var(--tooltray-background-color);
+  color: var(--text-color-on-darkbg);
   padding: 6px 10px;
   border-radius: 8px 8px 0 0;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-bottom: none;
   user-select: none;
-  font-size: 0.95em;
+  font-size: var(--font-size-base);
 }
 
 .formField input,
 .formField textarea {
   padding: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-radius: 0 0 8px 8px;
-  font-size: 0.95em;
+  font-size: var(--font-size-base);
   resize: none;
 }
 
@@ -95,10 +94,10 @@
 
 .typeSelect {
   padding: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-radius: 0 0 8px 8px;
-  font-size: 0.95em;
-  background-color: #e8e8e8;
+  font-size: var(--font-size-base);
+  background-color: var(--background-color-tertiary);
   appearance: none;
 }
 

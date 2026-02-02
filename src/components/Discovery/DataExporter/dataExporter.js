@@ -1,6 +1,7 @@
 import React from "react";
 import { jsonToCSV } from "../../../util/parser";
 
+// Exporting functionality from the discovery statistical data to CSV
 function DataExporter({ data, filteredData }) {
   const exportData = () => {
     const continuousAndDateData = data.continuousFeatures.map((feature) => ({
@@ -72,7 +73,7 @@ function DataExporter({ data, filteredData }) {
     document.body.removeChild(link);
   };
 
-  return <button onClick={exportData}>Export Data</button>;
+  return <button onClick={exportData} aria-label="Export statistics data to CSV files">Export Data</button>;
 }
 
 export default DataExporter;

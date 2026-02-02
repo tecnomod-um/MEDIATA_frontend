@@ -1,5 +1,3 @@
-@import '../../../variables.css';
-
 .modalBackground {
   position: fixed;
   top: 0;
@@ -16,7 +14,7 @@
 .modalContainer {
   display: flex;
   flex-direction: column;
-  background-color: #fff;
+  background-color: var(--background-color-card);
   border-radius: 8px;
   padding: 30px 40px;
   width: 90%;
@@ -27,7 +25,7 @@
 }
 
 .uploadModalContainer {
-  background-color: #fff;
+  background-color: var(--background-color-card);
   border-radius: 8px;
   padding: 30px 40px;
   width: 90%;
@@ -39,6 +37,7 @@
 }
 
 .modalTitle {
+  color: var(--text-color-primary);
   margin-bottom: 0.5em;
   flex-shrink: 0;
 }
@@ -98,8 +97,8 @@
 }
 
 .nodeTitle {
-  color: #333;
-  font-size: 0.9rem;
+  color: var(--text-color-primary);
+  font-size: var(--font-size-base);
   font-weight: 600;
   text-align: left;
 }
@@ -107,16 +106,19 @@
 .fileList {
   list-style: none;
   padding: 0;
-  border: 1px solid var(--background-color-1-light);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   overflow: hidden;
+  background-color: var(--background-color-4);
 }
 
 .fileItem {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--background-color-1-light);
+  border-bottom: 1px solid var(--border-color);
   cursor: pointer;
   transition: background-color 0.3s ease, border-left-color 0.3s ease;
+  background-color: var(--background-color-3);
+  color: var(--text-color-primary);
 }
 
 .fileItem:first-child {
@@ -130,7 +132,7 @@
 }
 
 .fileItem:not(.selected):hover {
-  background-color: var(--background-color-2-light);
+  background-color: var(--background-color-2);
 }
 
 .fileItem:last-child {
@@ -138,9 +140,9 @@
 }
 
 .selected {
-  background-color: var(--file-selected-bg-light);
-  border-left: 4px solid var(--file-selected-border-light) !important;
-  border-right: 4px solid var(--file-selected-border-light) !important;
+  background-color: var(--file-selected-bg);
+  border-left: 4px solid var(--file-selected-border) !important;
+  border-right: 4px solid var(--file-selected-border) !important;
 }
 
 .disabledFile {
@@ -151,14 +153,16 @@
 .uploadItem {
   padding: 0.75rem 1rem;
   margin: 1.5rem auto 1rem auto;
-  border: 1px solid var(--background-color-1-light);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.3s ease, border-left-color 0.3s ease;
+  color: var(--text-color-primary);
+  background-color: var(--background-color-3);
 }
 
 .uploadItem:hover:not(.selected):not(.disabledFile) {
-  background-color: var(--background-color-2-light);
+  background-color: var(--background-color-2);
 }
 
 .hiddenFileInput {
@@ -174,23 +178,23 @@
   min-height: 3rem;
   width: 100%;
   padding: 0 20px;
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: var(--font-size-base);
   font-weight: 600;
   margin-top: 20px;
   background-size: 300% 100%;
-  background-image: var(--button-gradient-light);
-  box-shadow: var(--button-color-shadow-light);
+  background-image: var(--button-gradient);
+  box-shadow: var(--button-color-shadow);
   transition: background-position 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
   box-sizing: border-box;
 }
 
 .confirmButton:hover:not(:disabled) {
   background-position: 100% 0;
-  background-color: var(--button-color-hover-light);
+  background-color: var(--button-color-hover);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
@@ -227,6 +231,359 @@
 
 .noFiles {
   font-style: italic;
-  color: grey;
+  color: var(--text-color-muted);
   text-align: center;
+}
+
+/* project picker */
+.listWrapper {
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.projectRow {
+  width: 100%;
+  display: grid;
+  grid-template-columns: var(--project-thumb-size) 1fr 18px;
+  gap: 14px;
+  align-items: center;
+  padding: 12px;
+
+  border: none;
+  border-bottom: 1px solid var(--project-row-border);
+  background: var(--project-row-bg);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.3s ease, border-left-color 0.3s ease;
+}
+
+.thumb {
+  width: var(--project-thumb-size);
+  height: var(--project-thumb-size);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  background: var(--background-color-card);
+
+  display: grid;
+  place-items: center;
+}
+
+.thumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  padding: 0;
+
+  display: block;
+}
+
+.projectRow:hover {
+  background-color: var(--project-row-hover);
+}
+
+.thumbFallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--chip-text);
+  background: var(--chip-bg);
+}
+
+.projectMain {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.projectTopLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.projectName {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--text-color-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  text-transform: capitalize;
+}
+
+.badgeActive {
+  background-color: var(--project-status-active-bg);
+  color: var(--project-status-active-text);
+  border: 1px solid color-mix(in srgb, currentColor 0%, black 25%);
+}
+
+.badgeHiatus {
+  background-color: var(--project-status-hiatus-bg);
+  color: var(--project-status-hiatus-text);
+  border: 1px solid color-mix(in srgb, currentColor 0%, black 25%);
+}
+
+.badgeClosed {
+  background-color: var(--project-status-closed-bg);
+  color: var(--project-status-closed-text);
+  border: 1px solid color-mix(in srgb, currentColor 0%, black 25%);
+}
+
+.badgeDefault {
+  background-color: var(--project-status-default-bg);
+  color: var(--project-status-default-text);
+  border: 1px solid color-mix(in srgb, currentColor 0%, black 25%);
+}
+
+.projectMeta {
+  display: flex;
+  min-width: 0;
+}
+
+.projectId {
+  font-size: var(--font-size-sm);
+  color: var(--text-color-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.statChip {
+  font-size: var(--font-size-xs);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--project-row-border);
+  background: var(--chip-bg);
+  color: var(--chip-text);
+}
+
+.chev {
+  font-size: var(--font-size-xl);
+  line-height: 1;
+  color: var(--background-nav-tool-background-color-active-light);
+  justify-self: end;
+}
+
+.emptyState {
+  padding: 1rem;
+  font-style: italic;
+  color: var(--text-color-muted);
+  text-align: center;
+}
+
+/* ProjectPicker uses these transition classnames; add them so it compiles */
+.fadeListEnter {
+  opacity: 0;
+}
+
+.fadeListEnterActive {
+  opacity: 1;
+  transition: opacity 200ms ease;
+}
+
+.fadeListExit {
+  opacity: 1;
+}
+
+.fadeListExitActive {
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.projectDescription {
+  font-size: var(--font-size-sm);
+  color: var(--text-color-secondary);
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.projectBottomRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lastAccess {
+  font-size: var(--font-size-xs);
+  color: var(--text-color-secondary);
+  white-space: nowrap;
+}
+
+.projectModal {
+  max-width: 1000px;
+}
+
+@media (max-width: 520px) {
+  .modalContainer {
+    width: 94%;
+    max-width: 520px;
+    padding: 18px 16px;
+    max-height: 88vh;
+  }
+
+  .modalTitle {
+    margin-bottom: 0.75em;
+    font-size: var(--font-size-lg);
+    line-height: 1.15;
+  }
+
+  .projectRow {
+    grid-template-columns: 44px 1fr 14px;
+    gap: 10px;
+    padding: 10px 10px;
+    align-items: center;
+  }
+
+  .thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+  }
+
+  .projectMain {
+    gap: 6px;
+    padding-top: 1px;
+    min-width: 0;
+  }
+
+  .projectTopLine {
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .projectName {
+    font-size: var(--font-size-base);
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .badge {
+    font-size: var(--font-size-xs);
+    padding: 2px 9px;
+    line-height: 1.2;
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .projectDescription {
+    font-size: var(--font-size-sm);
+    line-height: 1.25;
+
+    display: -webkit-box;
+    line-clamp: 3;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .projectBottomRow {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .statsRow {
+    flex-wrap: nowrap;
+    gap: 8px;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+
+    scrollbar-width: none;
+  }
+
+  .statsRow::-webkit-scrollbar {
+    display: none;
+  }
+
+  .statChip {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-size: var(--font-size-xs);
+    padding: 4px 10px;
+  }
+
+  .lastAccess {
+    width: 100%;
+    white-space: normal;
+    font-size: var(--font-size-xs);
+    line-height: 1.2;
+  }
+
+  .chev {
+    font-size: var(--font-size-lg);
+    line-height: 1;
+    color: var(--background-nav-tool-background-color-active-light);
+    justify-self: end;
+    align-self: center;
+    padding-top: 0;
+  }
+}
+
+.loadingState {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  color: var(--text-color-secondary);
+  background: var(--project-row-bg);
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--text-color-primary);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.errorState {
+  padding: 18px;
+  color: var(--text-color-primary);
+  background: var(--background-color-3);
+  border: 1px solid var(--border-color);
 }

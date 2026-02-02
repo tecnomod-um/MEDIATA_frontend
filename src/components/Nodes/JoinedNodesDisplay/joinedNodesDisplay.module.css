@@ -1,8 +1,6 @@
-@import '../../../variables.css';
-
 .modalContent {
   width: 100%;
-  background-color: var(--background-color-2-light);
+  background-color: var(--background-color-2);
   border-radius: 8px;
   margin: auto;
   overflow: hidden;
@@ -13,16 +11,16 @@
 
 .header {
   position: relative;
-  background-color: var(--background-nav-and-headers-background-color-light);
+  background-color: var(--background-nav-and-headers-background-color);
   padding: 15px 20px;
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   text-align: center;
 }
 
 .title {
   margin: 0;
   font-weight: 600;
-  font-size: 1.35rem;
+  font-size: var(--font-size-xl);
 }
 
 .closeBtn {
@@ -31,9 +29,9 @@
   right: 15px;
   border: none;
   background: transparent;
-  color: var(--text-color-on-darkbg-light);
+  color: var(--text-color-on-darkbg);
   cursor: pointer;
-  font-size: 1.25rem;
+  font-size: var(--font-size-lg);
   border-radius: 50%;
   padding: 6px;
   transition: background-color 0.2s ease;
@@ -44,7 +42,6 @@
 }
 
 .body {
-  /* Center the list container within the modal */
   padding: 15px 20px;
   max-height: 65vh;
   overflow-y: auto;
@@ -54,7 +51,6 @@
 }
 
 .nodeList {
-  /* Limit width so the cards are nicely centered and not too wide */
   width: 100%;
   max-width: 700px;
   display: flex;
@@ -64,14 +60,13 @@
 }
 
 .nodeCard {
-  background-color: #fff;
-  border: 1px solid #ddd;
+  background-color: var(--background-color-card);
+  border: 1px solid var(--border-color-secondary);
   border-radius: 6px;
   padding: 12px 16px;
   width: 100%;
 }
 
-/* Node header: name & desc on left, toggle button on right */
 .nodeHeader {
   display: flex;
   align-items: center;
@@ -85,15 +80,15 @@
 
 .nodeName {
   margin: 0 0 4px 0;
-  font-size: 1rem;
+  font-size: var(--font-size-base);
   font-weight: 600;
-  color: #333;
+  color: var(--text-color-primary);
 }
 
 .nodeDesc {
   margin: 0;
-  font-size: 0.9rem;
-  color: #555;
+  font-size: var(--font-size-base);
+  color: var(--text-color-secondary);
 }
 
 .collapsibleWrapper {
@@ -118,24 +113,29 @@
   gap: 6px;
   min-width: 120px;
   padding: 6px 12px;
-  background-color: #eee;
-  border: 1px solid #ccc;
+  background-color: var(--background-color-tertiary);
+  color: var(--text-color-primary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: var(--font-size-base);
   height: fit-content;
+  transition: background-color 0.2s ease;
+}
+
+.toggleButton:hover {
+  background-color: var(--background-color-hover);
 }
 
 .smallSpinner {
   width: 14px;
   height: 14px;
-  border: 2px solid #999;
-  border-top: 2px solid #555;
+  border: 2px solid var(--border-color-secondary);
+  border-top: 2px solid var(--text-color-secondary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 
-/* Loading spinner container for the main dataset area */
 .loadingContainer {
   display: flex;
   flex-direction: column;
@@ -147,8 +147,8 @@
 .spinner {
   width: 24px;
   height: 24px;
-  border: 3px solid #ddd;
-  border-top: 3px solid #666;
+  border: 3px solid var(--border-color-secondary);
+  border-top: 3px solid var(--text-color-secondary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin-bottom: 8px;
@@ -158,28 +158,36 @@
   0% {
     transform: rotate(0);
   }
+
   100% {
     transform: rotate(360deg);
   }
 }
 
 .muted {
-  color: #777;
+  color: var(--text-color-muted);
   font-style: italic;
   margin: 0.5rem 0;
 }
 
+.loadingText {
+  color: var(--text-color-secondary);
+  margin: 0;
+}
+
 .footer {
   padding: 15px 20px;
-  border-top: 1px solid #ddd;
+  border-top: 1px solid var(--border-color-secondary);
   text-align: center;
 }
 
 .accessButton {
-  /* Add all the shared properties from MetadataDisplay */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
   padding: 10px 20px;
-  font-size: 1rem;
-  color: #fff; /* Use explicit color instead of variable for parity */
+  font-size: var(--font-size-base);
+  color: var(--text-color-on-darkbg);
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -193,12 +201,41 @@
   font-weight: 600;
   margin: 20px;
   background-size: 300% 100%;
-  background-image: var(--button-gradient-light);
-  box-shadow: var(--button-color-shadow-light);
+  background-image: var(--button-gradient);
+  box-shadow: var(--button-color-shadow);
 }
 
 .accessButton:hover {
   background-position: 100% 0;
-  background-color: var(--button-color-hover-light);
+  background-color: var(--button-color-hover);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.body,
+.collapsibleWrapper {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.body::-webkit-scrollbar,
+.collapsibleWrapper::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.body::-webkit-scrollbar-track,
+.collapsibleWrapper::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+.body::-webkit-scrollbar-thumb,
+.collapsibleWrapper::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 999px;
+  border: 2px solid var(--scrollbar-track);
+}
+
+.body::-webkit-scrollbar-thumb:hover,
+.collapsibleWrapper::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--scrollbar-thumb) 85%, var(--text-color-primary) 15%);
 }

@@ -1,143 +1,154 @@
 import React, { useState, useEffect, useCallback } from "react";
+import RangePickerStyles from "./rangePicker.module.css";
 import Slider from "rc-slider";
 import "rc-slider/assets/index.css";
-import RangePickerStyles from "./rangePicker.module.css";
 
+// Range picker control with slider for numeric and date ranges
 function RangePicker({ min, max, type, onRangeChange, unavailableRanges = [] }) {
   const [selectedRange, setSelectedRange] = useState([min, max]);
+  const [isEditingDisplay, setIsEditingDisplay] = useState(false);
+  const [accentColor, setAccentColor] = useState("#9ABDDC");
 
-  // Set step value based on type
-  const step = type === "date" ? 86400000 : 1; // One day in milliseconds for dates
+  const step = type === "date" ? 86400000 : 1;
 
-  // Function to get the next available range
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const root = window.getComputedStyle(document.documentElement);
+    const v = root.getPropertyValue("--button-color-light").trim();
+    if (v) setAccentColor(v);
+  }, []);
+
+  const doesRangeOverlapUnavailableRanges = useCallback(
+    (start, end) =>
+      unavailableRanges.some(([uStart, uEnd]) => start <= uEnd && end >= uStart),
+    [unavailableRanges]
+  );
+
+  const isSelectionValid = useCallback(
+    (range) => {
+      if (!range || range.length !== 2) return false;
+      const [s, e] = range;
+      if (s < min || e > max || s > e) return false;
+      if (doesRangeOverlapUnavailableRanges(s, e)) return false;
+      return true;
+    },
+    [min, max, doesRangeOverlapUnavailableRanges]
+  );
+
   const getNextAvailableRange = useCallback(() => {
-    // Sort the unavailable ranges
     const sortedUnavailableRanges = [...unavailableRanges].sort(
       (a, b) => a[0] - b[0]
     );
-  
-    // Initialize available ranges
+
     const availableRanges = [];
     let currentStart = min;
-  
+
     sortedUnavailableRanges.forEach(([uStart, uEnd]) => {
-      // Adjust uStart to ensure potentialEnd is not less than currentStart
-      const potentialEnd = uStart - step >= currentStart ? uStart - step : currentStart - step;
-  
-      if (currentStart <= potentialEnd) {
-        availableRanges.push([currentStart, potentialEnd]);
-      }
+      const potentialEnd =
+        uStart - step >= currentStart ? uStart - step : currentStart - step;
+      if (currentStart <= potentialEnd) availableRanges.push([currentStart, potentialEnd]);
       currentStart = Math.max(currentStart, uEnd + step);
     });
-  
-    if (currentStart <= max) {
-      availableRanges.push([currentStart, max]);
-    }
-  
-    // Filter out any invalid ranges where start > end
+    if (currentStart <= max) availableRanges.push([currentStart, max]);
     const validAvailableRanges = availableRanges.filter(
       ([start, end]) => start <= end && start >= min && end <= max
     );
-  
+
     return validAvailableRanges.length > 0 ? validAvailableRanges[0] : null;
   }, [min, max, unavailableRanges, step]);
-  
 
   useEffect(() => {
-    // Initialize selectedRange to the next available range
-    const nextAvailableRange = getNextAvailableRange();
-    if (nextAvailableRange) {
-      setSelectedRange(nextAvailableRange);
-    } else {
-      // No available ranges left
-      setSelectedRange([min, min]);
-    }
-  }, [min, max, unavailableRanges, getNextAvailableRange]);
+    if (isSelectionValid(selectedRange)) return;
 
-  const doesRangeOverlapUnavailableRanges = (start, end) => {
-    return unavailableRanges.some(([uStart, uEnd]) => {
-      // Ranges are inclusive, so we check for any overlap including the endpoints
-      return start <= uEnd && end >= uStart;
-    });
-  };
+    const next = getNextAvailableRange();
+    const target = next ?? [min, min];
+    const needsUpdate =
+      !Array.isArray(selectedRange) ||
+      selectedRange.length !== 2 ||
+      selectedRange[0] !== target[0] ||
+      selectedRange[1] !== target[1];
+
+    if (needsUpdate) setSelectedRange(target);
+  }, [min, max, unavailableRanges, step, getNextAvailableRange, isSelectionValid, selectedRange]);
 
   const adjustRangeToAvailable = (minValue, maxValue) => {
     let newMin = minValue;
     let newMax = maxValue;
 
-    // While the range overlaps with unavailable ranges, adjust the range
     while (doesRangeOverlapUnavailableRanges(newMin, newMax)) {
       let overlapped = false;
       for (const [uStart, uEnd] of unavailableRanges) {
         if (newMin <= uEnd && newMax >= uStart) {
           overlapped = true;
           if (newMin < uStart && newMax > uEnd) {
-            // Unavailable range is within selected range, adjust newMax
             newMax = uStart - step;
-            if (newMax < newMin) {
-              newMax = newMin;
-            }
+            if (newMax < newMin) newMax = newMin;
           } else if (newMin >= uStart && newMax <= uEnd) {
-            // Selected range is entirely within unavailable range
-            // Need to find next available range
             const nextAvailableRange = getNextAvailableRange();
-            if (nextAvailableRange) {
-              [newMin, newMax] = nextAvailableRange;
-            } else {
-              // No available ranges left
+            if (nextAvailableRange) [newMin, newMax] = nextAvailableRange;
+            else {
               newMin = min;
               newMax = min;
             }
             break;
           } else if (newMin < uStart && newMax <= uEnd) {
-            // Adjust newMax to avoid overlap
             newMax = uStart - step;
-            if (newMax < newMin) {
-              newMax = newMin;
-            }
+            if (newMax < newMin) newMax = newMin;
           } else if (newMin >= uStart && newMin <= uEnd) {
-            // Adjust newMin to avoid overlap
             newMin = uEnd + step;
-            if (newMin > newMax) {
-              newMin = newMax;
-            }
+            if (newMin > newMax) newMin = newMax;
           }
           break;
         }
       }
-      if (!overlapped) {
-        break;
-      }
+      if (!overlapped) break;
     }
 
-    // Ensure newMin and newMax are within the allowed range
     newMin = Math.max(newMin, min);
     newMax = Math.min(newMax, max);
 
     return [newMin, newMax];
   };
 
-  const handleRangeChange = (values) => {
-    // Allow the user to freely move the slider handles
-    setSelectedRange(values);
+  const handleInputChange = (index, rawValue) => {
+    let numeric;
+
+    if (type === "date") {
+      const d = new Date(rawValue);
+      if (Number.isNaN(d.getTime())) return;
+      numeric = d.getTime();
+    } else {
+      const n = parseFloat(rawValue);
+      if (Number.isNaN(n)) return;
+      numeric = n;
+    }
+
+    const other = selectedRange[index === 0 ? 1 : 0];
+    let newMin = index === 0 ? numeric : Math.min(other, numeric);
+    let newMax = index === 1 ? numeric : Math.max(other, numeric);
+
+    [newMin, newMax] = adjustRangeToAvailable(newMin, newMax);
+    setSelectedRange([newMin, newMax]);
   };
 
-  const handleAfterChange = (values) => {
+  const handleRangeChange = (values) => {
+    const arr = Array.isArray(values) ? values : [values, values];
+    setSelectedRange(arr);
+  };
+
+  const handleChangeComplete = (value) => {
+    const values = Array.isArray(value) ? value : [value, value];
     const [newMin, newMax] = values;
-
-    // Adjust the range to avoid overlapping with unavailable ranges
-    let [adjustedMin, adjustedMax] = adjustRangeToAvailable(newMin, newMax);
-
+    const [adjustedMin, adjustedMax] = adjustRangeToAvailable(newMin, newMax);
     setSelectedRange([adjustedMin, adjustedMax]);
   };
 
   const handleSetClick = () => {
     const [minValue, maxValue] = selectedRange;
-
     const formattedMin = type === "date" ? new Date(minValue) : minValue;
     const formattedMax = type === "date" ? new Date(maxValue) : maxValue;
-
     onRangeChange({ minValue: formattedMin, maxValue: formattedMax });
+    setIsEditingDisplay(false);
   };
 
   const formatValue = (value) => {
@@ -150,11 +161,10 @@ function RangePicker({ min, max, type, onRangeChange, unavailableRanges = [] }) 
     return value !== undefined && value !== null ? value.toString() : "";
   };
 
-  // Check if there are no available ranges
-  const noAvailableRanges = useCallback(() => {
-    const nextAvailableRange = getNextAvailableRange();
-    return nextAvailableRange === null;
-  }, [getNextAvailableRange]);
+  const noAvailableRanges = useCallback(
+    () => getNextAvailableRange() === null,
+    [getNextAvailableRange]
+  );
 
   if (noAvailableRanges()) {
     return (
@@ -169,11 +179,45 @@ function RangePicker({ min, max, type, onRangeChange, unavailableRanges = [] }) 
   return (
     <div className={RangePickerStyles.rangePicker}>
       <div className={RangePickerStyles.rangeDisplayWrapper}>
-        <span className={RangePickerStyles.rangeDisplay}>
-          Selected Range: {formatValue(selectedRange[0])} -{" "}
-          {formatValue(selectedRange[1])}
-        </span>
+        {!isEditingDisplay ? (
+          <span
+            className={`${RangePickerStyles.rangeText} ${RangePickerStyles.rangeTextEditable}`}
+            onDoubleClick={() => setIsEditingDisplay(true)}
+            title="Double-click to edit values"
+          >
+            Selected range: {formatValue(selectedRange[0])} –{" "}
+            {formatValue(selectedRange[1])}
+          </span>
+        ) : (
+          <>
+            <span className={RangePickerStyles.rangeLabel}>Selected range:</span>
+            <div className={RangePickerStyles.rangeInputs}>
+              <input
+                className={RangePickerStyles.rangeInput}
+                type={type === "date" ? "date" : "number"}
+                value={
+                  type === "date"
+                    ? formatValue(selectedRange[0])
+                    : selectedRange[0]
+                }
+                onChange={(e) => handleInputChange(0, e.target.value)}
+              />
+              <span className={RangePickerStyles.rangeSeparator}>–</span>
+              <input
+                className={RangePickerStyles.rangeInput}
+                type={type === "date" ? "date" : "number"}
+                value={
+                  type === "date"
+                    ? formatValue(selectedRange[1])
+                    : selectedRange[1]
+                }
+                onChange={(e) => handleInputChange(1, e.target.value)}
+              />
+            </div>
+          </>
+        )}
       </div>
+
       <div className={RangePickerStyles.controlsContainer}>
         <div className={RangePickerStyles.sliderContainer}>
           <Slider
@@ -182,15 +226,14 @@ function RangePicker({ min, max, type, onRangeChange, unavailableRanges = [] }) 
             max={max}
             value={selectedRange}
             onChange={handleRangeChange}
-            onAfterChange={handleAfterChange}
-            railStyle={{ backgroundColor: "#ddd" }}
-            trackStyle={[{ backgroundColor: "#007bff" }]}
-            handleStyle={[
-              { borderColor: "#007bff" },
-              { borderColor: "#007bff" },
-            ]}
+            onChangeComplete={handleChangeComplete}
             step={step}
             allowCross={false}
+            styles={{
+              rail: { backgroundColor: "#ddd" },
+              track: { backgroundColor: "var(--background-nav-tool-background-color-active)" },
+              handle: { borderColor: "var(--background-nav-tool-background-color-active)" },
+            }}
           />
         </div>
         <button

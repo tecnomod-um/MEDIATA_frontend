@@ -70,7 +70,7 @@ describe('<ClusterDetailPanel />', () => {
 
   it('calls onRemoveElement with the correct id when remove is clicked', () => {
     setup();
-    const removeButtons = screen.getAllByText('✕');
+    const removeButtons = screen.getAllByLabelText('Remove element');
     fireEvent.click(removeButtons[0]);
     expect(onRemove).toHaveBeenCalledWith(1);
     fireEvent.click(removeButtons[1]);

@@ -6,12 +6,13 @@ import { CSSTransition, SwitchTransition } from "react-transition-group";
 import AutocompleteInput from "../../Common/AutoCompleteInput/autoCompleteInput";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddBoxIcon from "@mui/icons-material/AddBox";
+import CloseIcon from "@mui/icons-material/Close";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import TooltipPopup from "../../Common/TooltipPopup/tooltipPopup";
 import debounce from "lodash/debounce";
 
+// Main control panel for defining a semantic structure based on elements 
 const ElementDetailPanel = ({ activeElement, currentSelection, onSelectOption, activeElementIndex, activeCategoryIndex, elementFormValues, setElementFormValues, onBuildClass, onDeleteClass, builtClasses }) => {
-
   const [options, setOptions] = useState([]);
   const [formFields, setFormFields] = useState([]);
   const [fieldSuggestions, setFieldSuggestions] = useState({});
@@ -132,18 +133,15 @@ const ElementDetailPanel = ({ activeElement, currentSelection, onSelectOption, a
   const elementCategories = useMemo(() => activeElement.categories || [], [activeElement.categories]);
 
   useEffect(() => {
-    // look for any `type` field that’s now “categorical”
     formFields.forEach(({ name, type }) => {
       if (type !== "type") return;
       const kind = currentValues[`${name}_kind`];
       const catKey = `${name}_categories`;
-      // if they just flipped to categorical, and we haven’t seeded yet:
       if (kind === "categorical" && !currentValues[catKey]) {
         setElementFormValues((prev) => ({
           ...prev,
           [itemKey]: {
             ...prev[itemKey],
-            // initialize one row per original element‐category
             [catKey]: elementCategories.map((cat) => [cat, ""]),
           },
         }));
@@ -248,7 +246,7 @@ const ElementDetailPanel = ({ activeElement, currentSelection, onSelectOption, a
                 message="Select an ontology class and configure its fields to build the element."
                 buttonRef={tooltipButtonRef}
                 onClose={() => setShowTooltip(false)}
-                offsetY={35}
+                offsetY={-10}
               />
             )}
           </div>
@@ -405,8 +403,9 @@ const ElementDetailPanel = ({ activeElement, currentSelection, onSelectOption, a
                                           cats.splice(i, 1);
                                           handleInputChange(catsKey, cats);
                                         }}
+                                        aria-label="Remove category row"
                                       >
-                                        ×
+                                        <CloseIcon fontSize="small" />
                                       </button>
                                     </div>
                                   );
@@ -431,6 +430,6 @@ const ElementDetailPanel = ({ activeElement, currentSelection, onSelectOption, a
       </div>
     </div>
   );
-};
+}
 
 export default ElementDetailPanel;

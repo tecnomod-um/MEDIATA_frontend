@@ -83,4 +83,41 @@ describe('AggregateDisplay', () => {
     const newHeight = parseInt(topPanel.style.height, 10);
     expect(newHeight).toBeLessThan(startHeight);
   });
+
+  test('ignores mouse move when not dragging', () => {
+    render(<AggregateDisplay covariances={COV} />);
+    
+    const topPanel = screen.getByTestId('top-panel');
+    const startHeight = parseInt(topPanel.style.height, 10) || 300;
+    
+    // Mouse move without mousedown should not change height
+    fireEvent.mouseMove(window, { clientY: 100 });
+    
+    const newHeight = parseInt(topPanel.style.height, 10) || 300;
+    expect(newHeight).toBe(startHeight);
+  });
+
+  test('handles missing values in correlation matrix with N/A', () => {
+    const incompleteMatrix = {
+      age: { age: 1.0 },
+      weight: { age: 0.5 },
+    };
+
+    render(<AggregateDisplay covariances={incompleteMatrix} />);
+    
+    // Should show N/A for missing weight-weight value
+    const naElements = screen.getAllByText('N/A');
+    expect(naElements.length).toBeGreaterThan(0);
+  });
+
+  test('handles chi-square test with non-numeric p-value', () => {
+    const chiWithBadValue = [
+      { category1: 'cat1', category2: 'cat2', pvalue: null },
+    ];
+
+    render(<AggregateDisplay covariances={COV} chiSquareTest={chiWithBadValue} />);
+    
+    const naElements = screen.getAllByText('N/A');
+    expect(naElements.length).toBeGreaterThan(0);
+  });
 });

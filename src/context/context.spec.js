@@ -62,6 +62,151 @@ describe('NodeProvider & useNode', () => {
     fireEvent.click(screen.getByText('clear'));
     expect(screen.getByTestId('selected')).toHaveTextContent('');
   });
+
+  it('loads initial state from localStorage on mount', () => {
+    localStorage.setItem('selectedNodes', JSON.stringify([{ id: 10, name: 'Saved' }]));
+    render(
+      <NodeProvider>
+        <Tester />
+      </NodeProvider>
+    );
+    expect(screen.getByTestId('selected')).toHaveTextContent('10:Saved');
+  });
+
+  it('handles corrupt JSON in localStorage gracefully', () => {
+    localStorage.setItem('selectedNodes', 'not-valid-json{');
+    render(
+      <NodeProvider>
+        <Tester />
+      </NodeProvider>
+    );
+    expect(screen.getByTestId('selected')).toHaveTextContent('');
+  });
+
+  it('persists nodes to localStorage when selecting', () => {
+    render(
+      <NodeProvider>
+        <Tester />
+      </NodeProvider>
+    );
+    fireEvent.click(screen.getByText('one'));
+    const stored = JSON.parse(localStorage.getItem('selectedNodes'));
+    expect(stored).toEqual([{ id: 1, name: 'One' }]);
+  });
+
+  it('removes localStorage entry when clearing nodes', () => {
+    localStorage.setItem('selectedNodes', JSON.stringify([{ id: 1, name: 'Test' }]));
+    render(
+      <NodeProvider>
+        <Tester />
+      </NodeProvider>
+    );
+    fireEvent.click(screen.getByText('clear'));
+    expect(localStorage.getItem('selectedNodes')).toBeNull();
+  });
+
+  it('handles selecting empty array', () => {
+    render(
+      <NodeProvider>
+        <Tester />
+      </NodeProvider>
+    );
+    fireEvent.click(screen.getByText('one'));
+    fireEvent.click(screen.getByText('clear'));
+    expect(localStorage.getItem('selectedNodes')).toBeNull();
+    expect(screen.getByTestId('selected')).toHaveTextContent('');
+  });
+
+  it('listens to storage events and updates state', async () => {
+    const { rerender } = render(
+      <NodeProvider>
+        <Tester />
+      </NodeProvider>
+    );
+    
+    const event = new StorageEvent('storage', {
+      key: 'selectedNodes',
+      newValue: JSON.stringify([{ id: 99, name: 'External' }]),
+    });
+    window.dispatchEvent(event);
+    
+    // Rerender to see the update
+    rerender(
+      <NodeProvider>
+        <Tester />
+      </NodeProvider>
+    );
+    
+    // The storage event should trigger state update
+    expect(screen.getByTestId('selected').textContent).toContain('99');
+  });
+
+  it('ignores storage events for other keys', () => {
+    render(
+      <NodeProvider>
+        <Tester />
+      </NodeProvider>
+    );
+    fireEvent.click(screen.getByText('one'));
+    
+    const event = new StorageEvent('storage', {
+      key: 'otherKey',
+      newValue: 'something',
+    });
+    window.dispatchEvent(event);
+    
+    expect(screen.getByTestId('selected')).toHaveTextContent('1:One');
+  });
+
+  it('handles storage event with null newValue', async () => {
+    const { rerender } = render(
+      <NodeProvider>
+        <Tester />
+      </NodeProvider>
+    );
+    fireEvent.click(screen.getByText('one'));
+    
+    const event = new StorageEvent('storage', {
+      key: 'selectedNodes',
+      newValue: null,
+    });
+    window.dispatchEvent(event);
+    
+    // Rerender to see the update
+    rerender(
+      <NodeProvider>
+        <Tester />
+      </NodeProvider>
+    );
+    
+    // Null newValue should clear the nodes
+    expect(screen.getByTestId('selected').textContent).toBe('');
+  });
+
+  it('handles corrupt JSON in storage event gracefully', async () => {
+    const { rerender } = render(
+      <NodeProvider>
+        <Tester />
+      </NodeProvider>
+    );
+    fireEvent.click(screen.getByText('one'));
+    
+    const event = new StorageEvent('storage', {
+      key: 'selectedNodes',
+      newValue: 'invalid-json{',
+    });
+    window.dispatchEvent(event);
+    
+    // Rerender to see the update
+    rerender(
+      <NodeProvider>
+        <Tester />
+      </NodeProvider>
+    );
+    
+    // When parsing fails, the state is reset to empty array
+    expect(screen.getByTestId('selected').textContent).toBe('');
+  });
 });
 
 describe('AuthProvider & useAuth', () => {
@@ -136,5 +281,86 @@ describe('AuthProvider & useAuth', () => {
     expect(screen.getByTestId('auth')).toHaveTextContent('false');
     expect(screen.getByTestId('selectedCount')).toHaveTextContent('0');
     expect(mockNavigate).toHaveBeenCalledWith('/login');
+  });
+
+  it('on mount with no tokens, sets auth=false and loading=false', () => {
+    render(
+      <NodeProvider>
+        <AuthProvider>
+          <AuthTester />
+        </AuthProvider>
+      </NodeProvider>
+    );
+    expect(screen.getByTestId('loading')).toHaveTextContent('false');
+    expect(screen.getByTestId('auth')).toHaveTextContent('false');
+  });
+
+  it('on mount with only jwtToken but no TGT, sets auth=false', () => {
+    localStorage.setItem('jwtToken', 'token-only');
+    render(
+      <NodeProvider>
+        <AuthProvider>
+          <AuthTester />
+        </AuthProvider>
+      </NodeProvider>
+    );
+    expect(screen.getByTestId('auth')).toHaveTextContent('false');
+  });
+
+  it('on mount with only TGT but no jwtToken, sets auth=false', () => {
+    localStorage.setItem('kerberosTGT', 'tgt-only');
+    render(
+      <NodeProvider>
+        <AuthProvider>
+          <AuthTester />
+        </AuthProvider>
+      </NodeProvider>
+    );
+    expect(screen.getByTestId('auth')).toHaveTextContent('false');
+  });
+
+  it('login() clears jwtNodeTokens before setting new tokens', () => {
+    localStorage.setItem('jwtNodeTokens', 'old-tokens');
+    render(
+      <NodeProvider>
+        <AuthProvider>
+          <AuthTester />
+        </AuthProvider>
+      </NodeProvider>
+    );
+    fireEvent.click(screen.getByText('login'));
+    expect(localStorage.getItem('jwtNodeTokens')).toBeNull();
+  });
+
+  it('logout() clears jwtNodeTokens', () => {
+    localStorage.setItem('jwtToken', 'x');
+    localStorage.setItem('kerberosTGT', 'y');
+    localStorage.setItem('jwtNodeTokens', 'node-tokens');
+    
+    render(
+      <NodeProvider>
+        <AuthProvider>
+          <AuthTester />
+        </AuthProvider>
+      </NodeProvider>
+    );
+    fireEvent.click(screen.getByText('logout'));
+    expect(localStorage.getItem('jwtNodeTokens')).toBeNull();
+  });
+
+  it('logout() clears selectedNodes from localStorage', () => {
+    localStorage.setItem('jwtToken', 'x');
+    localStorage.setItem('kerberosTGT', 'y');
+    localStorage.setItem('selectedNodes', JSON.stringify([{ id: 1, name: 'Node' }]));
+    
+    render(
+      <NodeProvider>
+        <AuthProvider>
+          <AuthTester />
+        </AuthProvider>
+      </NodeProvider>
+    );
+    fireEvent.click(screen.getByText('logout'));
+    expect(localStorage.getItem('selectedNodes')).toBeNull();
   });
 });

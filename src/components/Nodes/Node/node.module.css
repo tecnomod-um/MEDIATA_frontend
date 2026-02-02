@@ -1,9 +1,7 @@
-@import '../../../variables.css';
-
 .auraColor {
     color: #c22535;
 }
 
 .textColor {
-    color: black;
+    color: var(--text-color-dark);
 }

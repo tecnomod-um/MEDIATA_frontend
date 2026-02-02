@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import JoinedNodesDisplay from './joinedNodesDisplay';
 import { getNodeMetadata } from '../../../util/petitionHandler';
 
-jest.mock('../../Unused/OverlayWrapper/overlayWrapper', () => ({
+jest.mock('../../Common/OverlayWrapper/overlayWrapper', () => ({
   __esModule: true,
   default: ({ isOpen, children }) =>
     isOpen ? <div data-testid="overlay">{children}</div> : null,
@@ -151,5 +151,73 @@ describe('JoinedNodesDisplay', () => {
     expect(btn2).not.toBeDisabled();
     fireEvent.click(btn2);
     expect(onAccess).toHaveBeenCalled();
+  });
+
+  it('logs error when metadata fetch fails', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const error = new Error('Network error');
+    getNodeMetadata.mockRejectedValueOnce(error);
+
+    render(
+      <JoinedNodesDisplay
+        isOpen
+        joinedNodes={[simpleNode]}
+        onClose={jest.fn()}
+        onAccessJoinedNodes={jest.fn()}
+        accessingNode={false}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Show datasets/i }));
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Failed to load metadata for node',
+        'n1',
+        error
+      );
+    });
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('shows "No datasets available" when dataset array is empty', async () => {
+    getNodeMetadata.mockResolvedValueOnce({ metadata: { dataset: [] } });
+
+    render(
+      <JoinedNodesDisplay
+        isOpen
+        joinedNodes={[simpleNode]}
+        onClose={jest.fn()}
+        onAccessJoinedNodes={jest.fn()}
+        accessingNode={false}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Show datasets/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('No datasets available.')).toBeInTheDocument();
+    });
+  });
+
+  it('shows "No datasets available" when metadata has no dataset property', async () => {
+    getNodeMetadata.mockResolvedValueOnce({ metadata: {} });
+
+    render(
+      <JoinedNodesDisplay
+        isOpen
+        joinedNodes={[simpleNode]}
+        onClose={jest.fn()}
+        onAccessJoinedNodes={jest.fn()}
+        accessingNode={false}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Show datasets/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('No datasets available.')).toBeInTheDocument();
+    });
   });
 });

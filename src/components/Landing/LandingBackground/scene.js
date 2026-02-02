@@ -1,7 +1,9 @@
 import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-const testAria = (label) => process.env.NODE_ENV === "test" ? { "aria-label": label } : {};
+
+// Main background scene, with all 3D elements and animations
+
 const verticalPlusGeometry = new THREE.BoxGeometry(0.15, 0.5, 0.05);
 const horizontalPlusGeometry = new THREE.BoxGeometry(0.5, 0.15, 0.05);
 
@@ -70,10 +72,9 @@ function WavyLine({ baseOffsetY, color, timeOffset }) {
   });
 
   return (
-    <line name="wave-line" {...testAria("wave-line")}>
+    <line name="wave-line">
       <bufferGeometry ref={geometryRef}>
         <bufferAttribute
-          {...testAria("buffer-attribute")}
           attach="attributes-position"
           array={positions}
           count={pointsCount}
@@ -170,7 +171,7 @@ function PlusSign({
   });
 
   return (
-    <group ref={groupRef} name="plus-sign" position={[initialPos[0], initialPos[1], 0]}  {...testAria("plus-sign")}>
+    <group ref={groupRef} name="plus-sign" position={[initialPos[0], initialPos[1], 0]}>
       <mesh geometry={verticalPlusGeometry}>
         <meshStandardMaterial color={color} transparent opacity={1} />
       </mesh>
@@ -230,11 +231,11 @@ export default function Scene() {
 
   return (
     <>
-      <ambientLight intensity={0.4} name="ambient-light" {...testAria("ambient-light")} />
-      <directionalLight position={[0, 10, 10]} intensity={0.7} name="directional-light" {...testAria("directional-light")} />
+      <ambientLight intensity={0.4} name="ambient-light" />
+      <directionalLight position={[0, 10, 10]} intensity={0.7} name="directional-light" />
       <mesh position={[0, 0, -5]} name="bg-mesh">
-        <planeGeometry args={[viewport.width * 2, viewport.height * 2]} {...testAria("plane-geometry")} />
-        <meshBasicMaterial color="#cce6ff" transparent opacity={0.15} {...testAria("mesh-basic-material")} />
+        <planeGeometry args={[viewport.width * 2, viewport.height * 2]} />
+        <meshBasicMaterial color="#cce6ff" transparent opacity={0.15} />
       </mesh>
 
       {STAVES.map((stave) =>

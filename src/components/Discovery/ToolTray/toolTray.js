@@ -4,37 +4,19 @@ import Switch from "react-switch";
 import { toast } from "react-toastify";
 import ToolTrayStyles from "./toolTray.module.css";
 import DataExporter from "../DataExporter/dataExporter";
-import ElementExporter from "../../Integration/ElementExporter/elementExporter";
-import CompareFilesModal from "../../Integration/CompareFilesModal/compareFilesModal";
+import ElementExporter from "../ElementExporter/elementExporter";
+import CompareFilesModal from "../CompareFilesModal/compareFilesModal";
 import { recalculateFeature } from "../../../util/petitionHandler";
 import { updateNodeAxiosBaseURL } from "../../../util/nodeAxiosSetup";
 import { useNode } from "../../../context/nodeContext";
 
-function ToolTray({
-  data,
-  filteredData,
-  setFilteredData,
-  setData,
-  showOutliers,
-  setShowOutliers,
-  isToolTrayOpen,
-  toggleToolTray,
-  selectedEntry,
-  setSelectedEntry,
-  showIndividualView,
-  toggleView,
-  filters,
-  toggleFilters,
-  dataResults = [],
-  activeFileIndices = [],
-  toggleFileActive,
-}) {
+// Sidebar holding all the discovery view controls
+function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, setShowOutliers, isToolTrayOpen, toggleToolTray, selectedEntry, setSelectedEntry, showIndividualView, toggleView, filters, toggleFilters, dataResults = [], activeFileIndices = [], toggleFileActive }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const { selectedNodes } = useNode();
 
-  // Creates a ripple effect on click.
   const createRipple = (e) => {
     const target = e.currentTarget;
     const rect = target.getBoundingClientRect();
@@ -55,7 +37,6 @@ function ToolTray({
     }, 600);
   };
 
-  // Returns all features from the combined data (with fileName).
   const getEntrySet = (dataSet) => {
     if (!dataSet) return [];
     let entries = [];
@@ -89,13 +70,11 @@ function ToolTray({
     return entries;
   };
 
-  // Extract the original feature name from "FeatureName (FileName)".
   const getOriginalFeatureName = (name) => {
     const idx = name.indexOf(" (");
     return idx !== -1 ? name.substring(0, idx) : name;
   };
 
-  // Determine the file name by dissecting the selectedEntry's featureName.
   const lookupFileName = () => {
     console.log("lookupFileName: selectedEntry =", selectedEntry);
     if (!selectedEntry) return undefined;
@@ -131,14 +110,12 @@ function ToolTray({
     return found.fileName;
   };
 
-  // Check if a given feature is currently "checked" in the filtered data.
   const isFeatureChecked = (featureName, featureType) => {
     return filteredData[`${featureType}Features`]?.some(
       (item) => item.featureName === featureName
     );
   };
 
-  // Toggle between feature types.
   const toggleFeatureType = async () => {
     if (!selectedEntry) return;
     setIsLoading(true);
@@ -151,7 +128,6 @@ function ToolTray({
         setIsLoading(false);
         return;
       }
-      // Try to find the node using selectedEntry.nodeId; if not, fallback using dataResults.
       let nodeForFeature = selectedEntry.nodeId
         ? selectedNodes.find((n) => n.nodeId === selectedEntry.nodeId)
         : null;
@@ -171,7 +147,6 @@ function ToolTray({
         setIsLoading(false);
         return;
       }
-      // Update axios base URL for the appropriate node.
       updateNodeAxiosBaseURL(nodeForFeature.serviceUrl);
 
       const normalizedFeatureName = getOriginalFeatureName(selectedEntry.featureName);
@@ -226,7 +201,6 @@ function ToolTray({
       console.log("toggleFeatureType: finalType decided as =>", finalType);
 
       const newData = { ...data };
-      // Remove the original feature from all arrays.
       ["dateFeatures", "categoricalFeatures", "continuousFeatures"].forEach(
         (arrayName) => {
           newData[arrayName] =
@@ -274,7 +248,6 @@ function ToolTray({
     }
   };
 
-  // Group dataResults by nodeId for the multi-file selector.
   const groupedFiles = dataResults.reduce((acc, file) => {
     const key = file.nodeId;
     if (!acc[key]) {
@@ -287,7 +260,6 @@ function ToolTray({
     return acc;
   }, {});
 
-  // Get the unfiltered entry set
   const entrySet = getEntrySet(data);
 
   // Filter entries based on the search term
@@ -295,12 +267,10 @@ function ToolTray({
     entry.featureName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Check if all displayed features are currently toggled on
   const allDisplayedChecked = displayedFeatures.every((entry) =>
     isFeatureChecked(entry.featureName, entry.type)
   );
 
-  // Toggle all displayed features on or off
   const toggleAllDisplayedFeatures = () => {
     setFilteredData((prev) => {
       const newFiltered = { ...prev };
@@ -328,14 +298,8 @@ function ToolTray({
   };
 
   return (
-    <div
-      className={`${ToolTrayStyles.container} ${isToolTrayOpen ? ToolTrayStyles.open : ToolTrayStyles.closed
-        }`}
-    >
-      {/* Toggle arrow */}
-
-
-     <div
+    <div className={`${ToolTrayStyles.container} ${isToolTrayOpen ? ToolTrayStyles.open : ToolTrayStyles.closed}`}>
+      <div
         className={ToolTrayStyles.toggleButton}
         onClick={toggleToolTray}
         role="button"
@@ -345,7 +309,6 @@ function ToolTray({
         {isToolTrayOpen ? <MdChevronLeft /> : <MdChevronRight />}
       </div>
 
-      {/* Selected entry info */}
       <div className={ToolTrayStyles.topSection}>
         {selectedEntry && selectedEntry.featureName ? (
           <>
@@ -365,7 +328,7 @@ function ToolTray({
                   <span className={ToolTrayStyles.entryType}>
                     {(selectedEntry?.type || "").toUpperCase()}
                   </span>
-                  <MdSync className={ToolTrayStyles.iconSpin} aria-hidden="true"/>
+                  <MdSync className={ToolTrayStyles.iconSpin} aria-hidden="true" />
                 </>
               )}
             </button>

@@ -2,13 +2,22 @@ import React, { useRef, useEffect, useState, useCallback } from "react";
 import { useFrame, useLoader } from "@react-three/fiber";
 import { Text } from "@react-three/drei";
 import { DoubleSide, TextureLoader, Color, Shape } from "three";
-import { useSpring, a } from "@react-spring/three";
+import { useSpring, useTransition, a, to } from "@react-spring/three";
 import nodeIcon from "../../../resources/images/node_image.png";
 
+// Helper to get node color with CSS variable fallback
+const getNodeColor = (nodeColor) => {
+  if (nodeColor) return nodeColor;
+  if (typeof document === 'undefined') return '#555555';
+  const cssVar = getComputedStyle(document.documentElement).getPropertyValue('--text-color-muted').trim();
+  return cssVar || '#555555';
+};
+
+// Three.js 'sphere-like' node in the scene
 const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descriptionSize, fontSize }) => {
   const ref = useRef();
   const auraRef = useRef();
-  const rippleRef = useRef();
+  const rippleMeshRef = useRef();
   const descriptionRef = useRef();
   const descriptionBackgroundRef = useRef();
   const texture = useLoader(TextureLoader, nodeIcon);
@@ -16,30 +25,21 @@ const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descr
   const [hovered, setHovered] = useState(false);
   const [descriptionHeight, setDescriptionHeight] = useState(descriptionSize[1]);
   const [rippleActive, setRippleActive] = useState(false);
+  const [rippleKey, setRippleKey] = useState(0);
   const [clickDelayActive, setClickDelayActive] = useState(false);
+
   const mainNameRef = useRef();
   const [nameWidth, setNameWidth] = useState(0);
   const [nameHeight, setNameHeight] = useState(0);
 
   const { opacity: hoverOpacity } = useSpring({
-    opacity:
-      hovered && !isDragging && !globalIsDragging && !clickDelayActive ? 1 : 0,
+    opacity: hovered && !isDragging && !globalIsDragging && !clickDelayActive ? 1 : 0,
     config: { duration: 200 },
   });
 
   const { scale } = useSpring({
-    scale:
-      hovered && !isDragging && !globalIsDragging && !clickDelayActive
-        ? [1, 1, 1]
-        : [0, 1, 1],
+    scale: hovered && !isDragging && !globalIsDragging && !clickDelayActive ? [1, 1, 1] : [0, 1, 1],
     config: { duration: 200 },
-  });
-
-  const { rippleScale, rippleOpacity } = useSpring({
-    rippleScale: rippleActive ? nodeSize * 0.8 : 0,
-    rippleOpacity: rippleActive ? 0 : 1,
-    config: { duration: 400 },
-    onRest: () => setRippleActive(false),
   });
 
   const fadeInProps = useSpring({
@@ -47,19 +47,53 @@ const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descr
     to: { opacity: 1 },
     config: { duration: 250 },
   });
-  const interpolatedOpacity= fadeInProps.opacity.to((o) => o);
+  const interpolatedOpacity = fadeInProps.opacity.to((o) => o);
+
+  const colorSafe = getNodeColor(node.color);
+  const backgroundColor = new Color(colorSafe).multiplyScalar(0.8).getStyle();
+  const margin = 0.1;
+
+  const rippleColor = new Color(colorSafe).multiplyScalar(0.25).getStyle();
+
+  const AURA_BASE_RADIUS = nodeSize * 1.25;
+  const AURA_MIN_PULSE_SCALE = 0.95;
+  const RIPPLE_INSET = 0.98;
+  const RIPPLE_MAX_RADIUS = AURA_BASE_RADIUS * AURA_MIN_PULSE_SCALE * RIPPLE_INSET;
+  const RIPPLE_START_RADIUS = nodeSize * 0.12;
+
+  const getSatisfyingRippleConfig = ({ slowFactor = 1.35 } = {}) => ({
+    mass: 1.15,
+    tension: 260 / slowFactor,
+    friction: 24 * slowFactor,
+    clamp: true,
+  });
+
+  const ripple = useTransition(rippleActive ? [{ id: rippleKey }] : [], {
+    keys: (item) => item.id,
+    from: { s: RIPPLE_START_RADIUS, o: 0.38 },
+    enter: { s: RIPPLE_MAX_RADIUS, o: 0 },
+    leave: { o: 0 },
+    config: getSatisfyingRippleConfig({ slowFactor: 1.35 }),
+    onRest: () => setRippleActive(false),
+  });
+
+  const triggerRipple = () => {
+    setRippleKey((k) => k + 1);
+    setRippleActive(true);
+  };
 
   const updatePosition = useCallback(
     (clock) => {
-      if (ref.current) {
-        const elapsedTime = clock.getElapsedTime();
-        const targetY = node.position.y + Math.sin(elapsedTime) * 0.1;
-        if (!isDragging)
-          ref.current.position.y =
-            ref.current.position.y + (targetY - ref.current.position.y) * 0.1;
-        else ref.current.position.y = node.position.y;
+      if (!ref.current) return;
+      const elapsedTime = clock.getElapsedTime();
+      const targetY = node.position.y + Math.sin(elapsedTime) * 0.1;
+      if (!isDragging) {
+        ref.current.position.y = ref.current.position.y + (targetY - ref.current.position.y) * 0.1;
+      } else {
+        ref.current.position.y = node.position.y;
       }
-    }, [isDragging, node.position.y]
+    },
+    [isDragging, node.position.y]
   );
 
   const updateAuraScale = useCallback((clock) => {
@@ -90,28 +124,32 @@ const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descr
     }, 100);
     return () => clearTimeout(timeoutId);
   }, [node.description, hovered]);
+
   useEffect(() => {
-    const disableRaycast = (refObj) => {
+    const disableRaycastSelf = (r) => {
+      if (r?.current) r.current.raycast = () => null;
+    };
+
+    const disableRaycastTraverse = (refObj) => {
       if (refObj.current) {
         refObj.current.traverse((child) => {
           child.raycast = () => null;
         });
       }
     };
-    disableRaycast(auraRef);
-    disableRaycast(descriptionRef);
-    disableRaycast(descriptionBackgroundRef);
+
+    disableRaycastSelf(rippleMeshRef);
+    disableRaycastTraverse(descriptionRef);
+    disableRaycastTraverse(descriptionBackgroundRef);
   }, []);
 
   const handleDoubleClick = () => {
-    setRippleActive(true);
     onNodeClick(node.nodeId);
   };
 
   const handleSingleClick = () => {
-    if (navigator.maxTouchPoints > 0) {
-      setRippleActive(true);
-    } else {
+    triggerRipple();
+    if (navigator.maxTouchPoints === 0) {
       setClickDelayActive(true);
       setTimeout(() => setClickDelayActive(false), 1200);
     }
@@ -129,12 +167,7 @@ const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descr
       if (bbox) {
         const measuredWidth = bbox.max.x - bbox.min.x;
         const measuredHeight = bbox.max.y - bbox.min.y;
-        if (
-          isFinite(measuredWidth) &&
-          isFinite(measuredHeight) &&
-          measuredWidth > 0 &&
-          measuredHeight > 0
-        ) {
+        if (isFinite(measuredWidth) && isFinite(measuredHeight) && measuredWidth > 0 && measuredHeight > 0) {
           setNameWidth(measuredWidth);
           setNameHeight(measuredHeight);
         }
@@ -142,54 +175,42 @@ const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descr
     }
   };
 
-  const backgroundColor = new Color(node.color).multiplyScalar(0.8).getStyle();
-  const margin = 0.1;
-
   return (
     <a.mesh
       ref={ref}
-      role="img"
-      aria-label={`Node: ${node.name}`}
       position={[node.position.x, node.position.y, 0]}
       onDoubleClick={handleDoubleClick}
       onClick={handleSingleClick}
       onPointerOver={() => !clickDelayActive && setHovered(true)}
       onPointerOut={() => setHovered(false)}
       castShadow
-      {...fadeInProps}
     >
-      <a.mesh
-        ref={auraRef}
-        position={[0, 0, -0.05]}
-        onPointerDown={(e) => e.stopPropagation()}
-      >
-        <circleGeometry args={[nodeSize * 1.25, 32]} />
+      <a.mesh ref={auraRef} position={[0, 0, -0.05]}>
+        <circleGeometry args={[AURA_BASE_RADIUS, 32]} />
         <a.meshBasicMaterial
-          color={node.color}
+          color={colorSafe}
           transparent
           opacity={interpolatedOpacity.to((o) => 0.3 * o)}
           side={DoubleSide}
         />
       </a.mesh>
 
-      {rippleActive && (
+      {ripple((styles) => (
         <a.mesh
-          ref={rippleRef}
-          position={[0, 0, -0.04]}
-          scale={rippleScale.to((s) => [s, s, s])}
-          onPointerDown={(e) => e.stopPropagation()}
-          role="img"
-          aria-hidden="true"
+          ref={rippleMeshRef}
+          position={[0, 0, -0.01]}
+          scale={styles.s.to((r) => [r, r, 1])}
         >
-          <circleGeometry args={[nodeSize * 0.625, 32]} />
+          <circleGeometry args={[1, 64]} />
           <a.meshBasicMaterial
-            color={node.color}
+            color={rippleColor}
             transparent
-            opacity={rippleOpacity.to((ro) => ro * interpolatedOpacity)}
+            opacity={to([styles.o, interpolatedOpacity], (o, io) => o * io)}
             side={DoubleSide}
+            depthWrite={false}
           />
         </a.mesh>
-      )}
+      ))}
 
       <planeGeometry args={[nodeSize, nodeSize]} />
       <a.meshStandardMaterial
@@ -200,18 +221,11 @@ const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descr
         opacity={interpolatedOpacity}
       />
 
-      <a.mesh
-        ref={descriptionBackgroundRef}
-        position={[0, nodeSize * 1.1, 0.04]}
-        scale={scale}
-        {...descriptionVisibility}
-        {...fadeInProps}
-      >
+      <a.mesh ref={descriptionBackgroundRef} position={[0, nodeSize * 1.1, 0.04]} scale={scale}>
         {(() => {
           const width = descriptionSize[0];
           const height = descriptionHeight;
-          if (!isFinite(width) || !isFinite(height) || width <= 0 || height <= 0)
-            return null;
+          if (!isFinite(width) || !isFinite(height) || width <= 0 || height <= 0) return null;
           const borderRadius = Math.min(width, height) * 0.2;
           const shape = new Shape();
           const x = -width / 2;
@@ -230,10 +244,11 @@ const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descr
         <a.meshBasicMaterial color="#1a1a1a" transparent opacity={hoverOpacity} />
       </a.mesh>
 
+      {/* Description text */}
       <a.group
         position={[0, nodeSize * 1.1, 0.05]}
         scale={scale}
-        {...descriptionVisibility}
+        visible={descriptionVisibility.opacity.to((o) => o > 0.02)}
       >
         <Text
           ref={descriptionRef}
@@ -247,10 +262,11 @@ const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descr
           visible={!clickDelayActive}
           opacity={interpolatedOpacity}
         >
-          {node.description}
+          {node.description ?? ""}
         </Text>
       </a.group>
 
+      {/* Name tag */}
       <group position={[0, -nodeSize * 0.7, 0.02]}>
         {nameWidth > 0 && nameHeight > 0 && (
           <mesh position={[0, 0, 0]}>
@@ -273,14 +289,10 @@ const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descr
               shape.quadraticCurveTo(x, y, x + borderRadius, y);
               return <shapeGeometry args={[shape]} />;
             })()}
-            <meshBasicMaterial
-              color={backgroundColor}
-              transparent
-              opacity={0.9}
-              side={DoubleSide}
-            />
+            <meshBasicMaterial color={backgroundColor} transparent opacity={0.9} side={DoubleSide} />
           </mesh>
         )}
+
         <Text
           ref={mainNameRef}
           onSync={handleNameSync}
@@ -294,8 +306,9 @@ const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descr
           letterSpacing={-0.015}
           materialType="MeshStandardMaterial"
         >
-          {node.name}
+          {node.name ?? ""}
         </Text>
+
         <Text
           position={[0.02, -0.02, 0.015]}
           fontSize={fontSize * 0.9}
@@ -307,7 +320,7 @@ const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descr
           letterSpacing={-0.015}
           materialType="MeshStandardMaterial"
         >
-          {node.name}
+          {node.name ?? ""}
         </Text>
       </group>
     </a.mesh>

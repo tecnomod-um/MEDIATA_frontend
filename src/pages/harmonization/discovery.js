@@ -1,37 +1,56 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 import DiscoveryStyles from "./discovery.module.css";
-import FilePicker from "../../components/Common/FilePicker/filePicker";
+import FileExplorer from "../../components/Common/FileExplorer/fileExplorer";
 import StatisticsDisplay from "../../components/Discovery/StatisticsDisplay/statisticsDisplay";
 import ToolTray from "../../components/Discovery/ToolTray/toolTray";
 import AggregateDisplay from "../../components/Discovery/AggregatesDisplay/aggregateDisplay";
 import FilterModal from "../../components/Discovery/FilterModal/filterModal";
 import { ToastContainer, toast } from "react-toastify";
-import { getNodeDatasets, processSelectedDatasets } from "../../util/petitionHandler";
+import { getNodeDatasets, processSelectedDatasets, getProcessSelectedDatasetsStatus, getProcessSelectedDatasetsResult } from "../../util/petitionHandler";
 import { updateNodeAxiosBaseURL } from "../../util/nodeAxiosSetup";
+
 import { useNode } from "../../context/nodeContext";
 
+// Discovery page for data profiling and statistics visualization
 function Discovery() {
   const [dataResults, setDataResults] = useState([]);
   const [activeFileIndices, setActiveFileIndices] = useState([]);
   const [dataStatistics, setDataStatistics] = useState(null);
   const [filteredDataStatistics, setFilteredDataStatistics] = useState(null);
-
   const [showIndividualView, toggleShownView] = useState(true);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [showOutliers, setShowOutliers] = useState(false);
   const [isToolTrayOpen, setIsToolTrayOpen] = useState(true);
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
   const [isFiltersOpen, setIsFiltersopen] = useState(false);
   const [filters, setFilters] = useState([]);
+
   const [hasProcessedMappingState, setHasProcessedMappingState] = useState(false);
   const { selectedNodes } = useNode();
+  // eslint-disable-next-line no-unused-vars
   const [datasets, setDatasets] = useState([]);
   const location = useLocation();
   const toggleToolTray = () => setIsToolTrayOpen(!isToolTrayOpen);
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  const pollDiscoveryJob = useCallback(async (jobId, onProgress) => {
+    while (true) {
+      const status = await getProcessSelectedDatasetsStatus(jobId);
+      if (typeof status?.percent === "number") onProgress(status.percent);
+
+      const state = String(status?.state || "").toUpperCase();
+      if (state === "DONE") {
+        const results = await getProcessSelectedDatasetsResult(jobId);
+        return results || [];
+      }
+      if (state === "ERROR") throw new Error(status.message || "Discovery job failed");
+
+      await sleep(500);
+    }
+  }, []);
 
   useEffect(() => {
     if (location.state?.elementFiles?.length && !hasProcessedMappingState) {
@@ -50,23 +69,35 @@ function Discovery() {
               if (filesForNode.length === 0) return;
               updateNodeAxiosBaseURL(node.serviceUrl);
               const result = await processSelectedDatasets(filesForNode);
-              if (Array.isArray(result)) {
+
+              if (result.mode === "sync") {
+                const arr = result.results || [];
                 allResults = allResults.concat(
-                  result.map((r) => ({
+                  arr.map((r) => ({
                     ...r,
                     fileName: r.fileName || "Unknown File",
                     nodeId: node.nodeId,
                     nodeName: node.name,
                   }))
                 );
-              } else {
-                allResults.push({
-                  ...result,
-                  fileName: result.fileName || "Unknown File",
-                  nodeId: node.nodeId,
-                  nodeName: node.name,
-                });
+                return;
               }
+
+              if (result.mode === "async") {
+                const arr = await pollDiscoveryJob(result.jobId, () => { });
+                allResults = allResults.concat(
+                  arr.map((r) => ({
+                    ...r,
+                    fileName: r.fileName || "Unknown File",
+                    nodeId: node.nodeId,
+                    nodeName: node.name,
+                  }))
+                );
+                return;
+              }
+
+              throw new Error("Unexpected response from processList");
+
             })
           );
           if (allResults.length === 0) {
@@ -81,7 +112,7 @@ function Discovery() {
       })();
       setHasProcessedMappingState(true);
     }
-  }, [location.state, selectedNodes, dataResults.length, hasProcessedMappingState]);
+  }, [location.state, selectedNodes, dataResults.length, hasProcessedMappingState, pollDiscoveryJob]);
 
   const combineSelectedData = (dataResultsArray, activeIndices) => {
     const combined = {
@@ -96,7 +127,7 @@ function Discovery() {
     };
 
     dataResultsArray.forEach((res, idx) => {
-      if (!activeIndices[idx]) return; // skip non-active files
+      if (!activeIndices[idx]) return;
       const fileLabel = res.fileName || `File #${idx + 1}`;
 
       res.continuousFeatures?.forEach((item) => {
@@ -179,47 +210,6 @@ function Discovery() {
     });
   };
 
-  const handleProcessSelectedDatasets = async (selectedFilenamesMapping) => {
-    setIsProcessing(true);
-
-    try {
-      const allResults = [];
-      if (selectedNodes && selectedNodes.length > 0) {
-        await Promise.all(
-          selectedNodes.map(async (node) => {
-            const filesForNode = selectedFilenamesMapping[node.nodeId] || [];
-            if (filesForNode.length === 0) return;
-
-            updateNodeAxiosBaseURL(node.serviceUrl);
-            const result = await processSelectedDatasets(filesForNode);
-            if (Array.isArray(result)) {
-              allResults.push(
-                ...result.map((r) => ({
-                  ...r,
-                  fileName: r.fileName || "Unknown File",
-                  nodeId: node.nodeId,
-                  nodeName: node.name,
-                }))
-              );
-            } else {
-              allResults.push({
-                ...result,
-                fileName: result.fileName || "Unknown File",
-                nodeId: node.nodeId,
-              });
-            }
-          })
-        );
-      }
-      setDataResults(allResults);
-      const toggles = allResults.map((_, idx) => idx === 0);
-      setActiveFileIndices(toggles);
-      setIsProcessing(false);
-    } catch (error) {
-      setIsProcessing(false);
-    }
-  };
-
   useEffect(() => {
     if (selectedNodes && selectedNodes.length > 0) {
       const fetchDatasets = async () => {
@@ -263,7 +253,11 @@ function Discovery() {
     });
   }
 
-  console.log(dataStatistics)
+  const handleFilesOpened = (allResults) => {
+    setDataResults(allResults);
+    setActiveFileIndices(allResults.map((_, idx) => idx === 0));
+  };
+
   return (
     <div className={DiscoveryStyles.dropContainer}>
       <FilterModal
@@ -280,13 +274,13 @@ function Discovery() {
         setDataStatistics={setDataStatistics}
       />
       {!filteredDataStatistics && (
-        <FilePicker
-          files={datasets}
-          onFilesSelected={handleProcessSelectedDatasets}
-          isProcessing={isProcessing}
-          modalTitle="Select dataset files to process"
+        <FileExplorer
+          nodes={selectedNodes}
+          category="DATASETS"
+          isOpen={true}
           preSelectedFiles={preSelected}
           autoProcess={!!location.state?.elementFiles?.length}
+          onFilesOpened={handleFilesOpened}
         />
       )}
       <CSSTransition

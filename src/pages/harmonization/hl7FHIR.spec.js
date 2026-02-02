@@ -55,15 +55,85 @@ describe('<HL7FHIR />', () => {
       pickerProps.onFileUpload(new File(['dummy'], 'format.csv'));
     });
 
-    await waitFor(() => expect(screen.getByTestId('list')).toBeInTheDocument());
+    await screen.findByTestId('list');
     expect(listProps.elements).toHaveLength(1);
     await act(async () => {
       screen.getByTestId('create-btn').click();
     });
 
     expect(mockCreateInitial).toHaveBeenCalledTimes(1);
-    await waitFor(() => expect(screen.getByTestId('cluster-list')).toBeInTheDocument());
+    await screen.findByTestId('cluster-list');
     expect(clusterProps.clusters).toHaveLength(1);
     expect(clusterProps.clusters[0].name).toBe('Cluster 1');
   });
+
+  it('parses CSV with integer type correctly', async () => {
+    render(<HL7FHIR />);
+    await act(async () => {
+      pickerProps.onFileUpload(new File(['dummy'], 'test.csv'));
+    });
+    await waitFor(() => {
+      expect(listProps.elements[0].type).toBe('integer');
+    });
+  });
+
+  it('selects first element after CSV upload', async () => {
+    render(<HL7FHIR />);
+    await act(async () => {
+      pickerProps.onFileUpload(new File(['dummy'], 'test.csv'));
+    });
+    await waitFor(() => {
+      expect(listProps.selectedElement).toBeDefined();
+    });
+    await waitFor(() => {
+      expect(listProps.selectedElement.id).toBe(0);
+    });
+  });
+
+  it('handles drag start and end', async () => {
+    render(<HL7FHIR />);
+    await act(async () => {
+      pickerProps.onFileUpload(new File(['dummy'], 'test.csv'));
+    });
+    await waitFor(() => {
+      expect(listProps.onDragStart).toBeDefined();
+    });
+
+    await waitFor(() => {
+      expect(listProps.onDragEnd).toBeDefined();
+    });
+
+    act(() => {
+      listProps.onDragStart();
+    });
+
+    act(() => {
+      listProps.onDragEnd();
+    });
+  });
+
+  it('handles cluster creation error', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => { });
+    mockCreateInitial.mockRejectedValueOnce(new Error('API Error'));
+
+    render(<HL7FHIR />);
+    await act(async () => {
+      pickerProps.onFileUpload(new File(['dummy'], 'test.csv'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('create-btn')).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      screen.getByTestId('create-btn').click();
+    });
+
+    await waitFor(() => {
+      expect(consoleError).toHaveBeenCalledWith(expect.any(String), expect.any(Error));
+    });
+
+    consoleError.mockRestore();
+  });
+
 });

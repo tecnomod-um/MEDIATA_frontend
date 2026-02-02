@@ -102,7 +102,7 @@ describe('<DataExporter />', () => {
 
   it('renders a button and downloads two CSVs on click', () => {
     render(<DataExporter data={sampleData} filteredData={[]} />);
-    const btn = screen.getByRole('button', { name: /export data/i });
+    const btn = screen.getByRole('button', { name: /export statistics data to csv files/i });
 
     fireEvent.click(btn);
     expect(mockJsonToCSV).toHaveBeenCalledTimes(2);

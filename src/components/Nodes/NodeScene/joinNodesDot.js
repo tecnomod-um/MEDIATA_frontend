@@ -4,12 +4,8 @@ import { Text } from "@react-three/drei";
 import { a, useSpring, to } from "@react-spring/three";
 import * as THREE from "three";
 
-const JoinNodesDot = ({
-  position,
-  nodesInGroup,
-  globalOpacity,
-  onJoinNodesDoubleClick
-}) => {
+// Control for joined nodes
+const JoinNodesDot = ({ position, nodesInGroup, globalOpacity, onJoinNodesDoubleClick }) => {
   const ringRef = useRef();
   const [hovered, setHovered] = useState(false);
   const [clicked, setClicked] = useState(false);
@@ -34,7 +30,6 @@ const JoinNodesDot = ({
     }
   });
 
-  // Memoize pointer event handlers
   const handlePointerOver = useCallback((e) => {
     e.stopPropagation();
     setHovered(true);

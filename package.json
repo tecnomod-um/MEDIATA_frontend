@@ -17,7 +17,7 @@
     "canvas": "^2.11.2",
     "chart.js": "^4.4.1",
     "chartjs-adapter-moment": "^1.0.1",
-    "chroma-js": "^2.1.0",
+    "chroma-js": "1.4.1",
     "css-loader": "^7.1.2",
     "css-select": "^5.1.0",
     "distinct-colors": "^3.0.0",
@@ -52,8 +52,10 @@
     "css-select": "^5.1.0",
     "postcss": "^8.4.47",
     "resolve-url-loader": "^5.0.0",
-    "webpack-dev-server": "^5.2.0",
-    "nth-check": "^2.0.1"
+    "webpack-dev-server": "^5.2.1",
+    "nth-check": "^2.0.1",
+    "chroma-js": "1.4.1",
+    "node-forge": "^1.3.2"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -67,13 +69,30 @@
       "src/**/*.{js,jsx,ts,tsx}",
       "!src/components/Unused/**"
     ],
-    "coverageReporters": ["text", "lcov", "json-summary"]
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "json-summary"
+    ],
+    "transformIgnorePatterns": [
+      "node_modules/(?!(axios)/)"
+    ],
+    "moduleNameMapper": {
+      "\\.(css|less|scss|sass)$": "identity-obj-proxy"
+    }
   },
   "eslintConfig": {
-    "extends": ["react-app", "react-app/jest"]
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
   },
   "browserslist": {
-    "production": [">0.2%", "not dead", "not op_mini all"],
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
     "development": [
       "last 1 chrome version",
       "last 1 firefox version",
@@ -85,6 +104,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@types/node": "^22.7.4",
+    "baseline-browser-mapping": "^2.9.7",
     "eslint": "^8.57.1",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.31.0",

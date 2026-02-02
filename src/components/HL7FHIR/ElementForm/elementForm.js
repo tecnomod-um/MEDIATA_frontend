@@ -1,22 +1,17 @@
 import React from 'react';
-import styles from './elementForm.module.css';
+import ElementFormStyles from './elementForm.module.css';
 
-export default function ElementForm({
-  element,
-  formValues,
-  onChange,
-  onCreateClusters,
-  allDescribed
-}) {
+// Form component for editing FHIR element properties
+export default function ElementForm({ element, formValues, onChange, onCreateClusters, allDescribed }) {
   if (!element) return null;
 
   return (
-    <div className={styles.detailPanel}>
-      <div className={styles.headerRow}>
-        <h2 className={styles.detailTitle}>{element.label}</h2>
+    <div className={ElementFormStyles.detailPanel}>
+      <div className={ElementFormStyles.headerRow}>
+        <h2 className={ElementFormStyles.detailTitle}>{element.label}</h2>
         {allDescribed && (
           <button
-            className={styles.buildClassBtn}
+            className={ElementFormStyles.buildClassBtn}
             onClick={onCreateClusters}
           >
             Create Clusters
@@ -24,29 +19,29 @@ export default function ElementForm({
         )}
       </div>
 
-      <div className={styles.formBody}>
-        <div className={styles.formField}>
+      <div className={ElementFormStyles.formBody}>
+        <div className={ElementFormStyles.formField}>
           <label>Name:</label>
           <input type="text" value={element.label} disabled />
         </div>
-        <div className={styles.formField}>
+        <div className={ElementFormStyles.formField}>
           <label>Description:</label>
           <textarea
             value={formValues.description}
             onChange={e => onChange('description', e.target.value)}
           />
         </div>
-        <div className={styles.formField}>
+        <div className={ElementFormStyles.formField}>
           <label>Possible Values:</label>
           <textarea
             value={formValues.possibleValues}
             onChange={e => onChange('possibleValues', e.target.value)}
           />
         </div>
-        <div className={styles.formField}>
+        <div className={ElementFormStyles.formField}>
           <label>Value Type:</label>
           <select
-            className={styles.typeSelect}
+            className={ElementFormStyles.typeSelect}
             value={formValues.valueType}
             onChange={e => onChange('valueType', e.target.value)}
           >

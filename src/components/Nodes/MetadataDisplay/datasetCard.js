@@ -29,6 +29,7 @@ function renderField(label, value) {
   );
 }
 
+// Card displaying dataset metadata information
 const DatasetCard = ({ dataset }) => {
   const {
     title,
@@ -47,7 +48,6 @@ const DatasetCard = ({ dataset }) => {
     language,
   } = dataset;
 
-  // Known DCAT fields
   const knownFields = [
     "title",
     "description",
@@ -65,7 +65,6 @@ const DatasetCard = ({ dataset }) => {
     "language",
   ];
 
-  // Everything else goes in "Additional Fields."
   const extraFields = Object.entries(dataset).filter(
     ([key]) => !knownFields.includes(key)
   );
@@ -137,7 +136,6 @@ const DatasetCard = ({ dataset }) => {
         <strong>Distributions:</strong> {renderDistributions(distribution)}
       </div>
 
-      {/* Additional unknown fields */}
       {extraFields.length > 0 && (
         <>
           <h6>Additional Fields:</h6>

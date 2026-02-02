@@ -6,18 +6,18 @@ import { IoMdClose } from 'react-icons/io';
 import { FaFileCsv, FaFileExcel, FaFileAlt, FaBroom } from 'react-icons/fa';
 import ArrowBackwardsIcon from '@mui/icons-material/ArrowBack';
 import { toast } from 'react-toastify';
-import OverlayWrapper from '../../Unused/OverlayWrapper/overlayWrapper';
+import OverlayWrapper from '../../Common/OverlayWrapper/overlayWrapper';
 import FileMapperModalStyles from './fileMapperModal.module.css';
 import { updateNodeAxiosBaseURL } from '../../../util/nodeAxiosSetup';
 import { getNodeDatasets } from '../../../util/petitionHandler';
 import { dateFormats } from '../../../util/dateFormat';
 
+// Displays datasets in backend nodes for user to select which to apply mappings to
 const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = [], onSend, }) => {
   const navigate = useNavigate();
   const popoverRef = useRef(null);
   const cleanButtonRef = useRef(null);
 
-  // Data & datasets
   const [datasetFiles, setDatasetFiles] = useState({});
   const [selectedDatasets, setSelectedDatasets] = useState({});
 
@@ -37,9 +37,27 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
   const [pointerLeft, setPointerLeft] = useState('20%');
   const [isSending, setIsSending] = useState(false);
 
-  const changesApplied = removeDuplicates || removeEmptyRows || standardizeDates;
+  // Numeric cleaning
+  const [standardizeNumeric, setStandardizeNumeric] = useState(false);
+  const [selectedNumericColumns, setSelectedNumericColumns] = useState([]);
+  const [numericMode, setNumericMode] = useState("");
 
-  // Build map of nodeId → nodeName
+  const [draftStandardizeNumeric, setDraftStandardizeNumeric] = useState(false);
+  const [draftSelectedNumericColumns, setDraftSelectedNumericColumns] = useState([]);
+  const [draftNumericMode, setDraftNumericMode] = useState("");
+
+  const changesApplied =
+    removeDuplicates ||
+    removeEmptyRows ||
+    standardizeDates ||
+    standardizeNumeric;
+
+  const numericColumns = React.useMemo(() => {
+    return columnsData.filter((c) =>
+      c.values.includes("integer") || c.values.includes("double")
+    );
+  }, [columnsData]);
+
   const nodeMap = nodes.reduce((acc, { nodeId, name }) => {
     acc[nodeId] = name;
     return acc;
@@ -100,8 +118,12 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
       setDraftRemoveEmptyRows(removeEmptyRows);
       setDraftStandarizeDates(standardizeDates);
       setDraftSelectedDateFormat(selectedDateFormat);
+
+      setDraftStandardizeNumeric(standardizeNumeric);
+      setDraftSelectedNumericColumns(selectedNumericColumns);
+      setDraftNumericMode(numericMode);
     }
-  }, [showCleanMenu, removeDuplicates, removeEmptyRows, standardizeDates, selectedDateFormat,]);
+  }, [showCleanMenu, removeDuplicates, removeEmptyRows, standardizeDates, selectedDateFormat, standardizeNumeric, selectedNumericColumns, numericMode]);
 
   // Position clean-popover arrow
   useEffect(() => {
@@ -136,7 +158,7 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
 
   const getFileColor = (fileName) => {
     const col = columnsData.find((c) => c.fileName === fileName);
-    return col ? col.color : '#ccc';
+    return col ? col.color : 'var(--background-color-3)';
   };
 
   const toggleDataset = (file, ds) =>
@@ -149,23 +171,38 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
     });
 
   const applyOrRemoveCleaning = () => {
-    if (!changesApplied) {
+    if (!changesApplied && !standardizeNumeric) {
+      // apply
       setRemoveDuplicates(draftRemoveDuplicates);
       setRemoveEmptyRows(draftRemoveEmptyRows);
       setStandardizeDates(draftStandardizeDates);
       setSelectedDateFormat(draftSelectedDateFormat);
+
+      setStandardizeNumeric(draftStandardizeNumeric);
+      setSelectedNumericColumns(draftSelectedNumericColumns);
+      setNumericMode(draftNumericMode);
     } else {
-      // reset all
+      // reset
       setRemoveDuplicates(false);
       setRemoveEmptyRows(false);
       setStandardizeDates(false);
-      setSelectedDateFormat('YYYY-MM-DD');
+      setSelectedDateFormat("YYYY-MM-DD");
+
+      setStandardizeNumeric(false);
+      setSelectedNumericColumns([]);
+      setNumericMode("");
+
       setDraftRemoveDuplicates(false);
       setDraftRemoveEmptyRows(false);
       setDraftStandarizeDates(false);
-      setDraftSelectedDateFormat('YYYY-MM-DD');
+      setDraftSelectedDateFormat("YYYY-MM-DD");
+
+      setDraftStandardizeNumeric(false);
+      setDraftSelectedNumericColumns([]);
+      setDraftNumericMode("");
     }
   };
+
 
   const doSend = async (followUpNavigation) => {
     setIsSending(true);
@@ -175,6 +212,10 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
         removeEmptyRows,
         standardizeDates,
         dateOutputFormat: selectedDateFormat,
+
+        standardizeNumeric,
+        numericColumns: selectedNumericColumns,
+        numericMode,
       };
       await onSend(selectedDatasets, mappings, cleanOpts);
 
@@ -232,9 +273,14 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                   className={FileMapperModalStyles.mappingItem}
                   style={{ borderTop: `6px solid ${color}` }}
                 >
-                  <h4>
-                    {fileName}{' '}
-                    <span style={{ fontSize: '0.8em', color: '#666' }}>
+                  <h4
+                    title={`${fileName} (Node: ${nodeName})`}
+                    aria-label={`${fileName} (Node: ${nodeName})`}
+                  >
+                    <span className={FileMapperModalStyles.fileTitle}>
+                      {fileName}
+                    </span>
+                    <span className={FileMapperModalStyles.nodeSubtitle}>
                       (Node: {nodeName})
                     </span>
                   </h4>
@@ -268,7 +314,6 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
             })
           )}
         </section>
-
         <footer className={FileMapperModalStyles.modalFooter}>
           <div className={FileMapperModalStyles.buttonsContainer}>
             <button
@@ -282,7 +327,6 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
             >
               <ArrowBackwardsIcon sx={{ fontSize: 16 }} />
             </button>
-
             <button
               className={FileMapperModalStyles.sendButton}
               onClick={() => doSend(false)}
@@ -297,7 +341,7 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                 'Apply'
               )}
             </button>
-
+          {/*
             <button
               ref={cleanButtonRef}
               className={FileMapperModalStyles.cleanButton}
@@ -314,7 +358,7 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                 Data cleaning
               </span>
             </button>
-
+  */}
             <CSSTransition
               in={showCleanMenu}
               timeout={350}
@@ -343,9 +387,7 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                   <label>
                     <Switch
                       checked={draftRemoveDuplicates}
-                      onChange={() =>
-                        setDraftRemoveDuplicates((v) => !v)
-                      }
+                      onChange={(checked) => setDraftRemoveDuplicates(checked)}
                       height={20}
                       width={40}
                       handleDiameter={16}
@@ -357,9 +399,7 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                   <label>
                     <Switch
                       checked={draftRemoveEmptyRows}
-                      onChange={() =>
-                        setDraftRemoveEmptyRows((v) => !v)
-                      }
+                      onChange={(checked) => setDraftRemoveEmptyRows(checked)}
                       height={20}
                       width={40}
                       handleDiameter={16}
@@ -372,9 +412,7 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                   <label>
                     <Switch
                       checked={draftStandardizeDates}
-                      onChange={() =>
-                        setDraftStandarizeDates((v) => !v)
-                      }
+                      onChange={(checked) => setDraftStandarizeDates(checked)}
                       height={20}
                       width={40}
                       handleDiameter={16}
@@ -397,6 +435,75 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                         ))}
                       </select>) : ('Standardize Dates')}
                   </label>
+                  <div className={FileMapperModalStyles.cleanRow}>
+                    <Switch
+                      checked={draftStandardizeNumeric}
+                      onChange={(checked) => setDraftStandardizeNumeric(checked)}
+                      height={20}
+                      width={40}
+                      handleDiameter={16}
+                      offColor="#888"
+                      onColor="#9ABDDC"
+                    />
+
+                    {!draftStandardizeNumeric && (
+                      <span>Standardize Numeric Fields</span>
+                    )}
+
+                    {draftStandardizeNumeric && (
+                      <div className={FileMapperModalStyles.numericBlock}>
+                        <div className={FileMapperModalStyles.numericList}>
+                          {numericColumns.map((col) => {
+                            const id = `${col.fileName}:::${col.column}`;
+                            const selected = draftSelectedNumericColumns.includes(id);
+                            return (
+                              <div
+                                key={id}
+                                className={`${FileMapperModalStyles.numericItem} ${selected ? FileMapperModalStyles.numericItemSelected : ""
+                                  }`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDraftSelectedNumericColumns((prev) =>
+                                    prev.includes(id)
+                                      ? prev.filter((x) => x !== id)
+                                      : [...prev, id]
+                                  );
+                                }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selected}
+                                  onChange={(e) => {
+                                    e.stopPropagation();
+                                    setDraftSelectedNumericColumns((prev) =>
+                                      prev.includes(id)
+                                        ? prev.filter((x) => x !== id)
+                                        : [...prev, id]
+                                    );
+                                  }}
+                                />
+                                <span title={`${col.column} (${col.fileName})`}>{col.column}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        <select
+                          className={FileMapperModalStyles.formatDropdown}
+                          value={draftNumericMode}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            setDraftNumericMode(e.target.value);
+                          }}
+                        >
+                          <option value="double">Convert to double</option>
+                          <option value="int_round">Convert to integer (round)</option>
+                          <option value="int_trunc">Convert to integer (truncate)</option>
+                        </select>
+
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '8px', }} >
                   <button className={`${FileMapperModalStyles.cleanMenuButton} ${changesApplied ? FileMapperModalStyles.remove : FileMapperModalStyles.apply}`}

@@ -53,20 +53,52 @@ afterAll(() => {
   consoleErrorSpy?.mockRestore();
 });
 
+const applyAriaLabels = () => {
+  // eslint-disable-next-line testing-library/no-node-access
+  document.querySelectorAll('[name]').forEach((el) => {
+    const name = el.getAttribute('name');
+    if (name && !el.getAttribute('aria-label')) {
+      el.setAttribute('aria-label', name);
+    }
+  });
+
+  // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+  document.querySelectorAll('ambientlight').forEach((el) => {
+    if (!el.getAttribute('aria-label')) el.setAttribute('aria-label', 'ambient-light');
+  });
+  // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+  document.querySelectorAll('directionallight').forEach((el) => {
+    if (!el.getAttribute('aria-label')) el.setAttribute('aria-label', 'directional-light');
+  });
+  // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+  document.querySelectorAll('planegeometry').forEach((el) => {
+    if (!el.getAttribute('aria-label')) el.setAttribute('aria-label', 'plane-geometry');
+  });
+  // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+  document.querySelectorAll('meshbasicmaterial').forEach((el) => {
+    if (!el.getAttribute('aria-label')) el.setAttribute('aria-label', 'mesh-basic-material');
+  });
+  // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+  document.querySelectorAll('bufferattribute').forEach((el) => {
+    if (!el.getAttribute('aria-label')) el.setAttribute('aria-label', 'buffer-attribute');
+  });
+};
+
 describe('<Scene /> rendering behavior', () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => { jest.runOnlyPendingTimers(); jest.useRealTimers(); });
 
   it('renders 15 wavy lines and eventually spawns plus-signs', () => {
     render(<Scene />);
+    applyAriaLabels();
     expect(screen.getAllByLabelText(/wave-line/i)).toHaveLength(15);
 
     act(() => {
       jest.advanceTimersByTime(1000);
       r3f.__advanceByTime(1000);
     });
-
-    expect(screen.getAllByLabelText(/plus-sign/i)).toHaveLength(1);
+    applyAriaLabels();
+    expect(screen.getAllByLabelText(/^plus-sign$/i)).toHaveLength(1);
   });
 
   it('registers and handles mousedown events without throwing', () => {
@@ -78,6 +110,8 @@ describe('<Scene /> rendering behavior', () => {
 
   it('renders lights and background plane', () => {
     render(<Scene />);
+    applyAriaLabels();
+
     expect(screen.getAllByLabelText(/ambient-light/i)).toHaveLength(1);
     expect(screen.getAllByLabelText(/directional-light/i)).toHaveLength(1);
     expect(screen.getAllByLabelText(/plane-geometry/i)).toHaveLength(1);
@@ -86,6 +120,8 @@ describe('<Scene /> rendering behavior', () => {
 
   it('creates one <bufferAttribute> per wavy line (15 total)', () => {
     render(<Scene />);
+    applyAriaLabels();
+
     expect(screen.getAllByLabelText(/buffer-attribute/i)).toHaveLength(15);
   });
 });

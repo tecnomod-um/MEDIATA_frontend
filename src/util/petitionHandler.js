@@ -1,7 +1,18 @@
 import axiosInstance from "./axiosSetup";
 import nodeAxiosInstance, { updateNodeAxiosBaseURL } from "./nodeAxiosSetup";
+// API request handlers for all backend and node petitions
 
 /* System petitions */
+// Fetch the list of projects
+export const getProjectList = async () => {
+  try {
+    const response = await axiosInstance.get(`/api/projects/list`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Fetch the list of nodes
 export const getNodeList = async () => {
   try {
@@ -349,17 +360,33 @@ export const getNodeDatasets = async () => {
 };
 
 export const processSelectedDatasets = async (fileNames) => {
-  try {
-    const response = await nodeAxiosInstance.post(
-      `/taniwha/api/data/processList`,
-      { fileNames }
-    );
-    return response.data;
-  } catch (error) {
-    console.error("Error processing selected datasets:", error);
-    throw error;
+  const response = await nodeAxiosInstance.post(
+    `/taniwha/api/data/processList`,
+    { fileNames }
+  );
+
+  // If backend decided it's huge -> 202 with {jobId, progress:true}
+  if (response.status === 202 || response.data?.jobId) {
+    return { mode: "async", ...response.data };
   }
+
+  // Normal -> 200 with List<AnalyticsResponseDTO>
+  return { mode: "sync", results: response.data };
 };
+
+export const getProcessSelectedDatasetsStatus = async (jobId) => {
+  const response = await nodeAxiosInstance.get(
+    `/taniwha/api/data/processList/status/${encodeURIComponent(jobId)}`
+  );
+  return response.data;
+};
+
+export async function getProcessSelectedDatasetsResult(jobId) {
+  const response = await nodeAxiosInstance.get(
+    `/taniwha/api/data/processList/result/${jobId}`
+  );
+  return response.data;
+}
 
 export const getNodeMappedDatasets = async () => {
   try {
@@ -416,4 +443,52 @@ export const fetchElementFile = async (fileName) => {
     console.error(`Error fetching element file: ${fileName}`, error);
     throw error;
   }
+};
+
+// explorer
+export const listExplorerFiles = async (category) => {
+  try {
+    const response = await nodeAxiosInstance.get(`/taniwha/api/files`, {
+      params: { category },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error listing explorer files:", error);
+    throw error;
+  }
+};
+
+export const renameExplorerFile = async (category, from, to) => {
+  try {
+    const response = await nodeAxiosInstance.post(
+      `/taniwha/api/files/rename`,
+      null,
+      { params: { category, from, to } }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error renaming explorer file:", error);
+    throw error;
+  }
+};
+
+export const deleteExplorerFile = async (category, name) => {
+  try {
+    const response = await nodeAxiosInstance.delete(`/taniwha/api/files`, {
+      params: { category, name },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting explorer file:", error);
+    throw error;
+  }
+};
+
+export const cleanExplorerFile = async (category, name, cleaningOptions) => {
+  const response = await nodeAxiosInstance.post(
+    `/taniwha/api/files/clean`,
+    cleaningOptions ?? null,
+    { params: { category, name } }
+  );
+  return response.data;
 };

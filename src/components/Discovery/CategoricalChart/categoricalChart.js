@@ -7,40 +7,64 @@ import { Chart as ChartJS, registerables } from "chart.js";
 
 ChartJS.register(...registerables);
 
+const TOP_N_OVERVIEW = 8;
+const TOP_N_FULL = 80;
+
+// Helper to get CSS variable value with fallback
+const getCSSVariable = (varName, fallback = '') => {
+  if (typeof document === 'undefined') return fallback;
+  const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  return value || fallback;
+};
+
+// Display for the categorical features' histogram
 const CategoricalChart = React.memo(
   ({ feature, onClick, onDoubleClick, isSelected, inOverview }) => {
     const chartRef = useRef(null);
     const stats = useMemo(() => feature.categoryCounts || {}, [feature.categoryCounts]);
 
-    const labels = useMemo(() =>
-      Object.keys(stats).filter((k) => k !== "MissingValues"),
-      [stats]
-    );
+    const { finalLabels, finalDataValues, finalColors, omittedCount, omittedTotal } = useMemo(() => {
+      const entries = Object.entries(stats)
+        .filter(([k]) => k !== "MissingValues")
+        .map(([k, v]) => [k, Number(v || 0)]);
 
-    const colors = useMemo(() => generateColorList(stats), [stats]);
+      entries.sort((a, b) => b[1] - a[1]);
 
-    const dataValues = useMemo(() =>
-      labels.map((label) => stats[label]),
-      [labels, stats]
-    );
+      const topN = inOverview ? TOP_N_OVERVIEW : TOP_N_FULL;
+      const top = entries.slice(0, topN);
+      const rest = entries.slice(topN);
 
-    const finalLabels = useMemo(() => {
-      if (feature.missingValuesCount > 0)
-        return [...labels, "No data"];
-      return labels;
-    }, [labels, feature.missingValuesCount]);
+      const otherSum = rest.reduce((s, [, v]) => s + v, 0);
+      const omitted = rest.length;
 
-    const finalDataValues = useMemo(() => {
-      if (feature.missingValuesCount > 0)
-        return [...dataValues, feature.missingValuesCount];
-      return dataValues;
-    }, [dataValues, feature.missingValuesCount]);
+      const colorMap = new Map();
+      const baseColors = generateColorList(stats);
+      Object.keys(stats).forEach((k, i) => colorMap.set(k, baseColors[i]));
 
-    const finalColors = useMemo(() => {
-      if (feature.missingValuesCount > 0)
-        return [...colors, "#D3D3D3"];
-      return colors;
-    }, [colors, feature.missingValuesCount]);
+      const labels = top.map(([k]) => k);
+      const values = top.map(([, v]) => v);
+      const colorsLocal = top.map(([k]) => colorMap.get(k)).filter(Boolean);
+
+      if (otherSum > 0) {
+        labels.push("Other");
+        values.push(otherSum);
+        colorsLocal.push(getCSSVariable('--text-color-muted', '#999999'));
+      }
+
+      if (feature.missingValuesCount > 0) {
+        labels.push("No data");
+        values.push(feature.missingValuesCount);
+        colorsLocal.push(getCSSVariable('--background-color-3', '#D3D3D3'));
+      }
+
+      return {
+        finalLabels: labels,
+        finalDataValues: values,
+        finalColors: colorsLocal,
+        omittedCount: omitted,
+        omittedTotal: otherSum,
+      };
+    }, [stats, feature.missingValuesCount, inOverview]);
 
     const chartData = useMemo(
       () => ({
@@ -65,14 +89,28 @@ const CategoricalChart = React.memo(
         indexAxis: "y",
         plugins: {
           legend: { display: false },
-          title: { display: true, text: feature.featureName },
+          title: {
+            display: true,
+            text:
+              omittedCount > 0
+                ? `${feature.featureName} (${omittedCount} categories grouped)`
+                : feature.featureName,
+          },
+          tooltip: {
+            callbacks: {
+              footer: () =>
+                omittedCount > 0
+                  ? `Grouped into "Other": ${omittedCount} categories (total ${omittedTotal})`
+                  : "",
+            },
+          },
         },
         scales: {
           x: { beginAtZero: true },
           y: { ticks: { autoSkip: false } },
         },
       }),
-      [feature.featureName, inOverview]
+      [feature.featureName, inOverview, omittedCount, omittedTotal]
     );
 
     useEffect(() => {
@@ -106,7 +144,7 @@ const CategoricalChart = React.memo(
         tabIndex={0}
         aria-label={`Chart for ${feature.featureName}`}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
+          if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             onClick && onClick(e);
           }
@@ -116,6 +154,6 @@ const CategoricalChart = React.memo(
       </div>
     );
   }
-);
+)
 
 export default CategoricalChart;

@@ -1,13 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import AggregateDisplayStyles from "./aggregateDisplay.module.css";
 
-const AggregateDisplay = ({
-  covariances = {},
-  pearsonCorrelations = {},
-  spearmanCorrelations = {},
-  chiSquareTest = [],
-  omittedFeatures = [],
-}) => {
+// Display for all aggregate statistics
+const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearmanCorrelations = {}, chiSquareTest = [], omittedFeatures = [] }) => {
+
   const [activeTab, setActiveTab] = useState("covariance");
   const [topHeight, setTopHeight] = useState(300);
 
@@ -42,13 +38,15 @@ const AggregateDisplay = ({
 
   useEffect(() => {
     const updateSelectWidth = () => {
-      if (matrixRef.current && selectRef.current) {
-        const firstHeaderCell = matrixRef.current.querySelector("th");
-        if (firstHeaderCell) {
-          selectRef.current.style.width = `${firstHeaderCell.offsetWidth}px`;
-        }
-      }
+      if (!matrixRef.current || !selectRef.current) return;
+    
+      const firstHeaderCell = matrixRef.current.querySelector("th");
+      if (!firstHeaderCell) return;
+      const rect = firstHeaderCell.getBoundingClientRect();
+      selectRef.current.style.width = `${Math.ceil(rect.width)}px`;
+      selectRef.current.style.height = `${Math.ceil(rect.height)}px`;
     };
+    
     updateSelectWidth();
     window.addEventListener("resize", updateSelectWidth);
     return () => window.removeEventListener("resize", updateSelectWidth);
@@ -213,6 +211,6 @@ const AggregateDisplay = ({
       </div>
     </div>
   );
-};
+}
 
 export default AggregateDisplay;

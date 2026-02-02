@@ -7,11 +7,12 @@ import CustomLink from "./customLink";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 import { FaFileAlt, FaSearch, FaSitemap, FaCodeBranch } from "react-icons/fa";
 import { ReactComponent as FhirIcon } from "../../../resources/images/fhir.svg";
+import DarkSwitch from "../../Common/DarkSwitch/darkSwitch";
 
 function FileSearchIcon() {
   return (
     <div
-    aria-hidden="true"
+      aria-hidden="true"
       style={{
         position: "relative",
         display: "inline-block",
@@ -22,7 +23,7 @@ function FileSearchIcon() {
       <FaFileAlt
         style={{
           fontSize: "1.2em",
-          color: "#fff",
+          color: "var(--text-color-on-darkbg)",
           position: "absolute",
           top: 0,
           left: 0
@@ -31,7 +32,7 @@ function FileSearchIcon() {
       <FaSearch
         style={{
           fontSize: "0.75em",
-          color: "#08242c",
+          color: "var(--text-color-primary-light)",
           position: "absolute",
           top: "28%",
           left: "22%"
@@ -41,6 +42,7 @@ function FileSearchIcon() {
   );
 }
 
+// Main navigation bar used thought the app
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [animate, setAnimate] = useState(false);
@@ -75,17 +77,19 @@ export default function Navbar() {
 
   return (
     <nav className={NavbarStyles.navbar} aria-label="Main navigation">
-      <Link to="/" className={`${NavbarStyles.logo} ${NavbarStyles.link}`}>
-        <img
-          className={NavbarStyles.logo}
-          src={`${process.env.PUBLIC_URL}/umu_coat.svg`}
-          width={40}
-          height={40}
-          alt="University of Murcia logo"
-          loading="eager"
-          fetchpriority="high"
-        />
-      </Link>
+      <div className={NavbarStyles.navLeft}>
+        <Link to="/" className={`${NavbarStyles.logo} ${NavbarStyles.link}`}>
+          <img
+            className={NavbarStyles.logo}
+            src={`${process.env.PUBLIC_URL}/umu_coat.svg`}
+            width={40}
+            height={40}
+            alt="University of Murcia logo"
+            loading="eager"
+            fetchpriority="high"
+          />
+        </Link>
+      </div>
       <ul className={NavbarStyles.navlinks}>
         <TransitionGroup component={null}>
           {isAuthenticated && selectedNodes && (
@@ -144,6 +148,9 @@ export default function Navbar() {
                     </span>
                   </CustomLink>
                 </li>
+                <li className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem} ${NavbarStyles.darkerSwitchItem}`}>
+                  <DarkSwitch />
+                </li>
               </div>
             </CSSTransition>
           )}
@@ -161,7 +168,7 @@ export default function Navbar() {
         <label htmlFor="menuToggle" className={NavbarStyles.hamburger}>
           &#9776;
         </label>
-        <div 
+        <div
           id="main-menu"
           className={`${NavbarStyles.menu} ${menuOpen && animate ? NavbarStyles.animate : ""}`}
           role="menu"
@@ -174,8 +181,8 @@ export default function Navbar() {
           </li>
           {isAuthenticated && (
             <li className={NavbarStyles.listItem} role="none">
-              <CustomLink to="/nodes" onClick={toggleMenu} role="menuitem">
-                Nodes
+              <CustomLink to="/projects" onClick={toggleMenu} role="menuitem">
+                Projects
               </CustomLink>
             </li>
           )}

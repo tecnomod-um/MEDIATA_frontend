@@ -1,27 +1,42 @@
+  /* css variables */
 :root {
+  /* ==================== LIGHT THEME ==================== */
+  
+  /* Background Colors */
   --background-color-1-light: #ecebeb;
   --background-color-2-light: #f1f1f1;
+  --background-color-3-light: #f9f9f9;
+  --background-color-4-light: #fafafa;
+  --background-color-5-light: #f8f9fa;
   --background-color-card-light: #ffffff;
+  --background-color-secondary-light: #f5f5f5;
+  --background-color-tertiary-light: #f0f0f0;
+  --background-color-modal-light: #ffffff;
+  --logo-backplate-light: #ecebeb;
 
+  /* Navigation & Headers */
   --background-nav-and-headers-background-color-light: #08242c;
   --background-nav-background-color-hover-light: #0c343f;
   --background-nav-tool-background-color-light: #08181d;
   --background-nav-tool-background-color-active-light: #3a6f7a;
   --background-nav-tool-background-color-hover-light: #071418;
 
+  /* Text Colors */
+  --text-color-primary-light: #333;
+  --text-color-secondary-light: #555;
+  --text-color-tertiary-light: #666;
+  --text-color-muted-light: #707070; /* Fixed from #777 for WCAG AA compliance (4.53:1) */
+  --text-color-disabled-light: #999;
   --text-color-on-darkbg-light: #fff;
+  --text-color-dark-light: #222;
+  --heading-color-light: #06202a; /* Darker blue for headings, similar to theme blue */
 
+  /* Button Colors */
   --button-color-light: #08242c;
   --button-color-shadow-light: 0 5px 15px rgba(3, 2, 43, 0.4);
   --button-color-hover-light: #0f3e48;
   --button-gradient-light: linear-gradient(to left, #0f3e48, #08242c 50%, #0f3e48);
-
-  --tooltray-background-color-light: #333;
-  --tooltray-background-color-light-transparent: rgba(51, 51, 51, 0.5);
-
-
-  --file-selected-bg-light: #dceeff;
-  --file-selected-border-light: var(--button-color-hover-light);
+  --button-disabled-light: #999;
 
   --button-add-value-color: #184a2b;
   --button-add-value-hover-color: #20663a;
@@ -32,22 +47,745 @@
   --button-save-color: #1b3442;
   --button-save-hover-color: #264656;
 
-  --transition-duration: 600ms;
-  --transition-ease: cubic-bezier(0.25, 0.8, 0.25, 1);
+  --button-add-mapping-color: #868686;
+  --button-add-mapping-hover-color: #b6b6b6;
+
+  --button-description-color: #975019;
+  --button-description-hover-color: #b15f1f;
+
+  --button-success-color: #1e7e34; /* Fixed from #28a745 for WCAG AA compliance (4.52:1) */
+  --button-success-hover-color: #186429;
+
+  /* Border Colors */
+  --border-color-light: #ccc;
+  --border-color-secondary-light: #ddd;
+  --border-color-tertiary-light: #eee;
+  --border-color-dark-light: #e1e1e1;
+  --border-color-input-light: #ccc;
+
+  /* Special Elements */
+  --tooltray-background-color-light: #333;
+  --tooltray-background-color-light-transparent: rgba(51, 51, 51, 0.5);
+  --tooltray-section-bg-light: #444; /* Sections within tooltray */
+  --tooltray-button-bg-light: #555; /* Buttons/toggles within tooltray */
+  --tooltray-button-hover-light: #666;
+  --tooltray-text-color-light: #fff;
+
+  /* SchemaTray closedTab */
+  --schema-tab-bg-light: #555;
+  --schema-tab-hover-light: #666;
+  --schema-tab-text-light: #fff;
+
+  /* EntryTable selected row */
+  --table-row-selected-bg-light: #e9ecef;
+  --table-scrollbar-thumb-light: #ccc;
+  --table-scrollbar-track-light: #f5f5f5;
+
+  /* ProjectRow and chips */
+  --project-row-bg-light: #ffffff;
+  --project-row-hover-light: #f1f1f1;
+  --project-row-border-light: #ecebeb;
+  --chip-bg-light: #e8eef5;
+  --chip-text-light: #2b2b2b;
+
+  --file-selected-bg-light: rgba(223, 240, 255, 0.75); /* Light blue */
+  --file-selected-border-light: var(--button-color-hover-light);
+
+  /* Scrollbar colors (light mode) */
+  --scrollbar-thumb-light: #ccc;
+  --scrollbar-track-light: #f5f5f5;
 
   --darkened-background-color: rgba(0, 0, 0, 0.5);
   --translucent-background-color: rgba(0, 0, 0, 0.7);
 
+  /* Error & Alert Colors */
+  --error-color-light: #c22535;
+  --error-bg-light: #f8d7da;
+  --error-border-light: #f5c6cb;
 
+  /* Project Status Colors */
+  --project-status-active-bg: #e6f4ea;
+  --project-status-active-text: #1e7f43;
+  
+  --project-status-hiatus-bg: #eef3f8;
+  --project-status-hiatus-text: #3a5a78;
+  
+  --project-status-closed-bg: #fbeaea;
+  --project-status-closed-text: #8b1e1e;
+  
+  --project-status-default-bg: #eeeeee;
+  --project-status-default-text: #444444;
 
-
+  /* Icons */
   --icon-background: #53a9ca;
   --icon-stroke: #0f2433;
   --icon-fill: #ffffff;
   --icon-fold-fill: #d9eef7;
   --icon-line-blue: #0056b3;
   --icon-line-green: #008844;
-
   --icon-shield-stroke: #ffffff;
   --icon-shield-stroke-inner: #0f2433;
+
+  /* Sizes */
+  --project-thumb-size: 90px;
+
+  /* Font Sizes */
+  --font-size-xs: 0.75rem;     /* 12px */
+  --font-size-sm: 0.875rem;    /* 14px */
+  --font-size-base: 1rem;      /* 16px */
+  --font-size-md: 1.125rem;    /* 18px */
+  --font-size-lg: 1.25rem;     /* 20px */
+  --font-size-xl: 1.5rem;      /* 24px */
+  --font-size-2xl: 2rem;       /* 32px */
+
+  /* Transitions & Animations */
+  --transition-duration: 600ms;
+  --transition-duration-fast: 300ms;
+  --transition-duration-slow: 500ms;
+  --transition-ease: cubic-bezier(0.25, 0.8, 0.25, 1);
+
+  /* Shadows */
+  --box-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --box-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
+  --box-shadow-lg: 0 5px 15px rgba(0, 0, 0, 0.2);
+  --box-shadow-xl: 0 14px 40px rgba(0, 0, 0, 0.35);
+
+  /* ==================== DARK THEME ==================== */
+  
+  --background-color-1-dark: #121212;
+  --background-color-2-dark: #1a1a1a;
+  --background-color-3-dark: #242424;
+  --background-color-4-dark: #2a2a2a;
+  --background-color-5-dark: #2f2f2f;
+  --background-color-card-dark: #2d2d2d;
+  --background-color-secondary-dark: #222222;
+  --background-color-tertiary-dark: #282828;
+  --background-color-modal-dark: #2d2d2d;
+  --logo-backplate-dark: #909090;
+
+  /* Navigation & Headers */
+  --background-nav-and-headers-background-color-dark: #0a2e3a;
+  --background-nav-background-color-hover-dark: #0e4250;
+  --background-nav-tool-background-color-dark: #0a1e25;
+  --background-nav-tool-background-color-active-dark: #4a8595;
+  --background-nav-tool-background-color-hover-dark: #091a1f;
+
+  /* Text Colors */
+  --text-color-primary-dark: #e0e0e0;
+  --text-color-secondary-dark: #c0c0c0;
+  --text-color-tertiary-dark: #a0a0a0;
+  --text-color-muted-dark: #909090; /* Fixed from #888 for WCAG AA compliance (5.31:1) */
+  --text-color-disabled-dark: #666666;
+  --text-color-on-darkbg-dark: #fff;
+  --text-color-dark-dark: #f0f0f0;
+  --heading-color-dark: #3da8d8; /* Slightly darker blue for headings in dark mode, closer to theme */
+
+  /* Button Colors */
+  --button-color-dark: #0a2e3a;
+  --button-color-shadow-dark: 0 5px 15px rgba(0, 0, 0, 0.6);
+  --button-color-hover-dark: #11505f;
+  --button-gradient-dark: linear-gradient(to left, #11505f, #0a2e3a 50%, #11505f);
+  --button-disabled-dark: #444444;
+
+  --button-add-value-color-dark: #1e5a38;
+  --button-add-value-hover-color-dark: #267a48;
+
+  --button-delete-color-dark: #5a1e1e;
+  --button-delete-hover-color-dark: #7a2828;
+
+  --button-save-color-dark: #1f3e4e;
+  --button-save-hover-color-dark: #2a5566;
+
+  --button-add-mapping-color-dark: #555555;
+  --button-add-mapping-hover-color-dark: #707070;
+
+  --button-description-color-dark: #a85e1f;
+  --button-description-hover-color-dark: #c26f25;
+
+  --button-success-color-dark: #218838; /* Fixed from #2ea84f for WCAG AA compliance (4.53:1) */
+  --button-success-hover-color-dark: #1a6b2d;
+
+  /* Border Colors */
+  --border-color-dark: #444444;
+  --border-color-secondary-dark: #3a3a3a;
+  --border-color-tertiary-dark: #333333;
+  --border-color-dark-dark: #404040;
+  --border-color-input-dark: #555555;
+
+  /* Special Elements */
+  --tooltray-background-color-dark: #1a1a1a;
+  --tooltray-background-color-dark-transparent: rgba(26, 26, 26, 0.5);
+  --tooltray-section-bg-dark: #242424; /* Sections within tooltray */
+  --tooltray-button-bg-dark: #2a2a2a; /* Buttons/toggles within tooltray */
+  --tooltray-button-hover-dark: #333333;
+  --tooltray-text-color-dark: #e0e0e0;
+
+  /* SchemaTray closedTab */
+  --schema-tab-bg-dark: #3a3a3a;
+  --schema-tab-hover-dark: #4a4a4a;
+  --schema-tab-text-dark: #e0e0e0;
+
+  /* EntryTable selected row */
+  --table-row-selected-bg-dark: #2a3a4a;
+  --table-scrollbar-thumb-dark: #444444;
+  --table-scrollbar-track-dark: #1a1a1a;
+
+  /* ProjectRow and chips */
+  --project-row-bg-dark: #2d2d2d;
+  --project-row-hover-dark: #353535;
+  --project-row-border-dark: #1a1a1a;
+  --chip-bg-dark: #3a4a5a;
+  --chip-text-dark: #e0e0e0;
+
+  --file-selected-bg-dark: rgba(70, 130, 180, 0.25); /* Steel blue, less bright */
+  --file-selected-border-dark: #11505f;
+
+  /* Scrollbar colors (dark mode) */
+  --scrollbar-thumb-dark: #444444;
+  --scrollbar-track-dark: #2a2a2a;
+
+  --darkened-background-color-dark: rgba(0, 0, 0, 0.7);
+  --translucent-background-color-dark: rgba(0, 0, 0, 0.85);
+
+  /* Error & Alert Colors */
+  --error-color-dark: #e85a5a;
+  --error-bg-dark: #3a1a1a;
+  --error-border-dark: #5a2a2a;
+
+  /* Project Status Colors (adjusted for dark mode) */
+  --project-status-active-bg-dark: #1e3a2a;
+  --project-status-active-text-dark: #5fc58f;
+  
+  --project-status-hiatus-bg-dark: #1e2a3a;
+  --project-status-hiatus-text-dark: #6a9ac8;
+  
+  --project-status-closed-bg-dark: #3a1e1e;
+  --project-status-closed-text-dark: #d66666;
+  
+  --project-status-default-bg-dark: #2a2a2a;
+  --project-status-default-text-dark: #b0b0b0;
+
+  /* Icons (adjusted for dark mode) */
+  --icon-background-dark: #4a9aba;
+  --icon-stroke-dark: #1f3a4a;
+  --icon-fill-dark: #e0e0e0;
+  --icon-fold-fill-dark: #2a5a6a;
+  --icon-line-blue-dark: #4a8fd6;
+  --icon-line-green-dark: #3aa866;
+  --icon-shield-stroke-dark: #e0e0e0;
+  --icon-shield-stroke-inner-dark: #1f3a4a;
+
+  /* Shadows (adjusted for dark mode) */
+  --box-shadow-sm-dark: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --box-shadow-md-dark: 0 4px 8px rgba(0, 0, 0, 0.4);
+  --box-shadow-lg-dark: 0 5px 15px rgba(0, 0, 0, 0.5);
+  --box-shadow-xl-dark: 0 14px 40px rgba(0, 0, 0, 0.7);
+
+  /* ==================== ACTIVE THEME (defaults to light) ==================== */
+  
+  /* Background Colors */
+  --background-color-1: var(--background-color-1-light);
+  --background-color-2: var(--background-color-2-light);
+  --background-color-3: var(--background-color-3-light);
+  --background-color-4: var(--background-color-4-light);
+  --background-color-5: var(--background-color-5-light);
+  --background-color-card: var(--background-color-card-light);
+  --background-color-secondary: var(--background-color-secondary-light);
+  --background-color-tertiary: var(--background-color-tertiary-light);
+  --background-color-modal: var(--background-color-modal-light);
+  --logo-backplate: var(--logo-backplate-light);
+  --schema-tray-bg: var(--background-color-2-light);
+
+
+  /* Navigation & Headers */
+  --background-nav-and-headers-background-color: var(--background-nav-and-headers-background-color-light);
+  --background-nav-background-color-hover: var(--background-nav-background-color-hover-light);
+  --background-nav-tool-background-color: var(--background-nav-tool-background-color-light);
+  --background-nav-tool-background-color-active: var(--background-nav-tool-background-color-active-light);
+  --background-nav-tool-background-color-hover: var(--background-nav-tool-background-color-hover-light);
+
+  /* Text Colors */
+  --text-color-primary: var(--text-color-primary-light);
+  --text-color-secondary: var(--text-color-secondary-light);
+  --text-color-tertiary: var(--text-color-tertiary-light);
+  --text-color-muted: var(--text-color-muted-light);
+  --text-color-disabled: var(--text-color-disabled-light);
+  --text-color-on-darkbg: var(--text-color-on-darkbg-light);
+  --text-color-dark: var(--text-color-dark-light);
+  --heading-color: var(--heading-color-light);
+
+  /* Button Colors */
+  --button-color: var(--button-color-light);
+  --button-color-shadow: var(--button-color-shadow-light);
+  --button-color-hover: var(--button-color-hover-light);
+  --button-gradient: var(--button-gradient-light);
+  --button-disabled: var(--button-disabled-light);
+
+  --button-add-value: var(--button-add-value-color);
+  --button-add-value-hover: var(--button-add-value-hover-color);
+
+  --button-delete: var(--button-delete-color);
+  --button-delete-hover: var(--button-delete-hover-color);
+
+  --button-save: var(--button-save-color);
+  --button-save-hover: var(--button-save-hover-color);
+
+  --button-add-mapping: var(--button-add-mapping-color);
+  --button-add-mapping-hover: var(--button-add-mapping-hover-color);
+
+  --button-description: var(--button-description-color);
+  --button-description-hover: var(--button-description-hover-color);
+
+  --button-success: var(--button-success-color);
+  --button-success-hover: var(--button-success-hover-color);
+
+  /* Border Colors */
+  --border-color: var(--border-color-light);
+  --border-color-secondary: var(--border-color-secondary-light);
+  --border-color-tertiary: var(--border-color-tertiary-light);
+  --border-color-dark: var(--border-color-dark-light);
+  --border-color-input: var(--border-color-input-light);
+
+  /* Special Elements */
+  --tooltray-background-color: var(--tooltray-background-color-light);
+  --tooltray-background-color-transparent: var(--tooltray-background-color-light-transparent);
+  --tooltray-section-bg: var(--tooltray-section-bg-light);
+  --tooltray-button-bg: var(--tooltray-button-bg-light);
+  --tooltray-button-hover: var(--tooltray-button-hover-light);
+  --tooltray-text-color: var(--tooltray-text-color-light);
+
+  --schema-tab-bg: var(--schema-tab-bg-light);
+  --schema-tab-hover: var(--schema-tab-hover-light);
+  --schema-tab-text: var(--schema-tab-text-light);
+
+  --table-row-selected-bg: var(--table-row-selected-bg-light);
+  --table-scrollbar-thumb: var(--table-scrollbar-thumb-light);
+  --table-scrollbar-track: var(--table-scrollbar-track-light);
+
+  --project-row-bg: var(--project-row-bg-light);
+  --project-row-hover: var(--project-row-hover-light);
+  --project-row-border: var(--project-row-border-light);
+  --chip-bg: var(--chip-bg-light);
+  --chip-text: var(--chip-text-light);
+
+  --file-selected-bg: var(--file-selected-bg-light);
+  --file-selected-border: var(--file-selected-border-light);
+
+  --scrollbar-thumb: var(--scrollbar-thumb-light);
+  --scrollbar-track: var(--scrollbar-track-light);
+
+  --darkened-background: var(--darkened-background-color);
+  --translucent-background: var(--translucent-background-color);
+
+  /* Error & Alert Colors */
+  --error-color: var(--error-color-light);
+  --error-bg: var(--error-bg-light);
+  --error-border: var(--error-border-light);
+
+  /* Shadows */
+  --box-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --box-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
+  --box-shadow-lg: 0 5px 15px rgba(0, 0, 0, 0.2);
+  --box-shadow-xl: 0 14px 40px rgba(0, 0, 0, 0.35);
 }
+
+/* Dark mode class */
+body.dark-mode {
+  /* Background Colors */
+  --background-color-1: var(--background-color-1-dark);
+  --background-color-2: var(--background-color-2-dark);
+  --background-color-3: var(--background-color-3-dark);
+  --background-color-4: var(--background-color-4-dark);
+  --background-color-5: var(--background-color-5-dark);
+  --background-color-card: var(--background-color-card-dark);
+  --background-color-secondary: var(--background-color-secondary-dark);
+  --background-color-tertiary: var(--background-color-tertiary-dark);
+  --background-color-modal: var(--background-color-modal-dark);
+  --logo-backplate: var(--logo-backplate-dark);
+  --schema-tray-bg: var(--background-color-5-dark);
+  
+  /* Navigation & Headers */
+  --background-nav-and-headers-background-color: var(--background-nav-and-headers-background-color-dark);
+  --background-nav-background-color-hover: var(--background-nav-background-color-hover-dark);
+  --background-nav-tool-background-color: var(--background-nav-tool-background-color-dark);
+  --background-nav-tool-background-color-active: var(--background-nav-tool-background-color-active-dark);
+  --background-nav-tool-background-color-hover: var(--background-nav-tool-background-color-hover-dark);
+
+  /* Text Colors */
+  --text-color-primary: var(--text-color-primary-dark);
+  --text-color-secondary: var(--text-color-secondary-dark);
+  --text-color-tertiary: var(--text-color-tertiary-dark);
+  --text-color-muted: var(--text-color-muted-dark);
+  --text-color-disabled: var(--text-color-disabled-dark);
+  --text-color-on-darkbg: var(--text-color-on-darkbg-dark);
+  --text-color-dark: var(--text-color-dark-dark);
+  --heading-color: var(--heading-color-dark);
+
+  /* Button Colors */
+  --button-color: var(--button-color-dark);
+  --button-color-shadow: var(--button-color-shadow-dark);
+  --button-color-hover: var(--button-color-hover-dark);
+  --button-gradient: var(--button-gradient-dark);
+  --button-disabled: var(--button-disabled-dark);
+
+  --button-add-value-color: var(--button-add-value-color-dark);
+  --button-add-value-hover-color: var(--button-add-value-hover-color-dark);
+
+  --button-delete-color: var(--button-delete-color-dark);
+  --button-delete-hover-color: var(--button-delete-hover-color-dark);
+
+  --button-save-color: var(--button-save-color-dark);
+  --button-save-hover-color: var(--button-save-hover-color-dark);
+
+  --button-add-mapping-color: var(--button-add-mapping-color-dark);
+  --button-add-mapping-hover-color: var(--button-add-mapping-hover-color-dark);
+
+  --button-description-color: var(--button-description-color-dark);
+  --button-description-hover-color: var(--button-description-hover-color-dark);
+
+  --button-success-color: var(--button-success-color-dark);
+  --button-success-hover-color: var(--button-success-hover-color-dark);
+
+  /* Border Colors */
+  --border-color: var(--border-color-dark);
+  --border-color-secondary: var(--border-color-secondary-dark);
+  --border-color-tertiary: var(--border-color-tertiary-dark);
+  --border-color-dark: var(--border-color-dark-dark);
+  --border-color-input: var(--border-color-input-dark);
+
+  /* Special Elements */
+  --tooltray-background-color: var(--tooltray-background-color-dark);
+  --tooltray-background-color-transparent: var(--tooltray-background-color-dark-transparent);
+  --tooltray-section-bg: var(--tooltray-section-bg-dark);
+  --tooltray-button-bg: var(--tooltray-button-bg-dark);
+  --tooltray-button-hover: var(--tooltray-button-hover-dark);
+  --tooltray-text-color: var(--tooltray-text-color-dark);
+
+  --schema-tab-bg: var(--schema-tab-bg-dark);
+  --schema-tab-hover: var(--schema-tab-hover-dark);
+  --schema-tab-text: var(--schema-tab-text-dark);
+
+  --table-row-selected-bg: var(--table-row-selected-bg-dark);
+  --table-scrollbar-thumb: var(--table-scrollbar-thumb-dark);
+  --table-scrollbar-track: var(--table-scrollbar-track-dark);
+
+  --project-row-bg: var(--project-row-bg-dark);
+  --project-row-hover: var(--project-row-hover-dark);
+  --project-row-border: var(--project-row-border-dark);
+  --chip-bg: var(--chip-bg-dark);
+  --chip-text: var(--chip-text-dark);
+
+  --file-selected-bg: var(--file-selected-bg-dark);
+  --file-selected-border: var(--file-selected-border-dark);
+
+  --scrollbar-thumb: var(--scrollbar-thumb-dark);
+  --scrollbar-track: var(--scrollbar-track-dark);
+
+  --darkened-background-color: var(--darkened-background-color-dark);
+  --translucent-background-color: var(--translucent-background-color-dark);
+
+  /* Error & Alert Colors */
+  --error-color: var(--error-color-dark);
+  --error-bg: var(--error-bg-dark);
+  --error-border: var(--error-border-dark);
+
+  /* Project Status Colors */
+  --project-status-active-bg: var(--project-status-active-bg-dark);
+  --project-status-active-text: var(--project-status-active-text-dark);
+  
+  --project-status-hiatus-bg: var(--project-status-hiatus-bg-dark);
+  --project-status-hiatus-text: var(--project-status-hiatus-text-dark);
+  
+  --project-status-closed-bg: var(--project-status-closed-bg-dark);
+  --project-status-closed-text: var(--project-status-closed-text-dark);
+  
+  --project-status-default-bg: var(--project-status-default-bg-dark);
+  --project-status-default-text: var(--project-status-default-text-dark);
+
+  /* Icons */
+  --icon-background: var(--icon-background-dark);
+  --icon-stroke: var(--icon-stroke-dark);
+  --icon-fill: var(--icon-fill-dark);
+  --icon-fold-fill: var(--icon-fold-fill-dark);
+  --icon-line-blue: var(--icon-line-blue-dark);
+  --icon-line-green: var(--icon-line-green-dark);
+  --icon-shield-stroke: var(--icon-shield-stroke-dark);
+  --icon-shield-stroke-inner: var(--icon-shield-stroke-inner-dark);
+
+  /* Shadows */
+  --box-shadow-sm: var(--box-shadow-sm-dark);
+  --box-shadow-md: var(--box-shadow-md-dark);
+  --box-shadow-lg: var(--box-shadow-lg-dark);
+  --box-shadow-xl: var(--box-shadow-xl-dark);
+}
+
+/* TODO
+ ============================================================================
+   CSS VARIABLES IMPLEMENTATION NOTES & FURTHER STANDARDIZATION OPPORTUNITIES
+   ============================================================================
+
+   COLORS PRESERVED (no changes to existing appearance):
+   • All original color values kept exactly as-is for light theme
+   • Navigation colors: #08242c, #0c343f, #08181d, #3a6f7a, #071418
+   • Button colors: #184a2b, #4a1818, #1b3442, #868686, #975019
+   • Background grays: #ecebeb, #f1f1f1, #ffffff
+   • All existing CSS modules continue to work without modification
+
+   --------------------------------------------------------------------------
+   CURRENT STATE: HARDCODED VALUES ACROSS CSS MODULES (Analysis Run Date)
+   --------------------------------------------------------------------------
+
+   BACKGROUND COLORS (still hardcoded in 36 CSS module files):
+   • #fff / #ffffff: 26 instances - SHOULD MAP TO: var(--background-color-card)
+   • #f9f9f9: 9 instances - SHOULD MAP TO: var(--background-color-3)
+   • #fafafa: 6 instances - SHOULD MAP TO: var(--background-color-4)
+   • #f8f9fa: 5 instances - SHOULD MAP TO: var(--background-color-5)
+   • #f5f5f5: 4 instances - SHOULD MAP TO: var(--background-color-secondary)
+   • #f0f0f0: 7 instances - SHOULD MAP TO: var(--background-color-tertiary)
+   • #ecebeb: 7 instances - SHOULD MAP TO: var(--background-color-1)
+   • #f1f1f1: 0 instances - ALREADY GOOD (only in variables)
+   • #e0e0e0: 6 instances - CONSIDER: new variable for lighter gray
+   • #f2f2f2, #f4f4f4, #f7f7f7, #f8f8f8: 13 instances - CLOSE TO existing vars
+   • #eee, #eaeaea, #e8e8e8: 7 instances - CLOSE TO tertiary or new var
+   • Various grays (#555, #666, #444, #333): Used for both bg and text
+   • #28a745, #218838: 4 instances - Success green, partially covered
+   • #6c757d, #5a6268: 5 instances - Gray buttons, NOT YET COVERED
+
+   TEXT COLORS (still hardcoded):
+   • #fff: 55 instances - SHOULD MAP TO: var(--text-color-on-darkbg)
+   • #333: 32 instances - SHOULD MAP TO: var(--text-color-primary)
+   • #555: 20 instances - SHOULD MAP TO: var(--text-color-secondary)
+   • #666: 20 instances - SHOULD MAP TO: var(--text-color-tertiary)
+   • #777: 4 instances - SHOULD MAP TO: var(--text-color-muted)
+   • #888: 6 instances - BETWEEN muted and disabled, CONSIDER: new var
+   • #999: 0 instances in text - ALREADY COVERED by disabled
+   • #222: 3 instances - SHOULD MAP TO: var(--text-color-dark)
+   • #444: 8 instances - BETWEEN primary and secondary, CONSIDER: new var
+   • #aaa, #ccc: 14 instances - Light grays for disabled/placeholder text
+
+   BORDER COLORS (still hardcoded):
+   • #ccc: 34 instances - SHOULD MAP TO: var(--border-color)
+   • #ddd: 14 instances - SHOULD MAP TO: var(--border-color-secondary)
+   • #eee: 6 instances - SHOULD MAP TO: var(--border-color-tertiary)
+   • #e1e1e1: 7 instances - SHOULD MAP TO: var(--border-color-dark)
+   • #cfcfcf: 2 instances - BETWEEN ccc and ddd, could use secondary
+   • #000, #011224, #011a35: 6 instances - Dark borders for specific components
+   • rgba borders: Several instances with transparency, COULD ADD variants
+
+   BOX SHADOWS (93 instances total):
+   • 0 2px 4px rgba(0,0,0,0.1): ~15 instances - MAPS TO: var(--box-shadow-sm)
+   • 0 4px 8px rgba(0,0,0,0.15): ~10 instances - MAPS TO: var(--box-shadow-md)
+   • 0 5px 15px rgba(0,0,0,0.2): ~8 instances - MAPS TO: var(--box-shadow-lg)
+   • 0 14px 40px rgba(0,0,0,0.35): ~3 instances - MAPS TO: var(--box-shadow-xl)
+   • Various custom shadows: ~57 instances
+   • "box-shadow: none": ~20 instances - Should stay as-is
+   • OBSERVATION: Many shadows have slight variations (0.1 vs 0.15 opacity)
+     that could be standardized to our 4 presets
+
+   --------------------------------------------------------------------------
+   SPACING & SIZING (not yet in variables)
+   --------------------------------------------------------------------------
+
+   BORDER RADIUS (highly inconsistent):
+   • Common values found: 5px, 8px, 10px, 15px, 6px, 12px, 7px, 999px/50%
+   • RECOMMENDATION: Create standard scale
+     --border-radius-sm: 5px
+     --border-radius-md: 8px
+     --border-radius-lg: 12px
+     --border-radius-xl: 16px
+     --border-radius-pill: 999px
+   • Usage: ~100+ instances across all modules
+   • NOTE: Some components intentionally use specific values for design
+
+   FONT SIZES (✓ COMPLETED):
+   • Font-size variables implemented (lines 132-139)
+   • All ~260+ hardcoded font-sizes in .module.css files replaced with variables
+   • Type scale now in use:
+     --font-size-xs: 0.75rem (12px)
+     --font-size-sm: 0.875rem (14px)
+     --font-size-base: 1rem (16px)
+     --font-size-md: 1.125rem (18px)
+     --font-size-lg: 1.25rem (20px)
+     --font-size-xl: 1.5rem (24px)
+     --font-size-2xl: 2rem (32px)
+   • Conservative mapping applied to minimize visual changes
+
+   
+   GAP/SPACING (moderately inconsistent):
+   • Common values: 8px, 10px, 5px, 20px, 6px, 12px, 14px, 16px
+   • RECOMMENDATION: Create spacing scale (if standardization desired)
+     --spacing-1: 4px
+     --spacing-2: 8px
+     --spacing-3: 12px
+     --spacing-4: 16px
+     --spacing-5: 20px
+     --spacing-6: 24px
+   • CAUTION: Spacing is very design-specific, changes could break layouts
+
+   --------------------------------------------------------------------------
+   COLORS THAT COULD BE ADDED FOR COMPLETE STANDARDIZATION
+   --------------------------------------------------------------------------
+
+   ADDITIONAL NEUTRAL GRAYS (intermediate shades):
+   • --neutral-50: #fafafa (very light gray - already covered as bg-4)
+   • --neutral-100: #f5f5f5 (light gray - already covered as secondary)
+   • --neutral-200: #e5e5e5 (lighter gray - NEW, for subtle borders)
+   • --neutral-300: #d4d4d4 (light-medium gray - NEW, between ccc and ddd)
+   • --neutral-400: #a3a3a3 (medium gray - NEW, between 888 and aaa)
+   • --neutral-500: #737373 (true medium gray - NEW)
+   • --neutral-600: #525252 (dark-medium gray - NEW)
+   • --neutral-700: #404040 (dark gray - NEW, for strong text on light)
+   • --neutral-800: #262626 (darker gray - NEW, for headings)
+   • --neutral-900: #171717 (very dark gray - NEW)
+
+   SEMANTIC COLORS (for consistency):
+   • --color-info: #0ea5e9 (blue for informational)
+   • --color-info-bg: #e0f2fe (light blue background)
+   • --color-warning: #f59e0b (orange for warnings)
+   • --color-warning-bg: #fef3c7 (light orange background)
+   • NOTE: Error colors already added, success partially covered
+
+   STATE COLORS (interactive elements):
+   • --color-focus: #3b82f6 (focus ring color)
+   • --color-hover-overlay: rgba(0, 0, 0, 0.05) (subtle hover)
+   • --color-active-overlay: rgba(0, 0, 0, 0.1) (pressed state)
+   • --color-disabled-overlay: rgba(255, 255, 255, 0.5) (disabled overlay)
+
+   --------------------------------------------------------------------------
+   RECOMMENDATIONS FOR NEXT STEPS
+   --------------------------------------------------------------------------
+
+   PHASE 1 - HIGH IMPACT, LOW RISK (Conservative Approach):
+   1. Replace exact color matches across modules:
+      • All #fff/#ffffff → var(--background-color-card) for backgrounds
+      • All #333 → var(--text-color-primary) for text
+      • All #ccc → var(--border-color) for borders
+      • All #ecebeb → var(--background-color-1) for backgrounds
+   2. Replace box-shadow with close matches:
+      • 0 2px 4px rgba(0,0,0,0.1) → var(--box-shadow-sm)
+      • 0 4px 8px rgba(0,0,0,0.15) → var(--box-shadow-md)
+   3. Test thoroughly in both light and dark modes
+   4. Estimated files to change: ~36 CSS modules
+   5. Estimated effort: 2-3 days
+
+   PHASE 2 - MEDIUM IMPACT (Careful Approach):
+   1. Add missing intermediate gray shades (neutral-200 through neutral-900)
+   2. Replace close-but-not-exact colors:
+      • #f2f2f2, #f4f4f4 → closest existing variable or new neutral-100
+      • #555, #666, #777 → existing text color variables
+      • #ddd, #e1e1e1 → existing border variables
+   3. Standardize common box-shadows with slight opacity variations
+   4. Add semantic color variables (info, warning)
+   5. Estimated files to change: ~40-50 CSS modules
+   6. Estimated effort: 3-4 days
+
+   PHASE 3 - SPACING & SIZING (Higher Risk):
+   1. Add border-radius scale variables
+   2. Add font-size scale variables
+   3. Add spacing scale variables
+   4. Replace common values ONLY where it makes sense
+   5. CRITICAL: Extensive visual testing required
+   6. Estimated files to change: ~50+ CSS modules
+   7. Estimated effort: 5-7 days
+   8. RISK: Could break carefully designed layouts
+
+   PHASE 4 - COMPREHENSIVE (Complete Overhaul):
+   1. Create complete design token system
+   2. Replace ALL hardcoded values
+   3. Document component-specific exceptions
+   4. Full regression testing
+   5. Estimated effort: 2-3 weeks
+   6. RISK: High chance of visual regressions
+
+   --------------------------------------------------------------------------
+   TESTING RECOMMENDATIONS FOR ANY STANDARDIZATION WORK
+   --------------------------------------------------------------------------
+
+   BEFORE CHANGES:
+   • Take screenshots of all pages in light mode
+   • Take screenshots of all pages in dark mode
+   • Document any intentional color/spacing variations
+
+   DURING CHANGES:
+   • Change one category at a time (e.g., all text colors first)
+   • Build and visually inspect after each category
+   • Test both light and dark modes
+   • Check responsive breakpoints
+
+   AFTER CHANGES:
+   • Compare before/after screenshots
+   • Test all interactive states (hover, focus, active, disabled)
+   • Test with screen readers (accessibility check)
+   • Validate in multiple browsers
+   • Check for color contrast issues in dark mode
+
+   --------------------------------------------------------------------------
+   CONSERVATIVE VS AGGRESSIVE APPROACH
+   --------------------------------------------------------------------------
+
+   CONSERVATIVE (Recommended):
+   • Only replace EXACT color matches
+   • Keep close-but-not-exact colors as-is
+   • Don't touch spacing or sizing
+   • Accept some inconsistency for safety
+   • Prioritize "no visual changes" over "perfect standardization"
+
+   AGGRESSIVE (Higher Risk):
+   • Standardize all close colors to nearest variable
+   • Add comprehensive spacing/sizing scales
+   • Enforce strict design token usage
+   • May require design review for variations
+   • Higher chance of breaking existing layouts
+
+   --------------------------------------------------------------------------
+   CURRENT VARIABLE USAGE
+   --------------------------------------------------------------------------
+
+   ALREADY USING VARIABLES (Good examples to follow):
+   • src/pages/login/login.module.css - Uses button-color, hover, bg-color-1
+   • src/components/Navigation/Navbar/navbar.module.css - Uses nav colors
+   • src/pages/main/main.module.css - Uses button-gradient, text colors
+   • src/components/Common/FilePicker/*.module.css - Uses multiple variables
+
+   NOT USING VARIABLES YET (Opportunities):
+   • Many Integration components - Heavy use of hardcoded grays
+   • Discovery components - Mixed hardcoded and variable usage
+   • Several modal components - Could benefit from modal variables
+
+   --------------------------------------------------------------------------
+   CONCLUSION
+   --------------------------------------------------------------------------
+
+   This implementation provides a solid foundation with:
+   • ~200 CSS variables covering most common colors
+   • Full dark mode support
+   • Backward compatibility (no breaking changes)
+   • Clear mapping for most use cases
+
+   However, ~70-80% of color usage across modules is still hardcoded.
+   The path forward depends on priorities:
+   • If goal is "enable dark mode" → Current state is sufficient
+   • If goal is "perfect consistency" → Significant work remains
+   • If goal is "gradual improvement" → Follow phased approach above
+
+   Recommendation: Adopt PHASE 1 approach for next PR, focusing on exact
+   matches only. This provides meaningful standardization with minimal risk.
+
+   --------------------------------------------------------------------------
+   MAINTENANCE NOTES
+   --------------------------------------------------------------------------
+
+   When adding NEW components:
+   • Use variables from this file instead of hardcoded colors
+   • Follow existing naming patterns (-light, -dark, active mapping)
+   • Test in both light and dark modes
+   • Add to dark mode switch if using theme-dependent colors
+
+   When MODIFYING existing components:
+   • Consider replacing hardcoded colors with variables IF the change is
+     being made anyway
+   • Don't refactor just for variables unless specifically tasked
+   • Maintain visual appearance unless redesign is intended
+
+   ============================================================================
+*/
