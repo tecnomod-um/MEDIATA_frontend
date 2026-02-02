@@ -53,7 +53,7 @@
   --button-description-color: #975019;
   --button-description-hover-color: #b15f1f;
 
-  --button-success-color: #1e7e34; /* Fixed from #28a745 for WCAG AA compliance (4.52:1) */
+  --button-success-color: #1e7e34;
   --button-success-hover-color: #186429;
 
   /* Border Colors */
@@ -66,8 +66,8 @@
   /* Special Elements */
   --tooltray-background-color-light: #333;
   --tooltray-background-color-light-transparent: rgba(51, 51, 51, 0.5);
-  --tooltray-section-bg-light: #444; /* Sections within tooltray */
-  --tooltray-button-bg-light: #555; /* Buttons/toggles within tooltray */
+  --tooltray-section-bg-light: #444;
+  --tooltray-button-bg-light: #555;
   --tooltray-button-hover-light: #666;
   --tooltray-text-color-light: #fff;
 
@@ -88,7 +88,7 @@
   --chip-bg-light: #e8eef5;
   --chip-text-light: #2b2b2b;
 
-  --file-selected-bg-light: rgba(223, 240, 255, 0.75); /* Light blue */
+  --file-selected-bg-light: rgba(223, 240, 255, 0.75);
   --file-selected-border-light: var(--button-color-hover-light);
 
   /* Scrollbar colors (light mode) */
@@ -130,13 +130,13 @@
   --project-thumb-size: 90px;
 
   /* Font Sizes */
-  --font-size-xs: 0.75rem;     /* 12px */
-  --font-size-sm: 0.875rem;    /* 14px */
-  --font-size-base: 1rem;      /* 16px */
-  --font-size-md: 1.125rem;    /* 18px */
-  --font-size-lg: 1.25rem;     /* 20px */
-  --font-size-xl: 1.5rem;      /* 24px */
-  --font-size-2xl: 2rem;       /* 32px */
+  --font-size-xs: 0.75rem;   
+  --font-size-sm: 0.875rem;  
+  --font-size-base: 1rem;    
+  --font-size-md: 1.125rem; 
+  --font-size-lg: 1.25rem;     
+  --font-size-xl: 1.5rem;  
+  --font-size-2xl: 2rem;    
 
   /* Transitions & Animations */
   --transition-duration: 600ms;
@@ -174,11 +174,11 @@
   --text-color-primary-dark: #e0e0e0;
   --text-color-secondary-dark: #c0c0c0;
   --text-color-tertiary-dark: #a0a0a0;
-  --text-color-muted-dark: #909090; /* Fixed from #888 for WCAG AA compliance (5.31:1) */
+  --text-color-muted-dark: #909090;
   --text-color-disabled-dark: #666666;
   --text-color-on-darkbg-dark: #fff;
   --text-color-dark-dark: #f0f0f0;
-  --heading-color-dark: #3da8d8; /* Slightly darker blue for headings in dark mode, closer to theme */
+  --heading-color-dark: #3da8d8; 
 
   /* Button Colors */
   --button-color-dark: #0a2e3a;
@@ -202,7 +202,7 @@
   --button-description-color-dark: #a85e1f;
   --button-description-hover-color-dark: #c26f25;
 
-  --button-success-color-dark: #218838; /* Fixed from #2ea84f for WCAG AA compliance (4.53:1) */
+  --button-success-color-dark: #218838;
   --button-success-hover-color-dark: #1a6b2d;
 
   /* Border Colors */
@@ -215,8 +215,8 @@
   /* Special Elements */
   --tooltray-background-color-dark: #1a1a1a;
   --tooltray-background-color-dark-transparent: rgba(26, 26, 26, 0.5);
-  --tooltray-section-bg-dark: #242424; /* Sections within tooltray */
-  --tooltray-button-bg-dark: #2a2a2a; /* Buttons/toggles within tooltray */
+  --tooltray-section-bg-dark: #242424;
+  --tooltray-button-bg-dark: #2a2a2a;
   --tooltray-button-hover-dark: #333333;
   --tooltray-text-color-dark: #e0e0e0;
 
@@ -237,7 +237,7 @@
   --chip-bg-dark: #3a4a5a;
   --chip-text-dark: #e0e0e0;
 
-  --file-selected-bg-dark: rgba(70, 130, 180, 0.25); /* Steel blue, less bright */
+  --file-selected-bg-dark: rgba(70, 130, 180, 0.25);
   --file-selected-border-dark: #11505f;
 
   /* Scrollbar colors (dark mode) */
@@ -518,274 +518,3 @@ body.dark-mode {
   --box-shadow-lg: var(--box-shadow-lg-dark);
   --box-shadow-xl: var(--box-shadow-xl-dark);
 }
-
-/* TODO
- ============================================================================
-   CSS VARIABLES IMPLEMENTATION NOTES & FURTHER STANDARDIZATION OPPORTUNITIES
-   ============================================================================
-
-   COLORS PRESERVED (no changes to existing appearance):
-   • All original color values kept exactly as-is for light theme
-   • Navigation colors: #08242c, #0c343f, #08181d, #3a6f7a, #071418
-   • Button colors: #184a2b, #4a1818, #1b3442, #868686, #975019
-   • Background grays: #ecebeb, #f1f1f1, #ffffff
-   • All existing CSS modules continue to work without modification
-
-   --------------------------------------------------------------------------
-   CURRENT STATE: HARDCODED VALUES ACROSS CSS MODULES (Analysis Run Date)
-   --------------------------------------------------------------------------
-
-   BACKGROUND COLORS (still hardcoded in 36 CSS module files):
-   • #fff / #ffffff: 26 instances - SHOULD MAP TO: var(--background-color-card)
-   • #f9f9f9: 9 instances - SHOULD MAP TO: var(--background-color-3)
-   • #fafafa: 6 instances - SHOULD MAP TO: var(--background-color-4)
-   • #f8f9fa: 5 instances - SHOULD MAP TO: var(--background-color-5)
-   • #f5f5f5: 4 instances - SHOULD MAP TO: var(--background-color-secondary)
-   • #f0f0f0: 7 instances - SHOULD MAP TO: var(--background-color-tertiary)
-   • #ecebeb: 7 instances - SHOULD MAP TO: var(--background-color-1)
-   • #f1f1f1: 0 instances - ALREADY GOOD (only in variables)
-   • #e0e0e0: 6 instances - CONSIDER: new variable for lighter gray
-   • #f2f2f2, #f4f4f4, #f7f7f7, #f8f8f8: 13 instances - CLOSE TO existing vars
-   • #eee, #eaeaea, #e8e8e8: 7 instances - CLOSE TO tertiary or new var
-   • Various grays (#555, #666, #444, #333): Used for both bg and text
-   • #28a745, #218838: 4 instances - Success green, partially covered
-   • #6c757d, #5a6268: 5 instances - Gray buttons, NOT YET COVERED
-
-   TEXT COLORS (still hardcoded):
-   • #fff: 55 instances - SHOULD MAP TO: var(--text-color-on-darkbg)
-   • #333: 32 instances - SHOULD MAP TO: var(--text-color-primary)
-   • #555: 20 instances - SHOULD MAP TO: var(--text-color-secondary)
-   • #666: 20 instances - SHOULD MAP TO: var(--text-color-tertiary)
-   • #777: 4 instances - SHOULD MAP TO: var(--text-color-muted)
-   • #888: 6 instances - BETWEEN muted and disabled, CONSIDER: new var
-   • #999: 0 instances in text - ALREADY COVERED by disabled
-   • #222: 3 instances - SHOULD MAP TO: var(--text-color-dark)
-   • #444: 8 instances - BETWEEN primary and secondary, CONSIDER: new var
-   • #aaa, #ccc: 14 instances - Light grays for disabled/placeholder text
-
-   BORDER COLORS (still hardcoded):
-   • #ccc: 34 instances - SHOULD MAP TO: var(--border-color)
-   • #ddd: 14 instances - SHOULD MAP TO: var(--border-color-secondary)
-   • #eee: 6 instances - SHOULD MAP TO: var(--border-color-tertiary)
-   • #e1e1e1: 7 instances - SHOULD MAP TO: var(--border-color-dark)
-   • #cfcfcf: 2 instances - BETWEEN ccc and ddd, could use secondary
-   • #000, #011224, #011a35: 6 instances - Dark borders for specific components
-   • rgba borders: Several instances with transparency, COULD ADD variants
-
-   BOX SHADOWS (93 instances total):
-   • 0 2px 4px rgba(0,0,0,0.1): ~15 instances - MAPS TO: var(--box-shadow-sm)
-   • 0 4px 8px rgba(0,0,0,0.15): ~10 instances - MAPS TO: var(--box-shadow-md)
-   • 0 5px 15px rgba(0,0,0,0.2): ~8 instances - MAPS TO: var(--box-shadow-lg)
-   • 0 14px 40px rgba(0,0,0,0.35): ~3 instances - MAPS TO: var(--box-shadow-xl)
-   • Various custom shadows: ~57 instances
-   • "box-shadow: none": ~20 instances - Should stay as-is
-   • OBSERVATION: Many shadows have slight variations (0.1 vs 0.15 opacity)
-     that could be standardized to our 4 presets
-
-   --------------------------------------------------------------------------
-   SPACING & SIZING (not yet in variables)
-   --------------------------------------------------------------------------
-
-   BORDER RADIUS (highly inconsistent):
-   • Common values found: 5px, 8px, 10px, 15px, 6px, 12px, 7px, 999px/50%
-   • RECOMMENDATION: Create standard scale
-     --border-radius-sm: 5px
-     --border-radius-md: 8px
-     --border-radius-lg: 12px
-     --border-radius-xl: 16px
-     --border-radius-pill: 999px
-   • Usage: ~100+ instances across all modules
-   • NOTE: Some components intentionally use specific values for design
-
-   FONT SIZES (✓ COMPLETED):
-   • Font-size variables implemented (lines 132-139)
-   • All ~260+ hardcoded font-sizes in .module.css files replaced with variables
-   • Type scale now in use:
-     --font-size-xs: 0.75rem (12px)
-     --font-size-sm: 0.875rem (14px)
-     --font-size-base: 1rem (16px)
-     --font-size-md: 1.125rem (18px)
-     --font-size-lg: 1.25rem (20px)
-     --font-size-xl: 1.5rem (24px)
-     --font-size-2xl: 2rem (32px)
-   • Conservative mapping applied to minimize visual changes
-
-   
-   GAP/SPACING (moderately inconsistent):
-   • Common values: 8px, 10px, 5px, 20px, 6px, 12px, 14px, 16px
-   • RECOMMENDATION: Create spacing scale (if standardization desired)
-     --spacing-1: 4px
-     --spacing-2: 8px
-     --spacing-3: 12px
-     --spacing-4: 16px
-     --spacing-5: 20px
-     --spacing-6: 24px
-   • CAUTION: Spacing is very design-specific, changes could break layouts
-
-   --------------------------------------------------------------------------
-   COLORS THAT COULD BE ADDED FOR COMPLETE STANDARDIZATION
-   --------------------------------------------------------------------------
-
-   ADDITIONAL NEUTRAL GRAYS (intermediate shades):
-   • --neutral-50: #fafafa (very light gray - already covered as bg-4)
-   • --neutral-100: #f5f5f5 (light gray - already covered as secondary)
-   • --neutral-200: #e5e5e5 (lighter gray - NEW, for subtle borders)
-   • --neutral-300: #d4d4d4 (light-medium gray - NEW, between ccc and ddd)
-   • --neutral-400: #a3a3a3 (medium gray - NEW, between 888 and aaa)
-   • --neutral-500: #737373 (true medium gray - NEW)
-   • --neutral-600: #525252 (dark-medium gray - NEW)
-   • --neutral-700: #404040 (dark gray - NEW, for strong text on light)
-   • --neutral-800: #262626 (darker gray - NEW, for headings)
-   • --neutral-900: #171717 (very dark gray - NEW)
-
-   SEMANTIC COLORS (for consistency):
-   • --color-info: #0ea5e9 (blue for informational)
-   • --color-info-bg: #e0f2fe (light blue background)
-   • --color-warning: #f59e0b (orange for warnings)
-   • --color-warning-bg: #fef3c7 (light orange background)
-   • NOTE: Error colors already added, success partially covered
-
-   STATE COLORS (interactive elements):
-   • --color-focus: #3b82f6 (focus ring color)
-   • --color-hover-overlay: rgba(0, 0, 0, 0.05) (subtle hover)
-   • --color-active-overlay: rgba(0, 0, 0, 0.1) (pressed state)
-   • --color-disabled-overlay: rgba(255, 255, 255, 0.5) (disabled overlay)
-
-   --------------------------------------------------------------------------
-   RECOMMENDATIONS FOR NEXT STEPS
-   --------------------------------------------------------------------------
-
-   PHASE 1 - HIGH IMPACT, LOW RISK (Conservative Approach):
-   1. Replace exact color matches across modules:
-      • All #fff/#ffffff → var(--background-color-card) for backgrounds
-      • All #333 → var(--text-color-primary) for text
-      • All #ccc → var(--border-color) for borders
-      • All #ecebeb → var(--background-color-1) for backgrounds
-   2. Replace box-shadow with close matches:
-      • 0 2px 4px rgba(0,0,0,0.1) → var(--box-shadow-sm)
-      • 0 4px 8px rgba(0,0,0,0.15) → var(--box-shadow-md)
-   3. Test thoroughly in both light and dark modes
-   4. Estimated files to change: ~36 CSS modules
-   5. Estimated effort: 2-3 days
-
-   PHASE 2 - MEDIUM IMPACT (Careful Approach):
-   1. Add missing intermediate gray shades (neutral-200 through neutral-900)
-   2. Replace close-but-not-exact colors:
-      • #f2f2f2, #f4f4f4 → closest existing variable or new neutral-100
-      • #555, #666, #777 → existing text color variables
-      • #ddd, #e1e1e1 → existing border variables
-   3. Standardize common box-shadows with slight opacity variations
-   4. Add semantic color variables (info, warning)
-   5. Estimated files to change: ~40-50 CSS modules
-   6. Estimated effort: 3-4 days
-
-   PHASE 3 - SPACING & SIZING (Higher Risk):
-   1. Add border-radius scale variables
-   2. Add font-size scale variables
-   3. Add spacing scale variables
-   4. Replace common values ONLY where it makes sense
-   5. CRITICAL: Extensive visual testing required
-   6. Estimated files to change: ~50+ CSS modules
-   7. Estimated effort: 5-7 days
-   8. RISK: Could break carefully designed layouts
-
-   PHASE 4 - COMPREHENSIVE (Complete Overhaul):
-   1. Create complete design token system
-   2. Replace ALL hardcoded values
-   3. Document component-specific exceptions
-   4. Full regression testing
-   5. Estimated effort: 2-3 weeks
-   6. RISK: High chance of visual regressions
-
-   --------------------------------------------------------------------------
-   TESTING RECOMMENDATIONS FOR ANY STANDARDIZATION WORK
-   --------------------------------------------------------------------------
-
-   BEFORE CHANGES:
-   • Take screenshots of all pages in light mode
-   • Take screenshots of all pages in dark mode
-   • Document any intentional color/spacing variations
-
-   DURING CHANGES:
-   • Change one category at a time (e.g., all text colors first)
-   • Build and visually inspect after each category
-   • Test both light and dark modes
-   • Check responsive breakpoints
-
-   AFTER CHANGES:
-   • Compare before/after screenshots
-   • Test all interactive states (hover, focus, active, disabled)
-   • Test with screen readers (accessibility check)
-   • Validate in multiple browsers
-   • Check for color contrast issues in dark mode
-
-   --------------------------------------------------------------------------
-   CONSERVATIVE VS AGGRESSIVE APPROACH
-   --------------------------------------------------------------------------
-
-   CONSERVATIVE (Recommended):
-   • Only replace EXACT color matches
-   • Keep close-but-not-exact colors as-is
-   • Don't touch spacing or sizing
-   • Accept some inconsistency for safety
-   • Prioritize "no visual changes" over "perfect standardization"
-
-   AGGRESSIVE (Higher Risk):
-   • Standardize all close colors to nearest variable
-   • Add comprehensive spacing/sizing scales
-   • Enforce strict design token usage
-   • May require design review for variations
-   • Higher chance of breaking existing layouts
-
-   --------------------------------------------------------------------------
-   CURRENT VARIABLE USAGE
-   --------------------------------------------------------------------------
-
-   ALREADY USING VARIABLES (Good examples to follow):
-   • src/pages/login/login.module.css - Uses button-color, hover, bg-color-1
-   • src/components/Navigation/Navbar/navbar.module.css - Uses nav colors
-   • src/pages/main/main.module.css - Uses button-gradient, text colors
-   • src/components/Common/FilePicker/*.module.css - Uses multiple variables
-
-   NOT USING VARIABLES YET (Opportunities):
-   • Many Integration components - Heavy use of hardcoded grays
-   • Discovery components - Mixed hardcoded and variable usage
-   • Several modal components - Could benefit from modal variables
-
-   --------------------------------------------------------------------------
-   CONCLUSION
-   --------------------------------------------------------------------------
-
-   This implementation provides a solid foundation with:
-   • ~200 CSS variables covering most common colors
-   • Full dark mode support
-   • Backward compatibility (no breaking changes)
-   • Clear mapping for most use cases
-
-   However, ~70-80% of color usage across modules is still hardcoded.
-   The path forward depends on priorities:
-   • If goal is "enable dark mode" → Current state is sufficient
-   • If goal is "perfect consistency" → Significant work remains
-   • If goal is "gradual improvement" → Follow phased approach above
-
-   Recommendation: Adopt PHASE 1 approach for next PR, focusing on exact
-   matches only. This provides meaningful standardization with minimal risk.
-
-   --------------------------------------------------------------------------
-   MAINTENANCE NOTES
-   --------------------------------------------------------------------------
-
-   When adding NEW components:
-   • Use variables from this file instead of hardcoded colors
-   • Follow existing naming patterns (-light, -dark, active mapping)
-   • Test in both light and dark modes
-   • Add to dark mode switch if using theme-dependent colors
-
-   When MODIFYING existing components:
-   • Consider replacing hardcoded colors with variables IF the change is
-     being made anyway
-   • Don't refactor just for variables unless specifically tasked
-   • Maintain visual appearance unless redesign is intended
-
-   ============================================================================
-*/
