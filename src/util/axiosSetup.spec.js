@@ -167,6 +167,19 @@ describe('axiosSetup utility', () => {
       expect(result.headers['Kerberos-TGT']).toBeUndefined();
     });
 
+    it('adds both JWT and Kerberos-TGT headers when both exist for connect endpoint', () => {
+      if (!requestHandler) return;
+      
+      localStorage.setItem('jwtToken', 'jwt-token');
+      localStorage.setItem('kerberosTGT', 'kerberos-token');
+      
+      const config = { url: '/nodes/connect/info', headers: {} };
+      const result = requestHandler(config);
+      
+      expect(result.headers['Authorization']).toBe('Bearer jwt-token');
+      expect(result.headers['Kerberos-TGT']).toBe('kerberos-token');
+    });
+
     it('handles request errors', async () => {
       if (!errorHandler) return;
       

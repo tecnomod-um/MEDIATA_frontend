@@ -66,4 +66,74 @@ describe("<Projects />", () => {
       state: { projectId: "1111-1111-1111-1111" },
     });
   });
+
+  it("handles error when fetching projects fails", async () => {
+    petitionHandler.getProjectList = jest.fn().mockRejectedValue(new Error("Network error"));
+
+    render(<Projects />);
+
+    await waitFor(() => {
+      expect(lastProjectPickerProps?.errorMessage).toBe("Failed to load projects");
+    });
+
+    expect(lastProjectPickerProps.projects).toHaveLength(0);
+    expect(lastProjectPickerProps.isLoading).toBe(false);
+  });
+
+  it("prefixes PUBLIC_URL to imageUrl when it starts with /", async () => {
+    const originalEnv = process.env.PUBLIC_URL;
+    process.env.PUBLIC_URL = "/app";
+
+    petitionHandler.getProjectList = jest.fn().mockResolvedValue([
+      { id: "123", name: "Test Project", imageUrl: "/images/logo.png" }
+    ]);
+
+    render(<Projects />);
+
+    await waitFor(() => {
+      expect(lastProjectPickerProps?.projects).toHaveLength(1);
+    });
+
+    expect(lastProjectPickerProps.projects[0].imageUrl).toBe("/app/images/logo.png");
+
+    process.env.PUBLIC_URL = originalEnv;
+  });
+
+  it("does not prefix PUBLIC_URL to imageUrl when it does not start with /", async () => {
+    petitionHandler.getProjectList = jest.fn().mockResolvedValue([
+      { id: "123", name: "Test Project", imageUrl: "https://example.com/logo.png" }
+    ]);
+
+    render(<Projects />);
+
+    await waitFor(() => {
+      expect(lastProjectPickerProps?.projects).toHaveLength(1);
+    });
+
+    expect(lastProjectPickerProps.projects[0].imageUrl).toBe("https://example.com/logo.png");
+  });
+
+  it("handles projects without imageUrl", async () => {
+    petitionHandler.getProjectList = jest.fn().mockResolvedValue([
+      { id: "123", name: "Test Project" }
+    ]);
+
+    render(<Projects />);
+
+    await waitFor(() => {
+      expect(lastProjectPickerProps?.projects).toHaveLength(1);
+    });
+
+    expect(lastProjectPickerProps.projects[0].imageUrl).toBeUndefined();
+  });
+
+  it("handles non-array response from getProjectList", async () => {
+    petitionHandler.getProjectList = jest.fn().mockResolvedValue(null);
+
+    render(<Projects />);
+
+    await waitFor(() => {
+      expect(lastProjectPickerProps?.projects).toEqual([]);
+    });
+  });
 });
