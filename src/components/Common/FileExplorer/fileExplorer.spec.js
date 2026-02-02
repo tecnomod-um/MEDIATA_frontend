@@ -33,6 +33,11 @@ jest.mock("react-toastify", () => ({
   },
 }));
 
+// Mock react-router-dom
+jest.mock("react-router-dom", () => ({
+  useNavigate: jest.fn(() => jest.fn()),
+}));
+
 // Mock the CSS module
 jest.mock("./fileExplorer.module.css", () => new Proxy({}, { get: (_, k) => String(k) }), {
   virtual: true,
@@ -332,6 +337,7 @@ describe("FileExplorer sub-components", () => {
       busy: false,
       load: jest.fn(),
       onClose: jest.fn(),
+      category: "DATASETS",
     };
 
     it("renders all toolbar buttons", () => {

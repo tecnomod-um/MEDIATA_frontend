@@ -173,7 +173,7 @@ describe('Integration Page', () => {
     expect(await screen.findByTestId('ColumnMapping')).toBeInTheDocument();
   });
 
-  test('processes files via FileExplorer selection', async () => {
+  test('processes files via FilePicker selection', async () => {
     const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
     useNode.mockReturnValue({ selectedNodes: [node] });
     useLocation.mockReturnValue({ state: {} });
@@ -181,9 +181,9 @@ describe('Integration Page', () => {
     fetchElementFile.mockResolvedValue('pickerCol,x,y');
 
     const { rerender } = render(<Integration />);
-    expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
+    expect(screen.getByTestId('FilePicker')).toBeInTheDocument();
     
-    // Simulate user selecting files through FileExplorer
+    // Simulate user selecting files through FilePicker
     // This would trigger handleProcessSelectedElements
   });
 
@@ -211,7 +211,7 @@ describe('Integration Page', () => {
     getNodeElements.mockResolvedValue(['file.csv']);
 
     render(<Integration />);
-    expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
+    expect(screen.getByTestId('FilePicker')).toBeInTheDocument();
   });
 
   test('does not reprocess files if hasProcessedElementFiles is true', async () => {
@@ -234,8 +234,8 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node2', fileName: 'other.csv' }] } });
 
     render(<Integration />);
-    // Should still render FileExplorer since no files were processed for the current node
-    expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
+    // Should still render FilePicker since no files were processed for the current node
+    expect(screen.getByTestId('FilePicker')).toBeInTheDocument();
   });
 
   test('merges columns data correctly with existing data', async () => {
@@ -331,7 +331,7 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: {} });
 
     render(<Integration />);
-    expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
+    expect(screen.getByTestId('FilePicker')).toBeInTheDocument();
   });
 
   test('handles null selectedNodes', () => {
@@ -339,7 +339,7 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: {} });
 
     render(<Integration />);
-    expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
+    expect(screen.getByTestId('FilePicker')).toBeInTheDocument();
   });
 
   test('handles undefined location state', () => {
@@ -347,7 +347,7 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({});
 
     render(<Integration />);
-    expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
+    expect(screen.getByTestId('FilePicker')).toBeInTheDocument();
   });
 
   test('handles fetchElementFile error gracefully', async () => {
@@ -417,7 +417,7 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [] } });
 
     render(<Integration />);
-    expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
+    expect(screen.getByTestId('FilePicker')).toBeInTheDocument();
   });
 
   test('handles single node with multiple files', async () => {
@@ -478,13 +478,13 @@ describe('Integration Page', () => {
     expect(screen.getByTestId('ToastContainer')).toBeInTheDocument();
   });
 
-  test('shows FileExplorer with correct props', () => {
+  test('shows FilePicker with correct props', () => {
     useNode.mockReturnValue({ selectedNodes: [] });
     useLocation.mockReturnValue({ state: {} });
 
     render(<Integration />);
-    const fileExplorer = screen.getByTestId('FileExplorer');
-    expect(fileExplorer).toBeInTheDocument();
+    const filePicker = screen.getByTestId('FilePicker');
+    expect(filePicker).toHaveAttribute('data-is-processing', 'false');
   });
 
   test('handles node with empty serviceUrl', async () => {
@@ -640,7 +640,7 @@ describe('Integration Page', () => {
 
     render(<Integration />);
     // Component has formatValue function that handles invalid dates
-    expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
+    expect(screen.getByTestId('FilePicker')).toBeInTheDocument();
   });
 
   test('formatValue handles null and undefined values', async () => {
@@ -650,7 +650,7 @@ describe('Integration Page', () => {
 
     render(<Integration />);
     // Component has formatValue function that handles null/undefined
-    expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
+    expect(screen.getByTestId('FilePicker')).toBeInTheDocument();
   });
 
   test('handleMappingChange updates temporaryGroups', async () => {
