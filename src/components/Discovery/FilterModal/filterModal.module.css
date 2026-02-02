@@ -23,7 +23,7 @@
   justify-content: space-between;
   align-items: center;
   text-align: center;
-  border-bottom: 1px solid #e1e1e1;
+  border-bottom: 1px solid var(--border-color-dark);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -310,7 +310,7 @@
   max-height: 50px;
   opacity: 1;
   padding: 5px;
-  border-bottom: 1px solid #e1e1e1;
+  border-bottom: 1px solid var(--border-color-dark);
 }
 
 .logicalOperatorButton {
