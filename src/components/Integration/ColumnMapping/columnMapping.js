@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import ColumnMappingStyles from "./columnMapping.module.css";
 import Switch from "react-switch";
+import DescriptionModal from "../DescriptionModal/descriptionModal.js";
 import TooltipPopup from "../../Common/TooltipPopup/tooltipPopup.js";
 import AddIcon from "@mui/icons-material/Add";
 import SaveIcon from "@mui/icons-material/Save";
@@ -38,6 +39,48 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
   const headerTooltipButtonRef = useRef(null);
 
   const getGroupKey = (g) => `${g.nodeId}::${g.fileName}::${g.column}`;
+
+
+  const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
+  const [descriptionItems, setDescriptionItems] = useState([]);
+  const [activeDescriptionIndex, setActiveDescriptionIndex] = useState(0);
+
+  const [unionDescription, setUnionDescription] = useState("");
+  const [valueDescriptions, setValueDescriptions] = useState({}); // { [customValueId]: string }
+
+  const openDescriptionModalAt = (index) => {
+    setActiveDescriptionIndex(index);
+    setIsDescriptionOpen(true);
+  };
+
+  const closeDescriptionModal = () => setIsDescriptionOpen(false);
+
+  const getActiveDescriptionValue = () => {
+    const item = descriptionItems[activeDescriptionIndex];
+    if (!item) return "";
+    if (item.kind === "union") return unionDescription || "";
+    return valueDescriptions[item.id] || "";
+  };
+
+  const setActiveDescriptionValue = (nextText) => {
+    const item = descriptionItems[activeDescriptionIndex];
+    if (!item) return;
+
+    if (item.kind === "union") {
+      setUnionDescription(nextText);
+    } else {
+      setValueDescriptions((prev) => ({ ...prev, [item.id]: nextText }));
+    }
+  };
+
+  const goPrevDescription = () => {
+    setActiveDescriptionIndex((i) => Math.max(0, i - 1));
+  };
+
+  const goNextDescription = () => {
+    setActiveDescriptionIndex((i) => Math.min(descriptionItems.length - 1, i + 1));
+  };
+
 
   const containerRef = useRef(null);
   const resizingRef = useRef(false);
@@ -379,6 +422,18 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
 
   return (
     <div className={ColumnMappingStyles.mappingSection} ref={containerRef}>
+
+      <DescriptionModal
+        isOpen={isDescriptionOpen}
+        closeModal={closeDescriptionModal}
+        items={descriptionItems}
+        activeIndex={activeDescriptionIndex}
+        value={getActiveDescriptionValue()}
+        onChange={setActiveDescriptionValue}
+        onPrev={goPrevDescription}
+        onNext={goNextDescription}
+      />
+
       <div
         className={ColumnMappingStyles.dropArea}
         style={{ height: dropAreaHeight }}
@@ -483,7 +538,23 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
             suggestions={unionTerminologySuggestionLabels}
           />
 
-          <button type="button" className={ColumnMappingStyles.descriptionButton}>
+          <button
+            type="button"
+            className={ColumnMappingStyles.descriptionButton}
+            onClick={() => {
+              const items = [
+                { kind: "union", label: unionName, index: 0 },
+                ...customValues.map((cv, i) => ({
+                  kind: "value",
+                  id: cv.id,
+                  label: cv.name,
+                  index: i,
+                })),
+              ];
+              setDescriptionItems(items);
+              openDescriptionModalAt(0);
+            }}
+          >
             <span className={ColumnMappingStyles.buttonText}>Description</span>
             <span className={ColumnMappingStyles.iconWrapper}>
               <DescriptionIcon fontSize="inherit" className={ColumnMappingStyles.buttonIcon} />
@@ -620,7 +691,26 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
                       suggestions={valueTerminologySuggestionLabelsFor(customValue.id)}
                     />
 
-                    <button type="button" className={ColumnMappingStyles.descriptionButton}>
+                    <button
+                      type="button"
+                      className={ColumnMappingStyles.descriptionButton}
+                      onClick={() => {
+                        const items = [
+                          { kind: "union", label: unionName, index: 0 },
+                          ...customValues.map((cv, i) => ({
+                            kind: "value",
+                            id: cv.id,
+                            label: cv.name,
+                            index: i,
+                          })),
+                        ];
+                        setDescriptionItems(items);
+
+                        // +1 because union is at index 0
+                        openDescriptionModalAt(index + 1);
+                      }}
+                    >
+
                       <span className={ColumnMappingStyles.buttonText}>Description</span>
                       <span className={ColumnMappingStyles.iconWrapper}>
                         <DescriptionIcon fontSize="inherit" className={ColumnMappingStyles.buttonIcon} />
