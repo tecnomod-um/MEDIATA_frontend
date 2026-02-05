@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import ColumnMappingStyles from "./columnMapping.module.css";
 import Switch from "react-switch";
+import DescriptionModal from "../DescriptionModal/descriptionModal.js";
 import TooltipPopup from "../../Common/TooltipPopup/tooltipPopup.js";
 import AddIcon from "@mui/icons-material/Add";
 import SaveIcon from "@mui/icons-material/Save";
@@ -15,7 +16,7 @@ import { fetchSuggestions } from "../../../util/petitionHandler";
 import debounce from "lodash/debounce";
 
 // Main control area for defining mappings in data integration
-function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
+function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft }) {
   const [unionName, setUnionName] = useState("");
   const [unionTerminology, setUnionTerminology] = useState("");
 
@@ -30,6 +31,9 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
   const [isTooltipShown, setTooltipShown] = useState(false);
   const [tooltipRef, setTooltipRef] = useState(null);
   const [dropAreaHeight, setDropAreaHeight] = useState(200);
+  const saveButtonRef = useRef(null);
+  const [saveTooltipShown, setSaveTooltipShown] = useState(false);
+  const [saveTooltipMessage, setSaveTooltipMessage] = useState("");
 
   const [snomedUnionTerminologySuggestions, setSnomedUnionTerminologySuggestions] = useState([]);
   const [snomedValueTerminologySuggestions, setSnomedValueTerminologySuggestions] = useState({});
@@ -38,6 +42,64 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
   const headerTooltipButtonRef = useRef(null);
 
   const getGroupKey = (g) => `${g.nodeId}::${g.fileName}::${g.column}`;
+
+
+  const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
+  const [descriptionItems, setDescriptionItems] = useState([]);
+  const [activeDescriptionIndex, setActiveDescriptionIndex] = useState(0);
+
+  const [unionDescription, setUnionDescription] = useState("");
+  const [valueDescriptions, setValueDescriptions] = useState({}); // { [customValueId]: string }
+
+  const openDescriptionModalAt = (index) => {
+    setActiveDescriptionIndex(index);
+    setIsDescriptionOpen(true);
+  };
+
+  const closeDescriptionModal = () => setIsDescriptionOpen(false);
+
+  useEffect(() => {
+    if (!loadedDraft) return;
+
+    setUnionName(loadedDraft.unionName || "");
+    setUnionTerminology(loadedDraft.unionTerminology || "");
+    setUnionDescription(loadedDraft.unionDescription || "");
+    setUseHotOneMapping(!!loadedDraft.useHotOneMapping);
+    setRemoveFromHierarchy(!!loadedDraft.removeFromHierarchy);
+    setValueDescriptions(loadedDraft.valueDescriptions || {});
+    onMappingChange?.(loadedDraft.groups || []);
+    setCustomValues(loadedDraft.customValues || []);
+    buttonRefs.current = (loadedDraft.customValues || []).map(() => React.createRef());
+    setIsPaneVisible(false);
+    setCurrentGroupIndex(null);
+  }, [loadedDraft, onMappingChange]);
+
+  const getActiveDescriptionValue = () => {
+    const item = descriptionItems[activeDescriptionIndex];
+    if (!item) return "";
+    if (item.kind === "union") return unionDescription || "";
+    return valueDescriptions[item.id] || "";
+  };
+
+  const setActiveDescriptionValue = (nextText) => {
+    const item = descriptionItems[activeDescriptionIndex];
+    if (!item) return;
+
+    if (item.kind === "union") {
+      setUnionDescription(nextText);
+    } else {
+      setValueDescriptions((prev) => ({ ...prev, [item.id]: nextText }));
+    }
+  };
+
+  const goPrevDescription = () => {
+    setActiveDescriptionIndex((i) => Math.max(0, i - 1));
+  };
+
+  const goNextDescription = () => {
+    setActiveDescriptionIndex((i) => Math.min(descriptionItems.length - 1, i + 1));
+  };
+
 
   const containerRef = useRef(null);
   const resizingRef = useRef(false);
@@ -230,12 +292,49 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
     onMappingChange(newGroups);
   };
 
-  const saveMapping = () => {
-    const cleanedCustomValues = customValues.map(({ snomedTerm, ...rest }) => rest);
+  const getSaveValidationError = () => {
+    if (unionName.trim().length === 0) return "Please set a new column name.";
+    if (customValues.length === 0) return "Please add at least one value.";
+    const unnamedIndex = customValues.findIndex((cv) => cv.name.trim().length === 0);
+    if (unnamedIndex !== -1) return `Value #${unnamedIndex + 1} has no contents.`;
 
-    onSave(groups, unionName, cleanedCustomValues, removeFromHierarchy, useHotOneMapping);
+    const unmappedIndex = customValues.findIndex((cv) => !cv.mapping || cv.mapping.length === 0);
+    if (unmappedIndex !== -1) {
+      const cv = customValues[unmappedIndex];
+      const label = cv?.name?.trim() ? `"${cv.name.trim()}"` : `#${unmappedIndex + 1}`;
+      return `Value ${label} has no mappings. Add at least one mapping or remove the value.`;
+    }
+
+    return "";
+  };
+
+  const saveMapping = () => {
+    const err = getSaveValidationError();
+    if (err) {
+      triggerSaveTooltip(err);
+      return;
+    }
+
+    const cleanedCustomValues = customValues.map(({ id, snomedTerm, name, mapping }) => ({
+      id,
+      name,
+      mapping,
+
+      terminology: snomedTerm || "",
+      description: valueDescriptions[id] || "",
+    }));
+
+    const unionMeta = {
+      terminology: unionTerminology || "",
+      description: unionDescription || "",
+    };
+
+    onSave(groups, unionName, cleanedCustomValues, removeFromHierarchy, useHotOneMapping, unionMeta);
+    setSaveTooltipShown(false);
     setUnionName("");
     setUnionTerminology("");
+    setUnionDescription("");
+    setValueDescriptions({});
     setCustomValues([]);
     setUseHotOneMapping(false);
   };
@@ -245,6 +344,12 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
     setTooltipMessage(message);
     setTooltipShown(false);
     setTimeout(() => setTooltipShown(true), 10);
+  };
+
+  const triggerSaveTooltip = (message) => {
+    setSaveTooltipMessage(message);
+    setSaveTooltipShown(false);
+    setTimeout(() => setSaveTooltipShown(true), 10);
   };
 
   const getAvailableValues = (group) => {
@@ -272,7 +377,8 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
     const hasValidName = unionName.trim().length > 0;
     const hasAtLeastOneValue = customValues.length > 0;
     const allValuesNamed = hasAtLeastOneValue && customValues.every((cv) => cv.name.trim().length > 0);
-    return !(hasValidName && hasAtLeastOneValue && allValuesNamed);
+    const allValuesMapped = hasAtLeastOneValue && customValues.every((cv) => (cv.mapping?.length ?? 0) > 0);
+    return !(hasValidName && hasAtLeastOneValue && allValuesNamed && allValuesMapped);
   };
 
   const extractMinMax = (values, type) => {
@@ -379,6 +485,18 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
 
   return (
     <div className={ColumnMappingStyles.mappingSection} ref={containerRef}>
+
+      <DescriptionModal
+        isOpen={isDescriptionOpen}
+        closeModal={closeDescriptionModal}
+        items={descriptionItems}
+        activeIndex={activeDescriptionIndex}
+        value={getActiveDescriptionValue()}
+        onChange={setActiveDescriptionValue}
+        onPrev={goPrevDescription}
+        onNext={goNextDescription}
+      />
+
       <div
         className={ColumnMappingStyles.dropArea}
         style={{ height: dropAreaHeight }}
@@ -483,7 +601,23 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
             suggestions={unionTerminologySuggestionLabels}
           />
 
-          <button type="button" className={ColumnMappingStyles.descriptionButton}>
+          <button
+            type="button"
+            className={ColumnMappingStyles.descriptionButton}
+            onClick={() => {
+              const items = [
+                { kind: "union", label: unionName, index: 0 },
+                ...customValues.map((cv, i) => ({
+                  kind: "value",
+                  id: cv.id,
+                  label: cv.name,
+                  index: i,
+                })),
+              ];
+              setDescriptionItems(items);
+              openDescriptionModalAt(0);
+            }}
+          >
             <span className={ColumnMappingStyles.buttonText}>Description</span>
             <span className={ColumnMappingStyles.iconWrapper}>
               <DescriptionIcon fontSize="inherit" className={ColumnMappingStyles.buttonIcon} />
@@ -620,7 +754,26 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
                       suggestions={valueTerminologySuggestionLabelsFor(customValue.id)}
                     />
 
-                    <button type="button" className={ColumnMappingStyles.descriptionButton}>
+                    <button
+                      type="button"
+                      className={ColumnMappingStyles.descriptionButton}
+                      onClick={() => {
+                        const items = [
+                          { kind: "union", label: unionName, index: 0 },
+                          ...customValues.map((cv, i) => ({
+                            kind: "value",
+                            id: cv.id,
+                            label: cv.name,
+                            index: i,
+                          })),
+                        ];
+                        setDescriptionItems(items);
+
+                        // +1 because union is at index 0
+                        openDescriptionModalAt(index + 1);
+                      }}
+                    >
+
                       <span className={ColumnMappingStyles.buttonText}>Description</span>
                       <span className={ColumnMappingStyles.iconWrapper}>
                         <DescriptionIcon fontSize="inherit" className={ColumnMappingStyles.buttonIcon} />
@@ -738,15 +891,24 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
 
           <button
             onClick={saveMapping}
-            className={ColumnMappingStyles.saveButton}
-            disabled={isSaveDisabled()}
+            className={`${ColumnMappingStyles.saveButton} ${isSaveDisabled() ? ColumnMappingStyles.saveButtonDisabled : ""}`}
+            aria-disabled={isSaveDisabled()}
             title="Save Mapping"
+            ref={saveButtonRef}
+            type="button"
           >
             <span className={ColumnMappingStyles.buttonText}>Save</span>
             <span className={ColumnMappingStyles.iconWrapper}>
               <SaveIcon fontSize="inherit" className={ColumnMappingStyles.buttonIcon} />
             </span>
           </button>
+          {saveTooltipShown && saveButtonRef.current && (
+            <TooltipPopup
+              message={saveTooltipMessage}
+              buttonRef={saveButtonRef}
+              onClose={() => setSaveTooltipShown(false)}
+            />
+          )}
         </div>
       </div>
     </div>

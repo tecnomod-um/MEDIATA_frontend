@@ -220,8 +220,13 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .noFiles {
@@ -556,11 +561,14 @@
 
 .loadingState {
   display: flex;
+  flex-direction: row;
+  justify-content: center;
   align-items: center;
   gap: 12px;
   padding: 18px;
   color: var(--text-color-secondary);
   background: var(--project-row-bg);
+  width: 100%;
 }
 
 .spinner {
