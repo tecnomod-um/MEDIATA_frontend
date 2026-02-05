@@ -68,7 +68,11 @@ function DescriptionModal({
   }, [isOpen, closeModal, canPrev, canNext, onPrev, onNext]);
 
   return (
-    <OverlayWrapper isOpen={isOpen} closeModal={closeModal}>
+    <OverlayWrapper
+      isOpen={isOpen}
+      closeModal={closeModal}
+      modalClassName={Styles.overlayModal}
+    >
       <div className={Styles.descriptionModal}>
         <header className={Styles.modalHeader}>
           <h3 className={Styles.title}>
