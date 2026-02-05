@@ -51,7 +51,7 @@ const makeProps = () => {
 
 describe('<MappingHierarchy />', () => {
   it('renders column heading and file-name', () => {
-    render(<MappingHierarchy {...makeProps()} />);
+    render(<MappingHierarchy {...makeProps()} autoOpen={true} />);
 
     expect(screen.getByText('TargetCol')).toBeInTheDocument();
     expect(screen.getByText(/file\.csv/i)).toBeInTheDocument();
@@ -73,7 +73,7 @@ describe('<MappingHierarchy />', () => {
 
   it('allows editing a value name and propagates via onUpdateMapping', () => {
     const props = makeProps();
-    render(<MappingHierarchy {...props} />);
+    render(<MappingHierarchy {...props} autoOpen={true} />);
     const val1 = screen.getByText('Val1');
     fireEvent.doubleClick(val1);
 
@@ -90,7 +90,7 @@ describe('<MappingHierarchy />', () => {
 
   it('allows renaming the column title', () => {
     const props = makeProps();
-    render(<MappingHierarchy {...props} />);
+    render(<MappingHierarchy {...props} autoOpen={true} />);
 
     const header = screen.getByText('TargetCol');
     fireEvent.doubleClick(header);
