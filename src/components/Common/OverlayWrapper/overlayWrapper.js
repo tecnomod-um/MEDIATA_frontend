@@ -4,7 +4,7 @@ import { CSSTransition } from "react-transition-group";
 import OverlayWrapperStyles from "./overlayWrapper.module.css";
 
 // Modal overlay wrapper used through the app
-function OverlayWrapper({ isOpen, children, closeModal, maxWidth }) {
+function OverlayWrapper({ isOpen, children, closeModal, maxWidth, modalClassName = "" }) {
 
   const modalRef = useRef(null);
   const [mouseDownOnBackdrop, setMouseDownOnBackdrop] = useState(false);
@@ -39,7 +39,7 @@ function OverlayWrapper({ isOpen, children, closeModal, maxWidth }) {
         onMouseDown={handleBackdropMouseDown}
         onMouseUp={handleBackdropMouseUp}
         ref={modalRef}>
-        <div className={OverlayWrapperStyles.modal}
+        <div className={`${OverlayWrapperStyles.modal} ${modalClassName}`.trim()}
           style={{ maxWidth: maxWidth }}
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}>

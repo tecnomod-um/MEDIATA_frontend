@@ -25,11 +25,11 @@
   --text-color-primary-light: #333;
   --text-color-secondary-light: #555;
   --text-color-tertiary-light: #666;
-  --text-color-muted-light: #707070; /* Fixed from #777 for WCAG AA compliance (4.53:1) */
+  --text-color-muted-light: #707070;
   --text-color-disabled-light: #999;
   --text-color-on-darkbg-light: #fff;
   --text-color-dark-light: #222;
-  --heading-color-light: #06202a; /* Darker blue for headings, similar to theme blue */
+  --heading-color-light: #06202a;
 
   /* Button Colors */
   --button-color-light: #08242c;
@@ -130,13 +130,13 @@
   --project-thumb-size: 90px;
 
   /* Font Sizes */
-  --font-size-xs: 0.75rem;   
-  --font-size-sm: 0.875rem;  
-  --font-size-base: 1rem;    
-  --font-size-md: 1.125rem; 
-  --font-size-lg: 1.25rem;     
-  --font-size-xl: 1.5rem;  
-  --font-size-2xl: 2rem;    
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-md: 1.125rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.5rem;
+  --font-size-2xl: 2rem;
 
   /* Transitions & Animations */
   --transition-duration: 600ms;
@@ -144,6 +144,34 @@
   --transition-duration-slow: 500ms;
   --transition-ease: cubic-bezier(0.25, 0.8, 0.25, 1);
 
+  /* Spinner Variables */
+  /* Sizes */
+  --spinner-size-xs: 14px;
+  --spinner-size-sm: 16px;
+  --spinner-size-md: 24px;
+  --spinner-size-lg: 36px;
+  --spinner-size-xl: 64px;
+  
+  /* Border widths */
+  --spinner-border-width-sm: 2px;
+  --spinner-border-width-md: 3px;
+  --spinner-border-width-lg: 4px;
+  --spinner-border-width-xl: 8px;
+  
+  /* Animation durations */
+  --spinner-duration-fast: 0.8s;
+  --spinner-duration-normal: 1s;
+  --spinner-duration-slow: 1.2s;
+  
+  /* Accent color for spinner highlights */
+  --spinner-accent-color: #AECCE4;
+  
+  /* Border colors - use theme-aware variables */
+  --spinner-border-base-light: rgba(255, 255, 255, 0.3);
+  --spinner-border-top-light: var(--text-color-on-darkbg-light);
+  --spinner-border-base-secondary-light: var(--border-color-secondary-light);
+  --spinner-border-top-secondary-light: var(--text-color-secondary-light);
+  
   /* Shadows */
   --box-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
   --box-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
@@ -178,7 +206,7 @@
   --text-color-disabled-dark: #666666;
   --text-color-on-darkbg-dark: #fff;
   --text-color-dark-dark: #f0f0f0;
-  --heading-color-dark: #3da8d8; 
+  --heading-color-dark: #3da8d8;
 
   /* Button Colors */
   --button-color-dark: #0a2e3a;
@@ -280,6 +308,12 @@
   --box-shadow-md-dark: 0 4px 8px rgba(0, 0, 0, 0.4);
   --box-shadow-lg-dark: 0 5px 15px rgba(0, 0, 0, 0.5);
   --box-shadow-xl-dark: 0 14px 40px rgba(0, 0, 0, 0.7);
+
+  /* Spinner Variables (dark theme) */
+  --spinner-border-base-dark: rgba(255, 255, 255, 0.15);
+  --spinner-border-top-dark: var(--text-color-on-darkbg-dark);
+  --spinner-border-base-secondary-dark: var(--border-color-secondary-dark);
+  --spinner-border-top-secondary-dark: var(--text-color-secondary-dark);
 
   /* ==================== ACTIVE THEME (defaults to light) ==================== */
   
@@ -387,6 +421,12 @@
   --box-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
   --box-shadow-lg: 0 5px 15px rgba(0, 0, 0, 0.2);
   --box-shadow-xl: 0 14px 40px rgba(0, 0, 0, 0.35);
+
+  /* Spinner Variables (active theme - defaults to light) */
+  --spinner-border-base: var(--spinner-border-base-light);
+  --spinner-border-top: var(--spinner-border-top-light);
+  --spinner-border-base-secondary: var(--spinner-border-base-secondary-light);
+  --spinner-border-top-secondary: var(--spinner-border-top-secondary-light);
 }
 
 /* Dark mode class */
@@ -517,4 +557,30 @@ body.dark-mode {
   --box-shadow-md: var(--box-shadow-md-dark);
   --box-shadow-lg: var(--box-shadow-lg-dark);
   --box-shadow-xl: var(--box-shadow-xl-dark);
+
+  /* Spinner Variables (dark mode) */
+  --spinner-border-base: var(--spinner-border-base-dark);
+  --spinner-border-top: var(--spinner-border-top-dark);
+  --spinner-border-base-secondary: var(--spinner-border-base-secondary-dark);
+  --spinner-border-top-secondary: var(--spinner-border-top-secondary-dark);
+}
+
+/* Standard spinner animation */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Reverse spinner animation */
+@keyframes spinReverse {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(-360deg);
+  }
 }

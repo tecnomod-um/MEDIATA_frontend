@@ -167,25 +167,20 @@
 }
 
 .loader {
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top: 3px solid #fff;
+  border: var(--spinner-border-width-md) solid var(--spinner-border-base);
+  border-top: var(--spinner-border-width-md) solid var(--spinner-border-top);
   border-radius: 50%;
   width: 1.2em;
   height: 1.2em;
-  animation: spin 1s linear infinite;
+  animation: spin var(--spinner-duration-normal) linear infinite;
   display: inline-block;
   vertical-align: middle;
   margin-top: -2px;
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 @media screen and (max-width: 768px) {

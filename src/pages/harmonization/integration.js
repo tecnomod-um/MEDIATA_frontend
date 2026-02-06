@@ -2,23 +2,27 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";
 import { ToastContainer, toast } from "react-toastify";
-import { getNodeElements, fetchElementFile, setParseConfigs, fetchSchemaFromBackend } from "../../util/petitionHandler";
+import {
+  getNodeElements,
+  fetchElementFile,
+  setParseConfigs,
+  fetchSchemaFromBackend,
+} from "../../util/petitionHandler";
 import { updateNodeAxiosBaseURL } from "../../util/nodeAxiosSetup";
 import { useNode } from "../../context/nodeContext";
 import IntegrationStyles from "./integration.module.css";
 import ColumnMapping from "../../components/Integration/ColumnMapping/columnMapping";
 import ColumnSearchList from "../../components/Integration/ColumnSearchList/columnSearchList";
 import FileMapperModal from "../../components/Integration/FileMapperModal/fileMapperModal";
-import FilePicker from "../../components/Common/FilePicker/filePicker";
 import FileExplorer from "../../components/Common/FileExplorer/fileExplorer";
 import SchemaTray from "../../components/Common/SchemaTray/schemaTray";
 import MappingsResult from "../../components/Integration/MappingsResult/mappingsResult";
 import { generateDistinctColors } from "../../util/colors";
 
-// Integration page for data mapping and harmonization
 function Integration() {
   const location = useLocation();
   const { selectedNodes } = useNode();
+
   const [elementFileList, setElementFileList] = useState([]);
   const [columnsData, setColumnsData] = useState([]);
   const [processingStatus, setProcessingStatus] = useState("idle");
@@ -29,6 +33,7 @@ function Integration() {
   const [schema, setSchema] = useState(null);
   const [schemaError, setSchemaError] = useState("");
   const [hasProcessedElementFiles, setHasProcessedElementFiles] = useState(false);
+  const [loadedDraft, setLoadedDraft] = useState(null);
 
   useEffect(() => {
     if (!selectedNodes || selectedNodes.length === 0) return;
@@ -54,13 +59,10 @@ function Integration() {
   }, [selectedNodes]);
 
   useEffect(() => {
-    if (processingStatus === "success")
-      toast.success("Files processed successfully.");
-    else if (processingStatus === "error")
-      toast.error("An error occurred during processing.");
+    if (processingStatus === "success") toast.success("Files processed successfully.");
+    else if (processingStatus === "error") toast.error("An error occurred during processing.");
   }, [processingStatus]);
 
-  // Simple CSV parser => array of { column, values }
   const parseCSV = (text) => {
     const lines = text.trim().split("\n");
     return lines.map((line) => {
@@ -69,7 +71,6 @@ function Integration() {
     });
   };
 
-  // Merge new columns data with existing columns
   const mergeColumnsData = useCallback((existingData, newData) => {
     const mergedData = [...existingData];
     newData.forEach((row) => {
@@ -86,7 +87,6 @@ function Integration() {
     return mergedData;
   }, []);
 
-  // Initialize mapping structure for each column in the newly loaded CSV file
   const initializeMappings = useCallback((data, fileName, nodeId) => {
     const newMapping = data.reduce((acc, column) => {
       const filteredValues = column.values.filter((value) => {
@@ -140,6 +140,7 @@ function Integration() {
           const filesForNode = selectedFilenamesMapping[node.nodeId] || [];
           filesForNode.forEach((f) => allSelectedFiles.push(f));
         });
+
         const fileColors = generateDistinctColors(allSelectedFiles.length);
         let colorIndex = 0;
 
@@ -168,7 +169,6 @@ function Integration() {
               mergedCols = mergeColumnsData(mergedCols, parsed);
               initializeMappings(parsed, filename, node.nodeId);
             });
-
           })
         );
 
@@ -179,12 +179,7 @@ function Integration() {
         setProcessingStatus("error");
       }
     },
-    [
-      columnsData,
-      selectedNodes,
-      mergeColumnsData,
-      initializeMappings
-    ]
+    [columnsData, selectedNodes, mergeColumnsData, initializeMappings]
   );
 
   useEffect(() => {
@@ -200,24 +195,22 @@ function Integration() {
     }
   }, [location.state, hasProcessedElementFiles, handleProcessSelectedElements]);
 
-  // Send mappings to the backend for processing
   const handleProcessMappings = async (selectedDatasets, currentMappings, cleanOpts) => {
     setProcessingStatus("processing");
 
     try {
       const nodeFileMappings = {};
-      // e.g. { "nodeA": { "Barthel.csv": ["dsA"], ... } }
 
       for (const fileName of Object.keys(selectedDatasets)) {
         const col = columnsData.find((c) => c.fileName === fileName);
         if (!col) continue;
 
         const nodeId = col.nodeId;
-        if (!nodeFileMappings[nodeId])
-          nodeFileMappings[nodeId] = {};
+        if (!nodeFileMappings[nodeId]) nodeFileMappings[nodeId] = {};
 
         nodeFileMappings[nodeId][fileName] = selectedDatasets[fileName];
       }
+
       for (const node of selectedNodes) {
         const fileMappingsForNode = nodeFileMappings[node.nodeId];
         if (!fileMappingsForNode) continue;
@@ -226,11 +219,13 @@ function Integration() {
         const payload = {
           fileMappings: JSON.stringify(fileMappingsForNode),
           configs: JSON.stringify(currentMappings),
-          cleaningOptions: cleanOpts
+          cleaningOptions: cleanOpts,
         };
+
         console.log("[handleProcessMappings] payload for node", node.nodeId, payload);
         await setParseConfigs(payload);
       }
+
       setProcessingStatus("success");
       return "All parse requests done";
     } catch (error) {
@@ -241,18 +236,48 @@ function Integration() {
   };
 
   const handleMappingChange = (newGroups) => {
+    setLoadedDraft(null);
     setTemporaryGroups(newGroups);
   };
 
-  const handleSaveMappings = (groups, unionName, customValues, removeFromHierarchy, isOneHotMapping) => {
+  const mappingKeyExists = useCallback(
+    (key) => mappings.some((obj) => Object.prototype.hasOwnProperty.call(obj, key)),
+    [mappings]
+  );
+
+  const oneHotAnyExists = useCallback(
+    (unionName, customValues) => customValues.some((cv) => mappingKeyExists(`${unionName}_${cv.name}`)),
+    [mappingKeyExists]
+  );
+
+  const handleSaveMappings = (groups, unionName, customValues, removeFromHierarchy, isOneHotMapping, unionMeta) => {
+    const norm = (s) => String(s ?? "").trim();
+
+    const normalizedUnion = norm(unionName);
+    const normalizedCustomValues = (customValues || []).map((cv) => ({ ...cv, name: norm(cv.name) }));
+
+    if (isOneHotMapping) {
+      if (oneHotAnyExists(normalizedUnion, normalizedCustomValues)) {
+        toast.error("Mapping already exists in the hierarchy.");
+        return;
+      }
+    } else {
+      if (mappingKeyExists(normalizedUnion)) {
+        toast.error("Mapping already exists in the hierarchy.");
+        return;
+      }
+    }
+
     if (isOneHotMapping) {
       const newMappings = {};
-      customValues.forEach((cv) => {
-        const columnName = `${unionName}_${cv.name}`;
+      normalizedCustomValues.forEach((cv) => {
+        const columnName = `${normalizedUnion}_${cv.name}`;
         newMappings[columnName] = {
           mappingType: "one-hot",
           fileName: "custom_mapping",
           columns: groups.map((g) => g.column),
+          terminology: unionMeta?.terminology || "",
+          description: unionMeta?.description || "",
           groups: [
             {
               column: columnName,
@@ -260,6 +285,8 @@ function Integration() {
                 {
                   name: "1",
                   mapping: cv.mapping,
+                  terminology: cv.terminology || "",
+                  description: cv.description || "",
                 },
                 {
                   name: "0",
@@ -285,32 +312,38 @@ function Integration() {
       }
     } else {
       const mergedValues =
-        customValues.length > 0
-          ? customValues
+        normalizedCustomValues.length > 0
+          ? normalizedCustomValues
           : groups.flatMap((g) =>
-            g.values.map((val) => ({
-              name: val,
-              mapping: [
-                {
-                  groupKey: `${g.nodeId}::${g.fileName}::${g.column}`,
-                  groupColumn: g.column,
-                  fileName: g.fileName,
-                  nodeId: g.nodeId,
-                  value: val,
-                },
-              ],
-            }))
-          );
+              g.values.map((val) => ({
+                name: val,
+                mapping: [
+                  {
+                    groupKey: `${g.nodeId}::${g.fileName}::${g.column}`,
+                    groupColumn: g.column,
+                    fileName: g.fileName,
+                    nodeId: g.nodeId,
+                    value: val,
+                  },
+                ],
+              }))
+            );
 
       const newMapping = {
-        [unionName]: {
+        [normalizedUnion]: {
           mappingType: "standard",
           fileName: "custom_mapping",
           columns: groups.map((g) => g.column),
+          terminology: unionMeta?.terminology || "",
+          description: unionMeta?.description || "",
           groups: [
             {
-              column: unionName,
-              values: mergedValues,
+              column: normalizedUnion,
+              values: mergedValues.map((v) => ({
+                ...v,
+                terminology: v.terminology || "",
+                description: v.description || "",
+              })),
             },
           ],
         },
@@ -329,7 +362,9 @@ function Integration() {
         setMappings((prev) => [...prev, newMapping]);
       }
     }
+
     setTemporaryGroups([]);
+    setLoadedDraft(null);
   };
 
   const handleDeleteMapping = (mappingIndex, mappingKey) => {
@@ -358,9 +393,7 @@ function Integration() {
       const { index, key, mapping } = lastDeletedItem;
 
       const updatedMappings = mappings.map((mappingObj, idx) => {
-        if (idx === index) {
-          return { ...mappingObj, [key]: mapping };
-        }
+        if (idx === index) return { ...mappingObj, [key]: mapping };
         return mappingObj;
       });
 
@@ -372,9 +405,7 @@ function Integration() {
   const formatValue = (value, type) => {
     if (type === "date") {
       const date = new Date(value);
-      return date instanceof Date && !isNaN(date)
-        ? date.toISOString().split("T")[0]
-        : "";
+      return date instanceof Date && !isNaN(date) ? date.toISOString().split("T")[0] : "";
     }
     return value !== undefined && value !== null ? value.toString() : "";
   };
@@ -383,9 +414,7 @@ function Integration() {
     (async function loadSchema() {
       try {
         const result = await fetchSchemaFromBackend();
-        if (result && result.schema) {
-          setSchema(result.schema);
-        }
+        if (result && result.schema) setSchema(result.schema);
       } catch (err) {
         console.error("Failed to fetch schema from backend in Mappings:", err);
       }
@@ -396,37 +425,140 @@ function Integration() {
     setSchema(null);
   };
 
-// same preselect shape used in Discovery
-let preSelected = {};
-if (location.state?.elementFiles?.length) {
-  location.state.elementFiles.forEach(({ nodeId, fileName }) => {
-    if (!preSelected[nodeId]) preSelected[nodeId] = [];
-    preSelected[nodeId].push(fileName);
-  });
-}
+  let preSelected = {};
+  if (location.state?.elementFiles?.length) {
+    location.state.elementFiles.forEach(({ nodeId, fileName }) => {
+      if (!preSelected[nodeId]) preSelected[nodeId] = [];
+      preSelected[nodeId].push(fileName);
+    });
+  }
 
-// FileExplorer callback -> normalize selection -> call your existing processor
-const handleFilesOpened = useCallback(
-  (payload) => {
-    // Support either shape:
-    // A) { [nodeId]: [fileName,...] }
-    // B) [ { nodeId, fileName }, ... ]
-    let nodeMapping = {};
+  const handleFilesOpened = useCallback(
+    (payload) => {
+      let nodeMapping = {};
 
-    if (Array.isArray(payload)) {
-      payload.forEach(({ nodeId, fileName }) => {
-        if (!nodeMapping[nodeId]) nodeMapping[nodeId] = [];
-        nodeMapping[nodeId].push(fileName);
+      if (Array.isArray(payload)) {
+        payload.forEach(({ nodeId, fileName }) => {
+          if (!nodeMapping[nodeId]) nodeMapping[nodeId] = [];
+          nodeMapping[nodeId].push(fileName);
+        });
+      } else if (payload && typeof payload === "object") {
+        nodeMapping = payload;
+      }
+
+      handleProcessSelectedElements(nodeMapping);
+    },
+    [handleProcessSelectedElements]
+  );
+
+  const buildGroupsFromMapping = useCallback((mapping, columnsData) => {
+    const refs = new Map();
+
+    (mapping?.groups || []).forEach((g) => {
+      (g?.values || []).forEach((v) => {
+        (v?.mapping || []).forEach((m) => {
+          const key = `${m.nodeId}::${m.fileName}::${m.groupColumn}`;
+          refs.set(key, { nodeId: m.nodeId, fileName: m.fileName, column: m.groupColumn });
+        });
       });
-    } else if (payload && typeof payload === "object") {
-      nodeMapping = payload;
+    });
+
+    const groups = [];
+    for (const ref of refs.values()) {
+      const col = columnsData.find(
+        (c) => c.nodeId === ref.nodeId && c.fileName === ref.fileName && c.column === ref.column
+      );
+      if (col) groups.push(col);
     }
+    return groups;
+  }, []);
 
-    handleProcessSelectedElements(nodeMapping);
-  },
-  [handleProcessSelectedElements]
-);
+  const makeId = () => crypto?.randomUUID?.() ?? `${Date.now()}_${Math.random()}`;
 
+  const buildStandardDraft = useCallback(
+    (mappingKey, mapping, columnsData) => {
+      const values = mapping?.groups?.[0]?.values || [];
+
+      const customValues = values.map((v) => ({
+        id: makeId(),
+        name: v?.name || "",
+        snomedTerm: v?.terminology || "",
+        mapping: v?.mapping || [],
+      }));
+
+      const valueDescriptions = {};
+      customValues.forEach((cv, i) => {
+        valueDescriptions[cv.id] = values[i]?.description || "";
+      });
+
+      return {
+        groups: buildGroupsFromMapping(mapping, columnsData),
+        unionName: mappingKey,
+        unionTerminology: mapping?.terminology || "",
+        unionDescription: mapping?.description || "",
+        useHotOneMapping: false,
+        removeFromHierarchy: false,
+        customValues,
+        valueDescriptions,
+      };
+    },
+    [buildGroupsFromMapping]
+  );
+
+  const collectOneHotFamily = useCallback((mappings, base) => {
+    const found = [];
+    mappings.forEach((obj) => {
+      Object.entries(obj).forEach(([k, m]) => {
+        if (m?.mappingType === "one-hot" && k.startsWith(base + "_")) {
+          found.push({ key: k, mapping: m });
+        }
+      });
+    });
+    found.sort((a, b) => a.key.localeCompare(b.key));
+    return found;
+  }, []);
+
+  const buildOneHotDraft = useCallback(
+    (selectedKey, mappings, columnsData) => {
+      const base = selectedKey.slice(0, selectedKey.lastIndexOf("_"));
+      if (!base) return null;
+
+      const family = collectOneHotFamily(mappings, base);
+      if (!family.length) return null;
+
+      const first = family[0].mapping;
+
+      const customValues = [];
+      const valueDescriptions = {};
+
+      family.forEach(({ key, mapping }) => {
+        const suffix = key.slice(base.length + 1);
+        const ones = mapping?.groups?.[0]?.values?.find((v) => v.name === "1");
+        const id = makeId();
+
+        customValues.push({
+          id,
+          name: suffix,
+          snomedTerm: ones?.terminology || "",
+          mapping: ones?.mapping || [],
+        });
+
+        valueDescriptions[id] = ones?.description || "";
+      });
+
+      return {
+        groups: buildGroupsFromMapping(first, columnsData),
+        unionName: base,
+        unionTerminology: first?.terminology || "",
+        unionDescription: first?.description || "",
+        useHotOneMapping: true,
+        removeFromHierarchy: false,
+        customValues,
+        valueDescriptions,
+      };
+    },
+    [buildGroupsFromMapping, collectOneHotFamily]
+  );
 
   return (
     <div className={IntegrationStyles.pageContainer}>
@@ -438,14 +570,7 @@ const handleFilesOpened = useCallback(
         nodes={selectedNodes}
         onSend={handleProcessMappings}
       />
-      {/*!columnsData.length && (
-        <FilePicker
-          files={elementFileList}
-          onFilesSelected={handleProcessSelectedElements}
-          isProcessing={processingStatus === "processing"}
-          modalTitle="Select dataset elements to map"
-        />
-      )*/}
+
       {!columnsData.length && (
         <FileExplorer
           nodes={selectedNodes}
@@ -456,6 +581,7 @@ const handleFilesOpened = useCallback(
           onFilesOpened={handleFilesOpened}
         />
       )}
+
       <div className={IntegrationStyles.mappingContainer}>
         <CSSTransition
           in={!!columnsData.length}
@@ -473,15 +599,10 @@ const handleFilesOpened = useCallback(
               columnsData={columnsData}
               handleColumnClick={(col) => {
                 const alreadyExists = temporaryGroups.some(
-                  (g) =>
-                    g.column === col.column &&
-                    g.fileName === col.fileName &&
-                    g.nodeId === col.nodeId
+                  (g) => g.column === col.column && g.fileName === col.fileName && g.nodeId === col.nodeId
                 );
-                if (!alreadyExists)
-                  setTemporaryGroups([...temporaryGroups, col]);
+                if (!alreadyExists) setTemporaryGroups([...temporaryGroups, col]);
               }}
-
               handleDragStart={(e, column) => {
                 e.dataTransfer.setData("column", JSON.stringify(column));
               }}
@@ -506,6 +627,7 @@ const handleFilesOpened = useCallback(
             groups={temporaryGroups}
             onSave={handleSaveMappings}
             schema={schema}
+            loadedDraft={loadedDraft}
           />
         </CSSTransition>
 
@@ -530,6 +652,17 @@ const handleFilesOpened = useCallback(
             onOpenFileMapper={() => setIsFileMapperOpen(true)}
             formatValue={formatValue}
             setMappings={setMappings}
+            onSelectMapping={(mappingIndex, mappingKey) => {
+              const mapping = mappings[mappingIndex]?.[mappingKey];
+              if (!mapping) return;
+
+              const draft =
+                mapping.mappingType === "one-hot"
+                  ? buildOneHotDraft(mappingKey, mappings, columnsData)
+                  : buildStandardDraft(mappingKey, mapping, columnsData);
+
+              if (draft) setLoadedDraft(draft);
+            }}
           />
         </CSSTransition>
       </div>
@@ -545,6 +678,7 @@ const handleFilesOpened = useCallback(
           nodesFetched
         />
       )}
+
       <ToastContainer
         autoClose={2000}
         hideProgressBar={true}
