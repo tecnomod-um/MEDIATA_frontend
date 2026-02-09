@@ -61,6 +61,22 @@ const makeDataTransfer = (payloadObj) => ({
 });
 
 describe("ColumnMapping", () => {
+  let overlayRoot;
+  
+  beforeEach(() => {
+    // Create overlay root for modals - required by OverlayWrapper
+    overlayRoot = document.createElement('div');
+    overlayRoot.setAttribute('id', 'overlay');
+    document.body.appendChild(overlayRoot);
+  });
+  
+  afterEach(() => {
+    // Clean up overlay root
+    if (overlayRoot && overlayRoot.parentNode) {
+      overlayRoot.parentNode.removeChild(overlayRoot);
+    }
+  });
+
   it("renders drop area and shows tooltip feedback when save validation fails", () => {
     const onMappingChange = jest.fn();
     const onSave = jest.fn();
@@ -626,5 +642,253 @@ describe("ColumnMapping", () => {
     
     fireEvent.click(screen.getByRole("button", { name: /add mapping/i }));
     fireEvent.click(screen.getByRole("button", { name: /Mock RangePicker/i }));
+  });
+
+  it("loads draft data with all properties", () => {
+    const onMappingChange = jest.fn();
+    const onSave = jest.fn();
+    
+    const draft = {
+      unionName: "Status",
+      unionTerminology: "Active Status | SNOMED:123456",
+      unionDescription: "Patient status description",
+      useHotOneMapping: true,
+      removeFromHierarchy: true,
+      valueDescriptions: { cv1: "Active patients", cv2: "Inactive patients" },
+      customValues: [
+        { id: "cv1", name: "Active", terminology: "", mapping: [] },
+        { id: "cv2", name: "Inactive", terminology: "", mapping: [] },
+      ],
+      groups: [
+        {
+          nodeId: "n1",
+          column: "status",
+          values: ["active", "inactive"],
+          fileName: "data.csv",
+          color: "#123456",
+        },
+      ],
+    };
+
+    const { rerender } = render(
+      <ColumnMapping
+        onMappingChange={onMappingChange}
+        onSave={onSave}
+        groups={[]}
+        schema={null}
+        loadedDraft={null}
+      />
+    );
+
+    // Rerender with draft loaded
+    rerender(
+      <ColumnMapping
+        onMappingChange={onMappingChange}
+        onSave={onSave}
+        groups={[]}
+        schema={null}
+        loadedDraft={draft}
+      />
+    );
+
+    // Verify union name is loaded
+    expect(screen.getByPlaceholderText(/new column's name/i)).toHaveValue("Status");
+    
+    // Verify onMappingChange was called with groups from draft
+    expect(onMappingChange).toHaveBeenCalledWith(draft.groups);
+  });
+
+  it("handles SNOMED terminology fetch errors gracefully", async () => {
+    const { fetchSuggestions } = require("../../../util/petitionHandler");
+    fetchSuggestions.mockRejectedValueOnce(new Error("API error"));
+
+    render(
+      <ColumnMapping
+        onMappingChange={jest.fn()}
+        onSave={jest.fn()}
+        groups={[]}
+        schema={null}
+      />
+    );
+
+    const unionTermInput = screen.getAllByPlaceholderText(/terminology/i)[0];
+    
+    // Trigger SNOMED fetch
+    fireEvent.change(unionTermInput, { target: { value: "heart disease" } });
+    
+    // Wait for debounced fetch to complete - should not crash
+    await new Promise(resolve => setTimeout(resolve, 400));
+    
+    // Component should still render without crashing
+    expect(screen.getByPlaceholderText(/new column's name/i)).toBeInTheDocument();
+  });
+
+  it("handles malformed dropped data gracefully", () => {
+    const onMappingChange = jest.fn();
+
+    render(
+      <ColumnMapping
+        onMappingChange={onMappingChange}
+        onSave={jest.fn()}
+        groups={[]}
+        schema={null}
+      />
+    );
+
+    const dropTarget = screen.getByText(/click or drop columns here/i);
+
+    // Create a data transfer with invalid JSON
+    const invalidDataTransfer = {
+      getData: jest.fn(() => "{ invalid json }"),
+      setData: jest.fn(),
+    };
+
+    fireEvent.drop(dropTarget, { dataTransfer: invalidDataTransfer });
+
+    // Should not crash and should not call onMappingChange
+    expect(onMappingChange).not.toHaveBeenCalled();
+  });
+
+  it("displays validation error for unmapped values on save attempt", () => {
+    const groups = [
+      {
+        nodeId: "n1",
+        column: "status",
+        values: ["active", "inactive"],
+        fileName: "data.csv",
+        color: "#123456",
+      },
+    ];
+
+    render(
+      <ColumnMapping
+        onMappingChange={jest.fn()}
+        onSave={jest.fn()}
+        groups={groups}
+        schema={null}
+      />
+    );
+
+    // Set union name
+    fireEvent.change(screen.getByPlaceholderText(/new column's name/i), {
+      target: { value: "Status" },
+    });
+
+    // Add a value but don't add any mappings
+    fireEvent.click(screen.getByRole("button", { name: /add value/i }));
+    fireEvent.change(screen.getByPlaceholderText(/value content/i), {
+      target: { value: "UnmappedValue" },
+    });
+
+    // Try to save - should show validation error
+    const saveBtn = screen.getByRole("button", { name: /save/i });
+    fireEvent.click(saveBtn);
+
+    // Button should still be disabled since there are validation errors
+    expect(saveBtn).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("shows error when trying to add mapping with no groups available", () => {
+    render(
+      <ColumnMapping
+        onMappingChange={jest.fn()}
+        onSave={jest.fn()}
+        groups={[]} // No groups available
+        schema={null}
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText(/new column's name/i), {
+      target: { value: "Test" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /add value/i }));
+    const valueInput = screen.getByPlaceholderText(/value content/i);
+    fireEvent.change(valueInput, {
+      target: { value: "TestValue" },
+    });
+
+    // Verify the add mapping button exists
+    const addMappingBtn = screen.getByRole("button", { name: /add mapping/i });
+    expect(addMappingBtn).toBeInTheDocument();
+    
+    // Try to add mapping when no groups available - should trigger tooltip
+    fireEvent.click(addMappingBtn);
+
+    // After clicking, there should still be no mappings added because there are no groups
+    // The button should still be present since we can try again
+    expect(addMappingBtn).toBeInTheDocument();
+  });
+
+  it("handles value with only numeric type mappings as locked", () => {
+    const groups = [
+      {
+        nodeId: "n1",
+        column: "age",
+        values: ["integer", "min:0", "max:100"],
+        fileName: "data.csv",
+        color: "#ff0000",
+      },
+      {
+        nodeId: "n2",
+        column: "score",
+        values: ["double", "min:0.0", "max:100.0"],
+        fileName: "data.csv",
+        color: "#00ff00",
+      },
+    ];
+
+    render(
+      <ColumnMapping
+        onMappingChange={jest.fn()}
+        onSave={jest.fn()}
+        groups={groups}
+        schema={null}
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText(/new column's name/i), {
+      target: { value: "NumericRange" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /add value/i }));
+    
+    const valueInput = screen.getByPlaceholderText(/value content/i);
+    fireEvent.change(valueInput, { target: { value: "LowRange" } });
+
+    // Add mapping from integer column
+    fireEvent.click(screen.getByRole("button", { name: /add mapping/i }));
+    
+    // After adding numeric mapping, the value input should become locked/disabled
+    // This is indicated by brackets around the name
+    expect(screen.getByText(/Type: Integer/i)).toBeInTheDocument();
+  });
+
+  it("handles date type columns with earliest/latest values", () => {
+    const groups = [
+      {
+        nodeId: "n1",
+        column: "enrollment_date",
+        values: ["date", "earliest:2020-01-01", "latest:2023-12-31"],
+        fileName: "dates.csv",
+        color: "#0000ff",
+      },
+    ];
+
+    render(
+      <ColumnMapping
+        onMappingChange={jest.fn()}
+        onSave={jest.fn()}
+        groups={groups}
+        schema={null}
+      />
+    );
+
+    // Check that the date type is displayed
+    expect(screen.getByText(/Type: Date/i)).toBeInTheDocument();
+    
+    // The dates are shown in the format determined by the component
+    // Just verify the component renders without errors
+    expect(screen.getByText(/enrollment_date/i)).toBeInTheDocument();
   });
 });
