@@ -17,17 +17,6 @@ import debounce from "lodash/debounce";
 import DroppedColumnsArea from "./DroppedColumnsArea.js";
 import UnionConfigPanel from "./UnionConfigPanel.js";
 import BottomControls from "./BottomControls.js";
-import {
-  getGroupKey,
-  extractMinMax,
-  formatValue,
-  getAvailableValues as getAvailableValuesUtil,
-  getUnavailableRanges as getUnavailableRangesUtil,
-  isLockedNumericValue,
-  bracketed,
-  getSaveValidationError,
-  isSaveDisabled as isSaveDisabledUtil,
-} from "./columnMappingUtils.js";
 
 // Main control area for defining mappings in data integration
 function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft }) {
@@ -304,13 +293,113 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft })
     onMappingChange(newGroups);
   };
 
-  // Wrapper functions to call utility functions with current state
-  const getAvailableValues = (group) => getAvailableValuesUtil(group, customValues);
-  const getUnavailableRanges = (group) => getUnavailableRangesUtil(group, customValues);
-  const isSaveDisabled = () => isSaveDisabledUtil(unionName, customValues);
+  // Helper functions for column mapping operations
+  const getGroupKey = (g) => `${g.nodeId}::${g.fileName}::${g.column}`;
+
+  const extractMinMax = (values, type) => {
+    let min = null;
+    let max = null;
+    values.forEach((value) => {
+      if (type === "date") {
+        if (value.startsWith("earliest:")) {
+          min = new Date(value.replace("earliest:", "")).getTime();
+        } else if (value.startsWith("latest:")) {
+          max = new Date(value.replace("latest:", "")).getTime();
+        }
+      } else if (type === "integer" || type === "double") {
+        if (value.startsWith("min:")) {
+          min = parseFloat(value.replace("min:", ""));
+        } else if (value.startsWith("max:")) {
+          max = parseFloat(value.replace("max:", ""));
+        }
+      }
+    });
+    return { min, max };
+  };
+
+  const formatValue = (value, type) => {
+    if (type === "date") {
+      if (typeof value === "number") {
+        const date = new Date(value);
+        return date.toISOString().split("T")[0];
+      }
+      return value;
+    }
+    return value;
+  };
+
+  const getAvailableValues = (group) => {
+    const groupKey = getGroupKey(group);
+    const columnMappings = customValues.flatMap((customValue) =>
+      customValue.mapping
+        .filter((map) => map.groupKey === groupKey)
+        .map((map) => map.value)
+    );
+    return group.values.filter(
+      (value) =>
+        !columnMappings.includes(value) ||
+        value === "integer" ||
+        value === "double" ||
+        value === "date"
+    );
+  };
+
+  const getUnavailableRanges = (group) => {
+    const groupKey = getGroupKey(group);
+    const ranges = [];
+    customValues.forEach((customValue) => {
+      customValue.mapping.forEach((map) => {
+        if (map.groupKey === groupKey && typeof map.value === "object" && map.value !== null) {
+          ranges.push({ min: map.value.minValue, max: map.value.maxValue });
+        }
+      });
+    });
+    return ranges;
+  };
+
+  const isLockedNumericValue = useCallback((cv) => {
+    if (!cv.mapping || cv.mapping.length === 0) return false;
+    return cv.mapping.every(
+      (map) =>
+        map.value === "integer" ||
+        map.value === "double" ||
+        (typeof map.value === "object" && map.value !== null && !Array.isArray(map.value))
+    );
+  }, []);
+
+  const bracketed = (s) => {
+    const t = (s ?? "").trim();
+    if (!t) return "";
+    if (t.startsWith("[") && t.endsWith("]")) return t;
+    return `[${t}]`;
+  };
+
+  const getSaveValidationError = () => {
+    if (unionName.trim().length === 0) return "Please set a new column name.";
+    if (customValues.length === 0) return "Please add at least one value.";
+    const unnamedIndex = customValues.findIndex((cv) => cv.name.trim().length === 0);
+    if (unnamedIndex !== -1) return `Value #${unnamedIndex + 1} has no contents.`;
+
+    const unmappedIndex = customValues.findIndex((cv) => !cv.mapping || cv.mapping.length === 0);
+    if (unmappedIndex !== -1) {
+      const cv = customValues[unmappedIndex];
+      const label = cv?.name?.trim() ? `"${cv.name.trim()}"` : `#${unmappedIndex + 1}`;
+      return `Value ${label} has no mappings. Add at least one mapping or remove the value.`;
+    }
+
+    return "";
+  };
+
+  const isSaveDisabled = () => {
+    const hasValidName = unionName.trim().length > 0;
+    const hasAtLeastOneValue = customValues.length > 0;
+    const allValuesNamed = hasAtLeastOneValue && customValues.every((cv) => cv.name.trim().length > 0);
+    const allValuesMapped = hasAtLeastOneValue && customValues.every((cv) => (cv.mapping?.length ?? 0) > 0);
+    return !(hasValidName && hasAtLeastOneValue && allValuesNamed && allValuesMapped);
+  };
 
   const saveMapping = () => {
-    const err = getSaveValidationError(unionName, customValues);
+    const err = getSaveValidationError();
     if (err) {
       triggerSaveTooltip(err);
       return;
