@@ -90,7 +90,7 @@ export const getUnavailableRanges = (group, customValues) => {
 
   customValues.forEach((customValue) => {
     customValue.mapping.forEach((map) => {
-      if (map.groupKey === groupKey && typeof map.value === "object") {
+      if (map.groupKey === groupKey && typeof map.value === "object" && map.value !== null) {
         ranges.push({ min: map.value.minValue, max: map.value.maxValue });
       }
     });
@@ -109,7 +109,9 @@ export const isLockedNumericValue = (customValue) => {
 
   return customValue.mapping.every(
     (map) =>
-      map.value === "integer" || map.value === "double" || typeof map.value === "object"
+      map.value === "integer" ||
+      map.value === "double" ||
+      (typeof map.value === "object" && map.value !== null && !Array.isArray(map.value))
   );
 };
 
