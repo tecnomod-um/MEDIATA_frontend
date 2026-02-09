@@ -14,6 +14,20 @@ import AutocompleteInput from "../../Common/AutoCompleteInput/autoCompleteInput.
 import { darkenColor } from "../../../util/colors.js";
 import { fetchSuggestions } from "../../../util/petitionHandler";
 import debounce from "lodash/debounce";
+import DroppedColumnsArea from "./DroppedColumnsArea.js";
+import UnionConfigPanel from "./UnionConfigPanel.js";
+import BottomControls from "./BottomControls.js";
+import {
+  getGroupKey,
+  extractMinMax,
+  formatValue,
+  getAvailableValues as getAvailableValuesUtil,
+  getUnavailableRanges as getUnavailableRangesUtil,
+  isLockedNumericValue,
+  bracketed,
+  getSaveValidationError,
+  isSaveDisabled as isSaveDisabledUtil,
+} from "./columnMappingUtils.js";
 
 // Main control area for defining mappings in data integration
 function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft }) {
@@ -40,8 +54,6 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft })
 
   const [showHeaderTooltip, setShowHeaderTooltip] = useState(false);
   const headerTooltipButtonRef = useRef(null);
-
-  const getGroupKey = (g) => `${g.nodeId}::${g.fileName}::${g.column}`;
 
   const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
   const [descriptionItems, setDescriptionItems] = useState([]);
@@ -292,24 +304,13 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft })
     onMappingChange(newGroups);
   };
 
-  const getSaveValidationError = () => {
-    if (unionName.trim().length === 0) return "Please set a new column name.";
-    if (customValues.length === 0) return "Please add at least one value.";
-    const unnamedIndex = customValues.findIndex((cv) => cv.name.trim().length === 0);
-    if (unnamedIndex !== -1) return `Value #${unnamedIndex + 1} has no contents.`;
-
-    const unmappedIndex = customValues.findIndex((cv) => !cv.mapping || cv.mapping.length === 0);
-    if (unmappedIndex !== -1) {
-      const cv = customValues[unmappedIndex];
-      const label = cv?.name?.trim() ? `"${cv.name.trim()}"` : `#${unmappedIndex + 1}`;
-      return `Value ${label} has no mappings. Add at least one mapping or remove the value.`;
-    }
-
-    return "";
-  };
+  // Wrapper functions to call utility functions with current state
+  const getAvailableValues = (group) => getAvailableValuesUtil(group, customValues);
+  const getUnavailableRanges = (group) => getUnavailableRangesUtil(group, customValues);
+  const isSaveDisabled = () => isSaveDisabledUtil(unionName, customValues);
 
   const saveMapping = () => {
-    const err = getSaveValidationError();
+    const err = getSaveValidationError(unionName, customValues);
     if (err) {
       triggerSaveTooltip(err);
       return;
@@ -351,71 +352,9 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft })
     setTimeout(() => setSaveTooltipShown(true), 10);
   };
 
-  const getAvailableValues = (group) => {
-    const groupKey = getGroupKey(group);
-
-    const columnMappings = customValues.flatMap((customValue) =>
-      customValue.mapping.filter((map) => map.groupKey === groupKey).map((map) => map.value)
-    );
-
-    return group.values.filter(
-      (value) =>
-        !columnMappings.includes(value) ||
-        value === "integer" ||
-        value === "double" ||
-        value === "date"
-    );
-  };
-
   const removeValue = (valueIndex) => {
     setCustomValues((prev) => prev.filter((_, i) => i !== valueIndex));
     buttonRefs.current.splice(valueIndex, 1);
-  };
-
-  const isSaveDisabled = () => {
-    const hasValidName = unionName.trim().length > 0;
-    const hasAtLeastOneValue = customValues.length > 0;
-    const allValuesNamed = hasAtLeastOneValue && customValues.every((cv) => cv.name.trim().length > 0);
-    const allValuesMapped = hasAtLeastOneValue && customValues.every((cv) => (cv.mapping?.length ?? 0) > 0);
-    return !(hasValidName && hasAtLeastOneValue && allValuesNamed && allValuesMapped);
-  };
-
-  const extractMinMax = (values, type) => {
-    let min = null;
-    let max = null;
-    values.forEach((value) => {
-      if (type === "date") {
-        if (value.startsWith("earliest:")) min = new Date(value.replace("earliest:", "")).getTime();
-        else if (value.startsWith("latest:")) max = new Date(value.replace("latest:", "")).getTime();
-      } else if (type === "integer" || type === "double") {
-        if (value.startsWith("min:")) min = parseFloat(value.replace("min:", ""));
-        else if (value.startsWith("max:")) max = parseFloat(value.replace("max:", ""));
-      }
-    });
-    return { min, max };
-  };
-
-  const getUnavailableRanges = (group) => {
-    const groupKey = getGroupKey(group);
-    const ranges = [];
-
-    customValues.forEach((customValue) => {
-      customValue.mapping.forEach((map) => {
-        if (map.groupKey === groupKey && typeof map.value === "object" && map.value.minValue !== undefined) {
-          ranges.push([map.value.minValue, map.value.maxValue]);
-        }
-      });
-    });
-
-    return ranges;
-  };
-
-  const formatValue = (value, type) => {
-    if (type === "date") {
-      const date = new Date(value);
-      return date instanceof Date && !isNaN(date) ? date.toISOString().split("T")[0] : "";
-    }
-    return value !== undefined && value !== null ? value.toString() : "";
   };
 
   const handleMouseDown = (e) => {
@@ -477,19 +416,6 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft })
     },
     [unionEnumSuggestions, snomedValueTerminologySuggestions]
   );
-
-  const isLockedNumericValue = useCallback((cv) => {
-    const vals = (cv?.mapping || []).map((m) => m?.value);
-    if (!vals.length) return false;
-    return vals.every((v) => typeof v === "string" && (v === "integer" || v === "double"));
-  }, []);
-
-  const bracketed = (s) => {
-    const t = (s ?? "").trim();
-    if (!t) return "";
-    if (t.startsWith("[") && t.endsWith("]")) return t;
-    return `[${t}]`;
-  };
 
   return (
     <div className={ColumnMappingStyles.mappingSection} ref={containerRef}>
