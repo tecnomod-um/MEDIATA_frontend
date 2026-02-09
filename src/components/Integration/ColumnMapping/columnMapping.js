@@ -15,7 +15,7 @@ import MappingSelectorPane from "./MappingSelectorPane.js";
 import ValuesList from "./ValuesList.js";
 
 // Main control area for defining mappings in data integration
-function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft }) {
+function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, onSuggestMappings }) {
   const [unionName, setUnionName] = useState("");
   const [unionTerminology, setUnionTerminology] = useState("");
 
@@ -498,26 +498,38 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft })
 
       <div className={ColumnMappingStyles.createEntrySection}>
         <div className={ColumnMappingStyles.sectionHeader}>
-          <h2 className={ColumnMappingStyles.sectionTitle}>Define mapping rules</h2>
+          <div className={ColumnMappingStyles.titleWithInfo}>
+            <h2 className={ColumnMappingStyles.sectionTitle}>Define mapping rules</h2>
 
-          <div className={ColumnMappingStyles.tooltipContainer}>
-            <InfoOutlinedIcon
-              ref={headerTooltipButtonRef}
-              className={ColumnMappingStyles.tooltipIcon}
-              onMouseEnter={() => setShowHeaderTooltip(true)}
-              onMouseLeave={() => setShowHeaderTooltip(false)}
-            />
-            {showHeaderTooltip && (
-              <TooltipPopup
-                message={
-                  "Create a column in the datasets with a given name.\nIt's values will be set based on the defined mappings from the selected columns."
-                }
-                buttonRef={headerTooltipButtonRef}
-                onClose={() => setShowHeaderTooltip(false)}
-                offsetY={-10}
+            <div className={ColumnMappingStyles.tooltipContainer}>
+              <InfoOutlinedIcon
+                ref={headerTooltipButtonRef}
+                className={ColumnMappingStyles.tooltipIcon}
+                onMouseEnter={() => setShowHeaderTooltip(true)}
+                onMouseLeave={() => setShowHeaderTooltip(false)}
               />
-            )}
+              {showHeaderTooltip && (
+                <TooltipPopup
+                  message={
+                    "Create a column in the datasets with a given name.\nIt's values will be set based on the defined mappings from the selected columns."
+                  }
+                  buttonRef={headerTooltipButtonRef}
+                  onClose={() => setShowHeaderTooltip(false)}
+                  offsetY={-10}
+                />
+              )}
+            </div>
           </div>
+
+          <button
+            type="button"
+            className={ColumnMappingStyles.suggestButton}
+            onClick={onSuggestMappings}
+            disabled={!onSuggestMappings}
+            title="Suggest mappings"
+          >
+            Suggest mappings
+          </button>
         </div>
 
         <div className={ColumnMappingStyles.entryHeaderRow}>

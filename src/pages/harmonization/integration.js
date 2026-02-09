@@ -2,12 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";
 import { ToastContainer, toast } from "react-toastify";
-import {
-  getNodeElements,
-  fetchElementFile,
-  setParseConfigs,
-  fetchSchemaFromBackend,
-} from "../../util/petitionHandler";
+import { getNodeElements, fetchElementFile, setParseConfigs, fetchSchemaFromBackend, suggestMappings } from "../../util/petitionHandler";
 import { updateNodeAxiosBaseURL } from "../../util/nodeAxiosSetup";
 import { useNode } from "../../context/nodeContext";
 import IntegrationStyles from "./integration.module.css";
@@ -69,6 +64,18 @@ function Integration() {
       const [column, ...values] = line.split(",");
       return { column, values };
     });
+  };
+
+  const handleSuggestMappings = async () => {
+    try {
+      const payload = { elementFiles: columnsData, ...(schema ? { schema } : {}) };
+      const res = await suggestMappings(payload);
+      toast.success("Suggestions generated.");
+      console.log("suggestMappings response:", res);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to generate suggestions.");
+    }
   };
 
   const mergeColumnsData = useCallback((existingData, newData) => {
@@ -315,19 +322,19 @@ function Integration() {
         normalizedCustomValues.length > 0
           ? normalizedCustomValues
           : groups.flatMap((g) =>
-              g.values.map((val) => ({
-                name: val,
-                mapping: [
-                  {
-                    groupKey: `${g.nodeId}::${g.fileName}::${g.column}`,
-                    groupColumn: g.column,
-                    fileName: g.fileName,
-                    nodeId: g.nodeId,
-                    value: val,
-                  },
-                ],
-              }))
-            );
+            g.values.map((val) => ({
+              name: val,
+              mapping: [
+                {
+                  groupKey: `${g.nodeId}::${g.fileName}::${g.column}`,
+                  groupColumn: g.column,
+                  fileName: g.fileName,
+                  nodeId: g.nodeId,
+                  value: val,
+                },
+              ],
+            }))
+          );
 
       const newMapping = {
         [normalizedUnion]: {
@@ -628,6 +635,7 @@ function Integration() {
             onSave={handleSaveMappings}
             schema={schema}
             loadedDraft={loadedDraft}
+            onSuggestMappings={handleSuggestMappings}
           />
         </CSSTransition>
 

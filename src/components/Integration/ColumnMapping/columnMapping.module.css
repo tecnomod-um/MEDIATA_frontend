@@ -109,7 +109,7 @@
   overflow: hidden;
   border: 1px solid #e1e1e1;
   border-radius: 10px;
-  padding: 10px;
+  padding: 5px;
   background-color: var(--background-color-4);
   display: flex;
   flex-direction: column;
@@ -661,6 +661,7 @@
   width: 100%;
   display: flex;
   align-items: center;
+  /* already, keep */
   justify-content: space-between;
   position: relative;
   padding: 2px 0;
@@ -670,6 +671,23 @@
   border-bottom: 1px solid #e1e1e1;
 }
 
+.suggestButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 12px;
+  background-color: var(--button-add-mapping-color);
+  color: var(--text-color-on-darkbg);
+  border: 1px solid var(--border-color-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+  transition: background-color 0.2s ease;
+}
+
+
 .sectionTitle {
   margin: 0;
   font-size: var(--font-size-base);
@@ -678,15 +696,17 @@
   letter-spacing: 0.2px;
 }
 
-.tooltipContainer {
-  position: absolute;
-  right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
+.titleWithInfo {
+  display: inline-flex;
   align-items: center;
-  z-index: 2;
-  transition: opacity 0.2s ease;
+  gap: 8px;
+}
+
+.tooltipContainer {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
 }
 
 .tooltipIcon {
@@ -889,5 +909,28 @@
 
 .lockedValueInput {
   opacity: 0.85;
+  cursor: not-allowed;
+}
+
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.headerActions .tooltipContainer {
+  position: static;
+  transform: none;
+}
+
+
+.suggestButton:hover {
+  background-color: var(--button-add-mapping-hover-color);
+}
+
+.suggestButton:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
 }

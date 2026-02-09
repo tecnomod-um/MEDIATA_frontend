@@ -498,3 +498,16 @@ export const cleanExplorerFile = async (category, name, cleaningOptions) => {
   );
   return response.data;
 };
+
+export const suggestMappings = async ({ elementFiles, schema }) => {
+  const payload = {
+    elementFiles,
+    schema: schema ? (typeof schema === "string" ? schema : JSON.stringify(schema)) : null,
+  };
+
+  const response = await axiosInstance.post("/api/mappings/suggest", payload, {
+    headers: { "Content-Type": "application/json" },
+  });
+
+  return response.data;
+};
