@@ -625,7 +625,6 @@
   font-size: var(--font-size-sm);
 }
 
-/* animations */
 .enter {
   opacity: 0;
   transform: translateY(-20px);
@@ -885,5 +884,10 @@
 
 .saveButtonDisabled {
   opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.lockedValueInput {
+  opacity: 0.85;
   cursor: not-allowed;
 }
