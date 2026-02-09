@@ -8,15 +8,15 @@ import SaveIcon from "@mui/icons-material/Save";
 import CloseIcon from "@mui/icons-material/Close";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import DescriptionIcon from "@mui/icons-material/Description";
-import { CSSTransition, TransitionGroup } from "react-transition-group";
-import RangePicker from "../RangePicker/rangePicker.js";
+import { TransitionGroup } from "react-transition-group";
 import AutocompleteInput from "../../Common/AutoCompleteInput/autoCompleteInput.js";
-import { darkenColor } from "../../../util/colors.js";
 import { fetchSuggestions } from "../../../util/petitionHandler";
 import debounce from "lodash/debounce";
 import DroppedColumnsArea from "./DroppedColumnsArea.js";
 import UnionConfigPanel from "./UnionConfigPanel.js";
 import BottomControls from "./BottomControls.js";
+import MappingSelectorPane from "./MappingSelectorPane.js";
+import ValuesList from "./ValuesList.js";
 
 // Main control area for defining mappings in data integration
 function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft }) {
@@ -102,7 +102,6 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft })
 
   const containerRef = useRef(null);
   const resizingRef = useRef(false);
-  const mappingRefs = useRef({});
 
   const parsedSchema = useMemo(() => {
     if (schema && typeof schema === "string") {
@@ -652,250 +651,52 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft })
           </button>
         </div>
 
-        <div
-          ref={paneRef}
-          className={`${ColumnMappingStyles.slidingPane} ${
-            isPaneVisible ? ColumnMappingStyles.paneVisible : ""
-          }`}
-        >
-          {currentGroupIndex !== null && (
-            <div className={ColumnMappingStyles.selectMappingContainer}>
-              <div className={ColumnMappingStyles.selectMappingHeader}>
-                <h5>
-                  {currentValueName.trim()
-                    ? `Create mappings for "${currentValueName}"`
-                    : "Create mappings for the set value"}
-                </h5>
-                <button
-                  onClick={() => {
-                    setCurrentGroupIndex(null);
-                    setIsPaneVisible(false);
-                  }}
-                  className={ColumnMappingStyles.closeIconButton}
-                >
-                  <CloseIcon />
-                </button>
-              </div>
-
-              {groups.map((group) => {
-                const darkenedColor = darkenColor(group.color, -30);
-                const firstValueType = group.values[0];
-                const { min, max } = extractMinMax(group.values, firstValueType);
-                const unavailableRanges = getUnavailableRanges(group);
-                const availableValues = getAvailableValues(group);
-                const allMapped = availableValues.length === 0;
-
-                return (
-                  <div key={getGroupKey(group)} className={ColumnMappingStyles.mappingGroup}>
-                    <div className={ColumnMappingStyles.columnTitle}>
-                      <span className={ColumnMappingStyles.columnName} style={{ color: darkenedColor }}>
-                        {group.column}
-                      </span>
-                      <span className={ColumnMappingStyles.columnFileInline}>from {group.fileName}</span>
-                    </div>
-
-                    {allMapped ? (
-                      <p className={ColumnMappingStyles.allMappedMessage}>All categories have been mapped.</p>
-                    ) : firstValueType === "integer" || firstValueType === "double" || firstValueType === "date" ? (
-                      <RangePicker
-                        min={min}
-                        max={max}
-                        type={firstValueType}
-                        onRangeChange={(newRange) => {
-                          handleSelectMapping(group, {
-                            minValue: newRange.minValue,
-                            maxValue: newRange.maxValue,
-                            type: firstValueType,
-                          });
-                        }}
-                        unavailableRanges={unavailableRanges}
-                      />
-                    ) : (
-                      <ul className={ColumnMappingStyles.mappingOptions}>
-                        {availableValues.map((value, valueIndex) => (
-                          <li key={valueIndex}>
-                            <button
-                              onClick={() => handleSelectMapping(group, value)}
-                              className={ColumnMappingStyles.mappingButton}
-                            >
-                              {value}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <MappingSelectorPane
+          isVisible={isPaneVisible}
+          paneRef={paneRef}
+          currentGroupIndex={currentGroupIndex}
+          currentValueName={currentValueName}
+          groups={groups}
+          onClose={() => {
+            setCurrentGroupIndex(null);
+            setIsPaneVisible(false);
+          }}
+          onSelectMapping={handleSelectMapping}
+          getGroupKey={getGroupKey}
+          extractMinMax={extractMinMax}
+          getAvailableValues={getAvailableValues}
+          getUnavailableRanges={getUnavailableRanges}
+        />
 
         <TransitionGroup
           className={`${ColumnMappingStyles.valueListContainer} ${
             customValues.length ? ColumnMappingStyles.hasValues : ""
           }`}
         >
-          {customValues.map((customValue, index) => {
-            if (!mappingRefs.current[customValue.id]) mappingRefs.current[customValue.id] = React.createRef();
-
-            const isLocked = isLockedNumericValue(customValue);
-            const hasRowActions = !isLocked; // Add Mapping + Delete value
-            const descBtnStyle = hasRowActions
-              ? {}
-              : {
-                  borderTopRightRadius: "5px",
-                  borderBottomRightRadius: "5px",
-                };
-
-            return (
-              <CSSTransition
-                key={customValue.id}
-                timeout={500}
-                classNames={{
-                  enter: ColumnMappingStyles.enter,
-                  enterActive: ColumnMappingStyles.enterActive,
-                  exit: ColumnMappingStyles.exit,
-                  exitActive: ColumnMappingStyles.exitActive,
-                }}
-                nodeRef={mappingRefs.current[customValue.id]}
-              >
-                <div ref={mappingRefs.current[customValue.id]} className={ColumnMappingStyles.valueMappingContainer}>
-                  <div className={ColumnMappingStyles.valueMappingRow}>
-                    <AutocompleteInput
-                      value={isLocked ? bracketed(customValue.name + " range") : customValue.name}
-                      onChange={(raw) => {
-                        if (isLocked) return;
-                        handleValueNameChange(customValue.id, raw);
-                      }}
-                      placeholder="Value content"
-                      className={`${ColumnMappingStyles.valueNameInput} ${
-                        isLocked ? ColumnMappingStyles.lockedValueInput : ""
-                      }`}
-                      suggestions={valueContentSuggestions}
-                      disabled={isLocked}
-                    />
-
-                    <AutocompleteInput
-                      value={customValue.snomedTerm || ""}
-                      onChange={(raw) => {
-                        const hits = snomedValueTerminologySuggestions[customValue.id] || [];
-                        const hit = hits.find((s) => s.value === raw || s.label === raw);
-                        handleValueSnomedChange(customValue.id, hit ? hit.value : raw);
-                      }}
-                      placeholder="Value terminology"
-                      className={ColumnMappingStyles.valueSnomedInput}
-                      suggestions={valueTerminologySuggestionLabelsFor(customValue.id)}
-                    />
-
-                    <button
-                      type="button"
-                      className={ColumnMappingStyles.descriptionButton}
-                      style={descBtnStyle}
-                      onClick={() => {
-                        const items = [
-                          { kind: "union", label: unionName, index: 0 },
-                          ...customValues.map((cv, i) => ({
-                            kind: "value",
-                            id: cv.id,
-                            label: cv.name,
-                            index: i,
-                          })),
-                        ];
-                        setDescriptionItems(items);
-                        openDescriptionModalAt(index + 1); // +1 because union is at index 0
-                      }}
-                    >
-                      <span className={ColumnMappingStyles.buttonText}>Description</span>
-                      <span className={ColumnMappingStyles.iconWrapper}>
-                        <DescriptionIcon fontSize="inherit" className={ColumnMappingStyles.buttonIcon} />
-                      </span>
-                    </button>
-
-                    {isTooltipShown && tooltipRef && (
-                      <TooltipPopup
-                        message={tooltipMessage}
-                        buttonRef={tooltipRef}
-                        onClose={() => setTooltipShown(false)}
-                      />
-                    )}
-
-                    {hasRowActions && (
-                      <>
-                        <button
-                          ref={buttonRefs.current[index]}
-                          onClick={() => {
-                            if (groups.length <= 0) {
-                              triggerTooltip("No set elements to get the values from.", index);
-                            } else {
-                              handleAddMapping(index);
-                            }
-                          }}
-                          className={ColumnMappingStyles.addMappingButton}
-                        >
-                          <span className={ColumnMappingStyles.buttonText}>Add Mapping</span>
-                          <span className={ColumnMappingStyles.iconWrapper}>
-                            <AddIcon fontSize="inherit" className={ColumnMappingStyles.buttonIcon} />
-                          </span>
-                        </button>
-
-                        <button onClick={() => removeValue(index)} className={ColumnMappingStyles.closeIconButton}>
-                          <CloseIcon />
-                        </button>
-                      </>
-                    )}
-                  </div>
-
-                  {/* remove the "X values from Y columns mapped" line for locked numeric defaults */}
-                  {!isLocked && customValue.mapping.length > 0 && (
-                    <div className={ColumnMappingStyles.mappingSummary}>
-                      {customValue.mapping.length} values from{" "}
-                      {new Set(customValue.mapping.map((m) => m.groupColumn)).size} columns mapped
-                    </div>
-                  )}
-
-                  <ul className={ColumnMappingStyles.currentMappings}>
-                    {customValue.mapping.map((map, mapIndex) => {
-                      const sameColumn = customValue.mapping.filter((m) => m.groupColumn === map.groupColumn);
-                      const distinctSources = new Set(
-                        sameColumn.map((m) => m.groupKey ?? `${m.nodeId}::${m.fileName}::${m.groupColumn}`)
-                      );
-                      const isAmbiguous = distinctSources.size > 1;
-
-                      const displayVal =
-                        typeof map.value === "object" && map.value.minValue !== undefined
-                          ? `${formatValue(map.value.minValue, map.value.type)} - ${formatValue(
-                              map.value.maxValue,
-                              map.value.type
-                            )}`
-                          : map.value;
-
-                      return (
-                        <li key={mapIndex} className={ColumnMappingStyles.mappedItem}>
-                          <div className={ColumnMappingStyles.mappedRow}>
-                            <span className={ColumnMappingStyles.mappedLabel}>
-                              From {map.groupColumn}
-                              {isAmbiguous ? ` (from ${map.fileName})` : ""}:
-                            </span>
-                            <span className={ColumnMappingStyles.mappedValue}>{displayVal}</span>
-
-                            {!isLocked && (
-                              <button
-                                className={ColumnMappingStyles.closeIconButton}
-                                onClick={() => handleRemoveMapping(index, mapIndex)}
-                              >
-                                <CloseIcon />
-                              </button>
-                            )}
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              </CSSTransition>
-            );
-          })}
+          <ValuesList
+            customValues={customValues}
+            unionName={unionName}
+            groups={groups}
+            isLockedNumericValue={isLockedNumericValue}
+            bracketed={bracketed}
+            valueContentSuggestions={valueContentSuggestions}
+            snomedValueTerminologySuggestions={snomedValueTerminologySuggestions}
+            valueTerminologySuggestionLabelsFor={valueTerminologySuggestionLabelsFor}
+            handleValueNameChange={handleValueNameChange}
+            handleValueSnomedChange={handleValueSnomedChange}
+            setDescriptionItems={setDescriptionItems}
+            openDescriptionModalAt={openDescriptionModalAt}
+            isTooltipShown={isTooltipShown}
+            tooltipRef={tooltipRef}
+            tooltipMessage={tooltipMessage}
+            setTooltipShown={setTooltipShown}
+            buttonRefs={buttonRefs}
+            triggerTooltip={triggerTooltip}
+            handleAddMapping={handleAddMapping}
+            removeValue={removeValue}
+            formatValue={formatValue}
+            handleRemoveMapping={handleRemoveMapping}
+          />
         </TransitionGroup>
 
         <div className={ColumnMappingStyles.bottomControlsRow}>
