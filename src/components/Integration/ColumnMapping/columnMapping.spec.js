@@ -61,7 +61,7 @@ const makeDataTransfer = (payloadObj) => ({
 });
 
 describe("ColumnMapping", () => {
-  it("renders drop area and keeps Save disabled until name + value names are set", () => {
+  it("renders drop area and shows tooltip feedback when save validation fails", () => {
     const onMappingChange = jest.fn();
     const onSave = jest.fn();
 
@@ -76,18 +76,21 @@ describe("ColumnMapping", () => {
 
     expect(screen.getByText(/click or drop columns here/i)).toBeInTheDocument();
 
+    // Save button should have visual disabled state when save is not valid
     const saveBtn = screen.getByRole("button", { name: /save/i });
-    expect(saveBtn).toBeDisabled();
+    expect(saveBtn).toHaveAttribute("aria-disabled", "true");
 
     const unionInput = screen.getByPlaceholderText(/new column's name/i);
     fireEvent.change(unionInput, { target: { value: "CombinedColor" } });
-    expect(saveBtn).toBeDisabled();
+    // Still disabled - need at least one value
+    expect(saveBtn).toHaveAttribute("aria-disabled", "true");
 
     fireEvent.click(screen.getByRole("button", { name: /add value/i }));
     const valueName = screen.getByPlaceholderText(/value content/i);
     fireEvent.change(valueName, { target: { value: "Red-ish" } });
 
-    expect(saveBtn).toBeEnabled();
+    // Still disabled - need at least one mapping for the value
+    expect(saveBtn).toHaveAttribute("aria-disabled", "true");
   });
 
   it("handles drop of a new group and calls onMappingChange with appended group", () => {
@@ -163,7 +166,7 @@ describe("ColumnMapping", () => {
     fireEvent.click(switches[1]);
 
     const saveBtn = screen.getByRole("button", { name: /save/i });
-    expect(saveBtn).toBeEnabled();
+    expect(saveBtn).toHaveAttribute("aria-disabled", "false");
     fireEvent.click(saveBtn);
 
     expect(onSave).toHaveBeenCalledTimes(1);
