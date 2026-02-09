@@ -245,25 +245,25 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft })
         prev.map((cv, i) =>
           i === currentGroupIndex
             ? {
-                ...cv,
-                mapping: [
-                  ...cv.mapping,
-                  {
-                    groupKey,
-                    groupColumn: group.column,
-                    fileName: group.fileName,
-                    nodeId: group.nodeId,
-                    value:
-                      typeof value === "object"
-                        ? {
-                            minValue: value.minValue,
-                            maxValue: value.maxValue,
-                            type: value.type,
-                          }
-                        : value,
-                  },
-                ],
-              }
+              ...cv,
+              mapping: [
+                ...cv.mapping,
+                {
+                  groupKey,
+                  groupColumn: group.column,
+                  fileName: group.fileName,
+                  nodeId: group.nodeId,
+                  value:
+                    typeof value === "object"
+                      ? {
+                        minValue: value.minValue,
+                        maxValue: value.maxValue,
+                        type: value.type,
+                      }
+                      : value,
+                },
+              ],
+            }
             : cv
         )
       );
@@ -640,7 +640,6 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft })
               <span className={ColumnMappingStyles.switchLabel}>Remove columns</span>
             </label>
           </div>
-
           <div className={ColumnMappingStyles.mappingTypeSelector}>
             <label title="One-Hot">
               <Switch
@@ -658,9 +657,8 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft })
 
           <button
             onClick={saveMapping}
-            className={`${ColumnMappingStyles.saveButton} ${
-              isSaveDisabled() ? ColumnMappingStyles.saveButtonDisabled : ""
-            }`}
+            className={`${ColumnMappingStyles.saveButton} ${isSaveDisabled() ? ColumnMappingStyles.saveButtonDisabled : ""
+              }`}
             aria-disabled={isSaveDisabled()}
             title="Save Mapping"
             ref={saveButtonRef}

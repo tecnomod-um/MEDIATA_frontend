@@ -4,27 +4,15 @@ import RangePicker from "../RangePicker/rangePicker.js";
 import { darkenColor } from "../../../util/colors.js";
 import ColumnMappingStyles from "./columnMapping.module.css";
 
-// Component for the sliding pane that appears when adding mappings to a custom value
-function MappingSelectorPane({
-  isPaneVisible,
-  currentValueName,
-  groups,
-  getGroupKey,
-  extractMinMax,
-  getUnavailableRanges,
-  getAvailableValues,
-  onSelectMapping,
-  onClose,
-  paneRef,
-}) {
+// Sliding pane that appears when adding mappings to a custom value
+function MappingSelectorPane({ isPaneVisible, currentValueName, groups, getGroupKey, extractMinMax, getUnavailableRanges, getAvailableValues, onSelectMapping, onClose, paneRef }) {
   if (!isPaneVisible) return null;
 
   return (
     <div
       ref={paneRef}
-      className={`${ColumnMappingStyles.slidingPane} ${
-        isPaneVisible ? ColumnMappingStyles.paneVisible : ""
-      }`}
+      className={`${ColumnMappingStyles.slidingPane} ${isPaneVisible ? ColumnMappingStyles.paneVisible : ""
+        }`}
     >
       <div className={ColumnMappingStyles.selectMappingContainer}>
         <div className={ColumnMappingStyles.selectMappingHeader}>

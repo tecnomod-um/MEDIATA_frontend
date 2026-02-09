@@ -7,26 +7,8 @@ import AutocompleteInput from "../../Common/AutoCompleteInput/autoCompleteInput.
 import TooltipPopup from "../../Common/TooltipPopup/tooltipPopup.js";
 import ColumnMappingStyles from "./columnMapping.module.css";
 
-// Component for displaying and managing the list of custom values with their mappings
-function ValuesList({
-  customValues,
-  groups,
-  valueContentSuggestions,
-  valueTerminologySuggestionLabelsFor,
-  snomedValueTerminologySuggestions,
-  isTooltipShown,
-  tooltipRef,
-  tooltipMessage,
-  onTooltipClose,
-  onValueNameChange,
-  onValueSnomedChange,
-  onAddMapping,
-  onRemoveMapping,
-  onRemoveValue,
-  onOpenDescription,
-  isLockedNumericValue,
-  buttonRefs,
-}) {
+// List of custom values with their mappings
+function ValuesList({ customValues, groups, valueContentSuggestions, valueTerminologySuggestionLabelsFor, snomedValueTerminologySuggestions, isTooltipShown, tooltipRef, tooltipMessage, onTooltipClose, onValueNameChange, onValueSnomedChange, onAddMapping, onRemoveMapping, onRemoveValue, onOpenDescription, isLockedNumericValue, buttonRefs }) {
   const mappingRefs = useRef({});
 
   const formatValue = (value, type) => {
@@ -48,9 +30,8 @@ function ValuesList({
 
   return (
     <TransitionGroup
-      className={`${ColumnMappingStyles.valueListContainer} ${
-        customValues.length ? ColumnMappingStyles.hasValues : ""
-      }`}
+      className={`${ColumnMappingStyles.valueListContainer} ${customValues.length ? ColumnMappingStyles.hasValues : ""
+        }`}
     >
       {customValues.map((customValue, index) => {
         if (!mappingRefs.current[customValue.id])
@@ -61,9 +42,9 @@ function ValuesList({
         const descBtnStyle = hasRowActions
           ? {}
           : {
-              borderTopRightRadius: "5px",
-              borderBottomRightRadius: "5px",
-            };
+            borderTopRightRadius: "5px",
+            borderBottomRightRadius: "5px",
+          };
 
         return (
           <CSSTransition
@@ -93,9 +74,8 @@ function ValuesList({
                     onValueNameChange(customValue.id, raw);
                   }}
                   placeholder="Value content"
-                  className={`${ColumnMappingStyles.valueNameInput} ${
-                    isLocked ? ColumnMappingStyles.lockedValueInput : ""
-                  }`}
+                  className={`${ColumnMappingStyles.valueNameInput} ${isLocked ? ColumnMappingStyles.lockedValueInput : ""
+                    }`}
                   suggestions={valueContentSuggestions}
                   disabled={isLocked}
                 />
@@ -197,11 +177,11 @@ function ValuesList({
 
                   const displayVal =
                     typeof map.value === "object" &&
-                    map.value.minValue !== undefined
+                      map.value.minValue !== undefined
                       ? `${formatValue(
-                          map.value.minValue,
-                          map.value.type
-                        )} - ${formatValue(map.value.maxValue, map.value.type)}`
+                        map.value.minValue,
+                        map.value.type
+                      )} - ${formatValue(map.value.maxValue, map.value.type)}`
                       : map.value;
 
                   return (

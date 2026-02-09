@@ -3,6 +3,12 @@ import nodeAxiosInstance, { updateNodeAxiosBaseURL } from "./nodeAxiosSetup";
 // API request handlers for all backend and node petitions
 
 /* System petitions */
+// Get backend deployment mode
+export const getSystemCapabilities = async () => {
+  const response = await axiosInstance.get(`/api/system/capabilities`);
+  return response.data;
+};
+
 // Fetch the list of projects
 export const getProjectList = async () => {
   try {
