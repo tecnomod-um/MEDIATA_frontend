@@ -3,12 +3,13 @@ import CloseIcon from "@mui/icons-material/Close";
 import ColumnMappingStyles from "./columnMapping.module.css";
 
 // Component for displaying dropped columns in the drop area
-function DroppedColumnsList({ groups, onDeleteGroup, onDrop }) {
+function DroppedColumnsList({ groups, onDeleteGroup, onDrop, height }) {
   const handleDragOver = (e) => e.preventDefault();
 
   return (
     <div
       className={ColumnMappingStyles.dropArea}
+      style={{ height }}
       onDragOver={handleDragOver}
       onDrop={onDrop}
     >

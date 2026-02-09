@@ -487,13 +487,12 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft })
         onNext={goNextDescription}
       />
 
-      <div style={{ height: dropAreaHeight }}>
-        <DroppedColumnsList
-          groups={groups}
-          onDeleteGroup={handleDeleteGroup}
-          onDrop={handleDrop}
-        />
-      </div>
+      <DroppedColumnsList
+        groups={groups}
+        onDeleteGroup={handleDeleteGroup}
+        onDrop={handleDrop}
+        height={dropAreaHeight}
+      />
 
       <div className={ColumnMappingStyles.resizer} onMouseDown={handleMouseDown} />
 
