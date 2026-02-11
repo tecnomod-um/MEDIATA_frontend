@@ -10,12 +10,13 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import AutocompleteInput from "../../Common/AutoCompleteInput/autoCompleteInput.js";
 import { fetchSuggestions } from "../../../util/petitionHandler";
 import debounce from "lodash/debounce";
-import DroppedColumnsList from "./DroppedColumnsList.js";
-import MappingSelectorPane from "./MappingSelectorPane.js";
-import ValuesList from "./ValuesList.js";
+import DroppedColumnsList from "../DroppedColumnList/droppedColumnsList.js";
+import MappingSelectorPane from "./mappingSelectorPane.js";
+import ValuesList from "./valuesList.js";
+import SuggestMappingsModal from "../SuggestMappingsModal/suggestMappingsModal.js";
 
 // Main control area for defining mappings in data integration
-function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, onSuggestMappings }) {
+function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, onSuggestMappings, hasExistingMappings }) {
   const [unionName, setUnionName] = useState("");
   const [unionTerminology, setUnionTerminology] = useState("");
 
@@ -47,7 +48,17 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
   const [activeDescriptionIndex, setActiveDescriptionIndex] = useState(0);
 
   const [unionDescription, setUnionDescription] = useState("");
-  const [valueDescriptions, setValueDescriptions] = useState({}); // { [customValueId]: string }
+  const [valueDescriptions, setValueDescriptions] = useState({});
+
+  const [isSuggestOpen, setIsSuggestOpen] = useState(false);
+  const openSuggest = () => setIsSuggestOpen(true);
+  const closeSuggest = () => setIsSuggestOpen(false);
+
+  const runSuggest = (mode) => {
+    closeSuggest();
+    onSuggestMappings?.(mode);
+  };
+
 
   const openDescriptionModalAt = (index) => {
     setActiveDescriptionIndex(index);
@@ -486,7 +497,13 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
         onPrev={goPrevDescription}
         onNext={goNextDescription}
       />
-
+      <SuggestMappingsModal
+        isOpen={isSuggestOpen}
+        onClose={closeSuggest}
+        onReplace={() => runSuggest("replace")}
+        onAppend={() => runSuggest("append")}
+        hasExistingMappings={!!hasExistingMappings}
+      />
       <DroppedColumnsList
         groups={groups}
         onDeleteGroup={handleDeleteGroup}
@@ -520,11 +537,10 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
               )}
             </div>
           </div>
-
           <button
             type="button"
             className={ColumnMappingStyles.suggestButton}
-            onClick={onSuggestMappings}
+            onClick={openSuggest}
             disabled={!onSuggestMappings}
             title="Suggest mappings"
           >

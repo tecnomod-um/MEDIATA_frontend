@@ -1,0 +1,61 @@
+.suggestModal {
+  padding: 0;
+  background-color: var(--background-color-card);
+  border-radius: 8px;
+  width: clamp(420px, 52vw, 680px);
+  min-height: 180px;
+  max-height: min(70vh, calc(100dvh - 24px));
+  margin: 0 auto;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.text {
+  margin: 0;
+  color: var(--text-color-primary);
+  font-size: var(--font-size-base);
+  line-height: 1.4;
+}
+
+.footer {
+  padding: 12px 16px 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.replaceBtn,
+.appendBtn {
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.replaceBtn {
+  border: 1px solid rgba(255, 0, 0, 0.25);
+  background: rgba(255, 0, 0, 0.12);
+  color: var(--text-color-primary);
+}
+
+.replaceBtn:hover {
+  background: rgba(255, 0, 0, 0.18);
+}
+
+.replaceBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.appendBtn {
+  border: none;
+  background-image: var(--button-gradient);
+  color: var(--text-color-on-darkbg);
+}
+
+.appendBtn:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.18);
+}

@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import DroppedColumnsList from "./DroppedColumnsList";
+import DroppedColumnsList from "./droppedColumnsList";
 
 jest.mock(
   "./columnMapping.module.css",

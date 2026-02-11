@@ -66,12 +66,40 @@ function Integration() {
     });
   };
 
-  const handleSuggestMappings = async () => {
+  const extractHierarchy = (res) => {
+    const r = res && typeof res === "object" ? res : null;
+    const hierarchy = r?.hierarchy;
+
+    return Array.isArray(hierarchy) ? hierarchy : [];
+  };
+
+  const handleSuggestMappings = async (mode = "append") => {
     try {
       const payload = { elementFiles: columnsData, ...(schema ? { schema } : {}) };
       const res = await suggestMappings(payload);
-      toast.success("Suggestions generated.");
-      console.log("suggestMappings response:", res);
+
+      if (res?.success === false) {
+        toast.error(res?.message || "Failed to generate suggestions.");
+        return;
+      }
+
+      const nextHierarchy = extractHierarchy(res);
+
+      if (!nextHierarchy.length) {
+        toast.info(res?.message || "No suggestions produced.");
+        return;
+      }
+
+      if (mode === "replace") {
+        setMappings(nextHierarchy);
+        setDeletedItems([]);
+        setLoadedDraft(null);
+        setTemporaryGroups([]);
+        toast.success("Suggestions applied (replaced).");
+      } else {
+        setMappings((prev) => [...prev, ...nextHierarchy]);
+        toast.success("Suggestions applied (appended).");
+      }
     } catch (err) {
       console.error(err);
       toast.error("Failed to generate suggestions.");
@@ -636,9 +664,9 @@ function Integration() {
             schema={schema}
             loadedDraft={loadedDraft}
             onSuggestMappings={handleSuggestMappings}
+            hasExistingMappings={mappings?.length > 0}
           />
         </CSSTransition>
-
         <CSSTransition
           in={!!columnsData.length}
           classNames={{

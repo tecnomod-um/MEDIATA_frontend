@@ -1,0 +1,147 @@
+.dropArea {
+  width: 100%;
+  background-color: var(--background-color-secondary);
+  border: 2px dashed var(--border-color);
+  border-radius: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0.5vw;
+  gap: 0.5vw;
+  transition: background-color 0.3s, border-color 0.3s;
+  overflow-y: auto;
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.dropArea:hover {
+  background-color: var(--background-color-tertiary);
+  border-color: var(--border-color);
+}
+
+.dropArea::-webkit-scrollbar {
+  width: 10px;
+}
+
+.dropArea::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 10px;
+  border: 2px solid var(--scrollbar-track);
+}
+
+.dropArea::-webkit-scrollbar-track {
+  background-color: var(--scrollbar-track);
+  border-radius: 10px;
+}
+
+.dropText {
+  width: 100%;
+  text-align: center;
+  color: var(--border-color);
+  font-size: var(--font-size-md);
+  margin: auto;
+}
+
+.droppedItem {
+  padding: 10px;
+  background-color: var(--background-color-3);
+  border: 1px solid var(--border-color-secondary);
+  border-radius: 8px;
+  position: relative;
+  width: 100%;
+  box-shadow: var(--box-shadow-sm);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  color: var(--text-color-primary);
+}
+
+.droppedItem:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+.deleteIcon {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  font-size: var(--font-size-md);
+  color: var(--button-delete-color);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.droppedItem:hover .deleteIcon {
+  opacity: 1;
+}
+
+.groupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.groupTypeFileWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.groupTitle {
+  margin: 0;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--text-color-primary);
+}
+
+.groupType {
+  font-size: var(--font-size-sm);
+  color: var(--text-color-primary);
+  font-weight: 600;
+}
+
+.groupFile {
+  font-size: var(--font-size-xs);
+  color: var(--text-color-muted);
+  margin-top: 2px;
+}
+
+.groupContent {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.groupDetail {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-color-secondary);
+}
+
+.categoryList {
+  list-style-type: none;
+  padding-left: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.categoryItem {
+  background-color: var(--background-color-4);
+  color: var(--text-color-primary);
+  border: 1px solid var(--border-color-secondary);
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: var(--font-size-sm);
+}
+
+.columnName {
+  font-weight: 600;
+}
+
+
+@media (max-width: 768px) {
+  .dropArea {
+    max-height: 10vh;
+  }
+}

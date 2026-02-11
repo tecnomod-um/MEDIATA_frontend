@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import MappingSelectorPane from "./MappingSelectorPane";
+import MappingSelectorPane from "./mappingSelectorPane";
 
 jest.mock(
   "./columnMapping.module.css",
@@ -24,7 +24,7 @@ jest.mock("../RangePicker/rangePicker.js", () => (props) => (
 ));
 
 jest.mock("../../../util/colors.js", () => ({
-  darkenColor: (color, amount) => color, // Just return the same color for testing
+  darkenColor: (color, amount) => color,
 }));
 
 describe("MappingSelectorPane", () => {

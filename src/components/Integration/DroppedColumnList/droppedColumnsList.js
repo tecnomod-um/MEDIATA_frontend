@@ -1,6 +1,6 @@
 import React from "react";
 import CloseIcon from "@mui/icons-material/Close";
-import ColumnMappingStyles from "./columnMapping.module.css";
+import ColumnMappingStyles from "./droppedColumnsList.module.css";
 
 // Component for displaying dropped columns in the drop area
 function DroppedColumnsList({ groups, onDeleteGroup, onDrop, height }) {
@@ -18,7 +18,6 @@ function DroppedColumnsList({ groups, onDeleteGroup, onDrop, height }) {
           Click or drop columns here
         </span>
       )}
-
       {groups.map((group, index) => (
         <div key={index} className={ColumnMappingStyles.droppedItem}>
           <div className={ColumnMappingStyles.groupHeader}>
