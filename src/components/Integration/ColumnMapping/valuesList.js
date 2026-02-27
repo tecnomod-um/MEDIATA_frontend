@@ -49,7 +49,7 @@ function ValuesList({ customValues, groups, valueContentSuggestions, valueTermin
         return (
           <CSSTransition
             key={customValue.id}
-            timeout={500}
+            timeout={250}
             classNames={{
               enter: ColumnMappingStyles.enter,
               enterActive: ColumnMappingStyles.enterActive,
@@ -57,6 +57,25 @@ function ValuesList({ customValues, groups, valueContentSuggestions, valueTermin
               exitActive: ColumnMappingStyles.exitActive,
             }}
             nodeRef={mappingRefs.current[customValue.id]}
+            onExit={() => {
+              const node = mappingRefs.current[customValue.id]?.current;
+              if (!node) return;
+              const top = node.offsetTop;
+              node.style.position = "absolute";
+              node.style.top = top + "px";
+              node.style.left = "0";
+              node.style.right = "0";
+              node.style.width = "calc(100% - 10px)";
+            }}
+            onExited={() => {
+              const node = mappingRefs.current[customValue.id]?.current;
+              if (!node) return;
+              node.style.position = "";
+              node.style.top = "";
+              node.style.left = "";
+              node.style.right = "";
+              node.style.width = "";
+            }}
           >
             <div
               ref={mappingRefs.current[customValue.id]}
@@ -116,7 +135,6 @@ function ValuesList({ customValues, groups, valueContentSuggestions, valueTermin
                     />
                   </span>
                 </button>
-
                 {isTooltipShown && tooltipRef && (
                   <TooltipPopup
                     message={tooltipMessage}
@@ -124,7 +142,6 @@ function ValuesList({ customValues, groups, valueContentSuggestions, valueTermin
                     onClose={onTooltipClose}
                   />
                 )}
-
                 {hasRowActions && (
                   <>
                     <button
@@ -142,15 +159,14 @@ function ValuesList({ customValues, groups, valueContentSuggestions, valueTermin
                         />
                       </span>
                     </button>
-
-                    <button
-                      onClick={() => onRemoveValue(index)}
-                      className={ColumnMappingStyles.closeIconButton}
-                    >
-                      <CloseIcon />
-                    </button>
                   </>
                 )}
+                <button
+                  onClick={() => onRemoveValue(index)}
+                  className={ColumnMappingStyles.closeIconButton}
+                >
+                  <CloseIcon />
+                </button>
               </div>
 
               {!isLocked && customValue.mapping.length > 0 && (

@@ -5,8 +5,11 @@ import DescriptionModal from "../DescriptionModal/descriptionModal.js";
 import TooltipPopup from "../../Common/TooltipPopup/tooltipPopup.js";
 import AddIcon from "@mui/icons-material/Add";
 import SaveIcon from "@mui/icons-material/Save";
+import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import DescriptionIcon from "@mui/icons-material/Description";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
+import LinearProgress from "@mui/material/LinearProgress";
 import AutocompleteInput from "../../Common/AutoCompleteInput/autoCompleteInput.js";
 import { fetchSuggestions } from "../../../util/petitionHandler";
 import debounce from "lodash/debounce";
@@ -15,8 +18,12 @@ import MappingSelectorPane from "./mappingSelectorPane.js";
 import ValuesList from "./valuesList.js";
 import SuggestMappingsModal from "../SuggestMappingsModal/suggestMappingsModal.js";
 
-// Main control area for defining mappings in data integration
-function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, onSuggestMappings, hasExistingMappings }) {
+const RESIZER_H = 8;
+const MIN_DROP = 50;
+const MIN_CREATE_DESKTOP = 260;
+const MIN_CREATE_MOBILE = 140;
+
+function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, onSuggestMappings, hasExistingMappings, onGenerateMetadata, isGenerateMetadataLoading = false, generateMetadataProgress = 0 }) {
   const [unionName, setUnionName] = useState("");
   const [unionTerminology, setUnionTerminology] = useState("");
 
@@ -51,20 +58,34 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
   const [valueDescriptions, setValueDescriptions] = useState({});
 
   const [isSuggestOpen, setIsSuggestOpen] = useState(false);
-  const openSuggest = () => setIsSuggestOpen(true);
-  const closeSuggest = () => setIsSuggestOpen(false);
+  const [isSuggestLoading, setIsSuggestLoading] = useState(false);
 
-  const runSuggest = (mode) => {
-    closeSuggest();
-    onSuggestMappings?.(mode);
+  const generateProgress = Math.max(0, Math.min(100, Number(generateMetadataProgress) || 0));
+
+  const openSuggest = () => {
+    if (isSuggestLoading) return;
+    setIsSuggestOpen(true);
   };
 
+  const closeSuggest = () => setIsSuggestOpen(false);
+
+  const runSuggest = async (mode) => {
+    if (!onSuggestMappings || isSuggestLoading) return;
+
+    setIsSuggestLoading(true);
+    setIsSuggestOpen(false);
+
+    try {
+      await onSuggestMappings(mode);
+    } finally {
+      setIsSuggestLoading(false);
+    }
+  };
 
   const openDescriptionModalAt = (index) => {
     setActiveDescriptionIndex(index);
     setIsDescriptionOpen(true);
   };
-
   const closeDescriptionModal = () => setIsDescriptionOpen(false);
 
   useEffect(() => {
@@ -101,16 +122,20 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
     }
   };
 
-  const goPrevDescription = () => {
-    setActiveDescriptionIndex((i) => Math.max(0, i - 1));
-  };
-
-  const goNextDescription = () => {
+  const goPrevDescription = () => setActiveDescriptionIndex((i) => Math.max(0, i - 1));
+  const goNextDescription = () =>
     setActiveDescriptionIndex((i) => Math.min(descriptionItems.length - 1, i + 1));
-  };
 
   const containerRef = useRef(null);
+
   const resizingRef = useRef(false);
+  const pointerIdRef = useRef(null);
+
+  const startClientYRef = useRef(0);
+  const startHeightRef = useRef(0);
+
+  const rafRef = useRef(0);
+  const pendingHeightRef = useRef(null);
 
   const parsedSchema = useMemo(() => {
     if (schema && typeof schema === "string") {
@@ -186,14 +211,10 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
         group.nodeId === droppedColumn.nodeId
     );
 
-    if (!alreadyExists) {
-      onMappingChange([...groups, droppedColumn]);
-    }
+    if (!alreadyExists) onMappingChange([...groups, droppedColumn]);
   };
 
-  const handleUnionNameChange = (val) => {
-    setUnionName(val);
-  };
+  const handleUnionNameChange = (val) => setUnionName(val);
 
   const unionTerminologySuggestionLabels = useMemo(() => {
     const schemaList = unionNameSuggestions || [];
@@ -238,6 +259,35 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
     );
   };
 
+  const triggerTooltip = (message, buttonIndex) => {
+    setTooltipRef(buttonRefs.current[buttonIndex]);
+    setTooltipMessage(message);
+    setTooltipShown(false);
+    setTimeout(() => setTooltipShown(true), 10);
+  };
+
+  const triggerSaveTooltip = (message) => {
+    setSaveTooltipMessage(message);
+    setSaveTooltipShown(false);
+    setTimeout(() => setSaveTooltipShown(true), 10);
+  };
+
+  const getAvailableValues = (group) => {
+    const groupKey = getGroupKey(group);
+
+    const columnMappings = customValues.flatMap((customValue) =>
+      customValue.mapping.filter((map) => map.groupKey === groupKey).map((map) => map.value)
+    );
+
+    return group.values.filter(
+      (value) =>
+        !columnMappings.includes(value) ||
+        value === "integer" ||
+        value === "double" ||
+        value === "date"
+    );
+  };
+
   const handleAddMapping = (valueIndex) => {
     const availableColumns = groups.filter((group) => getAvailableValues(group).length > 0);
     if (availableColumns.length > 0) {
@@ -266,11 +316,7 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
                   nodeId: group.nodeId,
                   value:
                     typeof value === "object"
-                      ? {
-                        minValue: value.minValue,
-                        maxValue: value.maxValue,
-                        type: value.type,
-                      }
+                      ? { minValue: value.minValue, maxValue: value.maxValue, type: value.type }
                       : value,
                 },
               ],
@@ -332,12 +378,20 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
       description: valueDescriptions[id] || "",
     }));
 
-    const unionMeta = {
-      terminology: unionTerminology || "",
-      description: unionDescription || "",
-    };
+    const unionMeta = { terminology: unionTerminology || "", description: unionDescription || "" };
 
-    onSave(groups, unionName, cleanedCustomValues, removeFromHierarchy, useHotOneMapping, unionMeta);
+    // IMPORTANT: onSave now returns boolean
+    const ok = onSave(
+      groups,
+      unionName,
+      cleanedCustomValues,
+      removeFromHierarchy,
+      useHotOneMapping,
+      unionMeta
+    );
+
+    if (!ok) return;
+
     setSaveTooltipShown(false);
     setUnionName("");
     setUnionTerminology("");
@@ -347,34 +401,6 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
     setUseHotOneMapping(false);
   };
 
-  const triggerTooltip = (message, buttonIndex) => {
-    setTooltipRef(buttonRefs.current[buttonIndex]);
-    setTooltipMessage(message);
-    setTooltipShown(false);
-    setTimeout(() => setTooltipShown(true), 10);
-  };
-
-  const triggerSaveTooltip = (message) => {
-    setSaveTooltipMessage(message);
-    setSaveTooltipShown(false);
-    setTimeout(() => setSaveTooltipShown(true), 10);
-  };
-
-  const getAvailableValues = (group) => {
-    const groupKey = getGroupKey(group);
-
-    const columnMappings = customValues.flatMap((customValue) =>
-      customValue.mapping.filter((map) => map.groupKey === groupKey).map((map) => map.value)
-    );
-
-    return group.values.filter(
-      (value) =>
-        !columnMappings.includes(value) ||
-        value === "integer" ||
-        value === "double" ||
-        value === "date"
-    );
-  };
 
   const removeValue = (valueIndex) => {
     setCustomValues((prev) => prev.filter((_, i) => i !== valueIndex));
@@ -410,7 +436,11 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
 
     customValues.forEach((customValue) => {
       customValue.mapping.forEach((map) => {
-        if (map.groupKey === groupKey && typeof map.value === "object" && map.value.minValue !== undefined) {
+        if (
+          map.groupKey === groupKey &&
+          typeof map.value === "object" &&
+          map.value.minValue !== undefined
+        ) {
           ranges.push([map.value.minValue, map.value.maxValue]);
         }
       });
@@ -419,35 +449,107 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
     return ranges;
   };
 
-  const handleMouseDown = (e) => {
-    e.preventDefault();
-    resizingRef.current = true;
-  };
+  const isMobileViewport = useCallback(() => window.matchMedia?.("(max-width: 768px)")?.matches ?? false, []);
+  const getMinCreate = useCallback(() => (isMobileViewport() ? MIN_CREATE_MOBILE : MIN_CREATE_DESKTOP), [isMobileViewport]);
 
-  const handleMouseMove = useCallback((e) => {
-    if (!resizingRef.current || !containerRef.current) return;
-    e.preventDefault();
-    const containerRect = containerRef.current.getBoundingClientRect();
-    let newHeight = e.clientY - containerRect.top;
-    const minHeight = 50;
-    const maxHeight = containerRect.height - 50;
-    if (newHeight < minHeight) newHeight = minHeight;
-    if (newHeight > maxHeight) newHeight = maxHeight;
-    setDropAreaHeight(newHeight);
-  }, []);
+  const clampDropHeight = useCallback(
+    (h) => {
+      const container = containerRef.current;
+      if (!container) return h;
 
-  const handleMouseUp = useCallback(() => {
+      const rect = container.getBoundingClientRect();
+      const minCreate = getMinCreate();
+
+      // if the screen is tiny, never let minCreate "eat" the entire container
+      const effectiveMinCreate = Math.min(minCreate, Math.max(0, rect.height - RESIZER_H - MIN_DROP));
+
+      const maxDrop = Math.max(MIN_DROP, rect.height - RESIZER_H - effectiveMinCreate);
+      return Math.max(MIN_DROP, Math.min(maxDrop, h));
+    },
+    [getMinCreate]
+  );
+
+  const flushRaf = useCallback(() => {
+    rafRef.current = 0;
+    if (pendingHeightRef.current == null) return;
+    setDropAreaHeight(clampDropHeight(pendingHeightRef.current));
+    pendingHeightRef.current = null;
+  }, [clampDropHeight]);
+
+  const scheduleHeight = useCallback(
+    (h) => {
+      pendingHeightRef.current = h;
+      if (rafRef.current) return;
+      rafRef.current = requestAnimationFrame(flushRaf);
+    },
+    [flushRaf]
+  );
+
+  const endResize = useCallback(() => {
     resizingRef.current = false;
+    pointerIdRef.current = null;
+    pendingHeightRef.current = null;
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = 0;
+    }
   }, []);
+
+  const handleResizerPointerDown = useCallback(
+    (e) => {
+      if (e.button != null && e.button !== 0) return;
+      e.preventDefault?.();
+
+      resizingRef.current = true;
+      pointerIdRef.current = e.pointerId ?? null;
+
+      startClientYRef.current = e.clientY;
+      startHeightRef.current = dropAreaHeight;
+
+      try {
+        e.currentTarget?.setPointerCapture?.(e.pointerId);
+      } catch { }
+
+      scheduleHeight(dropAreaHeight);
+    },
+    [dropAreaHeight, scheduleHeight]
+  );
 
   useEffect(() => {
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
+    const onMove = (e) => {
+      if (!resizingRef.current) return;
+      if (pointerIdRef.current != null && e.pointerId != null && e.pointerId !== pointerIdRef.current) return;
+
+      e.preventDefault?.();
+
+      const dy = e.clientY - startClientYRef.current;
+      const next = startHeightRef.current + dy;
+      scheduleHeight(next);
     };
-  }, [handleMouseMove, handleMouseUp]);
+
+    const onUp = (e) => {
+      if (!resizingRef.current) return;
+      if (pointerIdRef.current != null && e.pointerId != null && e.pointerId !== pointerIdRef.current) return;
+      endResize();
+    };
+
+    window.addEventListener("pointermove", onMove, { passive: false });
+    window.addEventListener("pointerup", onUp, { passive: true });
+    window.addEventListener("pointercancel", onUp, { passive: true });
+
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+  }, [endResize, scheduleHeight]);
+
+  useEffect(() => {
+    const clamp = () => setDropAreaHeight((h) => clampDropHeight(h));
+    clamp();
+    window.addEventListener("resize", clamp);
+    return () => window.removeEventListener("resize", clamp);
+  }, [clampDropHeight]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -458,15 +560,16 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
     };
     if (isPaneVisible) document.addEventListener("mousedown", handleClickOutside);
     else document.removeEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isPaneVisible]);
 
   const currentValueName =
-    currentGroupIndex !== null && customValues[currentGroupIndex] ? customValues[currentGroupIndex].name || "" : "";
+    currentGroupIndex !== null && customValues[currentGroupIndex]
+      ? customValues[currentGroupIndex].name || ""
+      : "";
 
   const valueContentSuggestions = useMemo(() => unionEnumSuggestions || [], [unionEnumSuggestions]);
+
   const valueTerminologySuggestionLabelsFor = useCallback(
     (customValueId) => {
       const schemaList = unionEnumSuggestions || [];
@@ -497,6 +600,7 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
         onPrev={goPrevDescription}
         onNext={goNextDescription}
       />
+
       <SuggestMappingsModal
         isOpen={isSuggestOpen}
         onClose={closeSuggest}
@@ -504,6 +608,7 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
         onAppend={() => runSuggest("append")}
         hasExistingMappings={!!hasExistingMappings}
       />
+
       <DroppedColumnsList
         groups={groups}
         onDeleteGroup={handleDeleteGroup}
@@ -511,7 +616,11 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
         height={dropAreaHeight}
       />
 
-      <div className={ColumnMappingStyles.resizer} onMouseDown={handleMouseDown} />
+      <div
+        className={ColumnMappingStyles.resizer}
+        onPointerDown={handleResizerPointerDown}
+        style={{ touchAction: "none" }}
+      />
 
       <div className={ColumnMappingStyles.createEntrySection}>
         <div className={ColumnMappingStyles.sectionHeader}>
@@ -537,17 +646,72 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
               )}
             </div>
           </div>
-          <button
-            type="button"
-            className={ColumnMappingStyles.suggestButton}
-            onClick={openSuggest}
-            disabled={!onSuggestMappings}
-            title="Suggest mappings"
-          >
-            Suggest mappings
-          </button>
-        </div>
+{/* 
+          <div className={ColumnMappingStyles.headerActions}>
+            <button
+              type="button"
+              className={`${ColumnMappingStyles.suggestButton} ${isSuggestLoading ? ColumnMappingStyles.suggestButtonLoading : ""
+                }`}
+              onClick={openSuggest}
+              disabled={!onSuggestMappings || isSuggestLoading}
+              title="Suggest mappings"
+            >
+              {isSuggestLoading && (
+                <span className={ColumnMappingStyles.suggestSpinnerOverlay}>
+                  <span className={ColumnMappingStyles.suggestSpinner} />
+                </span>
+              )}
+              <span className={ColumnMappingStyles.buttonText}>Suggest mappings</span>
+              <span className={ColumnMappingStyles.iconWrapper}>
+                <TipsAndUpdatesIcon fontSize="inherit" className={ColumnMappingStyles.buttonIcon} />
+              </span>
+            </button>
+            <button
+              type="button"
+              className={`${ColumnMappingStyles.suggestButton} ${isGenerateMetadataLoading ? ColumnMappingStyles.suggestButtonLoading : ""
+                }`}
+              onClick={() => {
+                if (isGenerateMetadataLoading) return;
+                onGenerateMetadata?.();
+              }}
+              disabled={isGenerateMetadataLoading || !hasExistingMappings}
+              title="Generate metadata"
+            >
+              {isGenerateMetadataLoading && (
+                <span className={ColumnMappingStyles.suggestSpinnerOverlay}>
+                  <span className={ColumnMappingStyles.suggestSpinner} />
+                </span>
+              )}
 
+              <span className={`${ColumnMappingStyles.buttonText} ${ColumnMappingStyles.generateTextSlot}`}>
+                {isGenerateMetadataLoading ? (
+                  <span className={ColumnMappingStyles.inlineProgressWrap}>
+                    <LinearProgress
+                      variant="determinate"
+                      value={generateProgress}
+                      sx={{
+                        width: 120,
+                        height: 10,
+                        borderRadius: 999,
+                        "& .MuiLinearProgress-bar": { borderRadius: 999 },
+                        backgroundColor: "rgba(255,255,255,0.25)",
+                      }}
+                    />
+                  </span>
+                ) : (
+                  "Generate metadata"
+                )}
+              </span>
+              <span className={ColumnMappingStyles.iconWrapper}>
+                <DescriptionOutlinedIcon
+                  fontSize="inherit"
+                  className={ColumnMappingStyles.buttonIcon}
+                />
+              </span>
+            </button>
+          </div>
+          */}
+        </div>
         <div className={ColumnMappingStyles.entryHeaderRow}>
           <AutocompleteInput
             value={unionName}
@@ -560,7 +724,9 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
           <AutocompleteInput
             value={unionTerminology}
             onChange={(raw) => {
-              const hit = (snomedUnionTerminologySuggestions || []).find((s) => s.value === raw || s.label === raw);
+              const hit = (snomedUnionTerminologySuggestions || []).find(
+                (s) => s.value === raw || s.label === raw
+              );
               handleUnionTerminologyChange(hit ? hit.value : raw);
             }}
             placeholder="Column's terminology"
@@ -574,12 +740,7 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
             onClick={() => {
               const items = [
                 { kind: "union", label: unionName, index: 0 },
-                ...customValues.map((cv, i) => ({
-                  kind: "value",
-                  id: cv.id,
-                  label: cv.name,
-                  index: i,
-                })),
+                ...customValues.map((cv, i) => ({ kind: "value", id: cv.id, label: cv.name, index: i })),
               ];
               setDescriptionItems(items);
               openDescriptionModalAt(0);
@@ -591,7 +752,12 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
             </span>
           </button>
 
-          <button onClick={addNewValue} className={ColumnMappingStyles.addValueButton} title="Add Value">
+          <button
+            onClick={addNewValue}
+            className={ColumnMappingStyles.addValueButton}
+            title="Add Value"
+            type="button"
+          >
             <span className={ColumnMappingStyles.buttonText}>Add Value</span>
             <span className={ColumnMappingStyles.iconWrapper}>
               <AddIcon fontSize="inherit" className={ColumnMappingStyles.buttonIcon} />
@@ -628,23 +794,15 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
           onValueNameChange={handleValueNameChange}
           onValueSnomedChange={handleValueSnomedChange}
           onAddMapping={(index) => {
-            if (groups.length <= 0) {
-              triggerTooltip("No set elements to get the values from.", index);
-            } else {
-              handleAddMapping(index);
-            }
+            if (groups.length <= 0) triggerTooltip("No set elements to get the values from.", index);
+            else handleAddMapping(index);
           }}
           onRemoveMapping={handleRemoveMapping}
           onRemoveValue={removeValue}
           onOpenDescription={(index) => {
             const items = [
               { kind: "union", label: unionName, index: 0 },
-              ...customValues.map((cv, i) => ({
-                kind: "value",
-                id: cv.id,
-                label: cv.name,
-                index: i,
-              })),
+              ...customValues.map((cv, i) => ({ kind: "value", id: cv.id, label: cv.name, index: i })),
             ];
             setDescriptionItems(items);
             openDescriptionModalAt(index + 1);
@@ -668,6 +826,7 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
               <span className={ColumnMappingStyles.switchLabel}>Remove columns</span>
             </label>
           </div>
+
           <div className={ColumnMappingStyles.mappingTypeSelector}>
             <label title="One-Hot">
               <Switch
@@ -697,6 +856,7 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
               <SaveIcon fontSize="inherit" className={ColumnMappingStyles.buttonIcon} />
             </span>
           </button>
+
           {saveTooltipShown && saveButtonRef.current && (
             <TooltipPopup
               message={saveTooltipMessage}

@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";
 import { ToastContainer, toast } from "react-toastify";
-import { getNodeElements, fetchElementFile, setParseConfigs, fetchSchemaFromBackend, suggestMappings } from "../../util/petitionHandler";
+import { getNodeElements, fetchElementFile, setParseConfigs, fetchSchemaFromBackend, suggestMappings, enrichMappingsStart, getEnrichMappingsStatus, getEnrichMappingsResult } from "../../util/petitionHandler";
 import { updateNodeAxiosBaseURL } from "../../util/nodeAxiosSetup";
 import { useNode } from "../../context/nodeContext";
 import IntegrationStyles from "./integration.module.css";
@@ -29,7 +29,43 @@ function Integration() {
   const [schemaError, setSchemaError] = useState("");
   const [hasProcessedElementFiles, setHasProcessedElementFiles] = useState(false);
   const [loadedDraft, setLoadedDraft] = useState(null);
+  const [selectedMappingId, setSelectedMappingId] = useState(null);
+  const [editTarget, setEditTarget] = useState(null);
+  const [activeMobilePanel, setActiveMobilePanel] = useState("mapping");
+  const [isMobile, setIsMobile] = useState(false);
+  const [isGenerateMetadataLoading, setIsGenerateMetadataLoading] = useState(false);
+  const [generateMetadataProgress, setGenerateMetadataProgress] = useState(0);
+  const enrichPollRef = useRef(null);
+  const lastEnrichMsgRef = useRef("");
+  const lastEnrichStepRef = useRef("");
+  const enrichToastIdRef = useRef(null);
 
+  useEffect(() => {
+    return () => {
+      if (enrichPollRef.current) {
+        clearInterval(enrichPollRef.current);
+        enrichPollRef.current = null;
+      }
+      closeEnrichToast();
+    };
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener?.("change", update);
+    return () => mq.removeEventListener?.("change", update);
+  }, []);
+
+  useEffect(() => {
+    // If mobile and no columns loaded yet, default to columns (FileExplorer flow)
+    if (isMobile && !columnsData.length) setActiveMobilePanel("columns");
+  }, [isMobile, columnsData.length]);
+
+
+
+  //
   useEffect(() => {
     if (!selectedNodes || selectedNodes.length === 0) return;
 
@@ -105,6 +141,150 @@ function Integration() {
       toast.error("Failed to generate suggestions.");
     }
   };
+
+  const normalizeEnrichStep = (msg) => {
+    const m = String(msg || "").trim();
+    if (!m) return "";
+    return m.replace(/\(batch\s+\d+\s*\/\s*\d+\)/i, "").trim();
+  };
+
+  const showOrUpdateEnrichToast = (msg, pct) => {
+    const text = msg?.trim() ? `${msg} (${pct}%)` : `Working… (${pct}%)`;
+  
+    const id = enrichToastIdRef.current;
+  
+    if (!id || !toast.isActive(id)) {
+      enrichToastIdRef.current = toast.info(text, {
+        autoClose: false,
+        closeButton: false,
+        draggable: false,
+        toastId: "enrich-progress",
+      });
+      return;
+    }
+  
+    toast.update(id, {
+      render: text,
+      type: "info",
+      autoClose: false,
+      closeButton: false,
+      draggable: false,
+    });
+  };
+
+  const closeEnrichToast = () => {
+    if (enrichToastIdRef.current != null) {
+      toast.dismiss(enrichToastIdRef.current);
+      enrichToastIdRef.current = null;
+    }
+  };
+
+  const handleGenerateMetadata = useCallback(async () => {
+    if (isGenerateMetadataLoading) return;
+
+    // stop any previous poller
+    if (enrichPollRef.current) {
+      clearInterval(enrichPollRef.current);
+      enrichPollRef.current = null;
+    }
+
+    if (!mappings?.length) {
+      toast.info("No mappings to enrich yet.");
+      return;
+    }
+
+    setIsGenerateMetadataLoading(true);
+    setGenerateMetadataProgress(0);
+
+    try {
+      const start = await enrichMappingsStart({ hierarchy: mappings, schema });
+
+      if (start?.status === 200) {
+        const nextHierarchy = extractHierarchy(start?.data);
+        if (nextHierarchy.length) setMappings(nextHierarchy);
+        setGenerateMetadataProgress(100);
+        toast.success(start?.data?.message || "Metadata generated.");
+        return;
+      }
+
+      if (start?.status !== 202) {
+        toast.error(start?.data?.message || "Failed to start metadata generation.");
+        return;
+      }
+
+      const jobId = start?.data?.jobId;
+      if (!jobId) {
+        toast.error("Metadata generation did not return a jobId.");
+        return;
+      }
+
+      await new Promise((resolve, reject) => {
+        let inFlight = false;
+
+        enrichPollRef.current = setInterval(async () => {
+          if (inFlight) return;
+          inFlight = true;
+
+          try {
+            const st = await getEnrichMappingsStatus(jobId);
+            const pct = Math.max(0, Math.min(100, Number(st?.percent) || 0));
+            setGenerateMetadataProgress(pct);
+            const msg = String(st?.message || "").trim();
+            const step = normalizeEnrichStep(msg);
+
+            if (step && step !== lastEnrichStepRef.current) {
+              lastEnrichStepRef.current = step;
+              showOrUpdateEnrichToast(msg, pct);
+            } else if (enrichToastIdRef.current != null) {
+              showOrUpdateEnrichToast(msg || lastEnrichMsgRef.current, pct);
+            }
+
+            lastEnrichMsgRef.current = msg;
+
+
+            if (st?.state === "FAILED") {
+              clearInterval(enrichPollRef.current);
+              enrichPollRef.current = null;
+              closeEnrichToast();
+              reject(new Error(st?.message || "Metadata generation failed."));
+              return;
+            }
+
+            if (st?.state === "DONE") {
+              clearInterval(enrichPollRef.current);
+              enrichPollRef.current = null;
+
+              const res = await getEnrichMappingsResult(jobId);
+
+              if (res?.status === 200) {
+                const nextHierarchy = extractHierarchy(res?.data);
+                if (nextHierarchy.length) setMappings(nextHierarchy);
+                setGenerateMetadataProgress(100);
+                closeEnrichToast();
+                toast.success(res?.data?.message || "Metadata generated.");
+                resolve();
+              } else {
+                closeEnrichToast();
+                reject(new Error("Metadata result not available."));
+              }
+            }
+          } catch (e) {
+            clearInterval(enrichPollRef.current);
+            enrichPollRef.current = null;
+            closeEnrichToast();
+            reject(e);
+          } finally {
+            inFlight = false;
+          }
+        }, 400);
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error(err?.message || "Failed to generate metadata.");
+    } finally {
+      setIsGenerateMetadataLoading(false);
+    }
+  }, [isGenerateMetadataLoading, mappings, schema, extractHierarchy]);
 
   const mergeColumnsData = useCallback((existingData, newData) => {
     const mergedData = [...existingData];
@@ -285,32 +465,250 @@ function Integration() {
     [mappingKeyExists]
   );
 
-  const handleSaveMappings = (groups, unionName, customValues, removeFromHierarchy, isOneHotMapping, unionMeta) => {
+  // Integration.jsx (only these functions need to be replaced)
+  // 1) handleSaveMappings (whole)
+  // 2) the MOBILE ColumnMapping onSave wrapper (whole snippet)
+
+  const handleSaveMappings = (
+    groups,
+    unionName,
+    customValues,
+    removeFromHierarchy,
+    isOneHotMapping,
+    unionMeta
+  ) => {
     const norm = (s) => String(s ?? "").trim();
-
     const normalizedUnion = norm(unionName);
-    const normalizedCustomValues = (customValues || []).map((cv) => ({ ...cv, name: norm(cv.name) }));
+    const normalizedCustomValues = (customValues || []).map((cv) => ({
+      ...cv,
+      name: norm(cv.name),
+    }));
 
-    if (isOneHotMapping) {
-      if (oneHotAnyExists(normalizedUnion, normalizedCustomValues)) {
-        toast.error("Mapping already exists in the hierarchy.");
-        return;
-      }
-    } else {
-      if (mappingKeyExists(normalizedUnion)) {
-        toast.error("Mapping already exists in the hierarchy.");
-        return;
+    // Are we editing an existing mapping?
+    const isEditing =
+      !!editTarget &&
+      typeof editTarget.index === "number" &&
+      editTarget.key &&
+      mappings?.[editTarget.index]?.[editTarget.key];
+
+    // Base key for one-hot (what user types as unionName)
+    const oldOneHotBase = isEditing
+      ? norm(
+        editTarget.base ||
+        (editTarget.key.includes("_")
+          ? editTarget.key.slice(0, editTarget.key.lastIndexOf("_"))
+          : editTarget.key)
+      )
+      : "";
+
+    // Only do dup checks when creating OR renaming
+    const shouldCheckDup = (() => {
+      if (!isEditing) return true;
+      if (isOneHotMapping) return normalizedUnion !== oldOneHotBase; // renaming base
+      return normalizedUnion !== norm(editTarget.key); // renaming standard key
+    })();
+
+    const mappingKeyExistsExcept = (key, excludeIndex, excludeKeysSet) => {
+      return (mappings || []).some((obj, idx) => {
+        return Object.keys(obj || {}).some((k) => {
+          if (idx === excludeIndex && excludeKeysSet?.has(k)) return false;
+          return k === key;
+        });
+      });
+    };
+
+    const oneHotAnyExistsExcept = (base, cvs, excludeIndex, excludeKeysSet) => {
+      return (cvs || []).some((cv) =>
+        mappingKeyExistsExcept(`${base}_${cv.name}`, excludeIndex, excludeKeysSet)
+      );
+    };
+
+    let excludeIndex = null;
+    let excludeKeys = null;
+
+    if (isEditing && shouldCheckDup) {
+      excludeIndex = editTarget.index;
+
+      if (isOneHotMapping) {
+        const base = oldOneHotBase;
+        const obj = mappings?.[editTarget.index] || {};
+        excludeKeys = new Set(Object.keys(obj).filter((k) => k.startsWith(base + "_")));
+        if (!excludeKeys.size) excludeKeys.add(editTarget.key);
+      } else {
+        excludeKeys = new Set([editTarget.key]);
       }
     }
 
+    if (shouldCheckDup) {
+      if (isOneHotMapping) {
+        if (
+          oneHotAnyExistsExcept(
+            normalizedUnion,
+            normalizedCustomValues,
+            excludeIndex,
+            excludeKeys
+          )
+        ) {
+          toast.error("Mapping already exists in the hierarchy.");
+          return false;
+        }
+      } else {
+        if (mappingKeyExistsExcept(normalizedUnion, excludeIndex, excludeKeys)) {
+          toast.error("Mapping already exists in the hierarchy.");
+          return false;
+        }
+      }
+    }
+
+    // ---------------------------
+    // NO-OP DETECTION (editing only)
+    // ---------------------------
+    const stableStringify = (x) => {
+      const seen = new WeakSet();
+      return JSON.stringify(x, (k, v) => {
+        if (v && typeof v === "object") {
+          if (seen.has(v)) return;
+          seen.add(v);
+          if (!Array.isArray(v)) {
+            return Object.keys(v)
+              .sort()
+              .reduce((acc, key) => {
+                acc[key] = v[key];
+                return acc;
+              }, {});
+          }
+        }
+        return v;
+      });
+    };
+
+    if (isEditing) {
+      const idx = editTarget.index;
+      const obj = mappings?.[idx] || {};
+
+      if (isOneHotMapping) {
+        const base = oldOneHotBase;
+        const oldKeys = Object.keys(obj).filter((k) => k.startsWith(base + "_"));
+
+        const oldBySuffix = {};
+        oldKeys.forEach((k) => {
+          const suffix = k.slice(base.length + 1);
+          oldBySuffix[suffix] = obj[k];
+        });
+
+        let changed = false;
+
+        // base rename or different count implies change
+        if (normalizedUnion !== base) changed = true;
+        if (oldKeys.length !== normalizedCustomValues.length) changed = true;
+
+        normalizedCustomValues.forEach((cv) => {
+          const suffix = cv.name;
+          const oldMapping = oldBySuffix[suffix];
+
+          if (!oldMapping) {
+            changed = true;
+            return;
+          }
+
+          const oldOnes =
+            oldMapping?.groups?.[0]?.values?.find((v) => v?.name === "1") || {};
+
+          const nextSnapshot = stableStringify({
+            unionMeta: {
+              terminology: unionMeta?.terminology || "",
+              description: unionMeta?.description || "",
+            },
+            columns: (groups || []).map((g) => g.column),
+            ones: {
+              mapping: cv.mapping || [],
+              terminology: cv.terminology || "",
+              description: cv.description || "",
+            },
+          });
+
+          const oldSnapshot = stableStringify({
+            unionMeta: {
+              terminology: oldMapping?.terminology || "",
+              description: oldMapping?.description || "",
+            },
+            columns: oldMapping?.columns || [],
+            ones: {
+              mapping: oldOnes?.mapping || [],
+              terminology: oldOnes?.terminology || "",
+              description: oldOnes?.description || "",
+            },
+          });
+
+          if (nextSnapshot !== oldSnapshot) changed = true;
+        });
+
+        // removeFromHierarchy is an action; treat it as a change-intent
+        if (removeFromHierarchy) changed = true;
+
+        if (!changed) {
+          toast.error("No changes to save.");
+          return false;
+        }
+      } else {
+        const oldKey = editTarget.key;
+        const oldMapping = obj?.[oldKey];
+
+        const oldValues = oldMapping?.groups?.[0]?.values || [];
+
+        const oldSnapshot = stableStringify({
+          key: norm(oldKey),
+          unionMeta: {
+            terminology: oldMapping?.terminology || "",
+            description: oldMapping?.description || "",
+          },
+          columns: oldMapping?.columns || [],
+          values: oldValues.map((v) => ({
+            name: norm(v?.name),
+            terminology: v?.terminology || "",
+            description: v?.description || "",
+            mapping: v?.mapping || [],
+          })),
+        });
+
+        const nextSnapshot = stableStringify({
+          key: normalizedUnion,
+          unionMeta: {
+            terminology: unionMeta?.terminology || "",
+            description: unionMeta?.description || "",
+          },
+          columns: (groups || []).map((g) => g.column),
+          values: (normalizedCustomValues || []).map((v) => ({
+            name: norm(v?.name),
+            terminology: v?.terminology || "",
+            description: v?.description || "",
+            mapping: v?.mapping || [],
+          })),
+        });
+
+        const changed = removeFromHierarchy ? true : oldSnapshot !== nextSnapshot;
+
+        if (!changed) {
+          toast.error("No changes to save.");
+          return false;
+        }
+      }
+    }
+
+    // ---------------------------
+    // APPLY SAVE
+    // ---------------------------
+
+    // ONE-HOT
     if (isOneHotMapping) {
-      const newMappings = {};
+      // Build family (CREATE defaults to custom_mapping; EDIT will preserve below)
+      const newFamily = {};
       normalizedCustomValues.forEach((cv) => {
         const columnName = `${normalizedUnion}_${cv.name}`;
-        newMappings[columnName] = {
+        newFamily[columnName] = {
           mappingType: "one-hot",
-          fileName: "custom_mapping",
-          columns: groups.map((g) => g.column),
+          fileName: "custom_mapping", // CREATE default; EDIT will override/preserve per key
+          columns: (groups || []).map((g) => g.column),
           terminology: unionMeta?.terminology || "",
           description: unionMeta?.description || "",
           groups: [
@@ -323,84 +721,157 @@ function Integration() {
                   terminology: cv.terminology || "",
                   description: cv.description || "",
                 },
-                {
-                  name: "0",
-                  mapping: [],
-                },
+                { name: "0", mapping: [] },
               ],
             },
           ],
         };
       });
 
+      // EDIT IN PLACE: preserve original fileName(s)
+      if (isEditing) {
+        const baseToRemove = oldOneHotBase;
+
+        setMappings((prev) =>
+          prev.map((obj, idx) => {
+            if (idx !== editTarget.index) return obj;
+
+            const out = { ...(obj || {}) };
+
+            // capture old family fileNames by suffix before deleting
+            const oldSuffixToFileName = {};
+            Object.entries(out).forEach(([k, v]) => {
+              if (k.startsWith(baseToRemove + "_")) {
+                const suffix = k.slice(baseToRemove.length + 1);
+                oldSuffixToFileName[suffix] = v?.fileName;
+              }
+            });
+
+            // remove old family
+            Object.keys(out).forEach((k) => {
+              if (k.startsWith(baseToRemove + "_")) delete out[k];
+            });
+
+            // remove source columns if requested
+            if (removeFromHierarchy) {
+              (groups || []).forEach((g) => delete out[g.column]);
+            }
+
+            // write new family, preserving fileName by matching suffix when possible
+            Object.entries(newFamily).forEach(([k, v]) => {
+              const suffix = k.slice(normalizedUnion.length + 1);
+              const preserved = oldSuffixToFileName[suffix];
+              out[k] = preserved ? { ...v, fileName: preserved } : v;
+            });
+
+            return out;
+          })
+        );
+
+        setTemporaryGroups([]);
+        setLoadedDraft(null);
+
+        setEditTarget((prev) =>
+          prev
+            ? {
+              ...prev,
+              key: `${normalizedUnion}_${normalizedCustomValues?.[0]?.name || ""}`,
+              base: normalizedUnion,
+              type: "one-hot",
+            }
+            : prev
+        );
+
+        return true;
+      }
+
+      // CREATE
       if (removeFromHierarchy) {
-        const updated = mappings.map((m) => {
+        const updated = (mappings || []).map((m) => {
           const newMap = { ...m };
-          groups.forEach((group) => {
-            delete newMap[group.column];
-          });
+          (groups || []).forEach((group) => delete newMap[group.column]);
           return newMap;
         });
-        setMappings([...updated, newMappings]);
+        setMappings([...updated, newFamily]);
       } else {
-        setMappings((prev) => [...prev, newMappings]);
+        setMappings((prev) => [...prev, newFamily]);
       }
-    } else {
-      const mergedValues =
-        normalizedCustomValues.length > 0
-          ? normalizedCustomValues
-          : groups.flatMap((g) =>
-            g.values.map((val) => ({
-              name: val,
-              mapping: [
-                {
-                  groupKey: `${g.nodeId}::${g.fileName}::${g.column}`,
-                  groupColumn: g.column,
-                  fileName: g.fileName,
-                  nodeId: g.nodeId,
-                  value: val,
-                },
-              ],
-            }))
-          );
 
-      const newMapping = {
-        [normalizedUnion]: {
-          mappingType: "standard",
-          fileName: "custom_mapping",
-          columns: groups.map((g) => g.column),
-          terminology: unionMeta?.terminology || "",
-          description: unionMeta?.description || "",
-          groups: [
-            {
-              column: normalizedUnion,
-              values: mergedValues.map((v) => ({
-                ...v,
-                terminology: v.terminology || "",
-                description: v.description || "",
-              })),
-            },
-          ],
+      setTemporaryGroups([]);
+      setLoadedDraft(null);
+      return true;
+    }
+
+    // STANDARD
+    const nextStandardCreate = {
+      mappingType: "standard",
+      fileName: "custom_mapping", // CREATE default; EDIT will preserve below
+      columns: (groups || []).map((g) => g.column),
+      terminology: unionMeta?.terminology || "",
+      description: unionMeta?.description || "",
+      groups: [
+        {
+          column: normalizedUnion,
+          values: (normalizedCustomValues || []).map((v) => ({
+            ...v,
+            terminology: v.terminology || "",
+            description: v.description || "",
+          })),
         },
-      };
+      ],
+    };
 
-      if (removeFromHierarchy) {
-        const updated = mappings.map((m) => {
-          const newMap = { ...m };
-          groups.forEach((group) => {
-            delete newMap[group.column];
-          });
-          return newMap;
-        });
-        setMappings([...updated, newMapping]);
-      } else {
-        setMappings((prev) => [...prev, newMapping]);
-      }
+    // EDIT IN PLACE: preserve existing fileName
+    if (isEditing) {
+      const oldKey = editTarget.key;
+
+      setMappings((prev) =>
+        prev.map((obj, idx) => {
+          if (idx !== editTarget.index) return obj;
+
+          const out = { ...(obj || {}) };
+          const existing = out[oldKey];
+          const preservedFileName = existing?.fileName || "custom_mapping";
+
+          if (removeFromHierarchy) {
+            (groups || []).forEach((g) => delete out[g.column]);
+          }
+
+          if (oldKey !== normalizedUnion) delete out[oldKey];
+
+          out[normalizedUnion] = { ...nextStandardCreate, fileName: preservedFileName };
+          return out;
+        })
+      );
+
+      setTemporaryGroups([]);
+      setLoadedDraft(null);
+
+      setSelectedMappingId(`${editTarget.index}::${normalizedUnion}`);
+      setEditTarget({ index: editTarget.index, key: normalizedUnion, type: "standard" });
+
+      return true;
+    }
+
+    // CREATE
+    const newMapping = { [normalizedUnion]: nextStandardCreate };
+
+    if (removeFromHierarchy) {
+      const updated = (mappings || []).map((m) => {
+        const newMap = { ...m };
+        (groups || []).forEach((group) => delete newMap[group.column]);
+        return newMap;
+      });
+      setMappings([...updated, newMapping]);
+    } else {
+      setMappings((prev) => [...prev, newMapping]);
     }
 
     setTemporaryGroups([]);
     setLoadedDraft(null);
+    return true;
   };
+
 
   const handleDeleteMapping = (mappingIndex, mappingKey) => {
     const mappingToDelete = {
@@ -618,90 +1089,291 @@ function Integration() {
       )}
 
       <div className={IntegrationStyles.mappingContainer}>
-        <CSSTransition
-          in={!!columnsData.length}
-          classNames={{
-            enter: IntegrationStyles.columnsSectionEnter,
-            enterActive: IntegrationStyles.columnsSectionEnterActive,
-            exit: IntegrationStyles.columnsSectionExit,
-            exitActive: IntegrationStyles.columnsSectionExitActive,
-          }}
-          timeout={500}
-          unmountOnExit
-        >
-          <div className={IntegrationStyles.columnsSection}>
-            <ColumnSearchList
-              columnsData={columnsData}
-              handleColumnClick={(col) => {
-                const alreadyExists = temporaryGroups.some(
-                  (g) => g.column === col.column && g.fileName === col.fileName && g.nodeId === col.nodeId
-                );
-                if (!alreadyExists) setTemporaryGroups([...temporaryGroups, col]);
+        {/* MOBILE */}
+        {isMobile ? (
+          <>
+            {columnsData.length > 0 && (
+              <div className={IntegrationStyles.mobileNav} role="tablist" aria-label="Integration panels">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeMobilePanel === "columns"}
+                  className={`${IntegrationStyles.mobileNavBtn} ${activeMobilePanel === "columns" ? IntegrationStyles.mobileNavBtnActive : ""
+                    }`}
+                  onClick={() => setActiveMobilePanel("columns")}
+                >
+                  Columns
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeMobilePanel === "mapping"}
+                  className={`${IntegrationStyles.mobileNavBtn} ${activeMobilePanel === "mapping" ? IntegrationStyles.mobileNavBtnActive : ""
+                    }`}
+                  onClick={() => setActiveMobilePanel("mapping")}
+                >
+                  Mapping
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeMobilePanel === "hierarchy"}
+                  className={`${IntegrationStyles.mobileNavBtn} ${activeMobilePanel === "hierarchy" ? IntegrationStyles.mobileNavBtnActive : ""
+                    }`}
+                  onClick={() => setActiveMobilePanel("hierarchy")}
+                >
+                  Hierarchy
+                </button>
+              </div>
+            )}
+
+            <CSSTransition
+              in={!!columnsData.length}
+              classNames={{
+                enter: IntegrationStyles.columnsSectionEnter,
+                enterActive: IntegrationStyles.columnsSectionEnterActive,
+                exit: IntegrationStyles.columnsSectionExit,
+                exitActive: IntegrationStyles.columnsSectionExitActive,
               }}
-              handleDragStart={(e, column) => {
-                e.dataTransfer.setData("column", JSON.stringify(column));
+              timeout={500}
+              unmountOnExit
+            >
+              <div
+                className={`${IntegrationStyles.columnsSection} ${IntegrationStyles.mobilePanel} ${activeMobilePanel === "columns" ? IntegrationStyles.mobilePanelActive : ""
+                  }`}
+              >
+                <ColumnSearchList
+                  columnsData={columnsData}
+                  handleColumnClick={(col) => {
+                    const alreadyExists = temporaryGroups.some(
+                      (g) => g.column === col.column && g.fileName === col.fileName && g.nodeId === col.nodeId
+                    );
+                    if (!alreadyExists) setTemporaryGroups((prev) => [...prev, col]);
+                    setEditTarget(null);
+
+                    // no auto navigation; user can add multiple, then tap Mapping tab
+                  }}
+
+                  handleDragStart={(e, column) => {
+                    e.dataTransfer.setData("column", JSON.stringify(column));
+                  }}
+                />
+              </div>
+            </CSSTransition>
+
+            <CSSTransition
+              in={!!columnsData.length}
+              classNames={{
+                enter: IntegrationStyles.columnMappingEnter,
+                enterActive: IntegrationStyles.columnMappingEnterActive,
+                exit: IntegrationStyles.columnMappingExit,
+                exitActive: IntegrationStyles.columnMappingExitActive,
               }}
-            />
-          </div>
-        </CSSTransition>
+              timeout={500}
+              unmountOnExit
+            >
+              <div
+                className={`${IntegrationStyles.mobilePanel} ${activeMobilePanel === "mapping" ? IntegrationStyles.mobilePanelActive : ""
+                  }`}
+              >
+                <ColumnMapping
+                  columnsData={columnsData}
+                  onMappingChange={handleMappingChange}
+                  groups={temporaryGroups}
+                  onSave={(...args) => {
+                    const ok = handleSaveMappings(...args);
+                    if (ok) setActiveMobilePanel("hierarchy");
+                    return ok;
+                  }}
+                  schema={schema}
+                  loadedDraft={loadedDraft}
+                  onSuggestMappings={async (mode) => {
+                    await handleSuggestMappings(mode);
+                    setActiveMobilePanel("hierarchy");
+                  }}
+                  hasExistingMappings={mappings?.length > 0}
+                  onGenerateMetadata={handleGenerateMetadata}
+                  isGenerateMetadataLoading={isGenerateMetadataLoading}
+                  generateMetadataProgress={generateMetadataProgress}
+                />
+              </div>
+            </CSSTransition>
 
-        <CSSTransition
-          in={!!columnsData.length}
-          classNames={{
-            enter: IntegrationStyles.columnMappingEnter,
-            enterActive: IntegrationStyles.columnMappingEnterActive,
-            exit: IntegrationStyles.columnMappingExit,
-            exitActive: IntegrationStyles.columnMappingExitActive,
-          }}
-          timeout={500}
-          unmountOnExit
-        >
-          <ColumnMapping
-            columnsData={columnsData}
-            onMappingChange={handleMappingChange}
-            groups={temporaryGroups}
-            onSave={handleSaveMappings}
-            schema={schema}
-            loadedDraft={loadedDraft}
-            onSuggestMappings={handleSuggestMappings}
-            hasExistingMappings={mappings?.length > 0}
-          />
-        </CSSTransition>
-        <CSSTransition
-          in={!!columnsData.length}
-          classNames={{
-            enter: IntegrationStyles.resultingSectionEnter,
-            enterActive: IntegrationStyles.resultingSectionEnterActive,
-            exit: IntegrationStyles.resultingSectionExit,
-            exitActive: IntegrationStyles.resultingSectionExitActive,
-          }}
-          timeout={500}
-          unmountOnExit
-        >
-          <MappingsResult
-            mappings={mappings}
-            columnsData={columnsData}
-            deletedItems={deletedItems}
-            processingStatus={processingStatus}
-            onUndoDelete={handleUndoDelete}
-            onDeleteMapping={handleDeleteMapping}
-            onOpenFileMapper={() => setIsFileMapperOpen(true)}
-            formatValue={formatValue}
-            setMappings={setMappings}
-            onSelectMapping={(mappingIndex, mappingKey) => {
-              const mapping = mappings[mappingIndex]?.[mappingKey];
-              if (!mapping) return;
+            <CSSTransition
+              in={!!columnsData.length}
+              classNames={{
+                enter: IntegrationStyles.resultingSectionEnter,
+                enterActive: IntegrationStyles.resultingSectionEnterActive,
+                exit: IntegrationStyles.resultingSectionExit,
+                exitActive: IntegrationStyles.resultingSectionExitActive,
+              }}
+              timeout={500}
+              unmountOnExit
+            >
+              <div
+                className={`${IntegrationStyles.mobilePanel} ${activeMobilePanel === "hierarchy" ? IntegrationStyles.mobilePanelActive : ""
+                  }`}
+              >
+                <MappingsResult
+                  mappings={mappings}
+                  columnsData={columnsData}
+                  deletedItems={deletedItems}
+                  processingStatus={processingStatus}
+                  onUndoDelete={handleUndoDelete}
+                  onDeleteMapping={handleDeleteMapping}
+                  onOpenFileMapper={() => setIsFileMapperOpen(true)}
+                  formatValue={formatValue}
+                  setMappings={setMappings}
+                  onSelectMapping={(mappingIndex, mappingKey) => {
+                    const nextId = `${mappingIndex}::${mappingKey}`;
+                    if (selectedMappingId === nextId) return;
+                    setSelectedMappingId(nextId);
 
-              const draft =
-                mapping.mappingType === "one-hot"
-                  ? buildOneHotDraft(mappingKey, mappings, columnsData)
-                  : buildStandardDraft(mappingKey, mapping, columnsData);
+                    const mapping = mappings[mappingIndex]?.[mappingKey];
+                    if (!mapping) return;
 
-              if (draft) setLoadedDraft(draft);
-            }}
-          />
-        </CSSTransition>
+                    const isOneHot = mapping?.mappingType === "one-hot";
+
+                    const draft = isOneHot
+                      ? buildOneHotDraft(mappingKey, mappings, columnsData)
+                      : buildStandardDraft(mappingKey, mapping, columnsData);
+
+                    if (draft) setLoadedDraft(draft);
+
+                    if (isOneHot) {
+                      const base = mappingKey.includes("_")
+                        ? mappingKey.slice(0, mappingKey.lastIndexOf("_"))
+                        : mappingKey;
+                      setEditTarget({ index: mappingIndex, key: mappingKey, type: "one-hot", base });
+                    } else {
+                      setEditTarget({ index: mappingIndex, key: mappingKey, type: "standard" });
+                    }
+
+                    if (isMobile) setActiveMobilePanel("mapping");
+                  }}
+
+                />
+              </div>
+            </CSSTransition>
+          </>
+        ) : (
+          /* DESKTOP (restore original layout) */
+          <>
+            <CSSTransition
+              in={!!columnsData.length}
+              classNames={{
+                enter: IntegrationStyles.columnsSectionEnter,
+                enterActive: IntegrationStyles.columnsSectionEnterActive,
+                exit: IntegrationStyles.columnsSectionExit,
+                exitActive: IntegrationStyles.columnsSectionExitActive,
+              }}
+              timeout={500}
+              unmountOnExit
+            >
+              <div className={IntegrationStyles.columnsSection}>
+                <ColumnSearchList
+                  columnsData={columnsData}
+                  handleColumnClick={(col) => {
+                    const alreadyExists = temporaryGroups.some(
+                      (g) => g.column === col.column && g.fileName === col.fileName && g.nodeId === col.nodeId
+                    );
+                    if (!alreadyExists) setTemporaryGroups((prev) => [...prev, col]);
+                    setEditTarget(null);
+
+                    // no auto navigation; user can add multiple, then tap Mapping tab
+                  }}
+
+                  handleDragStart={(e, column) => {
+                    e.dataTransfer.setData("column", JSON.stringify(column));
+                  }}
+                />
+              </div>
+            </CSSTransition>
+
+            <CSSTransition
+              in={!!columnsData.length}
+              classNames={{
+                enter: IntegrationStyles.columnMappingEnter,
+                enterActive: IntegrationStyles.columnMappingEnterActive,
+                exit: IntegrationStyles.columnMappingExit,
+                exitActive: IntegrationStyles.columnMappingExitActive,
+              }}
+              timeout={500}
+              unmountOnExit
+            >
+              <ColumnMapping
+                columnsData={columnsData}
+                onMappingChange={handleMappingChange}
+                groups={temporaryGroups}
+                onSave={(...args) => {
+                  const ok = handleSaveMappings(...args);
+                  if (ok) setActiveMobilePanel("hierarchy");
+                  return ok;
+                }}
+                schema={schema}
+                loadedDraft={loadedDraft}
+                onSuggestMappings={handleSuggestMappings}
+                hasExistingMappings={mappings?.length > 0}
+                onGenerateMetadata={handleGenerateMetadata}
+                isGenerateMetadataLoading={isGenerateMetadataLoading}
+                generateMetadataProgress={generateMetadataProgress}
+              />
+            </CSSTransition>
+            <CSSTransition
+              in={!!columnsData.length}
+              classNames={{
+                enter: IntegrationStyles.resultingSectionEnter,
+                enterActive: IntegrationStyles.resultingSectionEnterActive,
+                exit: IntegrationStyles.resultingSectionExit,
+                exitActive: IntegrationStyles.resultingSectionExitActive,
+              }}
+              timeout={500}
+              unmountOnExit
+            >
+              <MappingsResult
+                mappings={mappings}
+                columnsData={columnsData}
+                deletedItems={deletedItems}
+                processingStatus={processingStatus}
+                onUndoDelete={handleUndoDelete}
+                onDeleteMapping={handleDeleteMapping}
+                onOpenFileMapper={() => setIsFileMapperOpen(true)}
+                formatValue={formatValue}
+                setMappings={setMappings}
+                onSelectMapping={(mappingIndex, mappingKey) => {
+                  const nextId = `${mappingIndex}::${mappingKey}`;
+                  if (selectedMappingId === nextId) return;
+                  setSelectedMappingId(nextId);
+
+                  const mapping = mappings[mappingIndex]?.[mappingKey];
+                  if (!mapping) return;
+
+                  const isOneHot = mapping?.mappingType === "one-hot";
+
+                  const draft = isOneHot
+                    ? buildOneHotDraft(mappingKey, mappings, columnsData)
+                    : buildStandardDraft(mappingKey, mapping, columnsData);
+
+                  if (draft) setLoadedDraft(draft);
+
+                  if (isOneHot) {
+                    const base = mappingKey.includes("_")
+                      ? mappingKey.slice(0, mappingKey.lastIndexOf("_"))
+                      : mappingKey;
+                    setEditTarget({ index: mappingIndex, key: mappingKey, type: "one-hot", base });
+                  } else {
+                    setEditTarget({ index: mappingIndex, key: mappingKey, type: "standard" });
+                  }
+
+                  if (isMobile) setActiveMobilePanel("mapping");
+                }}
+
+              />
+            </CSSTransition>
+          </>
+        )}
       </div>
+
 
       {columnsData.length > 0 && (
         <SchemaTray

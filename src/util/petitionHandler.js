@@ -511,3 +511,32 @@ export const suggestMappings = async ({ elementFiles, schema }) => {
 
   return response.data;
 };
+
+export const enrichMappingsStart = async ({ hierarchy, schema }) => {
+  const payload = {
+    hierarchy,
+    schema: schema ? (typeof schema === "string" ? schema : JSON.stringify(schema)) : null,
+  };
+
+  const response = await axiosInstance.post("/api/mappings/enrich", payload, {
+    headers: { "Content-Type": "application/json" },
+    validateStatus: () => true,
+  });
+
+  return { status: response.status, data: response.data };
+};
+
+export const getEnrichMappingsStatus = async (jobId) => {
+  const response = await axiosInstance.get(
+    `/api/mappings/enrich/status/${encodeURIComponent(jobId)}`
+  );
+  return response.data;
+};
+
+export const getEnrichMappingsResult = async (jobId) => {
+  const response = await axiosInstance.get(
+    `/api/mappings/enrich/result/${encodeURIComponent(jobId)}`,
+    { validateStatus: () => true }
+  );
+  return { status: response.status, data: response.data };
+};

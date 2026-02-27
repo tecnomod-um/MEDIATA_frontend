@@ -36,7 +36,9 @@
   border-radius: 10px;
   gap: 0.5vw;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  height: 90vh;
   max-height: 90vh;
+  min-height: 0;
 }
 
 .resizer {
@@ -54,7 +56,8 @@
 .createEntrySection {
   position: relative;
   width: 100%;
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: hidden;
   border: 1px solid #e1e1e1;
   border-radius: 10px;
@@ -78,7 +81,7 @@
   background-color: var(--background-color-card);
   color: var(--text-color-primary);
   font-size: var(--font-size-base);
-  min-width: 200px;
+  width: 50px;
   border-radius: 5px 0 0 5px;
   outline: none;
 }
@@ -91,7 +94,7 @@
   color: var(--text-color-primary);
   border-left: 0;
   font-size: var(--font-size-base);
-  min-width: 120px;
+  width: 50px;
   border-radius: 0;
   outline: none;
 }
@@ -188,8 +191,8 @@
 }
 
 .mappingTypeSelector {
-  padding-left: 15px;
-  padding-right: 15px;
+  padding-left: 5px;
+  padding-right: 5px;
   border-radius: 0;
   border-left: 0;
 }
@@ -246,7 +249,6 @@
   overflow-x: hidden;
   position: relative;
   padding-left: 20px;
-  padding-right: 8px;
   padding-bottom: 50px;
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
@@ -318,7 +320,7 @@
   flex-wrap: nowrap;
 }
 
-.valueMappingRow > * {
+.valueMappingRow>* {
   min-height: 40px;
 }
 
@@ -451,8 +453,18 @@
   top: 0;
   position: sticky;
   width: 100%;
-  border-bottom: 1px solid #e1e1e1;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sectionHeader::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 1px;
+  width: 65%;
+  background: linear-gradient(to right, var(--border-color) 0%, rgba(225, 225, 225, 0) 100%);
+  pointer-events: none;
 }
 
 .selectMappingHeader h5 {
@@ -525,17 +537,18 @@
   align-items: center;
   justify-content: space-between;
   position: relative;
-  padding: 2px 0;
+  padding-bottom: 2px 0;
   margin: 0 0 10px 0;
   background: transparent;
   border: none;
-  border-bottom: 1px solid #e1e1e1;
 }
 
 .suggestButton {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   height: 32px;
   padding: 0 12px;
   background-color: var(--button-add-mapping-color);
@@ -546,6 +559,56 @@
   font-size: var(--font-size-sm);
   white-space: nowrap;
   transition: background-color 0.2s ease;
+}
+
+.suggestSpinnerOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.suggestSpinner {
+  width: var(--spinner-size-sm);
+  height: var(--spinner-size-sm);
+  border-radius: 50%;
+  border: var(--spinner-border-width-sm) solid var(--spinner-border-base);
+  border-top-color: var(--spinner-border-top);
+  animation: spin var(--spinner-duration-fast) linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.suggestButtonLoading .buttonText,
+.suggestButtonLoading .iconWrapper {
+  opacity: 0;
+}
+
+.suggestButtonLoading .suggestSpinnerOverlay {
+  display: none;
+}
+
+.suggestButtonLoading .generateTextSlot {
+  opacity: 1 !important;
+}
+
+.suggestButtonLoading .generateTextSlot .inlineProgressWrap {
+  opacity: 1 !important;
+}
+
+.suggestButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .suggestButton:hover {
@@ -569,6 +632,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  margin-left: 4px;
 }
 
 .tooltipContainer {
@@ -617,7 +681,6 @@
   transition: background-color 0.3s;
 }
 
-/* colors */
 .descriptionButton {
   background-color: var(--button-description-color);
   color: var(--text-color-on-darkbg);
@@ -644,7 +707,7 @@
 .valueNameInput,
 .valueSnomedInput {
   flex: 1 1 0;
-  min-width: 0;
+  width: 50px;
   padding: 12px;
   border: 1px solid var(--border-color);
   background-color: var(--background-color-card);
@@ -684,20 +747,16 @@
   cursor: not-allowed;
 }
 
+/* keep layout stable during animation */
 .enter {
   opacity: 0;
-  transform: translateY(-20px);
-  height: 0;
-  margin-bottom: 0;
+  transform: translateY(-12px);
 }
 
 .enterActive {
   opacity: 1;
   transform: translateY(0);
-  height: auto;
-  margin-bottom: 10px;
-  transition: opacity 0.25s ease, transform 0.25s ease, height 0.25s ease,
-    margin-bottom 0.25s ease;
+  transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
 .exit {
@@ -708,9 +767,6 @@
 .exitActive {
   opacity: 0;
   transform: translateX(50px);
-  position: absolute;
-  left: 0;
-  right: 0;
   pointer-events: none;
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
@@ -718,8 +774,9 @@
 .headerActions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
   position: relative;
+  justify-content: flex-end;
 }
 
 .headerActions .tooltipContainer {
@@ -737,27 +794,146 @@
 @media (max-width: 768px) {
   .mappingSection {
     width: 100%;
-    height: 42vh;
-    overflow-y: scroll;
+    height: 100%;
+    max-height: none;
+    min-height: 0;
+    overflow: hidden;
+    align-items: stretch;
+  }
+
+  .createEntrySection {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
   }
 }
+
 
 @media (max-width: 1195px) {
   .switchLabel {
     display: none;
   }
 
-  .removeCheckbox label,
-  .mappingTypeSelector label {
-    justify-content: center;
-  }
-
-  .buttonText {
-    display: none;
+  .buttonText,
+  .generateTextSlot,
+  .inlineProgressWrap {
+    display: none !important;
   }
 
   .iconWrapper {
     display: inline-block;
+  }
+
+  .suggestButton {
+    padding: 0;
+    width: 36px;
+    height: 32px;
+  }
+
+  .suggestButtonLoading .suggestSpinnerOverlay {
+    display: flex; 
+    z-index: 2;
+  }
+
+  .suggestButtonLoading .iconWrapper {
+    opacity: 0 !important;
+  }
+
+  .suggestButtonLoading .buttonText {
+    opacity: 0 !important;
+  }
+}
+
+.mappingSection {
+  position: relative;
+  width: 60%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--background-color-card);
+  padding: 1vw;
+  border-radius: 10px;
+  gap: 0.5vw;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  height: 90vh;
+  max-height: 90vh;
+  min-height: 0;
+}
+
+.resizer {
+  width: 100%;
+  height: 8px;
+  background: var(--border-color);
+  cursor: row-resize;
+  transition: background 0.2s;
+  touch-action: none;
+  /* important for touch drag */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.createEntrySection {
+  position: relative;
+  width: 100%;
+  flex: 1 1 0;
+  /* was auto; mobile needs shrinkable */
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid #e1e1e1;
+  border-radius: 10px;
+  padding: 5px;
+  background-color: var(--background-color-4);
+  display: flex;
+  flex-direction: column;
+}
+
+/* this is commonly the ACTUAL shrink blocker */
+.valueListContainer {
+  flex: 1;
+  min-height: 0;
+  /* critical: allow inner scroller to shrink */
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  padding-left: 20px;
+  padding-bottom: 50px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.selectMappingContainer {
+  flex: 1;
+  min-height: 0;
+  overflow-y: hidden;
+  background-color: var(--background-color-3);
+  border-radius: 6px;
+  margin: 0 5px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--button-color-shadow);
+  overflow: hidden;
+}
+
+.inlineProgressWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+}
+
+@media (max-width: 768px) {
+  .mappingSection {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    min-height: 0;
+    overflow: hidden;
+    align-items: stretch;
+  }
+
+  .createEntrySection {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
   }
 }
 
@@ -765,6 +941,7 @@
   from {
     overflow-y: hidden;
   }
+
   to {
     overflow-y: auto;
   }
@@ -774,6 +951,7 @@
   from {
     overflow-y: auto;
   }
+
   to {
     overflow-y: hidden;
   }
