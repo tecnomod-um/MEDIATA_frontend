@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { NodeProvider, useNode } from './nodeContext.js';
 import { AuthProvider, useAuth } from './authContext.js';
@@ -16,6 +16,10 @@ jest.mock('jwt-decode', () => ({
 
 jest.mock('../util/nodeAxiosSetup', () => ({
   setupNodeAxiosInterceptors: jest.fn(),
+}));
+
+jest.mock('../util/petitionHandler', () => ({
+  getSystemCapabilities: jest.fn(),
 }));
 
 beforeEach(() => {
@@ -211,16 +215,23 @@ describe('NodeProvider & useNode', () => {
 
 describe('AuthProvider & useAuth', () => {
   const { setupNodeAxiosInterceptors } = require('../util/nodeAxiosSetup');
+  const { getSystemCapabilities } = require('../util/petitionHandler');
+
+  beforeEach(() => {
+    getSystemCapabilities.mockResolvedValue({ semanticAlignment: true, hl7fhir: true });
+  });
 
   function AuthTester() {
-    const { isAuthenticated, isLoading, login, logout } = useAuth();
+    const { isAuthenticated, isLoading, loginAndLoadCaps, logout, capabilities, capsLoaded } = useAuth();
     const { selectedNodes, selectNode } = useNode();
     return (
       <>
         <div data-testid="loading">{String(isLoading)}</div>
         <div data-testid="auth">{String(isAuthenticated)}</div>
         <div data-testid="selectedCount">{selectedNodes.length}</div>
-        <button onClick={() => login('tok', 'tgt')}>login</button>
+        <div data-testid="capsLoaded">{String(capsLoaded)}</div>
+        <div data-testid="capabilities">{JSON.stringify(capabilities)}</div>
+        <button onClick={() => loginAndLoadCaps('tok', 'tgt')}>login</button>
         <button onClick={() => selectNode({ id: 5, name: 'Five' })}>add-node</button>
         <button onClick={logout}>logout</button>
       </>
@@ -254,9 +265,12 @@ describe('AuthProvider & useAuth', () => {
 
     expect(screen.getByTestId('auth')).toHaveTextContent('false');
     fireEvent.click(screen.getByText('login'));
-    expect(localStorage.getItem('jwtToken')).toBe('tok');
-    expect(localStorage.getItem('kerberosTGT')).toBe('tgt');
-    expect(screen.getByTestId('auth')).toHaveTextContent('true');
+    
+    await waitFor(() => {
+      expect(localStorage.getItem('jwtToken')).toBe('tok');
+      expect(localStorage.getItem('kerberosTGT')).toBe('tgt');
+      expect(screen.getByTestId('auth')).toHaveTextContent('true');
+    });
   });
 
   it('logout() clears tokens, resets auth & nodes, and navigates to /login', async () => {
@@ -271,13 +285,16 @@ describe('AuthProvider & useAuth', () => {
       </NodeProvider>
     );
     fireEvent.click(screen.getByText('login'));
-    expect(screen.getByTestId('auth')).toHaveTextContent('true');
+    await waitFor(() => {
+      expect(screen.getByTestId('auth')).toHaveTextContent('true');
+    });
     fireEvent.click(screen.getByText('add-node'));
     expect(screen.getByTestId('selectedCount')).toHaveTextContent('1');
     fireEvent.click(screen.getByText('logout'));
 
     expect(localStorage.getItem('jwtToken')).toBeNull();
     expect(localStorage.getItem('kerberosTGT')).toBeNull();
+    expect(localStorage.getItem('systemCapabilities')).toBeNull();
     expect(screen.getByTestId('auth')).toHaveTextContent('false');
     expect(screen.getByTestId('selectedCount')).toHaveTextContent('0');
     expect(mockNavigate).toHaveBeenCalledWith('/login');
@@ -319,7 +336,7 @@ describe('AuthProvider & useAuth', () => {
     expect(screen.getByTestId('auth')).toHaveTextContent('false');
   });
 
-  it('login() clears jwtNodeTokens before setting new tokens', () => {
+  it('login() clears jwtNodeTokens before setting new tokens', async () => {
     localStorage.setItem('jwtNodeTokens', 'old-tokens');
     render(
       <NodeProvider>
@@ -329,7 +346,9 @@ describe('AuthProvider & useAuth', () => {
       </NodeProvider>
     );
     fireEvent.click(screen.getByText('login'));
-    expect(localStorage.getItem('jwtNodeTokens')).toBeNull();
+    await waitFor(() => {
+      expect(localStorage.getItem('jwtNodeTokens')).toBeNull();
+    });
   });
 
   it('logout() clears jwtNodeTokens', () => {
@@ -362,5 +381,75 @@ describe('AuthProvider & useAuth', () => {
     );
     fireEvent.click(screen.getByText('logout'));
     expect(localStorage.getItem('selectedNodes')).toBeNull();
+  });
+
+  it('loginAndLoadCaps fetches capabilities and sets capsLoaded', async () => {
+    render(
+      <NodeProvider>
+        <AuthProvider>
+          <AuthTester />
+        </AuthProvider>
+      </NodeProvider>
+    );
+
+    expect(screen.getByTestId('capsLoaded')).toHaveTextContent('false');
+    fireEvent.click(screen.getByText('login'));
+    
+    await waitFor(() => {
+      expect(screen.getByTestId('capsLoaded')).toHaveTextContent('true');
+      expect(screen.getByTestId('capabilities')).toHaveTextContent(JSON.stringify({ semanticAlignment: true, hl7fhir: true }));
+    });
+  });
+
+  it('uses default capabilities when getSystemCapabilities fails', async () => {
+    getSystemCapabilities.mockRejectedValueOnce(new Error('API error'));
+    
+    render(
+      <NodeProvider>
+        <AuthProvider>
+          <AuthTester />
+        </AuthProvider>
+      </NodeProvider>
+    );
+
+    fireEvent.click(screen.getByText('login'));
+    
+    await waitFor(() => {
+      expect(screen.getByTestId('capsLoaded')).toHaveTextContent('true');
+      expect(screen.getByTestId('capabilities')).toHaveTextContent(JSON.stringify({ semanticAlignment: false, hl7fhir: false }));
+    });
+  });
+
+  it('loads capabilities from localStorage cache on mount', () => {
+    localStorage.setItem('systemCapabilities', JSON.stringify({ semanticAlignment: true, hl7fhir: false }));
+    
+    render(
+      <NodeProvider>
+        <AuthProvider>
+          <AuthTester />
+        </AuthProvider>
+      </NodeProvider>
+    );
+
+    expect(screen.getByTestId('capsLoaded')).toHaveTextContent('true');
+    expect(screen.getByTestId('capabilities')).toHaveTextContent(JSON.stringify({ semanticAlignment: true, hl7fhir: false }));
+  });
+
+  it('logout clears systemCapabilities from localStorage', () => {
+    localStorage.setItem('jwtToken', 'x');
+    localStorage.setItem('kerberosTGT', 'y');
+    localStorage.setItem('systemCapabilities', JSON.stringify({ semanticAlignment: true, hl7fhir: true }));
+    
+    render(
+      <NodeProvider>
+        <AuthProvider>
+          <AuthTester />
+        </AuthProvider>
+      </NodeProvider>
+    );
+    
+    fireEvent.click(screen.getByText('logout'));
+    expect(localStorage.getItem('systemCapabilities')).toBeNull();
+    expect(screen.getByTestId('capsLoaded')).toHaveTextContent('false');
   });
 });

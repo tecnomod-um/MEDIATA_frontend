@@ -1,21 +1,29 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import ColumnMappingStyles from "./columnMapping.module.css";
 import Switch from "react-switch";
+import DescriptionModal from "../DescriptionModal/descriptionModal.js";
 import TooltipPopup from "../../Common/TooltipPopup/tooltipPopup.js";
 import AddIcon from "@mui/icons-material/Add";
 import SaveIcon from "@mui/icons-material/Save";
-import CloseIcon from "@mui/icons-material/Close";
+import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import DescriptionIcon from "@mui/icons-material/Description";
-import { CSSTransition, TransitionGroup } from "react-transition-group";
-import RangePicker from "../RangePicker/rangePicker.js";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
+import LinearProgress from "@mui/material/LinearProgress";
 import AutocompleteInput from "../../Common/AutoCompleteInput/autoCompleteInput.js";
-import { darkenColor } from "../../../util/colors.js";
 import { fetchSuggestions } from "../../../util/petitionHandler";
 import debounce from "lodash/debounce";
+import DroppedColumnsList from "../DroppedColumnList/droppedColumnsList.js";
+import MappingSelectorPane from "./mappingSelectorPane.js";
+import ValuesList from "./valuesList.js";
+import SuggestMappingsModal from "../SuggestMappingsModal/suggestMappingsModal.js";
 
-// Main control area for defining mappings in data integration
-function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
+const RESIZER_H = 8;
+const MIN_DROP = 50;
+const MIN_CREATE_DESKTOP = 260;
+const MIN_CREATE_MOBILE = 140;
+
+function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, onSuggestMappings, hasExistingMappings, onGenerateMetadata, isGenerateMetadataLoading = false, generateMetadataProgress = 0 }) {
   const [unionName, setUnionName] = useState("");
   const [unionTerminology, setUnionTerminology] = useState("");
 
@@ -30,6 +38,9 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
   const [isTooltipShown, setTooltipShown] = useState(false);
   const [tooltipRef, setTooltipRef] = useState(null);
   const [dropAreaHeight, setDropAreaHeight] = useState(200);
+  const saveButtonRef = useRef(null);
+  const [saveTooltipShown, setSaveTooltipShown] = useState(false);
+  const [saveTooltipMessage, setSaveTooltipMessage] = useState("");
 
   const [snomedUnionTerminologySuggestions, setSnomedUnionTerminologySuggestions] = useState([]);
   const [snomedValueTerminologySuggestions, setSnomedValueTerminologySuggestions] = useState({});
@@ -39,9 +50,92 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
 
   const getGroupKey = (g) => `${g.nodeId}::${g.fileName}::${g.column}`;
 
+  const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
+  const [descriptionItems, setDescriptionItems] = useState([]);
+  const [activeDescriptionIndex, setActiveDescriptionIndex] = useState(0);
+
+  const [unionDescription, setUnionDescription] = useState("");
+  const [valueDescriptions, setValueDescriptions] = useState({});
+
+  const [isSuggestOpen, setIsSuggestOpen] = useState(false);
+  const [isSuggestLoading, setIsSuggestLoading] = useState(false);
+
+  const generateProgress = Math.max(0, Math.min(100, Number(generateMetadataProgress) || 0));
+
+  const openSuggest = () => {
+    if (isSuggestLoading) return;
+    setIsSuggestOpen(true);
+  };
+
+  const closeSuggest = () => setIsSuggestOpen(false);
+
+  const runSuggest = async (mode) => {
+    if (!onSuggestMappings || isSuggestLoading) return;
+
+    setIsSuggestLoading(true);
+    setIsSuggestOpen(false);
+
+    try {
+      await onSuggestMappings(mode);
+    } finally {
+      setIsSuggestLoading(false);
+    }
+  };
+
+  const openDescriptionModalAt = (index) => {
+    setActiveDescriptionIndex(index);
+    setIsDescriptionOpen(true);
+  };
+  const closeDescriptionModal = () => setIsDescriptionOpen(false);
+
+  useEffect(() => {
+    if (!loadedDraft) return;
+
+    setUnionName(loadedDraft.unionName || "");
+    setUnionTerminology(loadedDraft.unionTerminology || "");
+    setUnionDescription(loadedDraft.unionDescription || "");
+    setUseHotOneMapping(!!loadedDraft.useHotOneMapping);
+    setRemoveFromHierarchy(!!loadedDraft.removeFromHierarchy);
+    setValueDescriptions(loadedDraft.valueDescriptions || {});
+    onMappingChange?.(loadedDraft.groups || []);
+    setCustomValues(loadedDraft.customValues || []);
+    buttonRefs.current = (loadedDraft.customValues || []).map(() => React.createRef());
+    setIsPaneVisible(false);
+    setCurrentGroupIndex(null);
+  }, [loadedDraft, onMappingChange]);
+
+  const getActiveDescriptionValue = () => {
+    const item = descriptionItems[activeDescriptionIndex];
+    if (!item) return "";
+    if (item.kind === "union") return unionDescription || "";
+    return valueDescriptions[item.id] || "";
+  };
+
+  const setActiveDescriptionValue = (nextText) => {
+    const item = descriptionItems[activeDescriptionIndex];
+    if (!item) return;
+
+    if (item.kind === "union") {
+      setUnionDescription(nextText);
+    } else {
+      setValueDescriptions((prev) => ({ ...prev, [item.id]: nextText }));
+    }
+  };
+
+  const goPrevDescription = () => setActiveDescriptionIndex((i) => Math.max(0, i - 1));
+  const goNextDescription = () =>
+    setActiveDescriptionIndex((i) => Math.min(descriptionItems.length - 1, i + 1));
+
   const containerRef = useRef(null);
+
   const resizingRef = useRef(false);
-  const mappingRefs = useRef({});
+  const pointerIdRef = useRef(null);
+
+  const startClientYRef = useRef(0);
+  const startHeightRef = useRef(0);
+
+  const rafRef = useRef(0);
+  const pendingHeightRef = useRef(null);
 
   const parsedSchema = useMemo(() => {
     if (schema && typeof schema === "string") {
@@ -117,14 +211,10 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
         group.nodeId === droppedColumn.nodeId
     );
 
-    if (!alreadyExists) {
-      onMappingChange([...groups, droppedColumn]);
-    }
+    if (!alreadyExists) onMappingChange([...groups, droppedColumn]);
   };
 
-  const handleUnionNameChange = (val) => {
-    setUnionName(val);
-  };
+  const handleUnionNameChange = (val) => setUnionName(val);
 
   const unionTerminologySuggestionLabels = useMemo(() => {
     const schemaList = unionNameSuggestions || [];
@@ -164,7 +254,38 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
   };
 
   const handleValueNameChange = (customValueId, newName) => {
-    setCustomValues((prev) => prev.map((cv) => (cv.id === customValueId ? { ...cv, name: newName } : cv)));
+    setCustomValues((prev) =>
+      prev.map((cv) => (cv.id === customValueId ? { ...cv, name: newName } : cv))
+    );
+  };
+
+  const triggerTooltip = (message, buttonIndex) => {
+    setTooltipRef(buttonRefs.current[buttonIndex]);
+    setTooltipMessage(message);
+    setTooltipShown(false);
+    setTimeout(() => setTooltipShown(true), 10);
+  };
+
+  const triggerSaveTooltip = (message) => {
+    setSaveTooltipMessage(message);
+    setSaveTooltipShown(false);
+    setTimeout(() => setSaveTooltipShown(true), 10);
+  };
+
+  const getAvailableValues = (group) => {
+    const groupKey = getGroupKey(group);
+
+    const columnMappings = customValues.flatMap((customValue) =>
+      customValue.mapping.filter((map) => map.groupKey === groupKey).map((map) => map.value)
+    );
+
+    return group.values.filter(
+      (value) =>
+        !columnMappings.includes(value) ||
+        value === "integer" ||
+        value === "double" ||
+        value === "date"
+    );
   };
 
   const handleAddMapping = (valueIndex) => {
@@ -195,11 +316,7 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
                   nodeId: group.nodeId,
                   value:
                     typeof value === "object"
-                      ? {
-                        minValue: value.minValue,
-                        maxValue: value.maxValue,
-                        type: value.type,
-                      }
+                      ? { minValue: value.minValue, maxValue: value.maxValue, type: value.type }
                       : value,
                 },
               ],
@@ -230,38 +347,60 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
     onMappingChange(newGroups);
   };
 
-  const saveMapping = () => {
-    const cleanedCustomValues = customValues.map(({ snomedTerm, ...rest }) => rest);
+  const getSaveValidationError = () => {
+    if (unionName.trim().length === 0) return "Please set a new column name.";
+    if (customValues.length === 0) return "Please add at least one value.";
+    const unnamedIndex = customValues.findIndex((cv) => cv.name.trim().length === 0);
+    if (unnamedIndex !== -1) return `Value #${unnamedIndex + 1} has no contents.`;
 
-    onSave(groups, unionName, cleanedCustomValues, removeFromHierarchy, useHotOneMapping);
+    const unmappedIndex = customValues.findIndex((cv) => !cv.mapping || cv.mapping.length === 0);
+    if (unmappedIndex !== -1) {
+      const cv = customValues[unmappedIndex];
+      const label = cv?.name?.trim() ? `"${cv.name.trim()}"` : `#${unmappedIndex + 1}`;
+      return `Value ${label} has no mappings. Add at least one mapping or remove the value.`;
+    }
+
+    return "";
+  };
+
+  const saveMapping = () => {
+    const err = getSaveValidationError();
+    if (err) {
+      triggerSaveTooltip(err);
+      return;
+    }
+
+    const cleanedCustomValues = customValues.map(({ id, snomedTerm, name, mapping }) => ({
+      id,
+      name,
+      mapping,
+      terminology: snomedTerm || "",
+      description: valueDescriptions[id] || "",
+    }));
+
+    const unionMeta = { terminology: unionTerminology || "", description: unionDescription || "" };
+
+    // IMPORTANT: onSave now returns boolean
+    const ok = onSave(
+      groups,
+      unionName,
+      cleanedCustomValues,
+      removeFromHierarchy,
+      useHotOneMapping,
+      unionMeta
+    );
+
+    if (!ok) return;
+
+    setSaveTooltipShown(false);
     setUnionName("");
     setUnionTerminology("");
+    setUnionDescription("");
+    setValueDescriptions({});
     setCustomValues([]);
     setUseHotOneMapping(false);
   };
 
-  const triggerTooltip = (message, buttonIndex) => {
-    setTooltipRef(buttonRefs.current[buttonIndex]);
-    setTooltipMessage(message);
-    setTooltipShown(false);
-    setTimeout(() => setTooltipShown(true), 10);
-  };
-
-  const getAvailableValues = (group) => {
-    const groupKey = getGroupKey(group);
-
-    const columnMappings = customValues.flatMap((customValue) =>
-      customValue.mapping.filter((map) => map.groupKey === groupKey).map((map) => map.value)
-    );
-
-    return group.values.filter(
-      (value) =>
-        !columnMappings.includes(value) ||
-        value === "integer" ||
-        value === "double" ||
-        value === "date"
-    );
-  };
 
   const removeValue = (valueIndex) => {
     setCustomValues((prev) => prev.filter((_, i) => i !== valueIndex));
@@ -272,7 +411,8 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
     const hasValidName = unionName.trim().length > 0;
     const hasAtLeastOneValue = customValues.length > 0;
     const allValuesNamed = hasAtLeastOneValue && customValues.every((cv) => cv.name.trim().length > 0);
-    return !(hasValidName && hasAtLeastOneValue && allValuesNamed);
+    const allValuesMapped = hasAtLeastOneValue && customValues.every((cv) => (cv.mapping?.length ?? 0) > 0);
+    return !(hasValidName && hasAtLeastOneValue && allValuesNamed && allValuesMapped);
   };
 
   const extractMinMax = (values, type) => {
@@ -309,43 +449,107 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
     return ranges;
   };
 
-  const formatValue = (value, type) => {
-    if (type === "date") {
-      const date = new Date(value);
-      return date instanceof Date && !isNaN(date) ? date.toISOString().split("T")[0] : "";
-    }
-    return value !== undefined && value !== null ? value.toString() : "";
-  };
+  const isMobileViewport = useCallback(() => window.matchMedia?.("(max-width: 768px)")?.matches ?? false, []);
+  const getMinCreate = useCallback(() => (isMobileViewport() ? MIN_CREATE_MOBILE : MIN_CREATE_DESKTOP), [isMobileViewport]);
 
-  const handleMouseDown = (e) => {
-    e.preventDefault();
-    resizingRef.current = true;
-  };
+  const clampDropHeight = useCallback(
+    (h) => {
+      const container = containerRef.current;
+      if (!container) return h;
 
-  const handleMouseMove = useCallback((e) => {
-    if (!resizingRef.current || !containerRef.current) return;
-    e.preventDefault();
-    const containerRect = containerRef.current.getBoundingClientRect();
-    let newHeight = e.clientY - containerRect.top;
-    const minHeight = 50;
-    const maxHeight = containerRect.height - 50;
-    if (newHeight < minHeight) newHeight = minHeight;
-    if (newHeight > maxHeight) newHeight = maxHeight;
-    setDropAreaHeight(newHeight);
-  }, []);
+      const rect = container.getBoundingClientRect();
+      const minCreate = getMinCreate();
 
-  const handleMouseUp = useCallback(() => {
+      // if the screen is tiny, never let minCreate "eat" the entire container
+      const effectiveMinCreate = Math.min(minCreate, Math.max(0, rect.height - RESIZER_H - MIN_DROP));
+
+      const maxDrop = Math.max(MIN_DROP, rect.height - RESIZER_H - effectiveMinCreate);
+      return Math.max(MIN_DROP, Math.min(maxDrop, h));
+    },
+    [getMinCreate]
+  );
+
+  const flushRaf = useCallback(() => {
+    rafRef.current = 0;
+    if (pendingHeightRef.current == null) return;
+    setDropAreaHeight(clampDropHeight(pendingHeightRef.current));
+    pendingHeightRef.current = null;
+  }, [clampDropHeight]);
+
+  const scheduleHeight = useCallback(
+    (h) => {
+      pendingHeightRef.current = h;
+      if (rafRef.current) return;
+      rafRef.current = requestAnimationFrame(flushRaf);
+    },
+    [flushRaf]
+  );
+
+  const endResize = useCallback(() => {
     resizingRef.current = false;
+    pointerIdRef.current = null;
+    pendingHeightRef.current = null;
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = 0;
+    }
   }, []);
+
+  const handleResizerPointerDown = useCallback(
+    (e) => {
+      if (e.button != null && e.button !== 0) return;
+      e.preventDefault?.();
+
+      resizingRef.current = true;
+      pointerIdRef.current = e.pointerId ?? null;
+
+      startClientYRef.current = e.clientY;
+      startHeightRef.current = dropAreaHeight;
+
+      try {
+        e.currentTarget?.setPointerCapture?.(e.pointerId);
+      } catch { }
+
+      scheduleHeight(dropAreaHeight);
+    },
+    [dropAreaHeight, scheduleHeight]
+  );
 
   useEffect(() => {
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
+    const onMove = (e) => {
+      if (!resizingRef.current) return;
+      if (pointerIdRef.current != null && e.pointerId != null && e.pointerId !== pointerIdRef.current) return;
+
+      e.preventDefault?.();
+
+      const dy = e.clientY - startClientYRef.current;
+      const next = startHeightRef.current + dy;
+      scheduleHeight(next);
     };
-  }, [handleMouseMove, handleMouseUp]);
+
+    const onUp = (e) => {
+      if (!resizingRef.current) return;
+      if (pointerIdRef.current != null && e.pointerId != null && e.pointerId !== pointerIdRef.current) return;
+      endResize();
+    };
+
+    window.addEventListener("pointermove", onMove, { passive: false });
+    window.addEventListener("pointerup", onUp, { passive: true });
+    window.addEventListener("pointercancel", onUp, { passive: true });
+
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+  }, [endResize, scheduleHeight]);
+
+  useEffect(() => {
+    const clamp = () => setDropAreaHeight((h) => clampDropHeight(h));
+    clamp();
+    window.addEventListener("resize", clamp);
+    return () => window.removeEventListener("resize", clamp);
+  }, [clampDropHeight]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -356,15 +560,16 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
     };
     if (isPaneVisible) document.addEventListener("mousedown", handleClickOutside);
     else document.removeEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isPaneVisible]);
 
   const currentValueName =
-    currentGroupIndex !== null && customValues[currentGroupIndex] ? customValues[currentGroupIndex].name || "" : "";
+    currentGroupIndex !== null && customValues[currentGroupIndex]
+      ? customValues[currentGroupIndex].name || ""
+      : "";
 
   const valueContentSuggestions = useMemo(() => unionEnumSuggestions || [], [unionEnumSuggestions]);
+
   const valueTerminologySuggestionLabelsFor = useCallback(
     (customValueId) => {
       const schemaList = unionEnumSuggestions || [];
@@ -377,90 +582,136 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
     [unionEnumSuggestions, snomedValueTerminologySuggestions]
   );
 
+  const isLockedNumericValue = useCallback((cv) => {
+    const vals = (cv?.mapping || []).map((m) => m?.value);
+    if (!vals.length) return false;
+    return vals.every((v) => typeof v === "string" && (v === "integer" || v === "double"));
+  }, []);
+
   return (
     <div className={ColumnMappingStyles.mappingSection} ref={containerRef}>
-      <div
-        className={ColumnMappingStyles.dropArea}
-        style={{ height: dropAreaHeight }}
-        onDragOver={(e) => e.preventDefault()}
+      <DescriptionModal
+        isOpen={isDescriptionOpen}
+        closeModal={closeDescriptionModal}
+        items={descriptionItems}
+        activeIndex={activeDescriptionIndex}
+        value={getActiveDescriptionValue()}
+        onChange={setActiveDescriptionValue}
+        onPrev={goPrevDescription}
+        onNext={goNextDescription}
+      />
+
+      <SuggestMappingsModal
+        isOpen={isSuggestOpen}
+        onClose={closeSuggest}
+        onReplace={() => runSuggest("replace")}
+        onAppend={() => runSuggest("append")}
+        hasExistingMappings={!!hasExistingMappings}
+      />
+
+      <DroppedColumnsList
+        groups={groups}
+        onDeleteGroup={handleDeleteGroup}
         onDrop={handleDrop}
-      >
-        {groups.length === 0 && (
-          <span className={ColumnMappingStyles.dropText}>Click or drop columns here</span>
-        )}
+        height={dropAreaHeight}
+      />
 
-        {groups.map((group, index) => (
-          <div key={index} className={ColumnMappingStyles.droppedItem}>
-            <div className={ColumnMappingStyles.groupHeader}>
-              <span className={ColumnMappingStyles.deleteIcon} onClick={() => handleDeleteGroup(group)}>
-                <CloseIcon />
-              </span>
-
-              <h4 className={ColumnMappingStyles.groupTitle}>
-                <span className={ColumnMappingStyles.columnName}>{group.column}</span>
-              </h4>
-
-              <div className={ColumnMappingStyles.groupTypeFileWrapper}>
-                <span className={ColumnMappingStyles.groupType}>
-                  Type:{" "}
-                  {group.values.includes("integer")
-                    ? "Integer"
-                    : group.values.includes("double")
-                      ? "Double"
-                      : group.values.includes("date")
-                        ? "Date"
-                        : "Categorical"}
-                </span>
-                <em className={ColumnMappingStyles.groupFile}>from {group.fileName}</em>
-              </div>
-            </div>
-
-            <div className={ColumnMappingStyles.groupContent}>
-              {group.values.includes("integer") || group.values.includes("double") ? (
-                <p className={ColumnMappingStyles.groupDetail}>This column represents numerical data.</p>
-              ) : group.values.includes("date") ? (
-                <p className={ColumnMappingStyles.groupDetail}>This column represents date values.</p>
-              ) : (
-                <div>
-                  <p className={ColumnMappingStyles.groupDetail}>Categories:</p>
-                  <ul className={ColumnMappingStyles.categoryList}>
-                    {group.values.map((value, valueIndex) => (
-                      <li key={valueIndex} className={ColumnMappingStyles.categoryItem}>
-                        {value}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className={ColumnMappingStyles.resizer} onMouseDown={handleMouseDown} />
+      <div
+        className={ColumnMappingStyles.resizer}
+        onPointerDown={handleResizerPointerDown}
+        style={{ touchAction: "none" }}
+      />
 
       <div className={ColumnMappingStyles.createEntrySection}>
         <div className={ColumnMappingStyles.sectionHeader}>
-          <h2 className={ColumnMappingStyles.sectionTitle}>Define mapping rules</h2>
+          <div className={ColumnMappingStyles.titleWithInfo}>
+            <h2 className={ColumnMappingStyles.sectionTitle}>Define mapping rules</h2>
 
-          <div className={ColumnMappingStyles.tooltipContainer}>
-            <InfoOutlinedIcon
-              ref={headerTooltipButtonRef}
-              className={ColumnMappingStyles.tooltipIcon}
-              onMouseEnter={() => setShowHeaderTooltip(true)}
-              onMouseLeave={() => setShowHeaderTooltip(false)}
-            />
-            {showHeaderTooltip && (
-              <TooltipPopup
-                message={"Create a column in the datasets with a given name.\nIt's values will be set based on the defined mappings from the selected columns."}
-                buttonRef={headerTooltipButtonRef}
-                onClose={() => setShowHeaderTooltip(false)}
-                offsetY={-10}
+            <div className={ColumnMappingStyles.tooltipContainer}>
+              <InfoOutlinedIcon
+                ref={headerTooltipButtonRef}
+                className={ColumnMappingStyles.tooltipIcon}
+                onMouseEnter={() => setShowHeaderTooltip(true)}
+                onMouseLeave={() => setShowHeaderTooltip(false)}
               />
-            )}
+              {showHeaderTooltip && (
+                <TooltipPopup
+                  message={
+                    "Create a column in the datasets with a given name.\nIt's values will be set based on the defined mappings from the selected columns."
+                  }
+                  buttonRef={headerTooltipButtonRef}
+                  onClose={() => setShowHeaderTooltip(false)}
+                  offsetY={-10}
+                />
+              )}
+            </div>
           </div>
-        </div>
+{/* 
+          <div className={ColumnMappingStyles.headerActions}>
+            <button
+              type="button"
+              className={`${ColumnMappingStyles.suggestButton} ${isSuggestLoading ? ColumnMappingStyles.suggestButtonLoading : ""
+                }`}
+              onClick={openSuggest}
+              disabled={!onSuggestMappings || isSuggestLoading}
+              title="Suggest mappings"
+            >
+              {isSuggestLoading && (
+                <span className={ColumnMappingStyles.suggestSpinnerOverlay}>
+                  <span className={ColumnMappingStyles.suggestSpinner} />
+                </span>
+              )}
+              <span className={ColumnMappingStyles.buttonText}>Suggest mappings</span>
+              <span className={ColumnMappingStyles.iconWrapper}>
+                <TipsAndUpdatesIcon fontSize="inherit" className={ColumnMappingStyles.buttonIcon} />
+              </span>
+            </button>
+            <button
+              type="button"
+              className={`${ColumnMappingStyles.suggestButton} ${isGenerateMetadataLoading ? ColumnMappingStyles.suggestButtonLoading : ""
+                }`}
+              onClick={() => {
+                if (isGenerateMetadataLoading) return;
+                onGenerateMetadata?.();
+              }}
+              disabled={isGenerateMetadataLoading || !hasExistingMappings}
+              title="Generate metadata"
+            >
+              {isGenerateMetadataLoading && (
+                <span className={ColumnMappingStyles.suggestSpinnerOverlay}>
+                  <span className={ColumnMappingStyles.suggestSpinner} />
+                </span>
+              )}
 
+              <span className={`${ColumnMappingStyles.buttonText} ${ColumnMappingStyles.generateTextSlot}`}>
+                {isGenerateMetadataLoading ? (
+                  <span className={ColumnMappingStyles.inlineProgressWrap}>
+                    <LinearProgress
+                      variant="determinate"
+                      value={generateProgress}
+                      sx={{
+                        width: 120,
+                        height: 10,
+                        borderRadius: 999,
+                        "& .MuiLinearProgress-bar": { borderRadius: 999 },
+                        backgroundColor: "rgba(255,255,255,0.25)",
+                      }}
+                    />
+                  </span>
+                ) : (
+                  "Generate metadata"
+                )}
+              </span>
+              <span className={ColumnMappingStyles.iconWrapper}>
+                <DescriptionOutlinedIcon
+                  fontSize="inherit"
+                  className={ColumnMappingStyles.buttonIcon}
+                />
+              </span>
+            </button>
+          </div>
+          */}
+        </div>
         <div className={ColumnMappingStyles.entryHeaderRow}>
           <AutocompleteInput
             value={unionName}
@@ -483,14 +734,30 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
             suggestions={unionTerminologySuggestionLabels}
           />
 
-          <button type="button" className={ColumnMappingStyles.descriptionButton}>
+          <button
+            type="button"
+            className={ColumnMappingStyles.descriptionButton}
+            onClick={() => {
+              const items = [
+                { kind: "union", label: unionName, index: 0 },
+                ...customValues.map((cv, i) => ({ kind: "value", id: cv.id, label: cv.name, index: i })),
+              ];
+              setDescriptionItems(items);
+              openDescriptionModalAt(0);
+            }}
+          >
             <span className={ColumnMappingStyles.buttonText}>Description</span>
             <span className={ColumnMappingStyles.iconWrapper}>
               <DescriptionIcon fontSize="inherit" className={ColumnMappingStyles.buttonIcon} />
             </span>
           </button>
 
-          <button onClick={addNewValue} className={ColumnMappingStyles.addValueButton} title="Add Value">
+          <button
+            onClick={addNewValue}
+            className={ColumnMappingStyles.addValueButton}
+            title="Add Value"
+            type="button"
+          >
             <span className={ColumnMappingStyles.buttonText}>Add Value</span>
             <span className={ColumnMappingStyles.iconWrapper}>
               <AddIcon fontSize="inherit" className={ColumnMappingStyles.buttonIcon} />
@@ -498,212 +765,51 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
           </button>
         </div>
 
-        <div
-          ref={paneRef}
-          className={`${ColumnMappingStyles.slidingPane} ${isPaneVisible ? ColumnMappingStyles.paneVisible : ""
-            }`}
-        >
-          {currentGroupIndex !== null && (
-            <div className={ColumnMappingStyles.selectMappingContainer}>
-              <div className={ColumnMappingStyles.selectMappingHeader}>
-                <h5>
-                  {currentValueName.trim()
-                    ? `Create mappings for "${currentValueName}"`
-                    : "Create mappings for the set value"}
-                </h5>
-                <button
-                  onClick={() => {
-                    setCurrentGroupIndex(null);
-                    setIsPaneVisible(false);
-                  }}
-                  className={ColumnMappingStyles.closeIconButton}
-                >
-                  <CloseIcon />
-                </button>
-              </div>
+        <MappingSelectorPane
+          isPaneVisible={isPaneVisible && currentGroupIndex !== null}
+          currentValueName={currentValueName}
+          groups={groups}
+          getGroupKey={getGroupKey}
+          extractMinMax={extractMinMax}
+          getUnavailableRanges={getUnavailableRanges}
+          getAvailableValues={getAvailableValues}
+          onSelectMapping={handleSelectMapping}
+          onClose={() => {
+            setCurrentGroupIndex(null);
+            setIsPaneVisible(false);
+          }}
+          paneRef={paneRef}
+        />
 
-              {groups.map((group) => {
-                const darkenedColor = darkenColor(group.color, -30);
-                const firstValueType = group.values[0];
-                const { min, max } = extractMinMax(group.values, firstValueType);
-                const unavailableRanges = getUnavailableRanges(group);
-                const availableValues = getAvailableValues(group);
-                const allMapped = availableValues.length === 0;
-
-                return (
-                  <div key={getGroupKey(group)} className={ColumnMappingStyles.mappingGroup}>
-                    <div className={ColumnMappingStyles.columnTitle}>
-                      <span
-                        className={ColumnMappingStyles.columnName}
-                        style={{ color: darkenedColor }}
-                      >
-                        {group.column}
-                      </span>
-                      <span className={ColumnMappingStyles.columnFileInline}>from {group.fileName}</span>
-                    </div>
-
-                    {allMapped ? (
-                      <p className={ColumnMappingStyles.allMappedMessage}>All categories have been mapped.</p>
-                    ) : firstValueType === "integer" || firstValueType === "double" || firstValueType === "date" ? (
-                      <RangePicker
-                        min={min}
-                        max={max}
-                        type={firstValueType}
-                        onRangeChange={(newRange) => {
-                          handleSelectMapping(group, {
-                            minValue: newRange.minValue,
-                            maxValue: newRange.maxValue,
-                            type: firstValueType,
-                          });
-                        }}
-                        unavailableRanges={unavailableRanges}
-                      />
-                    ) : (
-                      <ul className={ColumnMappingStyles.mappingOptions}>
-                        {availableValues.map((value, valueIndex) => (
-                          <li key={valueIndex}>
-                            <button
-                              onClick={() => handleSelectMapping(group, value)}
-                              className={ColumnMappingStyles.mappingButton}
-                            >
-                              {value}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        <TransitionGroup
-          className={`${ColumnMappingStyles.valueListContainer} ${customValues.length ? ColumnMappingStyles.hasValues : ""
-            }`}
-        >
-          {customValues.map((customValue, index) => {
-            if (!mappingRefs.current[customValue.id]) mappingRefs.current[customValue.id] = React.createRef();
-
-            return (
-              <CSSTransition
-                key={customValue.id}
-                timeout={500}
-                classNames={{
-                  enter: ColumnMappingStyles.enter,
-                  enterActive: ColumnMappingStyles.enterActive,
-                  exit: ColumnMappingStyles.exit,
-                  exitActive: ColumnMappingStyles.exitActive,
-                }}
-                nodeRef={mappingRefs.current[customValue.id]}
-              >
-                <div ref={mappingRefs.current[customValue.id]} className={ColumnMappingStyles.valueMappingContainer}>
-                  <div className={ColumnMappingStyles.valueMappingRow}>
-                    <AutocompleteInput
-                      value={customValue.name}
-                      onChange={(raw) => handleValueNameChange(customValue.id, raw)}
-                      placeholder="Value content"
-                      className={ColumnMappingStyles.valueNameInput}
-                      suggestions={valueContentSuggestions}
-                    />
-
-                    <AutocompleteInput
-                      value={customValue.snomedTerm || ""}
-                      onChange={(raw) => {
-                        const hits = snomedValueTerminologySuggestions[customValue.id] || [];
-                        const hit = hits.find((s) => s.value === raw || s.label === raw);
-                        handleValueSnomedChange(customValue.id, hit ? hit.value : raw);
-                      }}
-                      placeholder="Value terminology"
-                      className={ColumnMappingStyles.valueSnomedInput}
-                      suggestions={valueTerminologySuggestionLabelsFor(customValue.id)}
-                    />
-
-                    <button type="button" className={ColumnMappingStyles.descriptionButton}>
-                      <span className={ColumnMappingStyles.buttonText}>Description</span>
-                      <span className={ColumnMappingStyles.iconWrapper}>
-                        <DescriptionIcon fontSize="inherit" className={ColumnMappingStyles.buttonIcon} />
-                      </span>
-                    </button>
-
-                    {isTooltipShown && tooltipRef && (
-                      <TooltipPopup
-                        message={tooltipMessage}
-                        buttonRef={tooltipRef}
-                        onClose={() => setTooltipShown(false)}
-                      />
-                    )}
-
-                    <button
-                      ref={buttonRefs.current[index]}
-                      onClick={() => {
-                        if (groups.length <= 0) {
-                          triggerTooltip("No set elements to get the values from.", index);
-                        } else {
-                          handleAddMapping(index);
-                        }
-                      }}
-                      className={ColumnMappingStyles.addMappingButton}
-                    >
-                      <span className={ColumnMappingStyles.buttonText}>Add Mapping</span>
-                      <span className={ColumnMappingStyles.iconWrapper}>
-                        <AddIcon fontSize="inherit" className={ColumnMappingStyles.buttonIcon} />
-                      </span>
-                    </button>
-
-                    <button onClick={() => removeValue(index)} className={ColumnMappingStyles.closeIconButton}>
-                      <CloseIcon />
-                    </button>
-                  </div>
-
-                  {customValue.mapping.length > 0 && (
-                    <div className={ColumnMappingStyles.mappingSummary}>
-                      {customValue.mapping.length} values from{" "}
-                      {new Set(customValue.mapping.map((m) => m.groupColumn)).size} columns mapped
-                    </div>
-                  )}
-
-                  <ul className={ColumnMappingStyles.currentMappings}>
-                    {customValue.mapping.map((map, mapIndex) => {
-                      const sameColumn = customValue.mapping.filter((m) => m.groupColumn === map.groupColumn);
-                      const distinctSources = new Set(
-                        sameColumn.map((m) => m.groupKey ?? `${m.nodeId}::${m.fileName}::${m.groupColumn}`)
-                      );
-                      const isAmbiguous = distinctSources.size > 1;
-
-                      const displayVal =
-                        typeof map.value === "object" && map.value.minValue !== undefined
-                          ? `${formatValue(map.value.minValue, map.value.type)} - ${formatValue(
-                            map.value.maxValue,
-                            map.value.type
-                          )}`
-                          : map.value;
-
-                      return (
-                        <li key={mapIndex} className={ColumnMappingStyles.mappedItem}>
-                          <div className={ColumnMappingStyles.mappedRow}>
-                            <span className={ColumnMappingStyles.mappedLabel}>
-                              From {map.groupColumn}
-                              {isAmbiguous ? ` (from ${map.fileName})` : ""}:
-                            </span>
-                            <span className={ColumnMappingStyles.mappedValue}>{displayVal}</span>
-                            <button
-                              className={ColumnMappingStyles.closeIconButton}
-                              onClick={() => handleRemoveMapping(index, mapIndex)}
-                            >
-                              <CloseIcon />
-                            </button>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              </CSSTransition>
-            );
-          })}
-        </TransitionGroup>
+        <ValuesList
+          customValues={customValues}
+          groups={groups}
+          valueContentSuggestions={valueContentSuggestions}
+          valueTerminologySuggestionLabelsFor={valueTerminologySuggestionLabelsFor}
+          snomedValueTerminologySuggestions={snomedValueTerminologySuggestions}
+          isTooltipShown={isTooltipShown}
+          tooltipRef={tooltipRef}
+          tooltipMessage={tooltipMessage}
+          onTooltipClose={() => setTooltipShown(false)}
+          onValueNameChange={handleValueNameChange}
+          onValueSnomedChange={handleValueSnomedChange}
+          onAddMapping={(index) => {
+            if (groups.length <= 0) triggerTooltip("No set elements to get the values from.", index);
+            else handleAddMapping(index);
+          }}
+          onRemoveMapping={handleRemoveMapping}
+          onRemoveValue={removeValue}
+          onOpenDescription={(index) => {
+            const items = [
+              { kind: "union", label: unionName, index: 0 },
+              ...customValues.map((cv, i) => ({ kind: "value", id: cv.id, label: cv.name, index: i })),
+            ];
+            setDescriptionItems(items);
+            openDescriptionModalAt(index + 1);
+          }}
+          isLockedNumericValue={isLockedNumericValue}
+          buttonRefs={buttonRefs}
+        />
 
         <div className={ColumnMappingStyles.bottomControlsRow}>
           <div className={ColumnMappingStyles.removeCheckbox}>
@@ -738,15 +844,26 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema }) {
 
           <button
             onClick={saveMapping}
-            className={ColumnMappingStyles.saveButton}
-            disabled={isSaveDisabled()}
+            className={`${ColumnMappingStyles.saveButton} ${isSaveDisabled() ? ColumnMappingStyles.saveButtonDisabled : ""
+              }`}
+            aria-disabled={isSaveDisabled()}
             title="Save Mapping"
+            ref={saveButtonRef}
+            type="button"
           >
             <span className={ColumnMappingStyles.buttonText}>Save</span>
             <span className={ColumnMappingStyles.iconWrapper}>
               <SaveIcon fontSize="inherit" className={ColumnMappingStyles.buttonIcon} />
             </span>
           </button>
+
+          {saveTooltipShown && saveButtonRef.current && (
+            <TooltipPopup
+              message={saveTooltipMessage}
+              buttonRef={saveButtonRef}
+              onClose={() => setSaveTooltipShown(false)}
+            />
+          )}
         </div>
       </div>
     </div>

@@ -73,7 +73,12 @@ describe('Navbar', () => {
     useMatch.mockReturnValue(false);
     navigateMock = jest.fn();
     useNavigate.mockReturnValue(navigateMock);
-    useAuth.mockReturnValue({ isAuthenticated: false, logout: jest.fn() });
+    useAuth.mockReturnValue({ 
+      isAuthenticated: false, 
+      logout: jest.fn(),
+      capabilities: { semanticAlignment: false, hl7fhir: false },
+      capsLoaded: false
+    });
     useNode.mockReturnValue({ selectedNodes: null });
   });
 
@@ -98,7 +103,12 @@ describe('Navbar', () => {
   });
 
   it('renders extra nav items when authenticated and nodes selected', () => {
-    useAuth.mockReturnValue({ isAuthenticated: true, logout: jest.fn() });
+    useAuth.mockReturnValue({ 
+      isAuthenticated: true, 
+      logout: jest.fn(),
+      capabilities: { semanticAlignment: true, hl7fhir: true },
+      capsLoaded: true
+    });
     useNode.mockReturnValue({ selectedNodes: ['abc'] });
     render(<Navbar />);
     
@@ -118,7 +128,12 @@ describe('Navbar', () => {
 
   it('calls logout + navigate on Logout click', () => {
     const logoutMock = jest.fn();
-    useAuth.mockReturnValue({ isAuthenticated: true, logout: logoutMock });
+    useAuth.mockReturnValue({ 
+      isAuthenticated: true, 
+      logout: logoutMock,
+      capabilities: { semanticAlignment: true, hl7fhir: true },
+      capsLoaded: true
+    });
     useNode.mockReturnValue({ selectedNodes: ['n1'] });
     render(<Navbar />);
     fireEvent.click(screen.getByRole('checkbox', { name: 'Toggle menu' }));
@@ -137,7 +152,12 @@ describe('Navbar', () => {
   });
 
   it('includes FileSearchIcon inside Discovery desktop label', () => {
-    useAuth.mockReturnValue({ isAuthenticated: true, logout: jest.fn() });
+    useAuth.mockReturnValue({ 
+      isAuthenticated: true, 
+      logout: jest.fn(),
+      capabilities: { semanticAlignment: true, hl7fhir: true },
+      capsLoaded: true
+    });
     useNode.mockReturnValue({ selectedNodes: ['n1'] });
     render(<Navbar />);
     expect(
@@ -146,7 +166,12 @@ describe('Navbar', () => {
   });
 
   it('does not render extra nav items when authenticated but no nodes selected', () => {
-    useAuth.mockReturnValue({ isAuthenticated: true, logout: jest.fn() });
+    useAuth.mockReturnValue({ 
+      isAuthenticated: true, 
+      logout: jest.fn(),
+      capabilities: { semanticAlignment: true, hl7fhir: true },
+      capsLoaded: true
+    });
     useNode.mockReturnValue({ selectedNodes: null });
     render(<Navbar />);
     
@@ -179,5 +204,49 @@ describe('Navbar', () => {
     
     // Menu should close
     expect(checkbox).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('only shows Discovery and Integration when capabilities are disabled', () => {
+    useAuth.mockReturnValue({ 
+      isAuthenticated: true, 
+      logout: jest.fn(),
+      capabilities: { semanticAlignment: false, hl7fhir: false },
+      capsLoaded: true
+    });
+    useNode.mockReturnValue({ selectedNodes: ['abc'] });
+    render(<Navbar />);
+    
+    expect(screen.getByRole('link', { name: 'Discovery' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Integration' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Semantic-Alignment' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'HL7 FHIR' })).toBeNull();
+  });
+
+  it('shows Semantic-Alignment when capability is enabled', () => {
+    useAuth.mockReturnValue({ 
+      isAuthenticated: true, 
+      logout: jest.fn(),
+      capabilities: { semanticAlignment: true, hl7fhir: false },
+      capsLoaded: true
+    });
+    useNode.mockReturnValue({ selectedNodes: ['abc'] });
+    render(<Navbar />);
+    
+    expect(screen.getByRole('link', { name: 'Semantic-Alignment' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'HL7 FHIR' })).toBeNull();
+  });
+
+  it('shows HL7 FHIR when capability is enabled', () => {
+    useAuth.mockReturnValue({ 
+      isAuthenticated: true, 
+      logout: jest.fn(),
+      capabilities: { semanticAlignment: false, hl7fhir: true },
+      capsLoaded: true
+    });
+    useNode.mockReturnValue({ selectedNodes: ['abc'] });
+    render(<Navbar />);
+    
+    expect(screen.queryByRole('link', { name: 'Semantic-Alignment' })).toBeNull();
+    expect(screen.getByRole('link', { name: 'HL7 FHIR' })).toBeInTheDocument();
   });
 });

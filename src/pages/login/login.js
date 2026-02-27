@@ -1,4 +1,4 @@
-import React, { useState , useRef} from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import LoginStyles from "./login.module.css";
 import { loginUser } from "../../util/petitionHandler";
@@ -11,8 +11,8 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const formRef = useRef(null); 
-  const { login } = useAuth();
+  const formRef = useRef(null);
+  const { loginAndLoadCaps } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -22,9 +22,9 @@ const Login = () => {
 
     try {
       const data = await loginUser(username, password);
-      login(data.token, data.tgt);
+      await loginAndLoadCaps(data.token, data.tgt);
       setIsLoggingIn(false);
-        navigate("/projects");
+      navigate("/projects");
     } catch (error) {
       console.log(error);
       setErrorMessage("Login failed. Please check your credentials.");
@@ -41,13 +41,16 @@ const Login = () => {
         classNames={LoginStyles}
         nodeRef={formRef}
       >
-        <form 
-          ref={formRef} 
-          className={LoginStyles.form} 
+        <form
+          ref={formRef}
+          className={LoginStyles.form}
           onSubmit={handleLogin}
           aria-labelledby="login-title"
         >
-          <h2 id="login-title" className={LoginStyles.title}>Login</h2>
+          <h2 id="login-title" className={LoginStyles.title}>
+            Login
+          </h2>
+
           <input
             type="text"
             id="username-input"
@@ -63,6 +66,7 @@ const Login = () => {
             aria-invalid={errorMessage ? "true" : "false"}
             aria-describedby={errorMessage ? "login-error" : undefined}
           />
+
           <input
             type="password"
             id="password-input"
@@ -78,16 +82,18 @@ const Login = () => {
             aria-invalid={errorMessage ? "true" : "false"}
             aria-describedby={errorMessage ? "login-error" : undefined}
           />
+
           {errorMessage && (
-            <div 
-              id="login-error" 
-              className={LoginStyles.error} 
+            <div
+              id="login-error"
+              className={LoginStyles.error}
               role="alert"
               aria-live="polite"
             >
               {errorMessage}
             </div>
           )}
+
           <button
             type="submit"
             id="login-submit-button"

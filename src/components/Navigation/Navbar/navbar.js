@@ -42,18 +42,21 @@ function FileSearchIcon() {
   );
 }
 
-// Main navigation bar used thought the app
+// Main navigation bar used throughout the app
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [animate, setAnimate] = useState(false);
-  const { isAuthenticated, logout } = useAuth();
+
+  const { isAuthenticated, logout, capabilities, capsLoaded } = useAuth();
   const { selectedNodes } = useNode();
+
   const navigate = useNavigate();
 
   const discoveryMatch = useMatch({ path: "/discovery", end: true });
   const integrationMatch = useMatch({ path: "/integration", end: true });
   const semanticAlignmentMatch = useMatch({ path: "/semanticalignment", end: true });
-  const fhirMatch = useMatch({ path: "/hl7fhir", end: true })
+  const fhirMatch = useMatch({ path: "/hl7fhir", end: true });
+
   const extraOptionsRef = useRef(null);
 
   const toggleMenu = () => {
@@ -75,6 +78,33 @@ export default function Navbar() {
     navigate("/");
   };
 
+  const nodesReadyNow = Array.isArray(selectedNodes) && selectedNodes.length > 0;
+  const [nodesLatched, setNodesLatched] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setNodesLatched(false);
+      return;
+    }
+    if (!nodesLatched && nodesReadyNow) {
+      setNodesLatched(true);
+    }
+  }, [isAuthenticated, nodesLatched, nodesReadyNow]);
+
+  const [capsLatched, setCapsLatched] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setCapsLatched(false);
+      return;
+    }
+    if (!capsLatched && capsLoaded) {
+      setCapsLatched(true);
+    }
+  }, [isAuthenticated, capsLatched, capsLoaded]);
+
+  const showSystemTabs = isAuthenticated && nodesLatched && capsLatched;
+
   return (
     <nav className={NavbarStyles.navbar} aria-label="Main navigation">
       <div className={NavbarStyles.navLeft}>
@@ -90,9 +120,10 @@ export default function Navbar() {
           />
         </Link>
       </div>
+
       <ul className={NavbarStyles.navlinks}>
         <TransitionGroup component={null}>
-          {isAuthenticated && selectedNodes && (
+          {showSystemTabs && (
             <CSSTransition
               key="extra-options"
               nodeRef={extraOptionsRef}
@@ -105,7 +136,11 @@ export default function Navbar() {
               }}
             >
               <div ref={extraOptionsRef} className={NavbarStyles.darkerContainer}>
-                <li className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem} ${discoveryMatch ? NavbarStyles.activeDarker : ""}`} >
+                <li
+                  className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem} ${
+                    discoveryMatch ? NavbarStyles.activeDarker : ""
+                  }`}
+                >
                   <CustomLink to="/discovery" reloadOnActive>
                     <span className={NavbarStyles.desktopLabel} title="Dataset analysis and exploration">
                       Discovery
@@ -115,7 +150,12 @@ export default function Navbar() {
                     </span>
                   </CustomLink>
                 </li>
-                <li className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem} ${integrationMatch ? NavbarStyles.activeDarker : ""}`}   >
+
+                <li
+                  className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem} ${
+                    integrationMatch ? NavbarStyles.activeDarker : ""
+                  }`}
+                >
                   <CustomLink to="/integration" reloadOnActive>
                     <span
                       className={NavbarStyles.desktopLabel}
@@ -128,26 +168,41 @@ export default function Navbar() {
                     </span>
                   </CustomLink>
                 </li>
-                <li className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem} ${semanticAlignmentMatch ? NavbarStyles.activeDarker : ""}`}   >
-                  <CustomLink to="/semanticalignment" reloadOnActive>
-                    <span className={NavbarStyles.desktopLabel} title="Map and align the data to an ontology">
-                      Semantic-Alignment
-                    </span>
-                    <span className={NavbarStyles.mobileIcon}>
-                      <FaSitemap aria-hidden="true" style={{ fontSize: "1.2em" }} />
-                    </span>
-                  </CustomLink>
-                </li>
-                <li className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem} ${fhirMatch ? NavbarStyles.activeDarker : ""}`} >
-                  <CustomLink to="/hl7fhir" reloadOnActive>
-                    <span className={NavbarStyles.desktopLabel} title="Create HL7 FHIR mappings">
-                      HL7 FHIR
-                    </span>
-                    <span className={NavbarStyles.mobileIcon}>
-                      <FhirIcon aria-hidden="true" style={{ width: "1.2em", height: "1.2em" }} />
-                    </span>
-                  </CustomLink>
-                </li>
+
+                {capabilities?.semanticAlignment && (
+                  <li
+                    className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem} ${
+                      semanticAlignmentMatch ? NavbarStyles.activeDarker : ""
+                    }`}
+                  >
+                    <CustomLink to="/semanticalignment" reloadOnActive>
+                      <span className={NavbarStyles.desktopLabel} title="Map and align the data to an ontology">
+                        Semantic-Alignment
+                      </span>
+                      <span className={NavbarStyles.mobileIcon}>
+                        <FaSitemap aria-hidden="true" style={{ fontSize: "1.2em" }} />
+                      </span>
+                    </CustomLink>
+                  </li>
+                )}
+
+                {capabilities?.hl7fhir && (
+                  <li
+                    className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem} ${
+                      fhirMatch ? NavbarStyles.activeDarker : ""
+                    }`}
+                  >
+                    <CustomLink to="/hl7fhir" reloadOnActive>
+                      <span className={NavbarStyles.desktopLabel} title="Create HL7 FHIR mappings">
+                        HL7 FHIR
+                      </span>
+                      <span className={NavbarStyles.mobileIcon}>
+                        <FhirIcon aria-hidden="true" style={{ width: "1.2em", height: "1.2em" }} />
+                      </span>
+                    </CustomLink>
+                  </li>
+                )}
+
                 <li className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem} ${NavbarStyles.darkerSwitchItem}`}>
                   <DarkSwitch />
                 </li>
@@ -155,6 +210,7 @@ export default function Navbar() {
             </CSSTransition>
           )}
         </TransitionGroup>
+
         <input
           type="checkbox"
           id="menuToggle"
@@ -168,6 +224,7 @@ export default function Navbar() {
         <label htmlFor="menuToggle" className={NavbarStyles.hamburger}>
           &#9776;
         </label>
+
         <div
           id="main-menu"
           className={`${NavbarStyles.menu} ${menuOpen && animate ? NavbarStyles.animate : ""}`}
@@ -179,6 +236,7 @@ export default function Navbar() {
               Home
             </CustomLink>
           </li>
+
           {isAuthenticated && (
             <li className={NavbarStyles.listItem} role="none">
               <CustomLink to="/projects" onClick={toggleMenu} role="menuitem">
@@ -186,6 +244,7 @@ export default function Navbar() {
               </CustomLink>
             </li>
           )}
+
           {!isAuthenticated ? (
             <li className={NavbarStyles.listItem} role="none">
               <CustomLink to="/login" onClick={toggleMenu} role="menuitem">
@@ -199,11 +258,13 @@ export default function Navbar() {
               </CustomLink>
             </li>
           )}
+
           <li className={NavbarStyles.listItem} role="none">
             <CustomLink to="/tutorial" onClick={toggleMenu} role="menuitem">
               Tutorial
             </CustomLink>
           </li>
+
           <li className={NavbarStyles.listItem} role="none">
             <CustomLink to="/about" onClick={toggleMenu} role="menuitem">
               About

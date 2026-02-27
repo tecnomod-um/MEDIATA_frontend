@@ -16,9 +16,9 @@ jest.mock('../../util/petitionHandler', () => ({
   loginUser: (...args) => mockLoginUser(...args),
 }));
 
-const mockLogin = jest.fn();
+const mockLoginAndLoadCaps = jest.fn();
 jest.mock('../../context/authContext', () => ({
-  useAuth: () => ({ login: mockLogin }),
+  useAuth: () => ({ loginAndLoadCaps: mockLoginAndLoadCaps }),
 }));
 
 const mockNavigate = jest.fn();
@@ -70,7 +70,7 @@ describe('<Login />', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /Login/i }));
 
-    await waitFor(() => expect(mockLogin).toHaveBeenCalledWith('T', 'G'));
+    await waitFor(() => expect(mockLoginAndLoadCaps).toHaveBeenCalledWith('T', 'G'));
     expect(mockNavigate).toHaveBeenCalledWith('/projects');
   });
 });

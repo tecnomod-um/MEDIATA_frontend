@@ -3,6 +3,12 @@ import nodeAxiosInstance, { updateNodeAxiosBaseURL } from "./nodeAxiosSetup";
 // API request handlers for all backend and node petitions
 
 /* System petitions */
+// Get backend deployment mode
+export const getSystemCapabilities = async () => {
+  const response = await axiosInstance.get(`/api/system/capabilities`);
+  return response.data;
+};
+
 // Fetch the list of projects
 export const getProjectList = async () => {
   try {
@@ -491,4 +497,46 @@ export const cleanExplorerFile = async (category, name, cleaningOptions) => {
     { params: { category, name } }
   );
   return response.data;
+};
+
+export const suggestMappings = async ({ elementFiles, schema }) => {
+  const payload = {
+    elementFiles,
+    schema: schema ? (typeof schema === "string" ? schema : JSON.stringify(schema)) : null,
+  };
+
+  const response = await axiosInstance.post("/api/mappings/suggest", payload, {
+    headers: { "Content-Type": "application/json" },
+  });
+
+  return response.data;
+};
+
+export const enrichMappingsStart = async ({ hierarchy, schema }) => {
+  const payload = {
+    hierarchy,
+    schema: schema ? (typeof schema === "string" ? schema : JSON.stringify(schema)) : null,
+  };
+
+  const response = await axiosInstance.post("/api/mappings/enrich", payload, {
+    headers: { "Content-Type": "application/json" },
+    validateStatus: () => true,
+  });
+
+  return { status: response.status, data: response.data };
+};
+
+export const getEnrichMappingsStatus = async (jobId) => {
+  const response = await axiosInstance.get(
+    `/api/mappings/enrich/status/${encodeURIComponent(jobId)}`
+  );
+  return response.data;
+};
+
+export const getEnrichMappingsResult = async (jobId) => {
+  const response = await axiosInstance.get(
+    `/api/mappings/enrich/result/${encodeURIComponent(jobId)}`,
+    { validateStatus: () => true }
+  );
+  return { status: response.status, data: response.data };
 };

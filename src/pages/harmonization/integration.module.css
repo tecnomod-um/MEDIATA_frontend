@@ -130,22 +130,91 @@
   100% { transform: rotate(360deg); }
 }
 
+.mobileNav {
+  display: none;
+}
+
 @media screen and (max-width: 768px) {
   .pageContainer {
-    height: auto;
+    height: calc(100vh - 55px);
     max-height: calc(100vh - 55px);
   }
 
   .mappingContainer {
+    position: relative;
     flex-direction: column;
-    padding: 1rem;
-    gap: 1rem;
-    justify-content: flex-start;
+    padding: 0;
+    gap: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .mobileNav {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    height: 54px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    align-items: center;
+
+    padding: 8px;
+    box-sizing: border-box;
+
+    background: var(--background-color-1);
+    border-top: 1px solid var(--border-color);
+    z-index: 20;
+  }
+
+  .mobileNavBtn {
+    height: 38px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color-secondary);
+    background: var(--background-color-card);
+    color: var(--text-color-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .mobileNavBtnActive {
+    background: var(--background-color-3);
+    border-color: var(--border-color);
+  }
+
+  .mobilePanel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 54px;
+
+    width: 100%;
+    height: auto;
+
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+
+    transition: transform 220ms ease, opacity 220ms ease;
+    overflow: hidden;
+  }
+
+
+  .mobilePanelActive {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .columnsSection {
     max-width: 100%;
-    max-height: 15vh;
-    overflow: hidden;
+    min-width: 0;
+    height: 100%;
+    max-height: none;
   }
 }
