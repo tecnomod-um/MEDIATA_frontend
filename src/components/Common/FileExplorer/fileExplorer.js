@@ -10,7 +10,6 @@ import CleanPanel from "./cleanPanel";
 import DeleteConfirmation from "./deleteConfirmation";
 import { useNavigate } from "react-router-dom";
 import { formatBytes, formatDateTime, isFileNew } from "./fileUtils";
-import { createPortal } from "react-dom";
 
 const notifyError = (e, fallback) => {
   const msg = e?.response?.data?.message || e?.message || fallback;
@@ -821,7 +820,7 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
 
   const toolbarDisabled = busy || loading;
 
-  return createPortal(
+  return (
     <CSSTransition
       in={isOpen}
       timeout={320}
@@ -971,8 +970,7 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
           </CSSTransition>
         </div>
       </div>
-    </CSSTransition>,
-    document.body
+    </CSSTransition>
   );
 }
 
