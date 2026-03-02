@@ -20,20 +20,20 @@
   flex-direction: column;
 }
 
-.fadeModalEnter {
+.fadeModalEnter .modalBackground {
   opacity: 0;
 }
 
-.fadeModalEnterActive {
+.fadeModalEnterActive .modalBackground {
   opacity: 1;
   transition: opacity var(--transition-duration) var(--transition-ease);
 }
 
-.fadeModalExit {
+.fadeModalExit .modalBackground {
   opacity: 1;
 }
 
-.fadeModalExitActive {
+.fadeModalExitActive .modalBackground {
   opacity: 0;
   transition: opacity var(--transition-duration) var(--transition-ease);
 }
