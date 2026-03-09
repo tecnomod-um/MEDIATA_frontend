@@ -210,3 +210,37 @@ label[for="menuToggle"] {
 .darkerSwitchItem:hover {
   background-color: transparent;
 }
+
+/* FileSearchIcon composite icon */
+.fileSearchWrapper {
+  position: relative;
+  display: inline-block;
+  width: 1.2em;
+  height: 1.2em;
+}
+
+.fileSearchFileIcon {
+  font-size: 1.2em;
+  color: var(--text-color-on-darkbg);
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.fileSearchSearchIcon {
+  font-size: 0.75em;
+  color: var(--text-color-primary-light);
+  position: absolute;
+  top: 28%;
+  left: 22%;
+}
+
+/* Mobile navigation icon sizing */
+.mobileNavIcon {
+  font-size: 1.2em;
+}
+
+.mobileNavFhirIcon {
+  width: 1.2em;
+  height: 1.2em;
+}
