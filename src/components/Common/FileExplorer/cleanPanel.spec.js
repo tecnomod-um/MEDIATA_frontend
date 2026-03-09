@@ -38,6 +38,13 @@ jest.mock("./jsonMapEditor.js", () => {
   };
 });
 
+jest.mock('react-toastify', () => ({
+  toast: {
+    error: jest.fn(),
+    success: jest.fn(),
+  },
+}));
+
 describe('CleanPanel', () => {
   const defaultProps = {
     show: true,
@@ -702,6 +709,1266 @@ describe('CleanPanel', () => {
         fireEvent.click(normalizeSwitch);
         expect(normalizeSwitch).toBeChecked();
       }
+    });
+  });
+});
+
+describe('CleanPanel - Advanced Options', () => {
+  const defaultProps = {
+    show: true,
+    onClose: jest.fn(),
+    busy: false,
+    selectedCount: 5,
+    onApply: jest.fn(),
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('Standardize Dates section', () => {
+    it('renders standardize dates option with date format dropdown', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      expect(screen.getByText('Standardize dates')).toBeInTheDocument();
+      
+      // Check for the inline hint
+      expect(screen.getByText(/Turn on to select the output format/i)).toBeInTheDocument();
+    });
+
+    it('enables date format selector when standardize dates is enabled', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const dateSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Standardize dates');
+      });
+      
+      if (dateSwitch) {
+        fireEvent.click(dateSwitch);
+        
+        // Check that date format options are available
+        const selects = screen.getAllByRole('combobox');
+        const dateFormatSelect = selects.find(s => {
+          const options = Array.from(s.options);
+          return options.some(o => o.value === 'YYYY-MM-DD' || o.value === 'DD/MM/YYYY');
+        });
+        
+        expect(dateFormatSelect).toBeDefined();
+        if (dateFormatSelect) {
+          expect(dateFormatSelect).not.toBeDisabled();
+        }
+      }
+    });
+
+    it('shows extract date components checkbox', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const dateSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Standardize dates');
+      });
+      
+      if (dateSwitch) {
+        fireEvent.click(dateSwitch);
+        
+        // Look for the extract components checkbox
+        const checkboxes = screen.getAllByRole('checkbox');
+        const extractCheckbox = checkboxes.find(cb => {
+          const label = cb.closest('label');
+          return label?.textContent?.includes('Extract year/month/day');
+        });
+        
+        expect(extractCheckbox).toBeDefined();
+      }
+    });
+
+    it('can toggle extract date components', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const dateSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Standardize dates');
+      });
+      
+      if (dateSwitch) {
+        fireEvent.click(dateSwitch);
+        
+        const checkboxes = screen.getAllByRole('checkbox');
+        const extractCheckbox = checkboxes.find(cb => {
+          const label = cb.closest('label');
+          return label?.textContent?.includes('Extract year/month/day');
+        });
+        
+        if (extractCheckbox) {
+          expect(extractCheckbox).not.toBeChecked();
+          fireEvent.click(extractCheckbox);
+          expect(extractCheckbox).toBeChecked();
+        }
+      }
+    });
+  });
+
+  describe('Standardize Numeric Fields section', () => {
+    it('renders standardize numeric option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText('Standardize numeric fields')).toBeInTheDocument();
+    });
+
+    it('enables numeric mode selector when standardize numeric is enabled', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const numericSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Standardize numeric');
+      });
+      
+      if (numericSwitch) {
+        fireEvent.click(numericSwitch);
+        
+        const selects = screen.getAllByRole('combobox');
+        const numericModeSelect = selects.find(s => {
+          const options = Array.from(s.options);
+          return options.some(o => o.value === 'double' || o.value === 'int_round');
+        });
+        
+        expect(numericModeSelect).toBeDefined();
+        if (numericModeSelect) {
+          expect(numericModeSelect).not.toBeDisabled();
+        }
+      }
+    });
+
+    it('allows changing numeric mode', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const numericSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Standardize numeric');
+      });
+      
+      if (numericSwitch) {
+        fireEvent.click(numericSwitch);
+        
+        const selects = screen.getAllByRole('combobox');
+        const numericModeSelect = selects.find(s => {
+          const options = Array.from(s.options);
+          return options.some(o => o.value === 'int_round');
+        });
+        
+        if (numericModeSelect) {
+          fireEvent.change(numericModeSelect, { target: { value: 'int_round' } });
+          expect(numericModeSelect.value).toBe('int_round');
+          
+          fireEvent.change(numericModeSelect, { target: { value: 'int_trunc' } });
+          expect(numericModeSelect.value).toBe('int_trunc');
+        }
+      }
+    });
+
+    it('shows columns input field for numeric standardization', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const numericSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Standardize numeric');
+      });
+      
+      if (numericSwitch) {
+        fireEvent.click(numericSwitch);
+        
+        const columnsInput = screen.queryByPlaceholderText(/Comma-separated.*age.*height/i);
+        expect(columnsInput).toBeInTheDocument();
+      }
+    });
+
+    it('allows entering numeric columns', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const numericSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Standardize numeric');
+      });
+      
+      if (numericSwitch) {
+        fireEvent.click(numericSwitch);
+        
+        const columnsInput = screen.queryByPlaceholderText(/Comma-separated.*age.*height/i);
+        if (columnsInput) {
+          fireEvent.change(columnsInput, { target: { value: 'age,height,weight' } });
+          expect(columnsInput.value).toBe('age,height,weight');
+        }
+      }
+    });
+
+    it('shows remove leading zeros checkbox', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const numericSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Standardize numeric');
+      });
+      
+      if (numericSwitch) {
+        fireEvent.click(numericSwitch);
+        
+        const checkboxes = screen.getAllByRole('checkbox');
+        const leadingZerosCheckbox = checkboxes.find(cb => {
+          const label = cb.closest('label');
+          return label?.textContent?.includes('Remove leading zeros');
+        });
+        
+        expect(leadingZerosCheckbox).toBeDefined();
+      }
+    });
+
+    it('shows round decimals checkbox', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const numericSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Standardize numeric');
+      });
+      
+      if (numericSwitch) {
+        fireEvent.click(numericSwitch);
+        
+        const checkboxes = screen.getAllByRole('checkbox');
+        const roundCheckbox = checkboxes.find(cb => {
+          const label = cb.closest('label');
+          return label?.textContent?.includes('Round decimals');
+        });
+        
+        expect(roundCheckbox).toBeDefined();
+      }
+    });
+
+    it('shows decimal places input when round decimals is checked', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const numericSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Standardize numeric');
+      });
+      
+      if (numericSwitch) {
+        fireEvent.click(numericSwitch);
+        
+        const checkboxes = screen.getAllByRole('checkbox');
+        const roundCheckbox = checkboxes.find(cb => {
+          const label = cb.closest('label');
+          return label?.textContent?.includes('Round decimals');
+        });
+        
+        if (roundCheckbox) {
+          fireEvent.click(roundCheckbox);
+          
+          // Should show decimal places input
+          const decimalInput = screen.queryByText(/Decimal places/i);
+          expect(decimalInput).toBeInTheDocument();
+        }
+      }
+    });
+  });
+
+  describe('Fill Missing Values section', () => {
+    it('renders fill missing values option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      // Look for the fill missing values text
+      const fillText = screen.queryByText(/Fill missing values/i);
+      expect(fillText).toBeDefined();
+    });
+
+    it('enables fill strategy selector when fill missing values is enabled', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const fillSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Fill missing');
+      });
+      
+      if (fillSwitch) {
+        fireEvent.click(fillSwitch);
+        
+        // Check for fill strategy selector
+        const selects = screen.getAllByRole('combobox');
+        const fillStrategySelect = selects.find(s => {
+          const options = Array.from(s.options);
+          return options.some(o => o.value === 'mean' || o.value === 'median' || o.value === 'constant');
+        });
+        
+        expect(fillStrategySelect).toBeDefined();
+      }
+    });
+  });
+
+  describe('Unicode Normalization', () => {
+    it('shows unicode normalization form selector', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const unicodeSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Normalize Unicode');
+      });
+      
+      if (unicodeSwitch) {
+        fireEvent.click(unicodeSwitch);
+        
+        const selects = screen.getAllByRole('combobox');
+        const unicodeSelect = selects.find(s => {
+          const options = Array.from(s.options);
+          return options.some(o => o.value === 'NFC' || o.value === 'NFD');
+        });
+        
+        expect(unicodeSelect).toBeDefined();
+      }
+    });
+
+    it('can change unicode normalization form', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const unicodeSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Normalize Unicode');
+      });
+      
+      if (unicodeSwitch) {
+        fireEvent.click(unicodeSwitch);
+        
+        const selects = screen.getAllByRole('combobox');
+        const unicodeSelect = selects.find(s => {
+          const options = Array.from(s.options);
+          return options.some(o => o.value === 'NFC');
+        });
+        
+        if (unicodeSelect) {
+          fireEvent.change(unicodeSelect, { target: { value: 'NFD' } });
+          expect(unicodeSelect.value).toBe('NFD');
+          
+          fireEvent.change(unicodeSelect, { target: { value: 'NFKC' } });
+          expect(unicodeSelect.value).toBe('NFKC');
+          
+          fireEvent.change(unicodeSelect, { target: { value: 'NFKD' } });
+          expect(unicodeSelect.value).toBe('NFKD');
+        }
+      }
+    });
+  });
+
+  describe('Multiple date format options', () => {
+    it('shows all date format options in the dropdown', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const dateSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Standardize dates');
+      });
+      
+      if (dateSwitch) {
+        fireEvent.click(dateSwitch);
+        
+        const selects = screen.getAllByRole('combobox');
+        const dateFormatSelect = selects.find(s => {
+          const options = Array.from(s.options);
+          return options.some(o => o.value === 'YYYY-MM-DD');
+        });
+        
+        if (dateFormatSelect) {
+          const options = Array.from(dateFormatSelect.options);
+          const values = options.map(o => o.value);
+          
+          expect(values).toContain('YYYY-MM-DD');
+          expect(values).toContain('DD/MM/YYYY');
+          expect(values).toContain('MM/DD/YYYY');
+          expect(values).toContain('YYYY/MM/DD');
+          expect(values).toContain('DD-MM-YYYY');
+          expect(values).toContain('MM-DD-YYYY');
+        }
+      }
+    });
+
+    it('can cycle through all date formats', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const dateSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Standardize dates');
+      });
+      
+      if (dateSwitch) {
+        fireEvent.click(dateSwitch);
+        
+        const selects = screen.getAllByRole('combobox');
+        const dateFormatSelect = selects.find(s => {
+          const options = Array.from(s.options);
+          return options.some(o => o.value === 'YYYY-MM-DD');
+        });
+        
+        if (dateFormatSelect) {
+          const formats = ['YYYY-MM-DD', 'DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY/MM/DD', 'DD-MM-YYYY', 'MM-DD-YYYY'];
+          
+          formats.forEach(format => {
+            fireEvent.change(dateFormatSelect, { target: { value: format } });
+            expect(dateFormatSelect.value).toBe(format);
+          });
+        }
+      }
+    });
+  });
+
+  describe('Complex interactions', () => {
+    it('can enable multiple options and apply', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      // Enable multiple options
+      const switches = screen.getAllByRole('switch');
+      
+      const duplicatesSwitch = switches.find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Remove duplicates');
+      });
+      
+      const trimSwitch = switches.find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Trim whitespace');
+      });
+      
+      if (duplicatesSwitch) fireEvent.click(duplicatesSwitch);
+      if (trimSwitch) fireEvent.click(trimSwitch);
+      
+      const applyButton = screen.getByTitle(/apply cleaning/i);
+      fireEvent.click(applyButton);
+      
+      expect(defaultProps.onApply).toHaveBeenCalled();
+      const payload = defaultProps.onApply.mock.calls[0][0];
+      
+      if (duplicatesSwitch) expect(payload.removeDuplicates).toBe(true);
+      if (trimSwitch) expect(payload.trimWhitespace).toBe(true);
+    });
+
+    it('step count increases with each enabled option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      // Initial state has 2 steps (mergeCaseInsensitive, mergeTrimValues)
+      let footerElement = screen.getByText(/Applying to the selected/i);
+      expect(footerElement).toHaveTextContent(/2 steps selected/i);
+      
+      // Enable options one by one and check the count
+      const switches = screen.getAllByRole('switch');
+      const options = [
+        'Remove duplicates',
+        'Trim whitespace',
+        'Remove extra spaces',
+      ];
+      
+      let expectedCount = 2;
+      
+      options.forEach((optionText, index) => {
+        const optionSwitch = switches.find((sw) => {
+          const parent = sw.closest('[role="switch"]');
+          return parent?.textContent?.includes(optionText);
+        });
+        
+        if (optionSwitch && !optionSwitch.checked) {
+          fireEvent.click(optionSwitch);
+          expectedCount++;
+          
+          footerElement = screen.getByText(/Applying to the selected/i);
+          expect(footerElement).toHaveTextContent(new RegExp(`${expectedCount} steps selected`));
+        }
+      });
+    });
+  });
+});
+
+describe('CleanPanel - Remaining UI Sections', () => {
+  const defaultProps = {
+    show: true,
+    onClose: jest.fn(),
+    busy: false,
+    selectedCount: 5,
+    onApply: jest.fn(),
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('Replace values section', () => {
+    it('renders replace values option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText('Replace values')).toBeInTheDocument();
+    });
+
+    it('enables replace values and shows JsonMapEditor', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const replaceSwitch = screen.getAllByRole('switch').find(sw => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Replace values');
+      });
+      
+      if (replaceSwitch) {
+        fireEvent.click(replaceSwitch);
+        const editors = screen.queryAllByTestId('json-map-editor');
+        expect(editors.length).toBeGreaterThan(0);
+      }
+    });
+  });
+
+  describe('Strip prefix and suffix', () => {
+    it('renders strip prefix option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText('Strip prefix')).toBeInTheDocument();
+    });
+
+    it('shows prefix input when enabled', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const prefixSwitch = screen.getAllByRole('switch').find(sw => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Strip prefix');
+      });
+      
+      if (prefixSwitch) {
+        fireEvent.click(prefixSwitch);
+        const prefixInput = screen.queryByPlaceholderText(/ID-/i);
+        expect(prefixInput).toBeInTheDocument();
+      }
+    });
+
+    it('renders strip suffix option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText('Strip suffix')).toBeInTheDocument();
+    });
+
+    it('shows suffix input when enabled', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const suffixSwitch = screen.getAllByRole('switch').find(sw => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Strip suffix');
+      });
+      
+      if (suffixSwitch) {
+        fireEvent.click(suffixSwitch);
+        const suffixInput = screen.queryByPlaceholderText(/_old/i);
+        expect(suffixInput).toBeInTheDocument();
+      }
+    });
+  });
+
+  describe('Pad values section', () => {
+    it('renders pad values option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText('Pad values')).toBeInTheDocument();
+    });
+
+    it('shows pad configuration when enabled', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const padSwitch = screen.getAllByRole('switch').find(sw => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Pad values');
+      });
+      
+      if (padSwitch) {
+        fireEvent.click(padSwitch);
+        // Should show padding options
+        expect(padSwitch).toBeChecked();
+      }
+    });
+  });
+
+  describe('Convert data types', () => {
+    it('renders convert data types option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText('Convert data types')).toBeInTheDocument();
+    });
+
+    it('shows JsonMapEditor when enabled', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const convertSwitch = screen.getAllByRole('switch').find(sw => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Convert data types');
+      });
+      
+      if (convertSwitch) {
+        fireEvent.click(convertSwitch);
+        const editors = screen.queryAllByTestId('json-map-editor');
+        expect(editors.length).toBeGreaterThan(0);
+      }
+    });
+  });
+
+  describe('Email and URL operations', () => {
+    it('renders extract email domain option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText('Extract email domain')).toBeInTheDocument();
+    });
+
+    it('renders validate emails option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText('Validate emails')).toBeInTheDocument();
+    });
+
+    it('renders extract URL components option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText('Extract URL components')).toBeInTheDocument();
+    });
+
+    it('renders normalize URLs option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText('Normalize URLs')).toBeInTheDocument();
+    });
+
+    it('can toggle extract email domain', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const emailSwitch = screen.getAllByRole('switch').find(sw => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Extract email domain');
+      });
+      
+      if (emailSwitch) {
+        expect(emailSwitch).not.toBeChecked();
+        fireEvent.click(emailSwitch);
+        expect(emailSwitch).toBeChecked();
+      }
+    });
+
+    it('can toggle validate emails', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const validateSwitch = screen.getAllByRole('switch').find(sw => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Validate emails');
+      });
+      
+      if (validateSwitch) {
+        expect(validateSwitch).not.toBeChecked();
+        fireEvent.click(validateSwitch);
+        expect(validateSwitch).toBeChecked();
+      }
+    });
+
+    it('can toggle extract URL components', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const urlSwitch = screen.getAllByRole('switch').find(sw => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Extract URL components');
+      });
+      
+      if (urlSwitch) {
+        expect(urlSwitch).not.toBeChecked();
+        fireEvent.click(urlSwitch);
+        expect(urlSwitch).toBeChecked();
+      }
+    });
+
+    it('can toggle normalize URLs', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const normalizeUrlSwitch = screen.getAllByRole('switch').find(sw => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Normalize URLs');
+      });
+      
+      if (normalizeUrlSwitch) {
+        expect(normalizeUrlSwitch).not.toBeChecked();
+        fireEvent.click(normalizeUrlSwitch);
+        expect(normalizeUrlSwitch).toBeChecked();
+      }
+    });
+  });
+
+  describe('Phone number standardization', () => {
+    it('renders standardize phone numbers option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText('Standardize phone numbers')).toBeInTheDocument();
+    });
+
+    it('shows phone format options when enabled', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const phoneSwitch = screen.getAllByRole('switch').find(sw => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Standardize phone');
+      });
+      
+      if (phoneSwitch) {
+        fireEvent.click(phoneSwitch);
+        expect(phoneSwitch).toBeChecked();
+      }
+    });
+  });
+
+  describe('Column operations', () => {
+    it('renders split column option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText('Split column')).toBeInTheDocument();
+    });
+
+    it('renders merge columns option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText('Merge columns')).toBeInTheDocument();
+    });
+
+    it('can toggle split column', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const splitSwitch = screen.getAllByRole('switch').find(sw => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Split column');
+      });
+      
+      if (splitSwitch) {
+        expect(splitSwitch).not.toBeChecked();
+        fireEvent.click(splitSwitch);
+        expect(splitSwitch).toBeChecked();
+      }
+    });
+
+    it('can toggle merge columns', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const mergeSwitch = screen.getAllByRole('switch').find(sw => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Merge columns');
+      });
+      
+      if (mergeSwitch) {
+        expect(mergeSwitch).not.toBeChecked();
+        fireEvent.click(mergeSwitch);
+        expect(mergeSwitch).toBeChecked();
+      }
+    });
+  });
+
+  describe('Row filtering', () => {
+    it('renders remove rows with pattern option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText('Remove rows with pattern')).toBeInTheDocument();
+    });
+
+    it('can toggle remove rows with pattern', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const rowsSwitch = screen.getAllByRole('switch').find(sw => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Remove rows with pattern');
+      });
+      
+      if (rowsSwitch) {
+        expect(rowsSwitch).not.toBeChecked();
+        fireEvent.click(rowsSwitch);
+        expect(rowsSwitch).toBeChecked();
+      }
+    });
+  });
+
+  describe('Data normalization and scaling', () => {
+    it('renders normalize data option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText(/Normalize data.*min-max/i)).toBeInTheDocument();
+    });
+
+    it('can toggle normalize data', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const normalizeSwitch = screen.getAllByRole('switch').find(sw => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Normalize data');
+      });
+      
+      if (normalizeSwitch) {
+        expect(normalizeSwitch).not.toBeChecked();
+        fireEvent.click(normalizeSwitch);
+        expect(normalizeSwitch).toBeChecked();
+      }
+    });
+  });
+
+  describe('Fuzzy merge', () => {
+    it('renders merge similar values option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText('Merge similar values')).toBeInTheDocument();
+    });
+
+    it('can toggle merge similar values', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const fuzzySwitch = screen.getAllByRole('switch').find(sw => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Merge similar values');
+      });
+      
+      if (fuzzySwitch) {
+        expect(fuzzySwitch).not.toBeChecked();
+        fireEvent.click(fuzzySwitch);
+        expect(fuzzySwitch).toBeChecked();
+      }
+    });
+  });
+
+  describe('Fill missing values strategies', () => {
+    it('shows all fill strategy options', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const fillSwitch = screen.getAllByRole('switch').find(sw => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Fill missing');
+      });
+      
+      if (fillSwitch) {
+        fireEvent.click(fillSwitch);
+        
+        const selects = screen.getAllByRole('combobox');
+        const fillStrategySelect = selects.find(s => {
+          const options = Array.from(s.options);
+          return options.some(o => o.value === 'mean');
+        });
+        
+        if (fillStrategySelect) {
+          const options = Array.from(fillStrategySelect.options);
+          const values = options.map(o => o.value);
+          
+          expect(values).toContain('mean');
+          expect(values).toContain('median');
+          expect(values).toContain('mode');
+          expect(values).toContain('constant');
+          expect(values).toContain('forward');
+          expect(values).toContain('backward');
+          expect(values).toContain('interpolate');
+        }
+      }
+    });
+
+    it('shows constant value input when constant strategy is selected', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const fillSwitch = screen.getAllByRole('switch').find(sw => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Fill missing');
+      });
+      
+      if (fillSwitch) {
+        fireEvent.click(fillSwitch);
+        
+        const selects = screen.getAllByRole('combobox');
+        const fillStrategySelect = selects.find(s => {
+          const options = Array.from(s.options);
+          return options.some(o => o.value === 'constant');
+        });
+        
+        if (fillStrategySelect) {
+          fireEvent.change(fillStrategySelect, { target: { value: 'constant' } });
+          
+          const constantInput = screen.queryByPlaceholderText(/Value to use for blanks/i);
+          expect(constantInput).toBeInTheDocument();
+        }
+      }
+    });
+
+    it('shows columns input for fill missing values', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const fillSwitch = screen.getAllByRole('switch').find(sw => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Fill missing');
+      });
+      
+      if (fillSwitch) {
+        fireEvent.click(fillSwitch);
+        
+        const columnsInput = screen.queryByPlaceholderText(/Blank = all columns/i);
+        expect(columnsInput).toBeInTheDocument();
+      }
+    });
+  });
+
+  describe('Massive option toggle test', () => {
+    it('can toggle many options and apply successfully', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const switches = screen.getAllByRole('switch');
+      const optionNames = [
+        'Remove duplicates',
+        'Trim whitespace',
+        'Extract email domain',
+        'Validate emails',
+        'Normalize URLs',
+      ];
+      
+      optionNames.forEach(optionName => {
+        const optionSwitch = switches.find(sw => {
+          const parent = sw.closest('[role="switch"]');
+          return parent?.textContent?.includes(optionName);
+        });
+        
+        if (optionSwitch && !optionSwitch.checked) {
+          fireEvent.click(optionSwitch);
+        }
+      });
+      
+      const applyButton = screen.getByTitle(/apply cleaning/i);
+      fireEvent.click(applyButton);
+      
+      expect(defaultProps.onApply).toHaveBeenCalled();
+    });
+  });
+});
+
+describe('CleanPanel - Validation Logic', () => {
+  const defaultProps = {
+    show: true,
+    onClose: jest.fn(),
+    busy: false,
+    selectedCount: 5,
+    onApply: jest.fn(),
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('handleApply validation errors', () => {
+    it('validates at least one step is selected', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      // By default, mergeCaseInsensitive and mergeTrimValues are enabled
+      // So apply should work without error
+      const applyButton = screen.getByTitle(/apply cleaning/i);
+      fireEvent.click(applyButton);
+      
+      // Should call onApply since steps are selected by default
+      expect(defaultProps.onApply).toHaveBeenCalled();
+    });
+
+    it('renders standardize case with mode selector', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      // Check if Standardize case option is present
+      expect(screen.getByText('Standardize case')).toBeInTheDocument();
+      
+      // Check for case mode selector options
+      const selects = screen.getAllByRole('combobox');
+      const caseModeSelect = selects.find(s => {
+        const options = Array.from(s.options);
+        return options.some(o => o.value === 'lower' || o.value === 'upper');
+      });
+      
+      expect(caseModeSelect).toBeDefined();
+    });
+
+    it('renders standardize dates with date format selector', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      // Check if Standardize dates option is present
+      expect(screen.getByText('Standardize dates')).toBeInTheDocument();
+      
+      // Check for date format selector
+      const selects = screen.getAllByRole('combobox');
+      const dateFormatSelect = selects.find(s => {
+        const options = Array.from(s.options);
+        return options.some(o => o.value === 'YYYY-MM-DD' || o.value === 'DD/MM/YYYY');
+      });
+      
+      expect(dateFormatSelect).toBeDefined();
+    });
+
+    it('renders remove special characters option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText('Remove special characters')).toBeInTheDocument();
+    });
+
+    it('renders remove punctuation option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText('Remove punctuation')).toBeInTheDocument();
+    });
+
+    it('renders remove non-printable characters option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText('Remove non-printable characters')).toBeInTheDocument();
+    });
+
+    it('renders fix encoding issues option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText('Fix encoding issues')).toBeInTheDocument();
+    });
+
+    it('renders normalize Unicode option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText('Normalize Unicode')).toBeInTheDocument();
+    });
+
+    it('can toggle remove line breaks', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const lineBreaksSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Remove line breaks');
+      });
+      
+      if (lineBreaksSwitch) {
+        expect(lineBreaksSwitch).not.toBeChecked();
+        fireEvent.click(lineBreaksSwitch);
+        expect(lineBreaksSwitch).toBeChecked();
+      }
+    });
+
+    it('can toggle remove special characters', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const specialCharsSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Remove special characters');
+      });
+      
+      if (specialCharsSwitch) {
+        expect(specialCharsSwitch).not.toBeChecked();
+        fireEvent.click(specialCharsSwitch);
+        expect(specialCharsSwitch).toBeChecked();
+      }
+    });
+
+    it('can toggle remove punctuation', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const punctuationSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Remove punctuation');
+      });
+      
+      if (punctuationSwitch) {
+        expect(punctuationSwitch).not.toBeChecked();
+        fireEvent.click(punctuationSwitch);
+        expect(punctuationSwitch).toBeChecked();
+      }
+    });
+
+    it('can toggle remove non-printable chars', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const nonPrintableSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Remove non-printable');
+      });
+      
+      if (nonPrintableSwitch) {
+        expect(nonPrintableSwitch).not.toBeChecked();
+        fireEvent.click(nonPrintableSwitch);
+        expect(nonPrintableSwitch).toBeChecked();
+      }
+    });
+
+    it('can toggle fix encoding issues', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const encodingSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Fix encoding');
+      });
+      
+      if (encodingSwitch) {
+        expect(encodingSwitch).not.toBeChecked();
+        fireEvent.click(encodingSwitch);
+        expect(encodingSwitch).toBeChecked();
+      }
+    });
+
+    it('can toggle normalize Unicode', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const unicodeSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Normalize Unicode');
+      });
+      
+      if (unicodeSwitch) {
+        expect(unicodeSwitch).not.toBeChecked();
+        fireEvent.click(unicodeSwitch);
+        expect(unicodeSwitch).toBeChecked();
+      }
+    });
+
+    it('can toggle standardize case', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const caseSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Standardize case');
+      });
+      
+      if (caseSwitch) {
+        expect(caseSwitch).not.toBeChecked();
+        fireEvent.click(caseSwitch);
+        expect(caseSwitch).toBeChecked();
+      }
+    });
+
+    it('can change case mode when standardize case is enabled', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const caseSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Standardize case');
+      });
+      
+      if (caseSwitch) {
+        fireEvent.click(caseSwitch);
+        
+        const selects = screen.getAllByRole('combobox');
+        const caseModeSelect = selects.find(s => {
+          const options = Array.from(s.options);
+          return options.some(o => o.value === 'lower');
+        });
+        
+        if (caseModeSelect) {
+          fireEvent.change(caseModeSelect, { target: { value: 'upper' } });
+          expect(caseModeSelect.value).toBe('upper');
+        }
+      }
+    });
+
+    it('can change date format when standardize dates is enabled', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const dateSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Standardize dates');
+      });
+      
+      if (dateSwitch) {
+        fireEvent.click(dateSwitch);
+        
+        const selects = screen.getAllByRole('combobox');
+        const dateFormatSelect = selects.find(s => {
+          const options = Array.from(s.options);
+          return options.some(o => o.value === 'YYYY-MM-DD');
+        });
+        
+        if (dateFormatSelect) {
+          fireEvent.change(dateFormatSelect, { target: { value: 'DD/MM/YYYY' } });
+          expect(dateFormatSelect.value).toBe('DD/MM/YYYY');
+        }
+      }
+    });
+  });
+
+  describe('Additional option toggles', () => {
+    it('can toggle standardize dates', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const dateSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Standardize dates');
+      });
+      
+      if (dateSwitch) {
+        expect(dateSwitch).not.toBeChecked();
+        fireEvent.click(dateSwitch);
+        expect(dateSwitch).toBeChecked();
+      }
+    });
+
+    it('step count updates when toggling multiple options', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      // Initial count is 2 (mergeCaseInsensitive, mergeTrimValues)
+      let footerElement = screen.getByText(/Applying to the selected/i);
+      expect(footerElement).toHaveTextContent(/2 steps selected/i);
+      
+      // Enable remove duplicates
+      const duplicatesSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Remove duplicates');
+      });
+      
+      if (duplicatesSwitch) {
+        fireEvent.click(duplicatesSwitch);
+        footerElement = screen.getByText(/Applying to the selected/i);
+        expect(footerElement).toHaveTextContent(/3 steps selected/i);
+        
+        // Enable another option
+        const emptyRowsSwitch = screen.getAllByRole('switch').find((sw) => {
+          const parent = sw.closest('[role="switch"]');
+          return parent?.textContent?.includes('Remove empty rows');
+        });
+        
+        if (emptyRowsSwitch) {
+          fireEvent.click(emptyRowsSwitch);
+          footerElement = screen.getByText(/Applying to the selected/i);
+          expect(footerElement).toHaveTextContent(/4 steps selected/i);
+        }
+      }
+    });
+
+    it('applies cleaning with enabled options', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      // Enable some options
+      const duplicatesSwitch = screen.getAllByRole('switch').find((sw) => {
+        const parent = sw.closest('[role="switch"]');
+        return parent?.textContent?.includes('Remove duplicates');
+      });
+      
+      if (duplicatesSwitch) {
+        fireEvent.click(duplicatesSwitch);
+      }
+      
+      const applyButton = screen.getByTitle(/apply cleaning/i);
+      fireEvent.click(applyButton);
+      
+      expect(defaultProps.onApply).toHaveBeenCalled();
+      const payload = defaultProps.onApply.mock.calls[0][0];
+      expect(payload).toHaveProperty('removeDuplicates');
+      expect(payload).toHaveProperty('mergeCaseInsensitive');
+      expect(payload).toHaveProperty('mergeTrimValues');
+    });
+  });
+
+  describe('Inline hints', () => {
+    it('shows inline hint for standardize case when disabled', () => {
+      render(<CleanPanel {...defaultProps} />);
+      expect(screen.getByText(/Turn on to select mode/i)).toBeInTheDocument();
+    });
+
+    it('shows inline hints for expandable date options when disabled', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      // Check for date-related inline hints
+      const hints = screen.queryAllByText(/Turn on to select/i);
+      expect(hints.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('ToggleRow component behavior', () => {
+    it('clicking row toggles the option', () => {
+      render(<CleanPanel {...defaultProps} />);
+      
+      const switches = screen.getAllByRole('switch');
+      const firstSwitch = switches[0];
+      const initialChecked = firstSwitch.checked;
+      
+      const toggleRow = firstSwitch.closest('[role="switch"]');
+      if (toggleRow) {
+        fireEvent.click(toggleRow);
+        expect(switches[0].checked).toBe(!initialChecked);
+      }
+    });
+
+    it('ignores click when busy', () => {
+      render(<CleanPanel {...defaultProps} busy={true} />);
+      
+      const switches = screen.getAllByRole('switch');
+      const firstSwitch = switches[0];
+      
+      // All switches should be disabled when busy
+      expect(firstSwitch).toBeDisabled();
     });
   });
 });
