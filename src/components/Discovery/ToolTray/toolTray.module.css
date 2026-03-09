@@ -11,6 +11,8 @@
   flex-direction: column;
   padding: 15px;
   z-index: 10;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .open {
@@ -53,6 +55,7 @@
   justify-content: center;
   cursor: pointer;
   border-radius: 0 0 15px 0;
+  flex: 0 0 auto;
 }
 
 .toggleButton:hover {
@@ -64,7 +67,7 @@
   padding: 10px;
   border-radius: 5px;
   margin-bottom: 10px;
-  flex: 1 1 0;
+  flex: 0 1 auto;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
@@ -78,6 +81,10 @@
 
 .nodeGroup {
   margin-bottom: 10px;
+}
+
+.nodeGroup:last-child {
+  margin-bottom: 0;
 }
 
 .nodeGroupTitle {
@@ -94,9 +101,9 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  overflow-y: auto;
+  overflow-y: visible;
   overflow-x: hidden;
-  max-height: 100px;
+  max-height: none;
   justify-content: flex-start;
 }
 
@@ -203,6 +210,7 @@
   border-radius: 5px;
   margin-bottom: 10px;
   text-align: center;
+  flex: 0 0 auto;
 }
 
 .topSection h3 {
@@ -268,7 +276,7 @@
   background-color: var(--tooltray-section-bg);
   padding: 10px;
   overflow-y: auto;
-  max-height: 300px;
+  overflow-x: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   flex: 1 1 0;
   min-height: 0;
@@ -355,6 +363,7 @@
   margin-bottom: 10px;
   display: flex;
   width: 100%;
+  flex: 0 0 auto;
 }
 
 .buttonContainer button {
@@ -377,14 +386,6 @@
 }
 
 .searchContainer {
-  margin-top: 2px;
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  border-radius: 5px;
-}
-
-.searchContainer {
   display: flex;
   align-items: center;
   gap: 2px;
@@ -393,6 +394,7 @@
   border-radius: 5px;
   width: 100%;
   box-sizing: border-box;
+  flex: 0 0 auto;
 }
 
 .searchInput {
