@@ -12,6 +12,7 @@
   padding: 15px 20px;
   color: var(--text-color-on-darkbg);
   position: relative;
+  background-color: var(--header-bg);
 }
 
 .header h2 {

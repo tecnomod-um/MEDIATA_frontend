@@ -63,7 +63,7 @@
 .modal {
     background: var(--background-color-card);
     min-width: 50VW;
-    max-width: 80vw;
+    max-width: var(--modal-max-width, 80vw);
     border-radius: 8px;
     box-shadow: 0 5px 20px 0 rgba(0, 0, 0, 0.04);
     position: relative;
