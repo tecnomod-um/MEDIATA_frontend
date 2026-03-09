@@ -23,7 +23,11 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm ci
+        # --legacy-peer-deps preserves npm v6 peer-dep resolution so that
+        # optional transitive peer deps (e.g. yaml from postcss-load-config)
+        # do not need to be explicitly listed in package-lock.json, preventing
+        # spurious "Missing: … from lock file" errors when indirect deps update.
+        run: npm ci --legacy-peer-deps
 
       - name: Run tests with coverage
         run: npm run test:cov
