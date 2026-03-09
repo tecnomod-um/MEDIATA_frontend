@@ -980,6 +980,14 @@
   flex: 0 0 auto;
 }
 
+.jsonMapRightColumn {
+  width: 100%;
+}
+
+.jsonMapModeSelect {
+  width: 120px;
+}
+
 .jsonMapBody {
   margin-top: 10px;
 }
