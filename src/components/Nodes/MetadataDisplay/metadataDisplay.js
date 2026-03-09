@@ -11,7 +11,7 @@ const MetadataDisplay = ({ isOpen, metadata, loadingMetadata, accessingNode, hea
       <div className={MetadataDisplayStyles.modalContent}>
         <div
           className={MetadataDisplayStyles.header}
-          style={{ backgroundColor: headerColor }}
+          style={{ '--header-bg': headerColor }}
         >
           <h2>{nodeName}</h2>
           <p>{nodeDescription || "No node description provided."}</p>

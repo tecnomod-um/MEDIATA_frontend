@@ -40,7 +40,7 @@ function OverlayWrapper({ isOpen, children, closeModal, maxWidth, modalClassName
         onMouseUp={handleBackdropMouseUp}
         ref={modalRef}>
         <div className={`${OverlayWrapperStyles.modal} ${modalClassName}`.trim()}
-          style={{ maxWidth: maxWidth }}
+          style={{ '--modal-max-width': maxWidth }}
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}>
           {children}

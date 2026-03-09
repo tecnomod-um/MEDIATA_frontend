@@ -13,7 +13,6 @@ const Slide = ({ images, steps }) => {
   const nextSlide = () => images.length && setCurrentStep(c => (c + 1) % images.length);
   const prevSlide = () => images.length && setCurrentStep(c => (c - 1 + images.length) % images.length);
 
-  const iconStyle = { fontSize: '4rem' };
   const disableArrows = images.length <= 1;
 
   return (
@@ -36,7 +35,7 @@ const Slide = ({ images, steps }) => {
           disabled={disableArrows}
           type="button"
         >
-          <ChevronLeftIcon style={iconStyle} />
+          <ChevronLeftIcon className={SlideStyles.arrowIcon} />
         </button>
         <button
           className={`${SlideStyles.arrow} ${SlideStyles.right}`}
@@ -46,7 +45,7 @@ const Slide = ({ images, steps }) => {
           disabled={disableArrows}
           type="button"
         >
-          <ChevronRightIcon style={iconStyle} />
+          <ChevronRightIcon className={SlideStyles.arrowIcon} />
         </button>
       </div>
 

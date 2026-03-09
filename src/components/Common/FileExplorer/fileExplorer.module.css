@@ -269,6 +269,10 @@
   flex: 0 0 auto;
 }
 
+.fileIconSvg {
+  font-size: 22px;
+}
+
 .iconCsv {
   color: #0a6d52;
   background: rgba(10, 109, 82, 0.08);
@@ -974,6 +978,14 @@
   align-items: center;
   gap: 8px;
   flex: 0 0 auto;
+}
+
+.jsonMapRightColumn {
+  width: 100%;
+}
+
+.jsonMapModeSelect {
+  width: 120px;
 }
 
 .jsonMapBody {

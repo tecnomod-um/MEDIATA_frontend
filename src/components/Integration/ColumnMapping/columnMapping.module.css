@@ -489,6 +489,7 @@
 
 .columnName {
   font-weight: 600;
+  color: var(--column-name-color);
 }
 
 .columnFileInline {
@@ -684,6 +685,11 @@
 .descriptionButton {
   background-color: var(--button-description-color);
   color: var(--text-color-on-darkbg);
+}
+
+.descriptionButtonLocked {
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
 }
 
 .descriptionButton:hover {

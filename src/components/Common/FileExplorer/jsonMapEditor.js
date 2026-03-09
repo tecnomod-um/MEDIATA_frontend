@@ -186,7 +186,7 @@ function JsonMapEditor({
       </div>
 
       {/* Right column: controls + content */}
-      <div style={{ width: "100%" }} data-no-row-toggle>
+      <div className={FileExplorerStyles.jsonMapRightColumn} data-no-row-toggle>
         {/* Top line: description + inline controls */}
         <div className={FileExplorerStyles.jsonMapTop} data-no-row-toggle>
           <div className={FileExplorerStyles.jsonMapMeta} data-no-row-toggle>
@@ -215,8 +215,7 @@ function JsonMapEditor({
 
           <div className={FileExplorerStyles.jsonMapActions} data-no-row-toggle>
             <select
-              className={FileExplorerStyles.cleanControl}
-              style={{ width: 120 }}
+              className={`${FileExplorerStyles.cleanControl} ${FileExplorerStyles.jsonMapModeSelect}`}
               value={mode}
               onChange={(e) => setMode(e.target.value)}
               disabled={disabled}

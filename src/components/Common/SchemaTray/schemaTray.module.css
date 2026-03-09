@@ -265,6 +265,10 @@
   transition: background 0.2s ease;
 }
 
+.closedTabReduced {
+  width: 30px;
+}
+
 .closedTab:hover {
   background: var(--schema-tab-hover);
 }

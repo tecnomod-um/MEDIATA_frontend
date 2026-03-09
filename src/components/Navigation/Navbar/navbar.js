@@ -13,31 +13,10 @@ function FileSearchIcon() {
   return (
     <div
       aria-hidden="true"
-      style={{
-        position: "relative",
-        display: "inline-block",
-        width: "1.2em",
-        height: "1.2em"
-      }}
+      className={NavbarStyles.fileSearchWrapper}
     >
-      <FaFileAlt
-        style={{
-          fontSize: "1.2em",
-          color: "var(--text-color-on-darkbg)",
-          position: "absolute",
-          top: 0,
-          left: 0
-        }}
-      />
-      <FaSearch
-        style={{
-          fontSize: "0.75em",
-          color: "var(--text-color-primary-light)",
-          position: "absolute",
-          top: "28%",
-          left: "22%"
-        }}
-      />
+      <FaFileAlt className={NavbarStyles.fileSearchFileIcon} />
+      <FaSearch className={NavbarStyles.fileSearchSearchIcon} />
     </div>
   );
 }
@@ -164,7 +143,7 @@ export default function Navbar() {
                       Integration
                     </span>
                     <span className={NavbarStyles.mobileIcon}>
-                      <FaCodeBranch aria-hidden="true" style={{ fontSize: "1.2em" }} />
+                      <FaCodeBranch aria-hidden="true" className={NavbarStyles.mobileNavIcon} />
                     </span>
                   </CustomLink>
                 </li>
@@ -180,7 +159,7 @@ export default function Navbar() {
                         Semantic-Alignment
                       </span>
                       <span className={NavbarStyles.mobileIcon}>
-                        <FaSitemap aria-hidden="true" style={{ fontSize: "1.2em" }} />
+                        <FaSitemap aria-hidden="true" className={NavbarStyles.mobileNavIcon} />
                       </span>
                     </CustomLink>
                   </li>
@@ -197,7 +176,7 @@ export default function Navbar() {
                         HL7 FHIR
                       </span>
                       <span className={NavbarStyles.mobileIcon}>
-                        <FhirIcon aria-hidden="true" style={{ width: "1.2em", height: "1.2em" }} />
+                        <FhirIcon aria-hidden="true" className={NavbarStyles.mobileNavFhirIcon} />
                       </span>
                     </CustomLink>
                   </li>
