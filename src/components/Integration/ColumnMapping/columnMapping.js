@@ -380,7 +380,6 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
 
     const unionMeta = { terminology: unionTerminology || "", description: unionDescription || "" };
 
-    // IMPORTANT: onSave now returns boolean
     const ok = onSave(
       groups,
       unionName,
@@ -459,14 +458,11 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
 
       const rect = container.getBoundingClientRect();
       const minCreate = getMinCreate();
-
-      // if the screen is tiny, never let minCreate "eat" the entire container
       const effectiveMinCreate = Math.min(minCreate, Math.max(0, rect.height - RESIZER_H - MIN_DROP));
 
       const maxDrop = Math.max(MIN_DROP, rect.height - RESIZER_H - effectiveMinCreate);
       return Math.max(MIN_DROP, Math.min(maxDrop, h));
-    },
-    [getMinCreate]
+    }, [getMinCreate]
   );
 
   const flushRaf = useCallback(() => {
@@ -646,12 +642,11 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
               )}
             </div>
           </div>
-{/* 
+
           <div className={ColumnMappingStyles.headerActions}>
             <button
               type="button"
-              className={`${ColumnMappingStyles.suggestButton} ${isSuggestLoading ? ColumnMappingStyles.suggestButtonLoading : ""
-                }`}
+              className={`${ColumnMappingStyles.suggestButton} ${isSuggestLoading ? ColumnMappingStyles.suggestButtonLoading : ""}`}
               onClick={openSuggest}
               disabled={!onSuggestMappings || isSuggestLoading}
               title="Suggest mappings"
@@ -710,7 +705,7 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
               </span>
             </button>
           </div>
-          */}
+
         </div>
         <div className={ColumnMappingStyles.entryHeaderRow}>
           <AutocompleteInput
