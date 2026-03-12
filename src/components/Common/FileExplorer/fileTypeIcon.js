@@ -37,7 +37,7 @@ function FileTypeIcon({ name }) {
 
   return (
     <span className={`${FileExplorerStyles.fileIcon} ${cls}`} aria-hidden="true" title={label}>
-      <IconComponent style={{ fontSize: 22 }} />
+      <IconComponent className={FileExplorerStyles.fileIconSvg} />
     </span>
   );
 }

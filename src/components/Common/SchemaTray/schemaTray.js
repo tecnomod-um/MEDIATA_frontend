@@ -338,8 +338,7 @@ const SchemaTray = ({ error, setError, nodesFetched, externalSchema = null, onRe
 
       {!isOpen && (
         <div
-          className={SchemaTrayStyles.closedTab}
-          style={reduced ? { width: "30px" } : {}}
+          className={`${SchemaTrayStyles.closedTab} ${reduced ? SchemaTrayStyles.closedTabReduced : ""}`}
           onClick={toggleTray}
         >
           <span>Schema</span>

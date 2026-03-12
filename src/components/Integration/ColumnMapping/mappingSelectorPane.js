@@ -42,7 +42,7 @@ function MappingSelectorPane({ isPaneVisible, currentValueName, groups, getGroup
               <div className={ColumnMappingStyles.columnTitle}>
                 <span
                   className={ColumnMappingStyles.columnName}
-                  style={{ color: darkenedColor }}
+                  style={{ '--column-name-color': darkenedColor }}
                 >
                   {group.column}
                 </span>

@@ -62,7 +62,6 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
   const visibleOptionsCount = useRef(0);
   const [showNoResults, setShowNoResults] = useState(false);
 
-  // Update showNoResults after render based on actual visible count
   useLayoutEffect(() => {
     if (cleanSearchNorm) {
       setShowNoResults(visibleOptionsCount.current === 0);

@@ -39,12 +39,6 @@ function ValuesList({ customValues, groups, valueContentSuggestions, valueTermin
 
         const isLocked = isLockedNumericValue(customValue);
         const hasRowActions = !isLocked;
-        const descBtnStyle = hasRowActions
-          ? {}
-          : {
-            borderTopRightRadius: "5px",
-            borderBottomRightRadius: "5px",
-          };
 
         return (
           <CSSTransition
@@ -121,8 +115,7 @@ function ValuesList({ customValues, groups, valueContentSuggestions, valueTermin
 
                 <button
                   type="button"
-                  className={ColumnMappingStyles.descriptionButton}
-                  style={descBtnStyle}
+                  className={`${ColumnMappingStyles.descriptionButton} ${!hasRowActions ? ColumnMappingStyles.descriptionButtonLocked : ""}`}
                   onClick={() => onOpenDescription(index)}
                 >
                   <span className={ColumnMappingStyles.buttonText}>
