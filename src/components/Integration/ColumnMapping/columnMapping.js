@@ -5,6 +5,7 @@ import DescriptionModal from "../DescriptionModal/descriptionModal.js";
 import TooltipPopup from "../../Common/TooltipPopup/tooltipPopup.js";
 import AddIcon from "@mui/icons-material/Add";
 import SaveIcon from "@mui/icons-material/Save";
+import CleaningServicesIcon from "@mui/icons-material/CleaningServices";
 import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import DescriptionIcon from "@mui/icons-material/Description";
@@ -23,7 +24,7 @@ const MIN_DROP = 50;
 const MIN_CREATE_DESKTOP = 260;
 const MIN_CREATE_MOBILE = 140;
 
-function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, onSuggestMappings, hasExistingMappings, onGenerateMetadata, isGenerateMetadataLoading = false, generateMetadataProgress = 0 }) {
+function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loadedDraft, onSuggestMappings, hasExistingMappings, onGenerateMetadata, isGenerateMetadataLoading = false, generateMetadataProgress = 0 }) {
   const [unionName, setUnionName] = useState("");
   const [unionTerminology, setUnionTerminology] = useState("");
 
@@ -400,6 +401,22 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
     setUseHotOneMapping(false);
   };
 
+  const clearMappingForm = () => {
+    setUnionName("");
+    setUnionTerminology("");
+    setUnionDescription("");
+    setCustomValues([]);
+    setValueDescriptions({});
+    setRemoveFromHierarchy(false);
+    setUseHotOneMapping(false);
+    setCurrentGroupIndex(null);
+    setIsPaneVisible(false);
+    setTooltipShown(false);
+    setSaveTooltipShown(false);
+    buttonRefs.current = [];
+    onMappingChange?.([]);
+    onClear?.();
+  };
 
   const removeValue = (valueIndex) => {
     setCustomValues((prev) => prev.filter((_, i) => i !== valueIndex));
@@ -646,7 +663,7 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
           <div className={ColumnMappingStyles.headerActions}>
             <button
               type="button"
-              className={`${ColumnMappingStyles.suggestButton} ${isSuggestLoading ? ColumnMappingStyles.suggestButtonLoading : ""}`}
+              className={`${ColumnMappingStyles.suggestButton} ${ColumnMappingStyles.suggestMappingsButton} ${isSuggestLoading ? ColumnMappingStyles.suggestButtonLoading : ""}`}
               onClick={openSuggest}
               disabled={!onSuggestMappings || isSuggestLoading}
               title="Suggest mappings"
@@ -807,6 +824,19 @@ function ColumnMapping({ onMappingChange, onSave, groups, schema, loadedDraft, o
         />
 
         <div className={ColumnMappingStyles.bottomControlsRow}>
+
+          <button
+            type="button"
+            onClick={clearMappingForm}
+            className={ColumnMappingStyles.clearButton}
+            title="Clear"
+          >
+            <span className={ColumnMappingStyles.buttonText}>Clear</span>
+            <span className={ColumnMappingStyles.iconWrapper}>
+              <CleaningServicesIcon fontSize="inherit" className={ColumnMappingStyles.buttonIcon} />
+            </span>
+          </button>
+
           <div className={ColumnMappingStyles.removeCheckbox}>
             <label title="Remove columns">
               <Switch

@@ -142,6 +142,13 @@ function Integration() {
     }
   };
 
+  const handleClearMappingEditor = useCallback(() => {
+    setTemporaryGroups([]);
+    setLoadedDraft(null);
+    setEditTarget(null);
+    setSelectedMappingId(null);
+  }, []);
+
   const normalizeEnrichStep = (msg) => {
     const m = String(msg || "").trim();
     if (!m) return "";
@@ -1185,6 +1192,7 @@ function Integration() {
                     if (ok) setActiveMobilePanel("hierarchy");
                     return ok;
                   }}
+                  onClear={handleClearMappingEditor}
                   schema={schema}
                   loadedDraft={loadedDraft}
                   onSuggestMappings={async (mode) => {
