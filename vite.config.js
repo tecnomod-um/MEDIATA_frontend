@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
 
 export default defineConfig({
-  css: { modules: { generateScopedName: '[local]' } },
+  css: { modules: { generateScopedName: "[local]" } },
   base: process.env.VITE_BASE_PATH || "/mediata/",
   plugins: [react(), svgr()],
   build: {
@@ -49,5 +49,10 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: "./src/setupTests.js",
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json-summary", "html"],
+      reportsDirectory: "./coverage",
+    },
   },
 });
