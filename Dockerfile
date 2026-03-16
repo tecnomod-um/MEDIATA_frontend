@@ -1,21 +1,23 @@
-FROM node:18-bullseye-slim AS build
+FROM node:22-bullseye-slim AS build
 
 WORKDIR /app
+
 COPY package*.json ./
-RUN npm ci --legacy-peer-deps
+RUN npm ci
+
 COPY . .
 
-ARG REACT_APP_BACKEND_URL
-ENV REACT_APP_BACKEND_URL=${REACT_APP_BACKEND_URL}
+ARG VITE_BACKEND_URL
+ENV VITE_BACKEND_URL=${VITE_BACKEND_URL}
 
-ARG PUBLIC_URL=/
-ENV PUBLIC_URL=${PUBLIC_URL}
+ARG VITE_BASE_PATH=/mediata/
+ENV VITE_BASE_PATH=${VITE_BASE_PATH}
 
-RUN npm run build
+RUN npm run build -- --base=${VITE_BASE_PATH}
 
 FROM nginx:alpine
 
-COPY --from=build /app/build /usr/share/nginx/html
+COPY --from=build /app/dist /usr/share/nginx/html
 
 RUN printf '%s\n' \
   '#!/bin/sh' \

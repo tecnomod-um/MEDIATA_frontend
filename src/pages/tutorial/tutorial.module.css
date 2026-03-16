@@ -258,7 +258,7 @@
 
 .bulletList li::before {
   content: "•";
-  color: var(-tooltray-background-color-light);
+  color: var(--tooltray-background-color-light);
   display: inline-block;
   width: 1em;
   margin-left: -1em;

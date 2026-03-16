@@ -1,0 +1,256 @@
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate, useMatch } from "react-router-dom";
+import NavbarStyles from "./navbar.module.css";
+import { useAuth } from "../../../context/authContext";
+import { useNode } from "../../../context/nodeContext";
+import CustomLink from "./customLink";
+import { CSSTransition, TransitionGroup } from "react-transition-group";
+import { FaFileAlt, FaSearch, FaSitemap, FaCodeBranch } from "react-icons/fa";
+import FhirIcon from "../../../resources/images/fhir.svg?react";
+import DarkSwitch from "../../Common/DarkSwitch/darkSwitch";
+
+function FileSearchIcon() {
+  return (
+    <div
+      aria-hidden="true"
+      className={NavbarStyles.fileSearchWrapper}
+    >
+      <FaFileAlt className={NavbarStyles.fileSearchFileIcon} />
+      <FaSearch className={NavbarStyles.fileSearchSearchIcon} />
+    </div>
+  );
+}
+
+// Main navigation bar used throughout the app
+export default function Navbar() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [animate, setAnimate] = useState(false);
+
+  const { isAuthenticated, logout, capabilities, capsLoaded } = useAuth();
+  const { selectedNodes } = useNode();
+
+  const navigate = useNavigate();
+
+  const discoveryMatch = useMatch({ path: "/discovery", end: true });
+  const integrationMatch = useMatch({ path: "/integration", end: true });
+  const semanticAlignmentMatch = useMatch({ path: "/semanticalignment", end: true });
+  const fhirMatch = useMatch({ path: "/hl7fhir", end: true });
+
+  const extraOptionsRef = useRef(null);
+
+  const toggleMenu = () => {
+    if (!menuOpen) setAnimate(true);
+    setMenuOpen(!menuOpen);
+  };
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) setAnimate(false);
+      setMenuOpen(false);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
+  const nodesReadyNow = Array.isArray(selectedNodes) && selectedNodes.length > 0;
+  const [nodesLatched, setNodesLatched] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setNodesLatched(false);
+      return;
+    }
+    if (!nodesLatched && nodesReadyNow) {
+      setNodesLatched(true);
+    }
+  }, [isAuthenticated, nodesLatched, nodesReadyNow]);
+
+  const [capsLatched, setCapsLatched] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setCapsLatched(false);
+      return;
+    }
+    if (!capsLatched && capsLoaded) {
+      setCapsLatched(true);
+    }
+  }, [isAuthenticated, capsLatched, capsLoaded]);
+
+  const showSystemTabs = isAuthenticated && nodesLatched && capsLatched;
+
+  return (
+    <nav className={NavbarStyles.navbar} aria-label="Main navigation">
+      <div className={NavbarStyles.navLeft}>
+        <Link to="/" className={`${NavbarStyles.logo} ${NavbarStyles.link}`}>
+          <img
+            className={NavbarStyles.logo}
+            src={`${import.meta.env.BASE_URL}/umu_coat.svg`}
+            width={40}
+            height={40}
+            alt="University of Murcia logo"
+            loading="eager"
+            fetchpriority="high"
+          />
+        </Link>
+      </div>
+
+      <ul className={NavbarStyles.navlinks}>
+        <TransitionGroup component={null}>
+          {showSystemTabs && (
+            <CSSTransition
+              key="extra-options"
+              nodeRef={extraOptionsRef}
+              timeout={300}
+              classNames={{
+                enter: NavbarStyles.fadeEnter,
+                enterActive: NavbarStyles.fadeEnterActive,
+                exit: NavbarStyles.fadeExit,
+                exitActive: NavbarStyles.fadeExitActive
+              }}
+            >
+              <div ref={extraOptionsRef} className={NavbarStyles.darkerContainer}>
+                <li
+                  className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem} ${
+                    discoveryMatch ? NavbarStyles.activeDarker : ""
+                  }`}
+                >
+                  <CustomLink to="/discovery" reloadOnActive>
+                    <span className={NavbarStyles.desktopLabel} title="Dataset analysis and exploration">
+                      Discovery
+                    </span>
+                    <span className={NavbarStyles.mobileIcon}>
+                      <FileSearchIcon />
+                    </span>
+                  </CustomLink>
+                </li>
+
+                <li
+                  className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem} ${
+                    integrationMatch ? NavbarStyles.activeDarker : ""
+                  }`}
+                >
+                  <CustomLink to="/integration" reloadOnActive>
+                    <span
+                      className={NavbarStyles.desktopLabel}
+                      title="Harmonization and standardizing from different sources"
+                    >
+                      Integration
+                    </span>
+                    <span className={NavbarStyles.mobileIcon}>
+                      <FaCodeBranch aria-hidden="true" className={NavbarStyles.mobileNavIcon} />
+                    </span>
+                  </CustomLink>
+                </li>
+
+                {capabilities?.semanticAlignment && (
+                  <li
+                    className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem} ${
+                      semanticAlignmentMatch ? NavbarStyles.activeDarker : ""
+                    }`}
+                  >
+                    <CustomLink to="/semanticalignment" reloadOnActive>
+                      <span className={NavbarStyles.desktopLabel} title="Map and align the data to an ontology">
+                        Semantic-Alignment
+                      </span>
+                      <span className={NavbarStyles.mobileIcon}>
+                        <FaSitemap aria-hidden="true" className={NavbarStyles.mobileNavIcon} />
+                      </span>
+                    </CustomLink>
+                  </li>
+                )}
+
+                {capabilities?.hl7fhir && (
+                  <li
+                    className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem} ${
+                      fhirMatch ? NavbarStyles.activeDarker : ""
+                    }`}
+                  >
+                    <CustomLink to="/hl7fhir" reloadOnActive>
+                      <span className={NavbarStyles.desktopLabel} title="Create HL7 FHIR mappings">
+                        HL7 FHIR
+                      </span>
+                      <span className={NavbarStyles.mobileIcon}>
+                        <FhirIcon aria-hidden="true" className={NavbarStyles.mobileNavFhirIcon} />
+                      </span>
+                    </CustomLink>
+                  </li>
+                )}
+
+                <li className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem} ${NavbarStyles.darkerSwitchItem}`}>
+                  <DarkSwitch />
+                </li>
+              </div>
+            </CSSTransition>
+          )}
+        </TransitionGroup>
+
+        <input
+          type="checkbox"
+          id="menuToggle"
+          className={NavbarStyles.checkboxToggle}
+          checked={menuOpen}
+          onChange={toggleMenu}
+          aria-label="Toggle menu"
+          aria-controls="main-menu"
+          aria-expanded={menuOpen}
+        />
+        <label htmlFor="menuToggle" className={NavbarStyles.hamburger}>
+          &#9776;
+        </label>
+
+        <div
+          id="main-menu"
+          className={`${NavbarStyles.menu} ${menuOpen && animate ? NavbarStyles.animate : ""}`}
+          role="menu"
+          aria-labelledby="menuToggle"
+        >
+          <li className={NavbarStyles.listItem} role="none">
+            <CustomLink to="/" onClick={toggleMenu} role="menuitem">
+              Home
+            </CustomLink>
+          </li>
+
+          {isAuthenticated && (
+            <li className={NavbarStyles.listItem} role="none">
+              <CustomLink to="/projects" onClick={toggleMenu} role="menuitem">
+                Projects
+              </CustomLink>
+            </li>
+          )}
+
+          {!isAuthenticated ? (
+            <li className={NavbarStyles.listItem} role="none">
+              <CustomLink to="/login" onClick={toggleMenu} role="menuitem">
+                Login
+              </CustomLink>
+            </li>
+          ) : (
+            <li className={NavbarStyles.listItem} role="none">
+              <CustomLink to="/login" onClick={handleLogout} role="menuitem">
+                Logout
+              </CustomLink>
+            </li>
+          )}
+
+          <li className={NavbarStyles.listItem} role="none">
+            <CustomLink to="/tutorial" onClick={toggleMenu} role="menuitem">
+              Tutorial
+            </CustomLink>
+          </li>
+
+          <li className={NavbarStyles.listItem} role="none">
+            <CustomLink to="/about" onClick={toggleMenu} role="menuitem">
+              About
+            </CustomLink>
+          </li>
+        </div>
+      </ul>
+    </nav>
+  );
+}

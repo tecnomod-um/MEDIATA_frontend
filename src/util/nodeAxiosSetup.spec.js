@@ -1,26 +1,28 @@
 import '@testing-library/jest-dom';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import axios from 'axios';
 
-jest.mock('axios', () => {
-  const mockReqUse = jest.fn();
-  const mockResUse = jest.fn();
+vi.mock('axios', () => {
+  const mockReqUse = vi.fn();
+  const mockResUse = vi.fn();
 
   const mockAxiosInstance = {
     interceptors: {
       request: { use: mockReqUse },
       response: { use: mockResUse },
     },
-    defaults: { baseURL: '' }
+    defaults: { baseURL: '' },
   };
 
-  const mockCreate = jest.fn(() => mockAxiosInstance);
+  const mockCreate = vi.fn(() => mockAxiosInstance);
   const def = {
     create: mockCreate,
-    __m: { mockReqUse, mockResUse, mockCreate, mockAxiosInstance }
+    __m: { mockReqUse, mockResUse, mockCreate, mockAxiosInstance },
   };
 
   return {
     __esModule: true,
-    default: def
+    default: def,
   };
 });
 
@@ -28,21 +30,21 @@ const localStorageMock = (() => {
   let store = {};
 
   return {
-    getItem: jest.fn((key) => store[key] || null),
-    setItem: jest.fn((key, value) => {
+    getItem: vi.fn((key) => store[key] || null),
+    setItem: vi.fn((key, value) => {
       store[key] = value.toString();
     }),
-    removeItem: jest.fn((key) => {
+    removeItem: vi.fn((key) => {
       delete store[key];
     }),
-    clear: jest.fn(() => {
+    clear: vi.fn(() => {
       store = {};
-    })
+    }),
   };
 })();
 
 Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock
+  value: localStorageMock,
 });
 
 let nodeAxiosInstance;
@@ -52,27 +54,21 @@ let mockReqUse;
 let mockResUse;
 let requestInterceptor;
 
-beforeAll(() => {
-  // Get axios mocks before requiring the module
-  const axios = require('axios').default;
+beforeAll(async () => {
   mockReqUse = axios.__m.mockReqUse;
   mockResUse = axios.__m.mockResUse;
 
-  jest.isolateModules(() => {
-    const mod = require('../util/nodeAxiosSetup');
-    nodeAxiosInstance = mod.default;
-    setupNodeAxiosInterceptors = mod.setupNodeAxiosInterceptors;
-    updateNodeAxiosBaseURL = mod.updateNodeAxiosBaseURL;
-  });
+  const mod = await import('../util/nodeAxiosSetup');
+  nodeAxiosInstance = mod.default;
+  setupNodeAxiosInterceptors = mod.setupNodeAxiosInterceptors;
+  updateNodeAxiosBaseURL = mod.updateNodeAxiosBaseURL;
 
-  // Save interceptors since they're set during module import
-  requestInterceptor = mockReqUse.mock.calls[0][0];
+  requestInterceptor = mockReqUse.mock.calls[0]?.[0];
 });
 
 beforeEach(() => {
   localStorage.clear();
-  // Clear mocks but preserve their implementation
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
 
 describe('nodeAxiosSetup', () => {
@@ -91,10 +87,9 @@ describe('nodeAxiosSetup', () => {
     let logoutMock;
 
     beforeEach(() => {
-      logoutMock = jest.fn();
+      logoutMock = vi.fn();
       setupNodeAxiosInterceptors(logoutMock);
 
-      // Get the most recent interceptor setup
       const lastCallIndex = mockResUse.mock.calls.length - 1;
       successHandler = mockResUse.mock.calls[lastCallIndex][0];
       errorHandler = mockResUse.mock.calls[lastCallIndex][1];
@@ -119,7 +114,7 @@ describe('nodeAxiosSetup', () => {
     it('handles 401/403 errors', async () => {
       const error = {
         response: { status: 401 },
-        isAxiosError: true
+        isAxiosError: true,
       };
 
       let caughtError;
@@ -139,7 +134,7 @@ describe('nodeAxiosSetup', () => {
     it('ignores non-401/403 errors', async () => {
       const error = {
         response: { status: 500 },
-        isAxiosError: true
+        isAxiosError: true,
       };
 
       let caughtError;
