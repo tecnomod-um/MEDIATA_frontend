@@ -1,8 +1,10 @@
 import '@testing-library/jest-dom';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import axios from 'axios';
 
-jest.mock('axios', () => {
-  const mockReqUse = jest.fn();
-  const mockResUse = jest.fn();
+vi.mock('axios', () => {
+  const mockReqUse = vi.fn();
+  const mockResUse = vi.fn();
 
   const mockAxios = {
     interceptors: {
@@ -11,34 +13,49 @@ jest.mock('axios', () => {
     },
   };
 
-  const mockCreate = jest.fn(() => mockAxios);
-  const def = { create: mockCreate };
-  def.__m = { mockReqUse, mockResUse, mockCreate, mockAxios };
-  return { __esModule: true, default: def };
+  const mockCreate = vi.fn(() => mockAxios);
+
+  const def = {
+    create: mockCreate,
+    __m: { mockReqUse, mockResUse, mockCreate, mockAxios },
+  };
+
+  return {
+    __esModule: true,
+    default: def,
+  };
 });
 
-jest.mock('../config', () => ({ backendUrl: 'https://api.example.com' }));
+vi.mock('../config', () => ({
+  __esModule: true,
+  backendUrl: 'https://api.example.com',
+  default: {
+    backendUrl: 'https://api.example.com',
+  },
+}));
 
 let axiosInstance;
 let setupAxiosInterceptors;
 let mockResUse;
 let mockReqUse;
 let mockAxios;
+let requestHandler;
+let errorHandler;
 
-beforeAll(() => {
-  const axios = require('axios').default;
+beforeAll(async () => {
   ({ mockResUse, mockReqUse, mockAxios } = axios.__m);
 
-  jest.isolateModules(() => {
-    const mod = require('../util/axiosSetup.js');
-    axiosInstance = mod.default;
-    setupAxiosInterceptors = mod.setupAxiosInterceptors;
-  });
+  const mod = await import('../util/axiosSetup');
+  axiosInstance = mod.default;
+  setupAxiosInterceptors = mod.setupAxiosInterceptors;
+
+  requestHandler = mockReqUse.mock.calls[0]?.[0];
+  errorHandler = mockReqUse.mock.calls[0]?.[1];
 });
 
 beforeEach(() => {
   localStorage.clear();
-  // Don't clear all mocks as it breaks the interceptor references
+  mockResUse.mockClear();
 });
 
 describe('axiosSetup utility', () => {
@@ -52,7 +69,7 @@ describe('axiosSetup utility', () => {
     let logoutSpy;
 
     beforeEach(() => {
-      logoutSpy = jest.fn();
+      logoutSpy = vi.fn();
       setupAxiosInterceptors(logoutSpy);
       successHandler = mockResUse.mock.calls.at(-1)[0];
       errHandler = mockResUse.mock.calls.at(-1)[1];
@@ -89,100 +106,88 @@ describe('axiosSetup utility', () => {
   });
 
   describe('request interceptor', () => {
-    let requestHandler;
-    let errorHandler;
-
     beforeEach(() => {
       localStorage.clear();
-      // The request interceptor is set up when the module is loaded
-      // Get the first call which is from module initialization
-      if (mockReqUse.mock.calls.length > 0) {
-        requestHandler = mockReqUse.mock.calls[0][0];
-        errorHandler = mockReqUse.mock.calls[0][1];
-      }
     });
 
     it('adds Authorization header when JWT token exists', () => {
-      if (!requestHandler) {
-        console.warn('Request handler not initialized');
-        return;
-      }
-      
+      expect(requestHandler).toBeTypeOf('function');
+
       localStorage.setItem('jwtToken', 'test-token-123');
-      
+
       const config = { url: '/test', headers: {} };
       const result = requestHandler(config);
-      
-      expect(result.headers['Authorization']).toBe('Bearer test-token-123');
+
+      expect(result.headers.Authorization).toBe('Bearer test-token-123');
     });
 
     it('does not add Authorization header when JWT token is missing', () => {
-      if (!requestHandler) return;
-      
+      expect(requestHandler).toBeTypeOf('function');
+
       const config = { url: '/test', headers: {} };
       const result = requestHandler(config);
-      
-      expect(result.headers['Authorization']).toBeUndefined();
+
+      expect(result.headers.Authorization).toBeUndefined();
     });
 
     it('adds Kerberos-TGT header for connect/info endpoint', () => {
-      if (!requestHandler) return;
-      
+      expect(requestHandler).toBeTypeOf('function');
+
       localStorage.setItem('kerberosTGT', 'kerberos-tgt-token');
-      
+
       const config = { url: '/nodes/connect/info', headers: {} };
       const result = requestHandler(config);
-      
+
       expect(result.headers['Kerberos-TGT']).toBe('kerberos-tgt-token');
     });
 
     it('adds Kerberos-TGT header for node/validate endpoint', () => {
-      if (!requestHandler) return;
-      
+      expect(requestHandler).toBeTypeOf('function');
+
       localStorage.setItem('kerberosTGT', 'kerberos-tgt-token');
-      
+
       const config = { url: '/node/validate', headers: {} };
       const result = requestHandler(config);
-      
+
       expect(result.headers['Kerberos-TGT']).toBe('kerberos-tgt-token');
     });
 
     it('does not add Kerberos-TGT header for other endpoints', () => {
-      if (!requestHandler) return;
-      
+      expect(requestHandler).toBeTypeOf('function');
+
       localStorage.setItem('kerberosTGT', 'kerberos-tgt-token');
-      
+
       const config = { url: '/other/endpoint', headers: {} };
       const result = requestHandler(config);
-      
+
       expect(result.headers['Kerberos-TGT']).toBeUndefined();
     });
 
     it('does not add Kerberos-TGT header when TGT is missing', () => {
-      if (!requestHandler) return;
-      
+      expect(requestHandler).toBeTypeOf('function');
+
       const config = { url: '/nodes/connect/info', headers: {} };
       const result = requestHandler(config);
-      
+
       expect(result.headers['Kerberos-TGT']).toBeUndefined();
     });
 
     it('adds both JWT and Kerberos-TGT headers when both exist for connect endpoint', () => {
-      if (!requestHandler) return;
-      
+      expect(requestHandler).toBeTypeOf('function');
+
       localStorage.setItem('jwtToken', 'jwt-token');
       localStorage.setItem('kerberosTGT', 'kerberos-token');
-      
+
       const config = { url: '/nodes/connect/info', headers: {} };
       const result = requestHandler(config);
-      
-      expect(result.headers['Authorization']).toBe('Bearer jwt-token');
+
+      expect(result.headers.Authorization).toBe('Bearer jwt-token');
       expect(result.headers['Kerberos-TGT']).toBe('kerberos-token');
     });
 
     it('handles request errors', async () => {
-      if (!errorHandler) return;
-      
+      expect(errorHandler).toBeTypeOf('function');
+
       const error = new Error('Request error');
       await expect(errorHandler(error)).rejects.toThrow('Request error');
     });

@@ -1,10 +1,16 @@
-// eslint-disable-next-line import/no-commonjs
-jest.mock('distinct-colors', () => jest.fn());
-// eslint-disable-next-line import/no-commonjs
-const distinctColors = require('distinct-colors');
-// eslint-disable-next-line import/no-commonjs
-const { generateDistinctColors, generateColorList, darkenColor, lightenColor } = require('./colors.js');
+import { vi } from "vitest";
 
+vi.mock("distinct-colors", () => ({
+  default: vi.fn(),
+}));
+
+import distinctColors from "distinct-colors";
+import {
+  generateDistinctColors,
+  generateColorList,
+  darkenColor,
+  lightenColor,
+} from "./colors.js";
 
 describe('generateDistinctColors', () => {
   it('should call distinctColors with correct parameters', () => {

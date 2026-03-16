@@ -1,0 +1,154 @@
+import React from 'react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import { vi } from 'vitest';
+import DateChart from './dateChart';
+
+const { updateSpy, resizeSpy } = vi.hoisted(() => ({
+  updateSpy: vi.fn(),
+  resizeSpy: vi.fn(),
+}));
+
+vi.mock('chartjs-adapter-moment', () => ({
+  __esModule: true,
+  default: {},
+}));
+
+vi.mock('react-chartjs-2', () => ({
+  __esModule: true,
+  Line: React.forwardRef(({ data, options }, ref) => {
+    React.useImperativeHandle(
+      ref,
+      () => ({
+        update: updateSpy,
+        resize: resizeSpy,
+      }),
+      []
+    );
+
+    return (
+      <div data-testid="mock-line">
+        {JSON.stringify({ data, options })}
+      </div>
+    );
+  }),
+}));
+
+describe('<DateChart />', () => {
+  const baseDateData = {
+    dateHistogram: {
+      '2020-01-01': 1,
+      '2021-01-01': 2,
+      '2022-01-01': 3,
+    },
+    outliers: ['2021-01-01'],
+  };
+
+  const dateDataKey = 'TestKey';
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('renders only non-outliers when showOutliers=false', () => {
+    render(
+      <DateChart
+        dateData={baseDateData}
+        dateDataKey={dateDataKey}
+        showOutliers={false}
+      />
+    );
+
+    const payload = JSON.parse(screen.getByTestId('mock-line').textContent);
+    expect(payload.data.labels).toEqual(['2020-01-01', '2022-01-01']);
+    expect(payload.data.datasets[0].data).toEqual([1, 3]);
+    expect(payload.options.plugins.title.text).toBe(
+      'TestKey Distribution Over Time'
+    );
+  });
+
+  it('renders all dates when showOutliers=true', () => {
+    render(
+      <DateChart
+        dateData={baseDateData}
+        dateDataKey={dateDataKey}
+        showOutliers={true}
+      />
+    );
+
+    const payload = JSON.parse(screen.getByTestId('mock-line').textContent);
+    expect(payload.data.labels).toEqual([
+      '2020-01-01',
+      '2021-01-01',
+      '2022-01-01',
+    ]);
+    expect(payload.data.datasets[0].data).toEqual([1, 2, 3]);
+  });
+
+  it('applies CSS classes and forwards click events', () => {
+    const handleClick = vi.fn();
+    const handleDouble = vi.fn();
+
+    render(
+      <DateChart
+        dateData={baseDateData}
+        dateDataKey={dateDataKey}
+        showOutliers
+        isSelected
+        onClick={handleClick}
+        onDoubleClick={handleDouble}
+      />
+    );
+
+    const wrapper = screen.getByTestId('mock-line');
+    fireEvent.click(wrapper);
+    fireEvent.doubleClick(wrapper);
+
+    expect(handleClick).toHaveBeenCalled();
+    expect(handleDouble).toHaveBeenCalled();
+  });
+
+  it('invokes chart.update once on mount and again when data changes', () => {
+    const { rerender } = render(
+      <DateChart
+        dateData={baseDateData}
+        dateDataKey={dateDataKey}
+        showOutliers={true}
+      />
+    );
+
+    expect(updateSpy).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <DateChart
+        dateData={{
+          ...baseDateData,
+          dateHistogram: {
+            ...baseDateData.dateHistogram,
+            '2023-01-01': 4,
+          },
+        }}
+        dateDataKey={dateDataKey}
+        showOutliers={true}
+      />
+    );
+
+    expect(updateSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('invokes chart.resize on window resize', () => {
+    render(
+      <DateChart
+        dateData={baseDateData}
+        dateDataKey={dateDataKey}
+        showOutliers
+      />
+    );
+
+    act(() => {
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    expect(resizeSpy).toHaveBeenCalledTimes(1);
+  });
+});

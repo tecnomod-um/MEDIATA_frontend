@@ -1,32 +1,33 @@
 import * as petitionHandler from './petitionHandler';
 import axiosInstance from './axiosSetup';
 import nodeAxiosInstance, { updateNodeAxiosBaseURL } from './nodeAxiosSetup';
+import { vi } from "vitest";
 
-jest.mock('./axiosSetup', () => ({
+vi.mock('./axiosSetup', () => ({
   __esModule: true,
   default: {
-    get: jest.fn(),
-    post: jest.fn(),
-    delete: jest.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 
-jest.mock('./nodeAxiosSetup', () => {
+vi.mock('./nodeAxiosSetup', () => {
   const instance = { 
-    get: jest.fn(), 
-    post: jest.fn(),
-    delete: jest.fn(),
+    get: vi.fn(), 
+    post: vi.fn(),
+    delete: vi.fn(),
   };
   return {
     __esModule: true,
     default: instance,
-    updateNodeAxiosBaseURL: jest.fn(),
+    updateNodeAxiosBaseURL: vi.fn(),
   };
 });
 
 describe('petitionHandler', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     localStorage.clear();
   });
 
@@ -198,7 +199,10 @@ describe('petitionHandler', () => {
 
   describe('nodeAuth', () => {
     const svc = 'http://node';
-    beforeEach(() => nodeAxiosInstance.post.mockClear());
+    beforeEach(() => {
+      nodeAxiosInstance.post.mockReset();
+      updateNodeAxiosBaseURL.mockClear();
+    });
 
     it('on Unauthorized jwtNodeToken clears storage and throws', async () => {
       updateNodeAxiosBaseURL.mockClear();
@@ -237,9 +241,11 @@ describe('petitionHandler', () => {
     });
 
     it('handles network errors', async () => {
-      nodeAxiosInstance.post.mockRejectedValue(new Error('Network error'));
+      const networkError = new Error('Network error');
+      nodeAxiosInstance.post.mockImplementationOnce(() => Promise.reject(networkError));
+    
       await expect(petitionHandler.nodeAuth(svc, 'kt'))
-        .rejects.toThrow('Network error');
+        .rejects.toBe(networkError);
     });
   });
 
@@ -247,7 +253,7 @@ describe('petitionHandler', () => {
     it('uploadFile sends FormData and returns data', async () => {
       const fakeFile = new Blob(['x']);
       nodeAxiosInstance.post.mockResolvedValue({ data: { f: 5 } });
-      const progressCallback = jest.fn();
+      const progressCallback = vi.fn();
       const out = await petitionHandler.uploadFile(fakeFile, progressCallback);
       expect(nodeAxiosInstance.post).toHaveBeenCalledWith(
         '/taniwha/api/data/process',
@@ -464,9 +470,9 @@ describe('petitionHandler', () => {
 
   describe('logError', () => {
     beforeEach(() => {
-      jest.clearAllMocks();
-      console.log = jest.fn();
-      console.error = jest.fn();
+      vi.clearAllMocks();
+      console.log = vi.fn();
+      console.error = vi.fn();
     });
 
     it('posts the error and logs success when status is 200', async () => {
