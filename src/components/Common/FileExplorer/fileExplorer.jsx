@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { CSSTransition } from "react-transition-group";
 import FileExplorerStyles from "./fileExplorer.module.css";
-import { listExplorerFiles, renameExplorerFile, deleteExplorerFile, cleanExplorerFile, processSelectedDatasets, getProcessSelectedDatasetsStatus, getProcessSelectedDatasetsResult } from "../../../util/petitionHandler";
+import { listExplorerFiles, renameExplorerFile, deleteExplorerFile, startCleanExplorerFile, getCleanExplorerFileStatus, getCleanExplorerFileResult, processSelectedDatasets, getProcessSelectedDatasetsStatus, getProcessSelectedDatasetsResult, cancelProcessSelectedDatasetsJob } from "../../../util/petitionHandler";
 import { updateNodeAxiosBaseURL } from "../../../util/nodeAxiosSetup";
 import FileToolbar from "./fileToolbar";
 import FileTable from "./fileTable";
@@ -48,10 +48,80 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
   const modalContainerRef = useRef(null);
   const toolbarRef = useRef(null);
 
+  const mountedRef = useRef(true);
+  const activeJobsRef = useRef(new Map());
+
   const cleanMeasureRef = useRef(null);
   const [cleanOpenHeight, setCleanOpenHeight] = useState(0);
   const [showCleanPanel, setShowCleanPanel] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const pollCleanJobHere = async (jobId, node, onProgress) => {
+    while (mountedRef.current) {
+      try {
+        if (node?.serviceUrl) updateNodeAxiosBaseURL(node.serviceUrl);
+  
+        const status = await getCleanExplorerFileStatus(jobId);
+  
+        if (typeof status?.percent === "number") {
+          onProgress(status.percent);
+        }
+  
+        const state = String(status?.state || "").toUpperCase();
+  
+        if (state === "DONE") {
+          const result = await getCleanExplorerFileResult(jobId);
+  
+          if (result?.status === 200) {
+            return result.data;
+          }
+  
+          throw new Error(
+            result?.data?.message || "Cleaning finished but result was not available"
+          );
+        }
+  
+        if (state === "ERROR") {
+          throw new Error(status?.message || "Cleaning failed");
+        }
+  
+        await sleep(500);
+      } catch (error) {
+        if (!mountedRef.current || error?.response?.status === 404) {
+          const err = new Error("Cleaning job aborted");
+          err.code = "CLEANING_ABORTED";
+          throw err;
+        }
+        throw error;
+      }
+    }
+  
+    const err = new Error("Cleaning job aborted");
+    err.code = "CLEANING_ABORTED";
+    throw err;
+  };
+
+  useEffect(() => {
+    mountedRef.current = true;
+
+    return () => {
+      mountedRef.current = false;
+
+      const entries = Array.from(activeJobsRef.current.entries());
+      Promise.allSettled(
+        entries.map(async ([jobId, node]) => {
+          try {
+            if (node?.serviceUrl) updateNodeAxiosBaseURL(node.serviceUrl);
+            await cancelProcessSelectedDatasetsJob(jobId);
+          } catch (e) {
+            // ignore
+          }
+        })
+      );
+
+      activeJobsRef.current.clear();
+    };
+  }, []);
 
   const measureCleanHeight = useCallback(() => {
     const modal = modalContainerRef.current;
@@ -497,21 +567,49 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
     return Object.values(byNode);
   };
 
-  const pollJobHere = async (jobId, onProgress) => {
-    while (true) {
-      const status = await getProcessSelectedDatasetsStatus(jobId);
-      if (typeof status?.percent === "number") onProgress(status.percent);
+  const pollJobHere = async (jobId, node, onProgress) => {
+    while (mountedRef.current) {
+      try {
+        if (node?.serviceUrl) updateNodeAxiosBaseURL(node.serviceUrl);
 
-      const state = String(status?.state || "").toUpperCase();
-      if (state === "DONE") {
-        const results = await getProcessSelectedDatasetsResult(jobId);
-        return results || [];
+        const status = await getProcessSelectedDatasetsStatus(jobId);
+        if (typeof status?.percent === "number") onProgress(status.percent);
+
+        const state = String(status?.state || "").toUpperCase();
+
+        if (state === "DONE") {
+          const results = await getProcessSelectedDatasetsResult(jobId);
+          activeJobsRef.current.delete(jobId);
+          return results || [];
+        }
+
+        if (state === "CANCELED") {
+          activeJobsRef.current.delete(jobId);
+          const err = new Error(status?.message || "File processing was canceled");
+          err.code = "DISCOVERY_CANCELED";
+          throw err;
+        }
+
+        if (state === "ERROR") {
+          activeJobsRef.current.delete(jobId);
+          throw new Error(status.message || "File processing failed");
+        }
+
+        await sleep(500);
+      } catch (error) {
+        if (!mountedRef.current || error?.response?.status === 404) {
+          activeJobsRef.current.delete(jobId);
+          const err = new Error("Processing job canceled");
+          err.code = "DISCOVERY_CANCELED";
+          throw err;
+        }
+        throw error;
       }
-      if (state === "ERROR") throw new Error(status.message || "File processing failed");
-
-      // eslint-disable-next-line no-await-in-loop
-      await sleep(500);
     }
+
+    const err = new Error("Processing job cancele");
+    err.code = "DISCOVERY_CANCELED";
+    throw err;
   };
 
   const doOpenMany = async (keys) => {
@@ -571,7 +669,8 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
 
           if (result?.mode === "async") {
             setBarFor(key, 0);
-            const arr = await pollJobHere(result.jobId, (p) => setBarFor(key, p));
+            activeJobsRef.current.set(result.jobId, node);
+            const arr = await pollJobHere(result.jobId, node, (p) => setBarFor(key, p));
             allResults = allResults.concat(
               (arr || []).map((r) => ({
                 ...r,
@@ -599,7 +698,11 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
 
       onFilesOpened(allResults);
     } catch (e) {
-      notifyError(e, "Failed to open selected files");
+      if (e?.code === "DISCOVERY_CANCELED") {
+        toast.info("Discovery processing canceled.");
+      } else {
+        notifyError(e, "Failed to open selected files");
+      }
     } finally {
       setProcessingFiles(new Set());
       clearProgressFor(keys);
@@ -647,32 +750,69 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
 
   const applyClean = async (cleaningOptions) => {
     if (busy || selected.size === 0) return;
-
+  
     setBusy(true);
     setError(null);
-
+  
+    const keys = Array.from(selected);
+    setProcessingFiles(new Set(keys));
+    setSpinnerFor(keys);
+  
     try {
-      const keys = Array.from(selected);
-
       for (const key of keys) {
         const file = findFileByKey(key);
         if (!file) continue;
+  
+        let node = null;
         if (nodes?.length) {
-          const node = nodes.find((n) => n.nodeId === file.nodeId);
+          node = nodes.find((n) => n.nodeId === file.nodeId);
           if (node?.serviceUrl) updateNodeAxiosBaseURL(node.serviceUrl);
         }
-        await cleanExplorerFile(category, file.name, cleaningOptions);
+  
+        const start = await startCleanExplorerFile(category, file.name, cleaningOptions);
+  
+        if (start?.status !== 202 || !start?.data?.jobId) {
+          throw new Error(
+            start?.data?.message || `Failed to start cleaning for ${file.name}`
+          );
+        }
+  
+        setBarFor(key, 0);
+  
+        const result = await pollCleanJobHere(start.data.jobId, node, (p) => {
+          setBarFor(key, p);
+        });
+  
+        setBarFor(key, 100);
+        await new Promise((r) => setTimeout(r, 120));
+  
+        setProcessingFiles((prev) => {
+          const next = new Set(prev);
+          next.delete(key);
+          return next;
+        });
+  
+        clearProgressFor([key]);
+  
+        if (result?.message) {
+          toast.success(result.message);
+        }
       }
-
+  
       setShowCleanPanel(false);
       await load(true);
     } catch (e) {
-      notifyError(e, "Clean failed");
+      if (e?.code === "CLEANING_ABORTED") {
+        toast.info("Cleaning was interrupted.");
+      } else {
+        notifyError(e, "Clean failed");
+      }
     } finally {
+      setProcessingFiles(new Set());
+      clearProgressFor(keys);
       setBusy(false);
     }
   };
-
 
   useEffect(() => {
     if (!hasSelection) setShowCleanPanel(false);

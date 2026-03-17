@@ -312,14 +312,19 @@ describe('petitionHandler', () => {
       );
     });
 
-    it('setParseConfigs returns data', async () => {
-      nodeAxiosInstance.post.mockResolvedValue({ data: 'cfg' });
+    it('setParseConfigs returns status and data', async () => {
+      nodeAxiosInstance.post.mockResolvedValue({ status: 202, data: 'cfg' });
+    
       await expect(petitionHandler.setParseConfigs({ config: 'test' }))
-        .resolves.toBe('cfg');
+        .resolves.toEqual({ status: 202, data: 'cfg' });
+    
       expect(nodeAxiosInstance.post).toHaveBeenCalledWith(
         '/taniwha/api/harmonization/parse',
         { config: 'test' },
-        { headers: { 'Content-Type': 'application/json' } }
+        {
+          headers: { 'Content-Type': 'application/json' },
+          validateStatus: expect.any(Function),
+        }
       );
     });
 

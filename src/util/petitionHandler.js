@@ -342,17 +342,31 @@ export const saveMockFile = async (file) => {
 };
 
 export const setParseConfigs = async (payload) => {
-  try {
-    const response = await nodeAxiosInstance.post(
-      `/taniwha/api/harmonization/parse`,
-      payload,
-      { headers: { "Content-Type": "application/json", }, }
-    );
-    return response.data;
-  } catch (error) {
-    console.error("Error occurred during config submission:", error);
-    throw error;
-  }
+  const response = await nodeAxiosInstance.post(
+    `/taniwha/api/harmonization/parse`,
+    payload,
+    {
+      headers: { "Content-Type": "application/json" },
+      validateStatus: () => true,
+    }
+  );
+
+  return { status: response.status, data: response.data };
+};
+
+export const getParseConfigsStatus = async (jobId) => {
+  const response = await nodeAxiosInstance.get(
+    `/taniwha/api/harmonization/parse/status/${encodeURIComponent(jobId)}`
+  );
+  return response.data;
+};
+
+export const getParseConfigsResult = async (jobId) => {
+  const response = await nodeAxiosInstance.get(
+    `/taniwha/api/harmonization/parse/result/${encodeURIComponent(jobId)}`,
+    { validateStatus: () => true }
+  );
+  return { status: response.status, data: response.data };
 };
 
 export const getNodeDatasets = async () => {
@@ -393,6 +407,13 @@ export async function getProcessSelectedDatasetsResult(jobId) {
   );
   return response.data;
 }
+
+export const cancelProcessSelectedDatasetsJob = async (jobId) => {
+  const response = await nodeAxiosInstance.post(
+    `/taniwha/api/data/processList/cancel/${encodeURIComponent(jobId)}`
+  );
+  return response.data;
+};
 
 export const getNodeMappedDatasets = async () => {
   try {
@@ -497,6 +518,35 @@ export const cleanExplorerFile = async (category, name, cleaningOptions) => {
     { params: { category, name } }
   );
   return response.data;
+};
+
+export const startCleanExplorerFile = async (category, name, cleaningOptions) => {
+  const response = await nodeAxiosInstance.post(
+    `/taniwha/api/files/clean/start`,
+    cleaningOptions ?? null,
+    {
+      params: { category, name },
+      headers: { "Content-Type": "application/json" },
+      validateStatus: () => true,
+    }
+  );
+
+  return { status: response.status, data: response.data };
+};
+
+export const getCleanExplorerFileStatus = async (jobId) => {
+  const response = await nodeAxiosInstance.get(
+    `/taniwha/api/files/clean/status/${encodeURIComponent(jobId)}`
+  );
+  return response.data;
+};
+
+export const getCleanExplorerFileResult = async (jobId) => {
+  const response = await nodeAxiosInstance.get(
+    `/taniwha/api/files/clean/result/${encodeURIComponent(jobId)}`,
+    { validateStatus: () => true }
+  );
+  return { status: response.status, data: response.data };
 };
 
 export const suggestMappings = async ({ elementFiles, schema }) => {

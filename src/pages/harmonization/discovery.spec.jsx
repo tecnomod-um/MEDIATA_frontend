@@ -64,12 +64,15 @@ vi.mock("react-transition-group", () => ({
   TransitionGroup: ({ children }) => <>{children}</>,
 }));
 
+const mockToastInfo = vi.hoisted(() => vi.fn());
+
 vi.mock("react-toastify", () => ({
   __esModule: true,
   ToastContainer: () => <div data-testid="ToastContainer" />,
   toast: {
     success: mockToastSuccess,
     error: mockToastError,
+    info: mockToastInfo,
   },
 }));
 
@@ -106,6 +109,8 @@ vi.mock("../../util/petitionHandler", () => ({
     mockGetProcessSelectedDatasetsStatus(...a),
   getProcessSelectedDatasetsResult: (...a) =>
     mockGetProcessSelectedDatasetsResult(...a),
+  cancelProcessSelectedDatasetsJob: (...a) =>
+    mockCancelProcessSelectedDatasetsJob(...a),
 }));
 
 vi.mock("../../util/nodeAxiosSetup", () => ({
@@ -142,8 +147,10 @@ const PROCESSED_ITEM = {
   omittedFeatures: [],
 };
 
+const mockCancelProcessSelectedDatasetsJob = vi.fn();
+
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
   mockFileExplorerProps = undefined;
   mockedRouterState.location = { state: undefined };
 });

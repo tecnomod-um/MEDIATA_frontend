@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 import DiscoveryStyles from "./discovery.module.css";
@@ -8,7 +8,7 @@ import ToolTray from "../../components/Discovery/ToolTray/toolTray";
 import AggregateDisplay from "../../components/Discovery/AggregatesDisplay/aggregateDisplay";
 import FilterModal from "../../components/Discovery/FilterModal/filterModal";
 import { ToastContainer, toast } from "react-toastify";
-import { getNodeDatasets, processSelectedDatasets, getProcessSelectedDatasetsStatus, getProcessSelectedDatasetsResult } from "../../util/petitionHandler";
+import { getNodeDatasets, processSelectedDatasets, getProcessSelectedDatasetsStatus, getProcessSelectedDatasetsResult, cancelProcessSelectedDatasetsJob } from "../../util/petitionHandler";
 import { updateNodeAxiosBaseURL } from "../../util/nodeAxiosSetup";
 
 import { useNode } from "../../context/nodeContext";
@@ -36,21 +36,89 @@ function Discovery() {
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-  const pollDiscoveryJob = useCallback(async (jobId, onProgress) => {
-    while (true) {
-      const status = await getProcessSelectedDatasetsStatus(jobId);
-      if (typeof status?.percent === "number") onProgress(status.percent);
+  const mountedRef = useRef(true);
+  const activeJobsRef = useRef(new Map());
+  const canceledByNavigationRef = useRef(false);
 
-      const state = String(status?.state || "").toUpperCase();
-      if (state === "DONE") {
-        const results = await getProcessSelectedDatasetsResult(jobId);
-        return results || [];
+  const pollDiscoveryJob = useCallback(async (jobId, node, onProgress) => {
+    while (mountedRef.current) {
+      try {
+        updateNodeAxiosBaseURL(node.serviceUrl);
+        const status = await getProcessSelectedDatasetsStatus(jobId);
+  
+        if (typeof status?.percent === "number") onProgress(status.percent);
+  
+        const state = String(status?.state || "").toUpperCase();
+  
+        if (state === "DONE") {
+          const results = await getProcessSelectedDatasetsResult(jobId);
+          activeJobsRef.current.delete(jobId);
+          return results || [];
+        }
+  
+        if (state === "CANCELED") {
+          activeJobsRef.current.delete(jobId);
+          const err = new Error(status?.message || "Discovery job was canceled");
+          err.code = "DISCOVERY_CANCELED";
+          throw err;
+        }
+  
+        if (state === "ERROR") {
+          activeJobsRef.current.delete(jobId);
+          throw new Error(status.message || "Discovery job failed");
+        }
+  
+        await sleep(500);
+      } catch (error) {
+        const statusCode = error?.response?.status;
+  
+        // If the UI changed and the job/status disappears, treat it as cancellation.
+        if (!mountedRef.current || canceledByNavigationRef.current || statusCode === 404) {
+          activeJobsRef.current.delete(jobId);
+          const err = new Error("Discovery canceled because you left the page");
+          err.code = "DISCOVERY_CANCELED";
+          throw err;
+        }
+  
+        throw error;
       }
-      if (state === "ERROR") throw new Error(status.message || "Discovery job failed");
-
-      await sleep(500);
     }
+  
+    const err = new Error("Discovery canceled because you left the page");
+    err.code = "DISCOVERY_CANCELED";
+    throw err;
   }, []);
+
+  const cancelAllDiscoveryJobs = useCallback(async () => {
+    canceledByNavigationRef.current = true;
+  
+    const entries = Array.from(activeJobsRef.current.entries());
+  
+    await Promise.allSettled(
+      entries.map(async ([jobId, meta]) => {
+        try {
+          if (meta?.node?.serviceUrl) {
+            updateNodeAxiosBaseURL(meta.node.serviceUrl);
+          }
+          await cancelProcessSelectedDatasetsJob(jobId);
+        } catch (e) {
+          // Ignore cancel failures
+        }
+      })
+    );
+  
+    activeJobsRef.current.clear();
+  }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    canceledByNavigationRef.current = false;
+  
+    return () => {
+      mountedRef.current = false;
+      cancelAllDiscoveryJobs();
+    };
+  }, [cancelAllDiscoveryJobs]);
 
   useEffect(() => {
     if (location.state?.elementFiles?.length && !hasProcessedMappingState) {
@@ -84,7 +152,9 @@ function Discovery() {
               }
 
               if (result.mode === "async") {
-                const arr = await pollDiscoveryJob(result.jobId, () => { });
+                activeJobsRef.current.set(result.jobId, { node });
+              
+                const arr = await pollDiscoveryJob(result.jobId, node, () => {});
                 allResults = allResults.concat(
                   arr.map((r) => ({
                     ...r,
@@ -107,6 +177,12 @@ function Discovery() {
           setActiveFileIndices(allResults.map(() => true));
         } catch (error) {
           console.error("Error processing parsed element files:", error);
+        
+          if (error?.code === "DISCOVERY_CANCELED") {
+            toast.info("File discovery was canceled.");
+            return;
+          }
+        
           toast.error("Error processing parsed element files: " + error.message);
         }
       })();

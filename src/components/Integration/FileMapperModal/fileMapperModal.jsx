@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 import Switch from 'react-switch';
 import { IoMdClose } from 'react-icons/io';
-import { FaFileCsv, FaFileExcel, FaFileAlt, FaBroom } from 'react-icons/fa';
+import { FaFileCsv, FaFileExcel, FaFileAlt } from 'react-icons/fa';
 import ArrowBackwardsIcon from '@mui/icons-material/ArrowBack';
 import { toast } from 'react-toastify';
 import OverlayWrapper from '../../Common/OverlayWrapper/overlayWrapper';
@@ -12,8 +12,14 @@ import { updateNodeAxiosBaseURL } from '../../../util/nodeAxiosSetup';
 import { getNodeDatasets } from '../../../util/petitionHandler';
 import { dateFormats } from '../../../util/dateFormat';
 
-// Displays datasets in backend nodes for user to select which to apply mappings to
-const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = [], onSend, }) => {
+const FileMapperModal = ({
+  isOpen,
+  closeModal,
+  mappings,
+  columnsData,
+  nodes = [],
+  onSend,
+}) => {
   const navigate = useNavigate();
   const popoverRef = useRef(null);
   const cleanButtonRef = useRef(null);
@@ -21,30 +27,41 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
   const [datasetFiles, setDatasetFiles] = useState({});
   const [selectedDatasets, setSelectedDatasets] = useState({});
 
-  // Cleaning toggles
   const [removeDuplicates, setRemoveDuplicates] = useState(false);
   const [removeEmptyRows, setRemoveEmptyRows] = useState(false);
   const [standardizeDates, setStandardizeDates] = useState(false);
   const [selectedDateFormat, setSelectedDateFormat] = useState('YYYY-MM-DD');
 
-  // Drafts for popover
   const [draftRemoveDuplicates, setDraftRemoveDuplicates] = useState(false);
   const [draftRemoveEmptyRows, setDraftRemoveEmptyRows] = useState(false);
   const [draftStandardizeDates, setDraftStandarizeDates] = useState(false);
-  const [draftSelectedDateFormat, setDraftSelectedDateFormat] = useState(selectedDateFormat);
+  const [draftSelectedDateFormat, setDraftSelectedDateFormat] = useState('YYYY-MM-DD');
 
   const [showCleanMenu, setShowCleanMenu] = useState(false);
   const [pointerLeft, setPointerLeft] = useState('20%');
   const [isSending, setIsSending] = useState(false);
 
-  // Numeric cleaning
   const [standardizeNumeric, setStandardizeNumeric] = useState(false);
   const [selectedNumericColumns, setSelectedNumericColumns] = useState([]);
-  const [numericMode, setNumericMode] = useState("");
+  const [numericMode, setNumericMode] = useState('');
 
   const [draftStandardizeNumeric, setDraftStandardizeNumeric] = useState(false);
   const [draftSelectedNumericColumns, setDraftSelectedNumericColumns] = useState([]);
-  const [draftNumericMode, setDraftNumericMode] = useState("");
+  const [draftNumericMode, setDraftNumericMode] = useState('');
+
+  const makeSourceKey = (nodeId, fileName) => `${nodeId}::${fileName}`;
+
+  const parseSourceKey = (key) => {
+    const value = String(key || '');
+    const idx = value.indexOf('::');
+    if (idx < 0) {
+      return { nodeId: '', fileName: value };
+    }
+    return {
+      nodeId: value.slice(0, idx),
+      fileName: value.slice(idx + 2),
+    };
+  };
 
   const changesApplied =
     removeDuplicates ||
@@ -53,8 +70,8 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
     standardizeNumeric;
 
   const numericColumns = React.useMemo(() => {
-    return columnsData.filter((c) =>
-      c.values.includes("integer") || c.values.includes("double")
+    return columnsData.filter(
+      (c) => c.values.includes('integer') || c.values.includes('double')
     );
   }, [columnsData]);
 
@@ -63,69 +80,107 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
     return acc;
   }, {});
 
-  // Unique processed files
-  const processedFiles = Array.from(
-    new Map(
-      columnsData.map(({ nodeId, fileName }) => [
-        `${nodeId}-${fileName}`,
-        { nodeId, fileName },
-      ])
-    ).values()
+  const processedFiles = useMemo(() => {
+    return Array.from(
+      new Map(
+        columnsData.map(({ nodeId, fileName }) => {
+          const sourceKey = makeSourceKey(nodeId, fileName);
+          return [sourceKey, { sourceKey, nodeId, fileName }];
+        })
+      ).values()
+    );
+  }, [columnsData]);
+
+  const hasAnySelection = Object.values(selectedDatasets).some(
+    (arr) => Array.isArray(arr) && arr.length > 0
   );
 
-  // Fetch available datasets when opened
+  const nodesFetchKey = useMemo(
+    () =>
+      (nodes || [])
+        .map((n) => `${n.nodeId}::${n.serviceUrl}`)
+        .sort()
+        .join("|"),
+    [nodes]
+  );
+
   useEffect(() => {
-    if (!isOpen || nodes.length === 0) {
-      setDatasetFiles(prev => (Object.keys(prev).length ? {} : prev));
-      setSelectedDatasets(prev => (Object.keys(prev).length ? {} : prev));
+    if (!isOpen || !nodes?.length) {
+      setDatasetFiles((prev) => (Object.keys(prev).length ? {} : prev));
+      setSelectedDatasets((prev) => (Object.keys(prev).length ? {} : prev));
       return;
     }
-
+  
+    let cancelled = false;
+  
     (async () => {
       try {
         const results = {};
+  
         for (const { nodeId, serviceUrl } of nodes) {
           updateNodeAxiosBaseURL(serviceUrl);
           results[nodeId] = (await getNodeDatasets()) || [];
         }
-        setDatasetFiles(prev => {
-          const a = prev || {};
-          const b = results || {};
-          if (a === b) return prev;
-
-          const ka = Object.keys(a);
-          const kb = Object.keys(b);
-          if (ka.length !== kb.length) return results;
-
-          for (let i = 0; i < ka.length; i++) {
-            const k = ka[i];
-            if (a[k] !== b[k]) return results;
-          }
-          return prev;
-        });
-
-        setSelectedDatasets(prev => (Object.keys(prev).length ? {} : prev));
+  
+        if (!cancelled) {
+          setDatasetFiles(results);
+        }
       } catch (err) {
-        console.error('Error fetching dataset files for nodes:', err);
+        if (!cancelled) {
+          console.error("Error fetching dataset files for nodes:", err);
+        }
       }
     })();
-  }, [isOpen, nodes]);
+  
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, nodesFetchKey]);
 
-  // Reset draft state whenever popover opens or base state changes
+  useEffect(() => {
+    if (!isOpen) return;
+  
+    setSelectedDatasets((prev) => {
+      if (!Object.keys(prev).length) return prev;
+  
+      const validKeys = new Set(processedFiles.map((pf) => pf.sourceKey));
+      const next = {};
+  
+      for (const [key, value] of Object.entries(prev)) {
+        if (validKeys.has(key)) {
+          next[key] = value;
+        }
+      }
+  
+      const prevKeys = Object.keys(prev);
+      const nextKeys = Object.keys(next);
+      if (prevKeys.length === nextKeys.length) return prev;
+  
+      return next;
+    });
+  }, [isOpen, processedFiles]);
+
   useEffect(() => {
     if (showCleanMenu) {
       setDraftRemoveDuplicates(removeDuplicates);
       setDraftRemoveEmptyRows(removeEmptyRows);
       setDraftStandarizeDates(standardizeDates);
       setDraftSelectedDateFormat(selectedDateFormat);
-
       setDraftStandardizeNumeric(standardizeNumeric);
       setDraftSelectedNumericColumns(selectedNumericColumns);
       setDraftNumericMode(numericMode);
     }
-  }, [showCleanMenu, removeDuplicates, removeEmptyRows, standardizeDates, selectedDateFormat, standardizeNumeric, selectedNumericColumns, numericMode]);
+  }, [
+    showCleanMenu,
+    removeDuplicates,
+    removeEmptyRows,
+    standardizeDates,
+    selectedDateFormat,
+    standardizeNumeric,
+    selectedNumericColumns,
+    numericMode,
+  ]);
 
-  // Position clean-popover arrow
   useEffect(() => {
     if (!showCleanMenu || !cleanButtonRef.current || !popoverRef.current) return;
 
@@ -137,110 +192,121 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
     popoverRef.current.style.setProperty('--clean-button-height', `${btn.height}px`);
   }, [showCleanMenu]);
 
-  // Close popover on outside click
   useEffect(() => {
-    if (!showCleanMenu) return;
-    const handleOutside = (e) =>
-      popoverRef.current &&
-      !popoverRef.current.contains(e.target) &&
-      setShowCleanMenu(false);
+    if (!showCleanMenu) return undefined;
+
+    const handleOutside = (e) => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target)) {
+        setShowCleanMenu(false);
+      }
+    };
 
     document.addEventListener('click', handleOutside, true);
     return () => document.removeEventListener('click', handleOutside, true);
   }, [showCleanMenu]);
 
   const getFileIcon = (name) => {
-    const ext = name.toLowerCase();
+    const ext = String(name || '').toLowerCase();
     if (ext.endsWith('.csv')) return <FaFileCsv />;
     if (ext.endsWith('.xlsx') || ext.endsWith('.xls')) return <FaFileExcel />;
     return <FaFileAlt />;
   };
 
-  const getFileColor = (fileName) => {
-    const col = columnsData.find((c) => c.fileName === fileName);
+  const getFileColor = (nodeId, fileName) => {
+    const col = columnsData.find(
+      (c) => String(c.nodeId) === String(nodeId) && String(c.fileName) === String(fileName)
+    );
     return col ? col.color : 'var(--background-color-3)';
   };
 
-  const toggleDataset = (file, ds) =>
+  const toggleDataset = (sourceKey, datasetName) => {
     setSelectedDatasets((prev) => {
-      const list = prev[file] || [];
-      const updated = list.includes(ds)
-        ? list.filter((x) => x !== ds)
-        : [...list, ds];
-      return { ...prev, [file]: updated };
+      const list = prev[sourceKey] || [];
+      const updated = list.includes(datasetName)
+        ? list.filter((x) => x !== datasetName)
+        : [...list, datasetName];
+      return { ...prev, [sourceKey]: updated };
     });
+  };
 
   const applyOrRemoveCleaning = () => {
     if (!changesApplied && !standardizeNumeric) {
-      // apply
       setRemoveDuplicates(draftRemoveDuplicates);
       setRemoveEmptyRows(draftRemoveEmptyRows);
       setStandardizeDates(draftStandardizeDates);
       setSelectedDateFormat(draftSelectedDateFormat);
-
       setStandardizeNumeric(draftStandardizeNumeric);
       setSelectedNumericColumns(draftSelectedNumericColumns);
       setNumericMode(draftNumericMode);
     } else {
-      // reset
       setRemoveDuplicates(false);
       setRemoveEmptyRows(false);
       setStandardizeDates(false);
-      setSelectedDateFormat("YYYY-MM-DD");
+      setSelectedDateFormat('YYYY-MM-DD');
 
       setStandardizeNumeric(false);
       setSelectedNumericColumns([]);
-      setNumericMode("");
+      setNumericMode('');
 
       setDraftRemoveDuplicates(false);
       setDraftRemoveEmptyRows(false);
       setDraftStandarizeDates(false);
-      setDraftSelectedDateFormat("YYYY-MM-DD");
+      setDraftSelectedDateFormat('YYYY-MM-DD');
 
       setDraftStandardizeNumeric(false);
       setDraftSelectedNumericColumns([]);
-      setDraftNumericMode("");
+      setDraftNumericMode('');
     }
   };
 
-
   const doSend = async (followUpNavigation) => {
+    if (isSending || !hasAnySelection) return;
+
+    const selectedEntries = Object.entries(selectedDatasets).filter(
+      ([, arr]) => Array.isArray(arr) && arr.length > 0
+    );
+
     setIsSending(true);
+
     try {
       const cleanOpts = {
         removeDuplicates,
         removeEmptyRows,
         standardizeDates,
         dateOutputFormat: selectedDateFormat,
-
         standardizeNumeric,
         numericColumns: selectedNumericColumns,
         numericMode,
       };
+
       await onSend(selectedDatasets, mappings, cleanOpts);
 
       if (followUpNavigation) {
-        const newFiles = Object.entries(selectedDatasets).filter(([, arr]) => arr.length).flatMap(([file]) => selectedDatasets[file].map((orig) => {
-          const nodeId = columnsData.find((c) => c.fileName === file).nodeId;
-          return {
+        const newFiles = selectedEntries.flatMap(([sourceKey, datasets]) => {
+          const { nodeId } = parseSourceKey(sourceKey);
+          return datasets.map((orig) => ({
             nodeId,
             fileName: `parsed_${orig.replace(/\.[^/.]+$/, '')}.csv`,
-          };
-        })
-        );
+          }));
+        });
+
+        closeModal();
         navigate('/discovery', {
           state: { elementFiles: newFiles, source: 'mapping' },
         });
+        return;
       }
+
       closeModal();
     } catch (err) {
       console.error('Error sending mappings:', err);
-      toast.error(err.message || 'Failed to apply mappings/cleaning');
     } finally {
       setIsSending(false);
     }
   };
 
+
+  
   return (
     <OverlayWrapper isOpen={isOpen} closeModal={closeModal}>
       <div className={FileMapperModalStyles.fileMapperModal}>
@@ -250,6 +316,7 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
             className={FileMapperModalStyles.closeBtn}
             onClick={closeModal}
             aria-label="Close"
+            disabled={isSending}
           >
             <IoMdClose />
           </button>
@@ -261,15 +328,15 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
               No processed element files found.
             </p>
           ) : (
-            processedFiles.map(({ fileName, nodeId }) => {
-              const color = getFileColor(fileName);
-              const selected = selectedDatasets[fileName] || [];
+            processedFiles.map(({ sourceKey, fileName, nodeId }) => {
+              const color = getFileColor(nodeId, fileName);
+              const selected = selectedDatasets[sourceKey] || [];
               const dsFiles = datasetFiles[nodeId] || [];
               const nodeName = nodeMap[nodeId] || nodeId;
 
               return (
                 <div
-                  key={`${nodeId}-${fileName}`}
+                  key={sourceKey}
                   className={FileMapperModalStyles.mappingItem}
                   style={{ borderTop: `6px solid ${color}` }}
                 >
@@ -284,17 +351,20 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                       (Node: {nodeName})
                     </span>
                   </h4>
+
                   <div className={FileMapperModalStyles.fileList}>
                     {dsFiles.map((ds) => {
                       const isSel = selected.includes(ds);
                       return (
                         <button
                           type="button"
-                          key={ds}
-                          className={`${FileMapperModalStyles.fileItem} ${isSel ? FileMapperModalStyles.selected : ''}`}
-                          onClick={() => toggleDataset(fileName, ds)}
+                          key={`${sourceKey}::${ds}`}
+                          className={`${FileMapperModalStyles.fileItem} ${isSel ? FileMapperModalStyles.selected : ''
+                            }`}
+                          onClick={() => toggleDataset(sourceKey, ds)}
                           aria-pressed={isSel}
                           aria-label={`Toggle dataset ${ds}`}
+                          disabled={isSending}
                         >
                           <span
                             className={`${FileMapperModalStyles.fileIcon} ${isSel ? FileMapperModalStyles.selectedIcon : ''
@@ -314,26 +384,22 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
             })
           )}
         </section>
+
         <footer className={FileMapperModalStyles.modalFooter}>
           <div className={FileMapperModalStyles.buttonsContainer}>
             <button
               className={FileMapperModalStyles.arrowButton}
               onClick={() => doSend(true)}
               aria-label="Apply and open in Discovery"
-              disabled={
-                isSending ||
-                Object.values(selectedDatasets).every((arr) => !arr.length)
-              }
+              disabled={isSending || !hasAnySelection}
             >
               <ArrowBackwardsIcon sx={{ fontSize: 16 }} />
             </button>
+
             <button
               className={FileMapperModalStyles.sendButton}
               onClick={() => doSend(false)}
-              disabled={
-                isSending ||
-                Object.values(selectedDatasets).every((arr) => !arr.length)
-              }
+              disabled={isSending || !hasAnySelection}
             >
               {isSending ? (
                 <div className={FileMapperModalStyles.loader} />
@@ -341,15 +407,13 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                 'Apply'
               )}
             </button>
-          {/*
+
+            {/*
             <button
               ref={cleanButtonRef}
               className={FileMapperModalStyles.cleanButton}
               onClick={() => setShowCleanMenu((v) => !v)}
-              disabled={
-                isSending ||
-                Object.values(selectedDatasets).every((arr) => !arr.length)
-              }
+              disabled={isSending || !hasAnySelection}
             >
               <span className={FileMapperModalStyles.cleanIcon}>
                 <FaBroom />
@@ -358,7 +422,8 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                 Data cleaning
               </span>
             </button>
-  */}
+            */}
+
             <CSSTransition
               in={showCleanMenu}
               timeout={350}
@@ -396,6 +461,7 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                     />
                     Remove Duplicates
                   </label>
+
                   <label>
                     <Switch
                       checked={draftRemoveEmptyRows}
@@ -423,9 +489,7 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                       <select
                         className={FileMapperModalStyles.formatDropdown}
                         value={draftSelectedDateFormat}
-                        onChange={(e) =>
-                          setDraftSelectedDateFormat(e.target.value)
-                        }
+                        onChange={(e) => setDraftSelectedDateFormat(e.target.value)}
                       >
                         <option value="">Select a format</option>
                         {dateFormats.map(({ value, label }) => (
@@ -433,8 +497,12 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                             {label}
                           </option>
                         ))}
-                      </select>) : ('Standardize Dates')}
+                      </select>
+                    ) : (
+                      'Standardize Dates'
+                    )}
                   </label>
+
                   <div className={FileMapperModalStyles.cleanRow}>
                     <Switch
                       checked={draftStandardizeNumeric}
@@ -455,11 +523,12 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                         <div className={FileMapperModalStyles.numericList}>
                           {numericColumns.map((col) => {
                             const id = `${col.fileName}:::${col.column}`;
-                            const selected = draftSelectedNumericColumns.includes(id);
+                            const selectedNum = draftSelectedNumericColumns.includes(id);
+
                             return (
                               <div
                                 key={id}
-                                className={`${FileMapperModalStyles.numericItem} ${selected ? FileMapperModalStyles.numericItemSelected : ""
+                                className={`${FileMapperModalStyles.numericItem} ${selectedNum ? FileMapperModalStyles.numericItemSelected : ''
                                   }`}
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -472,7 +541,7 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                               >
                                 <input
                                   type="checkbox"
-                                  checked={selected}
+                                  checked={selectedNum}
                                   onChange={(e) => {
                                     e.stopPropagation();
                                     setDraftSelectedNumericColumns((prev) =>
@@ -482,7 +551,9 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                                     );
                                   }}
                                 />
-                                <span title={`${col.column} (${col.fileName})`}>{col.column}</span>
+                                <span title={`${col.column} (${col.fileName})`}>
+                                  {col.column}
+                                </span>
                               </div>
                             );
                           })}
@@ -500,14 +571,17 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
                           <option value="int_round">Convert to integer (round)</option>
                           <option value="int_trunc">Convert to integer (truncate)</option>
                         </select>
-
                       </div>
                     )}
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '8px', }} >
-                  <button className={`${FileMapperModalStyles.cleanMenuButton} ${changesApplied ? FileMapperModalStyles.remove : FileMapperModalStyles.apply}`}
-                    onClick={applyOrRemoveCleaning} >
+
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '8px' }}>
+                  <button
+                    className={`${FileMapperModalStyles.cleanMenuButton} ${changesApplied ? FileMapperModalStyles.remove : FileMapperModalStyles.apply
+                      }`}
+                    onClick={applyOrRemoveCleaning}
+                  >
                     {changesApplied ? 'Remove Changes' : 'Confirm'}
                   </button>
                 </div>
@@ -518,6 +592,6 @@ const FileMapperModal = ({ isOpen, closeModal, mappings, columnsData, nodes = []
       </div>
     </OverlayWrapper>
   );
-}
+};
 
 export default FileMapperModal;
