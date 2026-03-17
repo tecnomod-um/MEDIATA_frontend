@@ -4,6 +4,12 @@ import ScrollSidebar from "../../components/Common/ScrollSidebar/scrollSidebar";
 import TutorialStyles from "./tutorial.module.css";
 import Slide from '../../components/Common/Slide/slide';
 import PageImage from "../../components/Common/PageImage/pageImage";
+
+import nodesGif from "../../resources/images/tutorial/1_nodes.gif";
+import navbarGif from "../../resources/images/tutorial/2_navbar.gif";
+import integrationUsageGif from "../../resources/images/tutorial/3_integration_usage.gif";
+import changeFilesModalPng from "../../resources/images/tutorial/4_change_files_modal.png";
+
 import { DiscoverySlides, AggregateSlides, IntegrationSlides } from "./images";
 
 // Tutorial page for the platform
@@ -103,7 +109,7 @@ function Tutorial() {
                 control that will show between them.
               </p>
               <PageImage
-                imageSrc={require("../../resources/images/tutorial/1_nodes.gif")}
+                imageSrc={nodesGif}
                 maintainAspectRatio={true}
                 alt="Dragging nodes and joining them"
               />
@@ -129,7 +135,7 @@ function Tutorial() {
                 section you're already in will reload that page.
               </p>
               <PageImage
-                imageSrc={require("../../resources/images/tutorial/2_navbar.gif")}
+                imageSrc={navbarGif}
                 maintainAspectRatio={true}
                 alt="Top navigation bar showing the available sections"
               />
@@ -309,7 +315,7 @@ function Tutorial() {
                 set it to one-hot encode the resulting column by using the controls at the left of the name input.
               </p>
               <PageImage
-                imageSrc={require("../../resources/images/tutorial/3_integration_usage.gif")}
+                imageSrc={integrationUsageGif}
                 maintainAspectRatio={true}
                 alt="Dragging nodes and joining them"
               />
@@ -341,7 +347,7 @@ function Tutorial() {
               button at the bottom to process the files. By clicking the leftmost green arrow button, the Discovery view will
               be opened, selecting the integrated files for exploration.
               <PageImage
-                imageSrc={require("../../resources/images/tutorial/4_change_files_modal.png")}
+                imageSrc={changeFilesModalPng}
                 maintainAspectRatio={true}
                 alt="Dragging nodes and joining them"
               />
