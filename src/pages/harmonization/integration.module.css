@@ -111,7 +111,7 @@
 .toastContainer {
   position: fixed;
   top: 65px;
-  z-index: 9 !important;
+  z-index: 1000 !important;
   pointer-events: none;
 }
 

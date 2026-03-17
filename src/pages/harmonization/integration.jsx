@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";
 import { ToastContainer, toast } from "react-toastify";
-import { getNodeElements, fetchElementFile, setParseConfigs, fetchSchemaFromBackend, suggestMappings, enrichMappingsStart, getEnrichMappingsStatus, getEnrichMappingsResult } from "../../util/petitionHandler";
+import { getNodeElements, fetchElementFile, setParseConfigs, getParseConfigsStatus, getParseConfigsResult, fetchSchemaFromBackend, suggestMappings, enrichMappingsStart, getEnrichMappingsStatus, getEnrichMappingsResult } from "../../util/petitionHandler";
 import { updateNodeAxiosBaseURL } from "../../util/nodeAxiosSetup";
 import { useNode } from "../../context/nodeContext";
 import IntegrationStyles from "./integration.module.css";
@@ -39,6 +39,7 @@ function Integration() {
   const lastEnrichMsgRef = useRef("");
   const lastEnrichStepRef = useRef("");
   const enrichToastIdRef = useRef(null);
+  const parseToastIdRef = useRef(null);
 
   useEffect(() => {
     return () => {
@@ -89,11 +90,6 @@ function Integration() {
     })();
   }, [selectedNodes]);
 
-  useEffect(() => {
-    if (processingStatus === "success") toast.success("Files processed successfully.");
-    else if (processingStatus === "error") toast.error("An error occurred during processing.");
-  }, [processingStatus]);
-
   const parseCSV = (text) => {
     const lines = text.trim().split("\n");
     return lines.map((line) => {
@@ -108,6 +104,36 @@ function Integration() {
 
     return Array.isArray(hierarchy) ? hierarchy : [];
   };
+
+  const showOrUpdateParseToast = useCallback((msg, pct) => {
+    const text = msg?.trim() ? `${msg} (${pct}%)` : `Applying mappings… (${pct}%)`;
+    const id = parseToastIdRef.current;
+
+    if (!id || !toast.isActive(id)) {
+      parseToastIdRef.current = toast.info(text, {
+        autoClose: false,
+        closeButton: false,
+        draggable: false,
+        toastId: "parse-progress",
+      });
+      return;
+    }
+
+    toast.update(id, {
+      render: text,
+      type: "info",
+      autoClose: false,
+      closeButton: false,
+      draggable: false,
+    });
+  }, []);
+
+  const closeParseToast = useCallback(() => {
+    if (parseToastIdRef.current != null) {
+      toast.dismiss(parseToastIdRef.current);
+      parseToastIdRef.current = null;
+    }
+  }, []);
 
   const handleSuggestMappings = async (mode = "append") => {
     try {
@@ -157,9 +183,9 @@ function Integration() {
 
   const showOrUpdateEnrichToast = (msg, pct) => {
     const text = msg?.trim() ? `${msg} (${pct}%)` : `Working… (${pct}%)`;
-  
+
     const id = enrichToastIdRef.current;
-  
+
     if (!id || !toast.isActive(id)) {
       enrichToastIdRef.current = toast.info(text, {
         autoClose: false,
@@ -169,7 +195,7 @@ function Integration() {
       });
       return;
     }
-  
+
     toast.update(id, {
       render: text,
       type: "info",
@@ -419,41 +445,157 @@ function Integration() {
 
   const handleProcessMappings = async (selectedDatasets, currentMappings, cleanOpts) => {
     setProcessingStatus("processing");
-
+  
     try {
       const nodeFileMappings = {};
-
-      for (const fileName of Object.keys(selectedDatasets)) {
-        const col = columnsData.find((c) => c.fileName === fileName);
-        if (!col) continue;
-
-        const nodeId = col.nodeId;
+      let totalTargetDatasets = 0;
+  
+      for (const [sourceKey, datasets] of Object.entries(selectedDatasets)) {
+        if (!Array.isArray(datasets) || datasets.length === 0) continue;
+      
+        const sep = String(sourceKey).indexOf("::");
+        if (sep < 0) continue;
+      
+        const nodeId = String(sourceKey).slice(0, sep);
+        const fileName = String(sourceKey).slice(sep + 2);
+      
+        if (!nodeId || !fileName) continue;
+      
         if (!nodeFileMappings[nodeId]) nodeFileMappings[nodeId] = {};
-
-        nodeFileMappings[nodeId][fileName] = selectedDatasets[fileName];
+        nodeFileMappings[nodeId][fileName] = datasets;
+        totalTargetDatasets += datasets.length;
       }
-
+  
+      const jobs = [];
+  
       for (const node of selectedNodes) {
         const fileMappingsForNode = nodeFileMappings[node.nodeId];
-        if (!fileMappingsForNode) continue;
+        if (!fileMappingsForNode || Object.keys(fileMappingsForNode).length === 0) continue;
+  
         updateNodeAxiosBaseURL(node.serviceUrl);
-
+  
         const payload = {
           fileMappings: JSON.stringify(fileMappingsForNode),
           configs: JSON.stringify(currentMappings),
           cleaningOptions: cleanOpts,
         };
-
-        console.log("[handleProcessMappings] payload for node", node.nodeId, payload);
-        await setParseConfigs(payload);
+  
+        const start = await setParseConfigs(payload);
+  
+        if (start?.status !== 202 || !start?.data?.jobId) {
+          throw new Error(
+            start?.data?.message || `Failed to start parsing job for node ${node.name || node.nodeId}`
+          );
+        }
+  
+        jobs.push({
+          node,
+          jobId: start.data.jobId,
+        });
       }
-
+  
+      if (!jobs.length) {
+        setProcessingStatus("idle");
+        throw new Error("No datasets selected.");
+      }
+  
+      showOrUpdateParseToast(
+        `Starting processing for ${totalTargetDatasets} dataset${totalTargetDatasets !== 1 ? "s" : ""}`,
+        0
+      );
+  
+      const nodeProgress = new Map(
+        jobs.map(({ jobId, node }) => [
+          jobId,
+          {
+            percent: 0,
+            message: `Queued on ${node.name || node.nodeId}`,
+          },
+        ])
+      );
+  
+      const computeOverallPercent = () => {
+        const values = Array.from(nodeProgress.values());
+        if (!values.length) return 0;
+        const total = values.reduce((acc, x) => acc + (Number(x.percent) || 0), 0);
+        return Math.round(total / values.length);
+      };
+  
+      for (const { node, jobId } of jobs) {
+        let finished = false;
+      
+        while (!finished) {
+          updateNodeAxiosBaseURL(node.serviceUrl);
+      
+          const st = await getParseConfigsStatus(jobId);
+          const pct = Math.max(0, Math.min(100, Number(st?.percent) || 0));
+          const state = String(st?.state || "").toUpperCase();
+      
+          let progressMessage = `Processing on ${node.name || node.nodeId}`;
+          if (state === "DONE") {
+            progressMessage = `Finalizing on ${node.name || node.nodeId}`;
+          } else if (st?.message && state !== "DONE") {
+            progressMessage = String(st.message).trim();
+          }
+      
+          nodeProgress.set(jobId, {
+            percent: pct,
+            message: progressMessage,
+          });
+      
+          showOrUpdateParseToast(progressMessage, computeOverallPercent());
+      
+          if (state === "ERROR") {
+            throw new Error(st?.message || `Processing failed on ${node.name || node.nodeId}`);
+          }
+      
+          if (state === "DONE") {
+            let res = null;
+            let attempts = 0;
+      
+            while (attempts < 10) {
+              updateNodeAxiosBaseURL(node.serviceUrl);
+              res = await getParseConfigsResult(jobId);
+      
+              if (res?.status === 200) break;
+              if (res?.status !== 409) break;
+      
+              attempts += 1;
+              await new Promise((r) => setTimeout(r, 300));
+            }
+      
+            if (res?.status !== 200) {
+              throw new Error(
+                res?.data?.message ||
+                  `Processed job finished but no result was available for ${node.name || node.nodeId}`
+              );
+            }
+      
+            nodeProgress.set(jobId, {
+              percent: 100,
+              message: `Finished on ${node.name || node.nodeId}`,
+            });
+      
+            showOrUpdateParseToast(`Finished on ${node.name || node.nodeId}`, computeOverallPercent());
+      
+            finished = true;
+            break;
+          }
+      
+          await new Promise((r) => setTimeout(r, 500));
+        }
+      }
+  
+      closeParseToast();
       setProcessingStatus("success");
-      return "All parse requests done";
+      toast.success("Files processed successfully.");
+      return { ok: true };
     } catch (error) {
       console.error("Error processing mappings:", error);
+      closeParseToast();
       setProcessingStatus("error");
-      return "Error occurred";
+      toast.error(error?.message || "Error processing files.");
+      throw error;
     }
   };
 
@@ -1077,7 +1219,10 @@ function Integration() {
     <div className={IntegrationStyles.pageContainer}>
       <FileMapperModal
         isOpen={isFileMapperOpen}
-        closeModal={() => setIsFileMapperOpen(false)}
+        closeModal={() => {
+          if (processingStatus === "processing") return;
+          setIsFileMapperOpen(false);
+        }}
         mappings={mappings}
         columnsData={columnsData}
         nodes={selectedNodes}
@@ -1381,8 +1526,6 @@ function Integration() {
           </>
         )}
       </div>
-
-
       {columnsData.length > 0 && (
         <SchemaTray
           reduced={true}
@@ -1394,7 +1537,6 @@ function Integration() {
           nodesFetched
         />
       )}
-
       <ToastContainer
         autoClose={2000}
         hideProgressBar={true}
