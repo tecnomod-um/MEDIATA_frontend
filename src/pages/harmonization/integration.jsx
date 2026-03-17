@@ -27,7 +27,6 @@ function Integration() {
   const [isFileMapperOpen, setIsFileMapperOpen] = useState(false);
   const [schema, setSchema] = useState(null);
   const [schemaError, setSchemaError] = useState("");
-  const [hasProcessedElementFiles, setHasProcessedElementFiles] = useState(false);
   const [loadedDraft, setLoadedDraft] = useState(null);
   const [selectedMappingId, setSelectedMappingId] = useState(null);
   const [editTarget, setEditTarget] = useState(null);
@@ -35,6 +34,7 @@ function Integration() {
   const [isMobile, setIsMobile] = useState(false);
   const [isGenerateMetadataLoading, setIsGenerateMetadataLoading] = useState(false);
   const [generateMetadataProgress, setGenerateMetadataProgress] = useState(0);
+  const hasProcessedElementFilesRef = useRef(false);
   const enrichPollRef = useRef(null);
   const lastEnrichMsgRef = useRef("");
   const lastEnrichStepRef = useRef("");
@@ -431,17 +431,19 @@ function Integration() {
   );
 
   useEffect(() => {
-    if (!hasProcessedElementFiles && location.state?.elementFiles?.length) {
-      const elementFiles = location.state.elementFiles;
-      const nodeMapping = {};
-      for (const { nodeId, fileName } of elementFiles) {
-        if (!nodeMapping[nodeId]) nodeMapping[nodeId] = [];
-        nodeMapping[nodeId].push(fileName);
-      }
-      handleProcessSelectedElements(nodeMapping);
-      setHasProcessedElementFiles(true);
+    if (hasProcessedElementFilesRef.current) return;
+    if (!location.state?.elementFiles?.length) return;
+    hasProcessedElementFilesRef.current = true;
+    const elementFiles = location.state.elementFiles;
+    const nodeMapping = {};
+  
+    for (const { nodeId, fileName } of elementFiles) {
+      if (!nodeMapping[nodeId]) nodeMapping[nodeId] = [];
+      nodeMapping[nodeId].push(fileName);
     }
-  }, [location.state, hasProcessedElementFiles, handleProcessSelectedElements]);
+  
+    handleProcessSelectedElements(nodeMapping);
+  }, [location.state, handleProcessSelectedElements]);
 
   const handleProcessMappings = async (selectedDatasets, currentMappings, cleanOpts) => {
     setProcessingStatus("processing");

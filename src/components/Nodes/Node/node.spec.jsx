@@ -59,9 +59,9 @@ vi.mock("@react-spring/three", async () => {
       __item: item,
     }));
 
-    return (render) =>
+    return (renderFn) =>
       entries.map((styles) => {
-        const view = render(styles, styles.__item);
+        const view = renderFn(styles, styles.__item);
         const isRipple =
           view &&
           view.props &&
@@ -89,15 +89,15 @@ vi.mock("@react-spring/three", async () => {
 
   const AMesh = React.forwardRef(({ position, scale, ...props }, forwardedRef) => {
     const innerRef = React.useRef(null);
-  
+
     React.useImperativeHandle(forwardedRef, () => innerRef.current);
-  
+
     React.useLayoutEffect(() => {
       const node = innerRef.current;
       if (!node) return;
-  
+
       if (!node.userData) node.userData = {};
-  
+
       if (!node.position) {
         node.position = {
           x: 0,
@@ -111,7 +111,7 @@ vi.mock("@react-spring/three", async () => {
           },
         };
       }
-  
+
       if (!node.scale) {
         node.scale = {
           x: 1,
@@ -125,17 +125,18 @@ vi.mock("@react-spring/three", async () => {
           },
         };
       }
-  
+
       if (Array.isArray(position)) {
         node.position.set(position[0] ?? 0, position[1] ?? 0, position[2] ?? 0);
       }
-  
+
       if (Array.isArray(scale)) {
         node.scale.set(scale[0] ?? 1, scale[1] ?? 1, scale[2] ?? 1);
       }
     }, [position, scale]);
-  
+
     return React.createElement("mesh", {
+      "data-testid": "node-mesh",
       role: "button",
       ref: innerRef,
       ...props,
@@ -182,6 +183,7 @@ beforeAll(() => {
   });
 
   restoreConsoleError = () => spy.mockRestore();
+  vi.useFakeTimers();
 });
 
 afterAll(() => {
@@ -225,10 +227,6 @@ describe("<Node /> component", () => {
   let frameCallbacks = [];
   let mockClock;
 
-  beforeAll(() => {
-    vi.useFakeTimers();
-  });
-
   beforeEach(() => {
     frameCallbacks = [];
     mockClock = { getElapsedTime: vi.fn().mockReturnValue(0) };
@@ -239,8 +237,22 @@ describe("<Node /> component", () => {
     });
   });
 
-  const renderNode = (props = {}) =>
-    render(React.createElement(Node, { ...baseProps, ...props }));
+  const flushTimers = async () => {
+    await act(async () => {
+      vi.runOnlyPendingTimers();
+    });
+  };
+
+  const renderNode = async (props = {}) => {
+    const utils = render(React.createElement(Node, { ...baseProps, ...props }));
+    await flushTimers();
+    return utils;
+  };
+
+  const rerenderNode = async (rerender, props = {}) => {
+    rerender(React.createElement(Node, { ...baseProps, ...props }));
+    await flushTimers();
+  };
 
   const runAnimationFrames = (count = 1) => {
     act(() => {
@@ -252,24 +264,21 @@ describe("<Node /> component", () => {
     });
   };
 
-  const getRootMesh = () => screen.getAllByRole("button")[0];
+  const getRootMesh = () => screen.getByTestId("node-mesh");
 
-  it("sets nodeId in userData", () => {
-    renderNode();
+  it("sets nodeId in userData", async () => {
+    await renderNode();
     const mesh = getRootMesh();
     expect(mesh.userData.nodeId).toBe(nodeData.nodeId);
   });
 
-  it("handles dragging state in position updates", () => {
-    const { rerender } = renderNode({ isDragging: true });
+  it("handles dragging state in position updates", async () => {
+    const { rerender } = await renderNode({ isDragging: true });
 
-    rerender(
-      React.createElement(Node, {
-        ...baseProps,
-        isDragging: true,
-        node: { ...nodeData, position: { x: 6, y: 12 } },
-      })
-    );
+    await rerenderNode(rerender, {
+      isDragging: true,
+      node: { ...nodeData, position: { x: 6, y: 12 } },
+    });
 
     runAnimationFrames(5);
 
@@ -279,45 +288,55 @@ describe("<Node /> component", () => {
     expect(updatedMesh.position.z).toBe(0);
   });
 
-  it("shows/hides description on non-touch interaction", () => {
-    renderNode();
+  it("shows/hides description on non-touch interaction", async () => {
+    await renderNode();
     const mesh = getRootMesh();
 
     fireEvent.click(mesh);
+    await flushTimers();
+
     const textElement = screen.getByRole("text", { name: /Hello World/i });
     expect(textElement).toBeInTheDocument();
 
-    act(() => vi.advanceTimersByTime(1300));
+    act(() => {
+      vi.advanceTimersByTime(1300);
+    });
+
     expect(textElement).toBeInTheDocument();
   });
 
-  it("handles hover state interactions", () => {
-    renderNode();
+  it("handles hover state interactions", async () => {
+    await renderNode();
     const mesh = getRootMesh();
 
     fireEvent.pointerOver(mesh);
+    await flushTimers();
+
     const textElement = screen.getByRole("text", { name: /Hello World/i });
     expect(textElement).toBeInTheDocument();
 
     fireEvent.pointerOut(mesh);
   });
 
-  it("renders all text elements", () => {
-    renderNode();
+  it("renders all text elements", async () => {
+    await renderNode();
+    await flushTimers();
+
     const nameElements = screen.getAllByText(nodeData.name);
     expect(nameElements.length).toBe(2);
     expect(screen.getByText(nodeData.description)).toBeInTheDocument();
   });
 
-  it("renders a <mesh> at the correct position", () => {
-    renderNode();
+  it("renders a <mesh> at the correct position", async () => {
+    await renderNode();
     const mesh = getRootMesh();
+
     expect(mesh).toBeInTheDocument();
     expect(mesh).toHaveAttribute("position", `${nodeData.position.x},${nodeData.position.y},0`);
   });
 
-  it("ignores single clicks but fires on double-click", () => {
-    renderNode();
+  it("ignores single clicks but fires on double-click", async () => {
+    await renderNode();
     const mesh = getRootMesh();
 
     fireEvent.click(mesh);

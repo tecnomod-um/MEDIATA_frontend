@@ -12,7 +12,6 @@ import {
 import { useLocation } from 'react-router-dom';
 import { updateNodeAxiosBaseURL } from '../../util/nodeAxiosSetup';
 import { generateDistinctColors } from '../../util/colors';
-import { toast } from 'react-toastify';
 import { vi } from "vitest";
 
 vi.mock('react-router-dom', () => ({
@@ -110,12 +109,19 @@ vi.mock('../../components/Integration/MappingsResult/mappingsResult', () => ({
   default: () => <div data-testid="MappingsResult" />,
 }));
 
+const mockToastSuccess = vi.hoisted(() => vi.fn());
+const mockToastError = vi.hoisted(() => vi.fn());
+
 vi.mock('react-toastify', () => ({
   __esModule: true,
   ToastContainer: () => <div data-testid="ToastContainer" />,
   toast: {
-    success: vi.fn(),
-    error: vi.fn(),
+    success: mockToastSuccess,
+    error: mockToastError,
+    info: vi.fn(),
+    dismiss: vi.fn(),
+    isActive: vi.fn(() => false),
+    update: vi.fn(),
   },
 }));
 
@@ -182,18 +188,6 @@ describe('Integration Page', () => {
     expect(await screen.findByTestId('ColumnMapping')).toBeInTheDocument();
     expect(await screen.findByTestId('MappingsResult')).toBeInTheDocument();
     expect(await screen.findByTestId('SchemaTray')).toBeInTheDocument();
-  });
-
-  test('shows error toast when file processing fails', async () => {
-    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
-    useNode.mockReturnValue({ selectedNodes: [node] });
-    useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'bad.csv' }] } });
-    fetchElementFile.mockRejectedValue(new Error('Fetch failed'));
-    render(<Integration />);
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('An error occurred during processing.');
-    });
-    expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
   });
 
   test('parses CSV with multiple columns and values', async () => {
@@ -1019,20 +1013,32 @@ describe('Integration Page', () => {
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
-  test('shows error toast when processingStatus is error', async () => {
+  test('shows explorer again when file processing fails', async () => {
     const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
     useNode.mockReturnValue({ selectedNodes: [node] });
-    useLocation.mockReturnValue({ 
-      state: { 
-        elementFiles: [{ nodeId: 'node1', fileName: 'error.csv' }] 
-      } 
+    useLocation.mockReturnValue({
+      state: { elementFiles: [{ nodeId: 'node1', fileName: 'bad.csv' }] }
     });
-    fetchElementFile.mockRejectedValue(new Error('Fetch error'));
-
+    fetchElementFile.mockRejectedValue(new Error('Fetch failed'));
+  
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  
     render(<Integration />);
+  
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('An error occurred during processing.');
+      expect(fetchElementFile).toHaveBeenCalledWith('bad.csv');
     });
+  
+    await waitFor(() => {
+      expect(errorSpy).toHaveBeenCalledWith(
+        'Error processing element files:',
+        expect.any(Error)
+      );
+    });
+  
+    expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
+  
+    errorSpy.mockRestore();
   });
 
   test('parseCSV handles empty lines correctly', async () => {
