@@ -90,7 +90,7 @@ export default function Navbar() {
         <Link to="/" className={`${NavbarStyles.logo} ${NavbarStyles.link}`}>
           <img
             className={NavbarStyles.logo}
-            src={`${import.meta.env.BASE_URL}/umu_coat.svg`}
+            src={`${import.meta.env.BASE_URL}umu_coat.svg`}
             width={40}
             height={40}
             alt="University of Murcia logo"

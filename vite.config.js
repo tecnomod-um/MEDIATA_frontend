@@ -3,7 +3,6 @@ import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
 
 export default defineConfig({
-  css: { modules: { generateScopedName: "[local]" } },
   base: process.env.VITE_BASE_PATH || "/mediata/",
   plugins: [react(), svgr()],
   build: {
