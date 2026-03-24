@@ -180,7 +180,7 @@ beforeAll(() => {
       s.includes("is using incorrect casing. Use PascalCase for React components") ||
       s.includes("is unrecognized in this browser") ||
       s.includes("React does not recognize the") ||
-      s.includes("Received `true` for a non-boolean attribute") ||
+      s.includes("non-boolean attribute") ||
       s.includes("Unknown event handler property")
     );
   };
