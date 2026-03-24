@@ -48,6 +48,11 @@ vi.mock('../MappingHierarchy/mappingHierarchy', () => ({
   default: mockHierarchyComponent,
 }));
 
+vi.mock('../../../context/authContext', () => ({
+  __esModule: true,
+  useAuth: () => ({ capabilities: { semanticAlignment: true } }),
+}));
+
 if (!global.URL.createObjectURL) {
   global.URL.createObjectURL = vi.fn(() => 'blob:url');
 } else {
