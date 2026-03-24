@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, within } from '@testing-library/react';
 import Tutorial from './tutorial';
-import { DiscoverySlides, AggregateSlides, IntegrationSlides } from './images';
+import { DiscoverySlides, AggregateSlides, IntegrationSlides, SemanticAlignmentSlides } from './images';
 import { vi } from "vitest";
 
 vi.mock('./tutorial.module.css', () => ({
@@ -159,10 +159,11 @@ describe('<Tutorial /> + images.js', () => {
     expect(screen.getAllByRole('cell', { name: /^mode %$/i }).length).toBeGreaterThan(0);
   });
 
-  it('exposes DiscoverySlides, AggregateSlides, IntegrationSlides arrays from images.js', () => {
+  it('exposes DiscoverySlides, AggregateSlides, IntegrationSlides, SemanticAlignmentSlides arrays from images.js', () => {
     expect(Array.isArray(DiscoverySlides)).toBe(true);
     expect(Array.isArray(AggregateSlides)).toBe(true);
     expect(Array.isArray(IntegrationSlides)).toBe(true);
+    expect(Array.isArray(SemanticAlignmentSlides)).toBe(true);
     expect(DiscoverySlides).toEqual([
       'RESOLVED:./1.jpg',
       'RESOLVED:./2.jpg',
@@ -182,6 +183,12 @@ describe('<Tutorial /> + images.js', () => {
       'RESOLVED:./b3.jpg',
       'RESOLVED:./b4.jpg',
       'RESOLVED:./b5.jpg',
+    ]);
+    expect(SemanticAlignmentSlides).toEqual([
+      'RESOLVED:./c1.jpg',
+      'RESOLVED:./c2.jpg',
+      'RESOLVED:./c3.jpg',
+      'RESOLVED:./c4.jpg',
     ]);
   });
 
