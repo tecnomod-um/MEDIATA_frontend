@@ -3,7 +3,6 @@ import ScrollSidebar from "../../components/Common/ScrollSidebar/scrollSidebar";
 import TutorialStyles from "./tutorial.module.css";
 import Slide from '../../components/Common/Slide/slide';
 import PageImage from "../../components/Common/PageImage/pageImage";
-
 import projectPng from "../../resources/images/tutorial/5_project.png";
 import nodesGif from "../../resources/images/tutorial/1_nodes.gif";
 import navbarGif from "../../resources/images/tutorial/2_navbar.gif";

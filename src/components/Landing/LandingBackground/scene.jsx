@@ -173,10 +173,10 @@ function PlusSign({
   return (
     <group ref={groupRef} name="plus-sign" position={[initialPos[0], initialPos[1], 0]}>
       <mesh geometry={verticalPlusGeometry}>
-        <meshStandardMaterial color={color} transparent opacity={1} />
+        <meshStandardMaterial color={color} transparent={true} opacity={1} />
       </mesh>
       <mesh geometry={horizontalPlusGeometry}>
-        <meshStandardMaterial color={color} transparent opacity={1} />
+        <meshStandardMaterial color={color} transparent={true} opacity={1} />
       </mesh>
     </group>
   );
@@ -235,7 +235,7 @@ export default function Scene() {
       <directionalLight position={[0, 10, 10]} intensity={0.7} name="directional-light" />
       <mesh position={[0, 0, -5]} name="bg-mesh">
         <planeGeometry args={[viewport.width * 2, viewport.height * 2]} />
-        <meshBasicMaterial color="#cce6ff" transparent opacity={0.15} />
+        <meshBasicMaterial color="#cce6ff" transparent={true} opacity={0.15} />
       </mesh>
 
       {STAVES.map((stave) =>

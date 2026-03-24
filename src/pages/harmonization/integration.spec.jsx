@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Integration from './integration';
 import { useNode } from '../../context/nodeContext';
@@ -139,7 +139,7 @@ beforeAll(() => {
       dispatchEvent: vi.fn(),
     })),
   });
-});
+    });
 
 describe('Integration Page', () => {
   beforeEach(() => {
@@ -147,11 +147,13 @@ describe('Integration Page', () => {
     generateDistinctColors.mockReturnValue(['#123']);
   });
 
-  test('renders FileExplorer when no columns are processed', () => {
+  test('renders FileExplorer when no columns are processed', async () => {
     useLocation.mockReturnValue({ state: {} });
     useNode.mockReturnValue({ selectedNodes: [] });
 
-    render(<Integration />);
+    await act(async () => {
+      render(<Integration />);
+    });
 
     expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
   });
@@ -165,7 +167,9 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: {} });
     getNodeElements.mockResolvedValue(['a.csv']);
 
-    render(<Integration />);
+    await act(async () => {
+      render(<Integration />);
+    });
     await waitFor(() => {
       expect(updateNodeAxiosBaseURL).toHaveBeenCalledTimes(nodes.length);
     });
@@ -182,7 +186,9 @@ describe('Integration Page', () => {
     const csvText = 'col1,1,2\ncol2,3,4';
     fetchElementFile.mockResolvedValue(csvText);
 
-    render(<Integration />);
+    await act(async () => {
+      render(<Integration />);
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalledWith('file.csv'));
     expect(await screen.findByTestId('ColumnSearchList')).toBeInTheDocument();
     expect(await screen.findByTestId('ColumnMapping')).toBeInTheDocument();
@@ -197,7 +203,9 @@ describe('Integration Page', () => {
     const csvText = 'colA,val1,val2\ncolB,val3,val4\ncolC,val5,val6';
     fetchElementFile.mockResolvedValue(csvText);
 
-    render(<Integration />);
+    await act(async () => {
+      render(<Integration />);
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalledWith('multi.csv'));
     expect(await screen.findByTestId('ColumnSearchList')).toBeInTheDocument();
   });
@@ -222,7 +230,9 @@ describe('Integration Page', () => {
       return Promise.reject(new Error('Unknown file'));
     });
 
-    render(<Integration />);
+    await act(async () => {
+      render(<Integration />);
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalledTimes(2));
     expect(await screen.findByTestId('ColumnMapping')).toBeInTheDocument();
   });
@@ -234,7 +244,11 @@ describe('Integration Page', () => {
     getNodeElements.mockResolvedValue(['picker.csv']);
     fetchElementFile.mockResolvedValue('pickerCol,x,y');
 
-    const { rerender } = render(<Integration />);
+    let rerenderFn;
+    await act(async () => {
+      const result = render(<Integration />);
+      rerenderFn = result.rerender;
+    });
     expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
     
     // Simulate user selecting files through FileExplorer
@@ -247,7 +261,9 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'success.csv' }] } });
     fetchElementFile.mockResolvedValue('successCol,1,2');
 
-    render(<Integration />);
+    await act(async () => {
+      render(<Integration />);
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
     
     // After successful processing, status should eventually become success
@@ -264,7 +280,9 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [] } });
     getNodeElements.mockResolvedValue(['file.csv']);
 
-    render(<Integration />);
+    await act(async () => {
+      render(<Integration />);
+    });
     expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
   });
 
@@ -274,11 +292,17 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'once.csv' }] } });
     fetchElementFile.mockResolvedValue('onceCol,a');
 
-    const { rerender } = render(<Integration />);
+    let rerenderFn;
+    await act(async () => {
+      const result = render(<Integration />);
+      rerenderFn = result.rerender;
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalledTimes(1));
     
     // Rerender should not trigger another fetch
-    rerender(<Integration />);
+    await act(async () => {
+      rerenderFn(<Integration />);
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalledTimes(1));
   });
 
@@ -287,7 +311,9 @@ describe('Integration Page', () => {
     useNode.mockReturnValue({ selectedNodes: [node] });
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node2', fileName: 'other.csv' }] } });
 
-    render(<Integration />);
+    await act(async () => {
+      render(<Integration />);
+    });
     // Should still render FileExplorer since no files were processed for the current node
     expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
   });
@@ -309,7 +335,9 @@ describe('Integration Page', () => {
       return Promise.reject(new Error('Unknown'));
     });
 
-    render(<Integration />);
+    await act(async () => {
+      render(<Integration />);
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalledTimes(2));
     expect(await screen.findByTestId('ColumnMapping')).toBeInTheDocument();
   });
@@ -320,7 +348,9 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'init.csv' }] } });
     fetchElementFile.mockResolvedValue('initCol,integer,min:1,max:100');
 
-    render(<Integration />);
+    await act(async () => {
+      render(<Integration />);
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
     expect(await screen.findByTestId('MappingsResult')).toBeInTheDocument();
   });
@@ -331,7 +361,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'num.csv' }] } });
     fetchElementFile.mockResolvedValue('numCol,integer,min:0,max:999,actual1,actual2');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
     expect(await screen.findByTestId('ColumnMapping')).toBeInTheDocument();
   });
@@ -342,7 +376,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'date.csv' }] } });
     fetchElementFile.mockResolvedValue('dateCol,date,earliest:2020-01-01,latest:2024-12-31');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
     expect(await screen.findByTestId('ColumnMapping')).toBeInTheDocument();
   });
@@ -353,7 +391,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'dbl.csv' }] } });
     fetchElementFile.mockResolvedValue('dblCol,double,min:0.1,max:99.9');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
     expect(await screen.findByTestId('ColumnMapping')).toBeInTheDocument();
   });
@@ -376,7 +418,11 @@ describe('Integration Page', () => {
     });
     generateDistinctColors.mockReturnValue(['#FF0000', '#00FF00']);
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(generateDistinctColors).toHaveBeenCalled());
   });
 
@@ -384,7 +430,9 @@ describe('Integration Page', () => {
     useNode.mockReturnValue({ selectedNodes: [] });
     useLocation.mockReturnValue({ state: {} });
 
-    render(<Integration />);
+    act(() => {
+      render(<Integration />);
+    });
     expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
   });
 
@@ -392,7 +440,9 @@ describe('Integration Page', () => {
     useNode.mockReturnValue({ selectedNodes: null });
     useLocation.mockReturnValue({ state: {} });
 
-    render(<Integration />);
+    act(() => {
+      render(<Integration />);
+    });
     expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
   });
 
@@ -400,7 +450,9 @@ describe('Integration Page', () => {
     useNode.mockReturnValue({ selectedNodes: [] });
     useLocation.mockReturnValue({});
 
-    render(<Integration />);
+    act(() => {
+      render(<Integration />);
+    });
     expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
   });
 
@@ -411,7 +463,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'error.csv' }] } });
     fetchElementFile.mockRejectedValue(new Error('Fetch failed'));
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
     
     consoleErrorSpy.mockRestore();
@@ -424,7 +480,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: {} });
     getNodeElements.mockRejectedValue(new Error('Get elements failed'));
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(getNodeElements).toHaveBeenCalled());
     
     consoleErrorSpy.mockRestore();
@@ -442,7 +502,11 @@ describe('Integration Page', () => {
       return Promise.resolve(['c.csv']);
     });
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(getNodeElements).toHaveBeenCalledTimes(2));
   });
 
@@ -462,7 +526,11 @@ describe('Integration Page', () => {
     });
     fetchElementFile.mockResolvedValue('col,a,b');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -470,7 +538,9 @@ describe('Integration Page', () => {
     useNode.mockReturnValue({ selectedNodes: [] });
     useLocation.mockReturnValue({ state: { elementFiles: [] } });
 
-    render(<Integration />);
+    act(() => {
+      render(<Integration />);
+    });
     expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
   });
 
@@ -489,7 +559,11 @@ describe('Integration Page', () => {
     fetchElementFile.mockResolvedValue('col,a,b');
     generateDistinctColors.mockReturnValue(['#111', '#222', '#333']);
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalledTimes(3));
   });
 
@@ -499,7 +573,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'simple.csv' }] } });
     fetchElementFile.mockResolvedValue('columnName');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -509,7 +587,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'empty.csv' }] } });
     fetchElementFile.mockResolvedValue('col,,,');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -520,7 +602,11 @@ describe('Integration Page', () => {
     const largeCsvData = Array(100).fill('col,a,b').join('\n');
     fetchElementFile.mockResolvedValue(largeCsvData);
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -528,7 +614,9 @@ describe('Integration Page', () => {
     useNode.mockReturnValue({ selectedNodes: [] });
     useLocation.mockReturnValue({ state: {} });
 
-    render(<Integration />);
+    act(() => {
+      render(<Integration />);
+    });
     expect(screen.getByTestId('ToastContainer')).toBeInTheDocument();
   });
 
@@ -536,7 +624,9 @@ describe('Integration Page', () => {
     useNode.mockReturnValue({ selectedNodes: [] });
     useLocation.mockReturnValue({ state: {} });
 
-    render(<Integration />);
+    act(() => {
+      render(<Integration />);
+    });
     const fileExplorer = screen.getByTestId('FileExplorer');
     expect(fileExplorer).toBeInTheDocument();
   });
@@ -547,7 +637,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: {} });
     getNodeElements.mockResolvedValue(['a.csv']);
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(updateNodeAxiosBaseURL).toHaveBeenCalledWith(''));
   });
 
@@ -557,7 +651,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'special.csv' }] } });
     fetchElementFile.mockResolvedValue('col,value-with-dash,value_with_underscore,value.with.dot');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -567,7 +665,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'empty.csv' }] } });
     fetchElementFile.mockResolvedValue('');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -577,7 +679,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'whitespace.csv' }] } });
     fetchElementFile.mockResolvedValue('col, value with spaces , another value ');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -626,7 +732,11 @@ describe('Integration Page', () => {
       new Promise(resolve => setTimeout(() => resolve('col,a,b'), 10))
     );
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalledTimes(2));
   });
 
@@ -637,7 +747,11 @@ describe('Integration Page', () => {
     const csvData = 'colA,val1,val2,val3\ncolB,val4,val5,val6';
     fetchElementFile.mockResolvedValue(csvData);
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -647,7 +761,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'trailing.csv' }] } });
     fetchElementFile.mockResolvedValue('col,a,b,');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -663,7 +781,11 @@ describe('Integration Page', () => {
     });
     fetchElementFile.mockResolvedValue('dupCol,a,b,a,b,a');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -673,7 +795,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'map.csv' }] } });
     fetchElementFile.mockResolvedValue('mapCol,val1,val2');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -683,7 +809,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'date.csv' }] } });
     fetchElementFile.mockResolvedValue('dateCol,date,2024-01-01');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -713,7 +843,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'temp.csv' }] } });
     fetchElementFile.mockResolvedValue('tempCol,a,b');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(screen.queryByTestId('ColumnMapping')).toBeInTheDocument());
   });
 
@@ -723,7 +857,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'std.csv' }] } });
     fetchElementFile.mockResolvedValue('stdCol,val1,val2');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(screen.queryByTestId('ColumnMapping')).toBeInTheDocument());
   });
 
@@ -733,7 +871,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'oh.csv' }] } });
     fetchElementFile.mockResolvedValue('ohCol,cat1,cat2');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(screen.queryByTestId('ColumnMapping')).toBeInTheDocument());
   });
 
@@ -743,7 +885,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'rem.csv' }] } });
     fetchElementFile.mockResolvedValue('remCol,v1,v2');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(screen.queryByTestId('ColumnMapping')).toBeInTheDocument());
   });
 
@@ -753,7 +899,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'del.csv' }] } });
     fetchElementFile.mockResolvedValue('delCol,d1,d2');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(screen.queryByTestId('MappingsResult')).toBeInTheDocument());
   });
 
@@ -763,7 +913,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'undo.csv' }] } });
     fetchElementFile.mockResolvedValue('undoCol,u1,u2');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(screen.queryByTestId('MappingsResult')).toBeInTheDocument());
   });
 
@@ -773,7 +927,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'schema.csv' }] } });
     fetchElementFile.mockResolvedValue('schemaCol,s1,s2');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(screen.queryByTestId('SchemaTray')).toBeInTheDocument());
   });
 
@@ -784,7 +942,11 @@ describe('Integration Page', () => {
     fetchElementFile.mockResolvedValue('procCol,p1,p2');
     setParseConfigs.mockResolvedValue({ success: true });
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -805,7 +967,11 @@ describe('Integration Page', () => {
     fetchElementFile.mockResolvedValue('col,v1,v2');
     setParseConfigs.mockResolvedValue({ success: true });
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalledTimes(2));
   });
 
@@ -817,7 +983,11 @@ describe('Integration Page', () => {
     fetchElementFile.mockResolvedValue('errCol,e1,e2');
     setParseConfigs.mockRejectedValue(new Error('Backend error'));
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
     
     consoleErrorSpy.mockRestore();
@@ -827,7 +997,11 @@ describe('Integration Page', () => {
     useNode.mockReturnValue({ selectedNodes: [] });
     useLocation.mockReturnValue({ state: {} });
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchSchemaFromBackend).toHaveBeenCalled());
   });
 
@@ -837,7 +1011,11 @@ describe('Integration Page', () => {
     useNode.mockReturnValue({ selectedNodes: [] });
     useLocation.mockReturnValue({ state: {} });
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchSchemaFromBackend).toHaveBeenCalled());
     
     consoleErrorSpy.mockRestore();
@@ -849,7 +1027,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'modal.csv' }] } });
     fetchElementFile.mockResolvedValue('modalCol,m1,m2');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(screen.queryByTestId('FileMapperModal')).toBeInTheDocument());
   });
 
@@ -859,7 +1041,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'click.csv' }] } });
     fetchElementFile.mockResolvedValue('clickCol,c1,c2');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(screen.queryByTestId('ColumnSearchList')).toBeInTheDocument());
   });
 
@@ -869,7 +1055,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'nodup.csv' }] } });
     fetchElementFile.mockResolvedValue('nodupCol,n1,n2');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(screen.queryByTestId('ColumnSearchList')).toBeInTheDocument());
   });
 
@@ -879,7 +1069,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'trans.csv' }] } });
     fetchElementFile.mockResolvedValue('transCol,t1,t2');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(screen.queryByTestId('ColumnSearchList')).toBeInTheDocument());
   });
 
@@ -889,7 +1083,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'drag.csv' }] } });
     fetchElementFile.mockResolvedValue('dragCol,d1,d2');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(screen.queryByTestId('ColumnSearchList')).toBeInTheDocument());
   });
 
@@ -899,7 +1097,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'succ.csv' }] } });
     fetchElementFile.mockResolvedValue('succCol,s1,s2');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -915,7 +1117,11 @@ describe('Integration Page', () => {
     });
     fetchElementFile.mockResolvedValue('mergeCol,m1,m2');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -929,7 +1135,11 @@ describe('Integration Page', () => {
     });
     fetchElementFile.mockResolvedValue('col1,val1,val2\ncol2,val3,val4');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -943,7 +1153,11 @@ describe('Integration Page', () => {
     });
     fetchElementFile.mockResolvedValue('col1,val1,val2');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -957,7 +1171,11 @@ describe('Integration Page', () => {
     });
     fetchElementFile.mockResolvedValue('col1,val1,val2\ncol2,val3,val4');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -971,7 +1189,11 @@ describe('Integration Page', () => {
     });
     fetchElementFile.mockResolvedValue('col1,val1,val2');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -981,7 +1203,11 @@ describe('Integration Page', () => {
     useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'format.csv' }] } });
     fetchElementFile.mockResolvedValue('col1,2024-01-15');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -995,7 +1221,11 @@ describe('Integration Page', () => {
     });
     fetchElementFile.mockResolvedValue('col1,val1');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -1009,7 +1239,11 @@ describe('Integration Page', () => {
     });
     fetchElementFile.mockResolvedValue('col1,val1');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
@@ -1023,7 +1257,11 @@ describe('Integration Page', () => {
   
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
   
-    render(<Integration />);
+    await act(async () => {
+  
+      render(<Integration />);
+  
+    });
   
     await waitFor(() => {
       expect(fetchElementFile).toHaveBeenCalledWith('bad.csv');
@@ -1051,7 +1289,11 @@ describe('Integration Page', () => {
     });
     fetchElementFile.mockResolvedValue('col1,val1\n\ncol2,val2');
 
-    render(<Integration />);
+    await act(async () => {
+
+      render(<Integration />);
+
+    });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
-});
+    });

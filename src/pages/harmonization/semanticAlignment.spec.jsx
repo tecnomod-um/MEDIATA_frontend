@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, screen, waitFor } from '@testing-library/react';
+import { render, fireEvent, screen, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -349,7 +349,9 @@ describe('<SemanticAlignment />', () => {
     it('resizer drag adjusts middle panel width (ARIA first, testid fallback)', async () => {
       const csv = 'W';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      act(() => {
+        render(<SemanticAlignment />);
+      });
 
       const resizer =
         screen.queryByRole('separator', { name: /resize middle panel/i }) ||
@@ -359,26 +361,34 @@ describe('<SemanticAlignment />', () => {
 
       main.getBoundingClientRect = () => ({ left: 0, width: 200 });
 
-      fireEvent.mouseDown(resizer);
-      window.dispatchEvent(new MouseEvent('mousemove', { clientX: 160 }));
+      act(() => {
+        fireEvent.mouseDown(resizer);
+        window.dispatchEvent(new MouseEvent('mousemove', { clientX: 160 }));
+      });
       const width = parseFloat(mid.style.width);
       expect(width).toBeGreaterThanOrEqual(10);
       expect(width).toBeLessThanOrEqual(70);
-      window.dispatchEvent(new MouseEvent('mouseup'));
+      act(() => {
+        window.dispatchEvent(new MouseEvent('mouseup'));
+      });
     });
 
     it('handles touch events for resizer', async () => {
       const csv = 'T';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      act(() => {
+        render(<SemanticAlignment />);
+      });
 
       const resizer = screen.getByTestId('resizer');
       const main = screen.getByTestId('main-content');
       main.getBoundingClientRect = () => ({ left: 0, width: 200 });
 
-      fireEvent.touchStart(resizer, { preventDefault: vi.fn() });
-      window.dispatchEvent(new TouchEvent('touchmove', { touches: [{ clientX: 100 }] }));
-      window.dispatchEvent(new TouchEvent('touchend'));
+      act(() => {
+        fireEvent.touchStart(resizer, { preventDefault: vi.fn() });
+        window.dispatchEvent(new TouchEvent('touchmove', { touches: [{ clientX: 100 }] }));
+        window.dispatchEvent(new TouchEvent('touchend'));
+      });
     });
 
     it('handles card dragging with mouse', async () => {

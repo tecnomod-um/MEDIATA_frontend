@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { vi } from "vitest";
 import FileExplorer from "./fileExplorer";
@@ -322,13 +322,15 @@ describe("FileExplorer Main Component", () => {
     });
   });
 
-  test("handles opening and closing", () => {
+  test("handles opening and closing", async () => {
     const nodes = [{ nodeId: "node1", serviceUrl: "http://test.com", name: "Test Node" }];
     const { rerender } = render(<FileExplorer nodes={nodes} category="clinical" isOpen={false} />);
 
     expect(petitionHandler.listExplorerFiles).not.toHaveBeenCalled();
 
-    rerender(<FileExplorer nodes={nodes} category="clinical" isOpen={true} />);
+    await act(async () => {
+      rerender(<FileExplorer nodes={nodes} category="clinical" isOpen={true} />);
+    });
     expect(petitionHandler.listExplorerFiles).toHaveBeenCalled();
   });
 
