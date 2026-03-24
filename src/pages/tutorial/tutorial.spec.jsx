@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, within } from '@testing-library/react';
 import Tutorial from './tutorial';
-import { DiscoverySlides, AggregateSlides, IntegrationSlides } from './images';
+import { DiscoverySlides, AggregateSlides, IntegrationSlides, SemanticAlignmentSlides } from './images';
 import { vi } from "vitest";
 
 vi.mock('./tutorial.module.css', () => ({
@@ -41,6 +41,12 @@ vi.mock('./images', () => ({
     'RESOLVED:./b3.jpg',
     'RESOLVED:./b4.jpg',
     'RESOLVED:./b5.jpg',
+  ],
+  SemanticAlignmentSlides: [
+    'RESOLVED:./c1.jpg',
+    'RESOLVED:./c2.jpg',
+    'RESOLVED:./c3.jpg',
+    'RESOLVED:./c4.jpg',
   ],
 }));
 
@@ -108,30 +114,36 @@ describe('<Tutorial /> + images.js', () => {
     expect(screen.getByRole('heading', { name: /Introduction/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Navigating the tool/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Selecting files/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Data cleaning/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /^Discovery$/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Discovery: Individual metrics/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Discovery: Aggregate metrics/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /^Integration$/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Integration: Creating mappings/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Integration: Semantic enrichment/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Integration: Updating files/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Semantic Alignment/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /^Semantic Alignment$/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Semantic Alignment: Generating RDF/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /HL7 FHIR/i })).toBeInTheDocument();
     const nav = screen.getByTestId('scroll-sidebar');
     expect(nav).toBeInTheDocument();
     expect(nav).toHaveAttribute('data-offset', '55');
     const items = within(nav).getAllByRole('listitem');
-    expect(items.length).toBe(10);
+    expect(items.length).toBe(14);
   });
 
-  it('renders three Slide components with images count matching the steps per section', () => {
+  it('renders four Slide components with images count matching the steps per section', () => {
     render(<Tutorial />);
     const slides = screen.getAllByTestId('slide');
-    expect(slides.length).toBe(3);
+    expect(slides.length).toBe(4);
     expect(slides[0]).toHaveAttribute('data-images-count', '4');
     expect(slides[0]).toHaveAttribute('data-steps-count', '4');
     expect(slides[1]).toHaveAttribute('data-images-count', '5');
     expect(slides[1]).toHaveAttribute('data-steps-count', '5');
     expect(slides[2]).toHaveAttribute('data-images-count', '5');
     expect(slides[2]).toHaveAttribute('data-steps-count', '5');
+    expect(slides[3]).toHaveAttribute('data-images-count', '4');
+    expect(slides[3]).toHaveAttribute('data-steps-count', '4');
   });
 
   it('renders the variable tables and key metric labels for individual metrics', () => {
@@ -141,16 +153,17 @@ describe('<Tutorial /> + images.js', () => {
     expect(screen.getAllByRole('cell', { name: /^standard deviation$/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('cell', { name: /^minimum$/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('cell', { name: /^maximum$/i }).length).toBeGreaterThan(0);
-    expect(screen.getAllByRole('cell', { name: /^missing$/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('cell', { name: /^missing entries$/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('cell', { name: /^mode$/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('cell', { name: /^mode frequency$/i }).length).toBeGreaterThan(0);
-    expect(screen.getAllByRole('cell', { name: /^mode percentage$/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('cell', { name: /^mode %$/i }).length).toBeGreaterThan(0);
   });
 
-  it('exposes DiscoverySlides, AggregateSlides, IntegrationSlides arrays from images.js', () => {
+  it('exposes DiscoverySlides, AggregateSlides, IntegrationSlides, SemanticAlignmentSlides arrays from images.js', () => {
     expect(Array.isArray(DiscoverySlides)).toBe(true);
     expect(Array.isArray(AggregateSlides)).toBe(true);
     expect(Array.isArray(IntegrationSlides)).toBe(true);
+    expect(Array.isArray(SemanticAlignmentSlides)).toBe(true);
     expect(DiscoverySlides).toEqual([
       'RESOLVED:./1.jpg',
       'RESOLVED:./2.jpg',
@@ -171,11 +184,17 @@ describe('<Tutorial /> + images.js', () => {
       'RESOLVED:./b4.jpg',
       'RESOLVED:./b5.jpg',
     ]);
+    expect(SemanticAlignmentSlides).toEqual([
+      'RESOLVED:./c1.jpg',
+      'RESOLVED:./c2.jpg',
+      'RESOLVED:./c3.jpg',
+      'RESOLVED:./c4.jpg',
+    ]);
   });
 
   it('renders inline tutorial images via PageImage with accessible alt text', () => {
     render(<Tutorial />);
-    expect(screen.getAllByRole('img', { name: /Dragging nodes and joining them/i }).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByRole('img', { name: /Dragging and joining nodes/i }).length).toBeGreaterThanOrEqual(1);
     expect(
       screen.getByRole('img', { name: /Top navigation bar showing the available sections/i })
     ).toBeInTheDocument();

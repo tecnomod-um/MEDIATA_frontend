@@ -12,18 +12,22 @@ const {
   mockToastSuccess,
   mockToastError,
   mockHierarchyComponent,
+  mockUseAuth,
 } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
   mockToastSuccess: vi.fn(),
   mockToastError: vi.fn(),
-  mockHierarchyComponent: vi.fn(({ mappingKey, onDeleteMapping, onUpdateMapping }) => {
+  mockHierarchyComponent: vi.fn(({ mappingKey, onDeleteMapping, onUpdateMapping, onSelect, autoOpen }) => {
     mockHierarchyComponent.lastProps = {
       mappingKey,
       onDeleteMapping,
       onUpdateMapping,
+      onSelect,
+      autoOpen,
     };
     return <div data-testid="hierarchy">{mappingKey}</div>;
   }),
+  mockUseAuth: vi.fn(() => ({ capabilities: { semanticAlignment: true } })),
 }));
 
 vi.mock('react-router-dom', async () => {
@@ -47,6 +51,34 @@ vi.mock('../MappingHierarchy/mappingHierarchy', () => ({
   __esModule: true,
   default: mockHierarchyComponent,
 }));
+
+vi.mock('../../../context/authContext', () => ({
+  __esModule: true,
+  useAuth: mockUseAuth,
+}));
+
+vi.mock('../../Common/TooltipPopup/tooltipPopup', () => ({
+  __esModule: true,
+  default: ({ message, onClose }) => (
+    <div data-testid="tooltip-popup" role="tooltip">
+      {message}
+      <button data-testid="tooltip-close" onClick={onClose}>close</button>
+    </div>
+  ),
+}));
+
+function captureBlobContent() {
+  const originalBlob = global.Blob;
+  let capturedContent;
+  global.Blob = function(content, options) {
+    capturedContent = content;
+    return new originalBlob(content, options);
+  };
+  return {
+    getContent: () => capturedContent,
+    restore: () => { global.Blob = originalBlob; },
+  };
+}
 
 if (!global.URL.createObjectURL) {
   global.URL.createObjectURL = vi.fn(() => 'blob:url');
@@ -107,6 +139,7 @@ const defaultHandlers = {
 describe('<MappingsExporter />', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseAuth.mockImplementation(() => ({ capabilities: { semanticAlignment: true } }));
     global.URL.createObjectURL.mockReturnValue?.('blob:url');
   });
 
@@ -164,6 +197,128 @@ describe('<MappingsExporter />', () => {
     );
 
     global.FileReader = originalFileReader;
+  });
+
+  it('renders arrow button as disabled when semanticAlignment is false', () => {
+    mockUseAuth.mockImplementation(() => ({ capabilities: { semanticAlignment: false } }));
+    render(<MappingsExporter mappings={sampleMappings} />);
+
+    const arrowBtn = screen.getAllByRole('button')[1];
+    expect(arrowBtn).toBeDisabled();
+    expect(arrowBtn).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('does not navigate when arrow button is clicked with semanticAlignment disabled', () => {
+    mockUseAuth.mockImplementation(() => ({ capabilities: { semanticAlignment: false } }));
+    render(<MappingsExporter mappings={sampleMappings} />);
+
+    fireEvent.click(screen.getAllByRole('button')[1]);
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('shows tooltip on hover when semanticAlignment is disabled and hides on mouseleave', () => {
+    mockUseAuth.mockImplementation(() => ({ capabilities: { semanticAlignment: false } }));
+    render(<MappingsExporter mappings={sampleMappings} />);
+
+    const arrowBtn = screen.getAllByRole('button')[1];
+    fireEvent.mouseEnter(arrowBtn.parentElement);
+
+    expect(screen.getByTestId('tooltip-popup')).toBeInTheDocument();
+    expect(screen.getByTestId('tooltip-popup')).toHaveTextContent(
+      'This deployment does not include Semantic Alignment.'
+    );
+
+    fireEvent.mouseLeave(arrowBtn.parentElement);
+    expect(screen.queryByTestId('tooltip-popup')).not.toBeInTheDocument();
+  });
+
+  it('hides tooltip via its onClose callback', () => {
+    mockUseAuth.mockImplementation(() => ({ capabilities: { semanticAlignment: false } }));
+    render(<MappingsExporter mappings={sampleMappings} />);
+
+    const arrowBtn = screen.getAllByRole('button')[1];
+    fireEvent.mouseEnter(arrowBtn.parentElement);
+    expect(screen.getByTestId('tooltip-popup')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('tooltip-close'));
+    expect(screen.queryByTestId('tooltip-popup')).not.toBeInTheDocument();
+  });
+
+  it('does not show tooltip on hover when semanticAlignment is enabled', () => {
+    render(<MappingsExporter mappings={sampleMappings} />);
+
+    const arrowBtn = screen.getAllByRole('button')[1];
+    fireEvent.mouseEnter(arrowBtn.parentElement);
+
+    expect(screen.queryByTestId('tooltip-popup')).not.toBeInTheDocument();
+  });
+
+  it('generates correct CSV for integer mappings with min and max', () => {
+    const numericMappings = [
+      {
+        Amount: {
+          groups: [
+            {
+              values: [
+                { name: 'integer' },
+                { name: 'min:5' },
+                { name: 'max:100' },
+              ],
+            },
+          ],
+        },
+      },
+    ];
+
+    const blobSpy = captureBlobContent();
+    render(<MappingsExporter mappings={numericMappings} />);
+    fireEvent.click(screen.getByText(/download mappings/i));
+    blobSpy.restore();
+
+    expect(blobSpy.getContent()?.[0]).toBe('Amount,integer,min:5,max:100');
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  it('generates correct CSV for double mappings without min/max', () => {
+    const doubleMappings = [
+      {
+        Score: {
+          groups: [{ values: [{ name: 'double' }] }],
+        },
+      },
+    ];
+
+    const blobSpy = captureBlobContent();
+    render(<MappingsExporter mappings={doubleMappings} />);
+    fireEvent.click(screen.getByText(/download mappings/i));
+    blobSpy.restore();
+
+    expect(blobSpy.getContent()?.[0]).toBe('Score,double,min:,max:');
+  });
+
+  it('generates correct CSV for date mappings with earliest and latest', () => {
+    const dateMappings = [
+      {
+        DateCol: {
+          groups: [
+            {
+              values: [
+                { name: 'date' },
+                { name: 'earliest:2020-01-01' },
+                { name: 'latest:2023-12-31' },
+              ],
+            },
+          ],
+        },
+      },
+    ];
+
+    const blobSpy = captureBlobContent();
+    render(<MappingsExporter mappings={dateMappings} />);
+    fireEvent.click(screen.getByText(/download mappings/i));
+    blobSpy.restore();
+
+    expect(blobSpy.getContent()?.[0]).toBe('DateCol,date,earliest:2020-01-01,latest:2023-12-31');
   });
 });
 
@@ -477,5 +632,85 @@ describe('<MappingsResult />', () => {
     );
 
     expect(screen.queryByText(/undo changes/i)).not.toBeInTheDocument();
+  });
+
+  it('auto-opens a newly added mapping', async () => {
+    const { rerender } = render(
+      <MappingsResult
+        mappings={sampleMappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="idle"
+        {...defaultHandlers}
+      />
+    );
+
+    const extendedMappings = [
+      ...sampleMappings,
+      { ExtraCol: { groups: [], fileName: 'extra.csv' } },
+    ];
+
+    rerender(
+      <MappingsResult
+        mappings={extendedMappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="idle"
+        {...defaultHandlers}
+      />
+    );
+
+    await waitFor(() => {
+      const extraColCalls = mockHierarchyComponent.mock.calls
+        .filter((call) => call[0].mappingKey === 'ExtraCol');
+      const lastCall = extraColCalls[extraColCalls.length - 1];
+      expect(lastCall?.[0]?.autoOpen).toBe(true);
+    });
+  });
+
+  it('calls onSelectMapping when a hierarchy onSelect is triggered', () => {
+    const onSelectMapping = vi.fn();
+
+    render(
+      <MappingsResult
+        mappings={sampleMappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="idle"
+        onSelectMapping={onSelectMapping}
+        {...defaultHandlers}
+      />
+    );
+
+    mockHierarchyComponent.lastProps.onSelect();
+    expect(onSelectMapping).toHaveBeenCalledWith(0, 'TargetCol');
+  });
+
+  it('renames the mapping key when onUpdateMapping is called with a new key', () => {
+    let updaterResult;
+    const setMappings = vi.fn((updater) => {
+      updaterResult = updater([{ TargetCol: { groups: [] } }]);
+      return updaterResult;
+    });
+
+    render(
+      <MappingsResult
+        mappings={[{ TargetCol: { groups: [] } }]}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="idle"
+        onUndoDelete={() => {}}
+        onDeleteMapping={() => {}}
+        onOpenFileMapper={() => {}}
+        formatValue={(v) => v}
+        setMappings={setMappings}
+      />
+    );
+
+    mockHierarchyComponent.lastProps.onUpdateMapping(0, 'TargetCol', { groups: [] }, 'RenamedCol');
+
+    expect(setMappings).toHaveBeenCalled();
+    expect(updaterResult[0]).not.toHaveProperty('TargetCol');
+    expect(updaterResult[0]).toHaveProperty('RenamedCol');
   });
 });
