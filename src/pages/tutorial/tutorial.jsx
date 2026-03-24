@@ -29,15 +29,15 @@ function Tutorial() {
     'Overall Discovery view.',
     'Feature tables containing statistics.',
     'Graph representations of each feature.',
-    'Side bar hosting most of the page controls.'
+    'Sidebar containing most of the page controls.'
   ];
 
   const AggregateSteps = [
     'Aggregate statistics display',
     'Aggregate statistics table',
     'Chi-Squared test results.',
-    'List of ommited features in the calculations.',
-    'Side bar hosting most of the page controls.'
+    'List of omitted features in the calculations.',
+    'Sidebar containing most of the page controls.'
   ];
 
   const IntegrationSteps = [
@@ -253,7 +253,7 @@ function Tutorial() {
                 Inside a Node, you can access the tool&apos;s different functionalities. New options
                 will appear on the left side of the top bar. The view that is currently selected will appear
                 highlighted. You can also return to the Projects tab to select a different project, or back to
-                the Nodes view clicking the back button in the file selector.
+                the Nodes view by clicking the back button in the file selector.
                 A highlight indicates your current section. Clicking the section you are already in will reload that page.
               </p>
               <p className={TutorialStyles.lesserText}>
@@ -276,10 +276,10 @@ function Tutorial() {
           <div className={TutorialStyles.introText}>
             <p>
               The files needed to use the different sections of the platform are selected through the File Explorer.
-              This files displayed depend on the current view and the selected Node or Nodes.
-              For example, the Discovery view displays the raw datasets, while the Integration will only display produced metadata
-              or other generated files required for that stage of the harmonization workflow. Only files with appropiate extensions
-              will be shown to select (datasets need to be either .csv, .tsv or .xlsx).
+              The files displayed depend on the current view and the selected Node or Nodes. For example,
+              the Discovery view FIle Explorer displays the raw datasets, while in the Integration view it only shows produced metadata
+              or other generated files required for that stage of the harmonization workflow. Only files with appropriate extensions
+              are shown for selection (datasets need to be either .csv, .tsv or .xlsx).
             </p>
             <p>
               The File Explorer shows each available file, together with its size and creation and
@@ -317,7 +317,7 @@ function Tutorial() {
             <p>
               When working with datasets in the File Explorer, like when first accessing the Discovery tab,
               you can apply preprocessing operations by selecting one or more files and clicking the <strong>Data cleaning </strong>
-              button in the toolbar. This opens the Data cleaning panel, where the all the available cleaning steps can be
+              button in the toolbar. This opens the Data cleaning panel, where all the available cleaning steps can be
               configured before being applied to the selected files.
             </p>
             <p>
@@ -521,7 +521,7 @@ function Tutorial() {
               <div className={TutorialStyles.controlsListSection}>
                 <div className={TutorialStyles.controlsListCard}>
                   <h3 className={TutorialStyles.controlsListTitle}>
-                    The sidebar contains the following controls
+                    The sidebar contains the following controls:
                   </h3>
 
                   <div className={TutorialStyles.controlsList}>
@@ -744,7 +744,7 @@ function Tutorial() {
               <PageImage
                 imageSrc={suggestionUsageGif}
                 maintainAspectRatio={true}
-                alt="Suggestion auto generating mappings"
+                alt="Automatically generated mapping suggestions"
               />
 
               <p>
@@ -868,7 +868,7 @@ function Tutorial() {
                 Suggestions are available while filling in the semantic fields, helping you define the appropriate
                 ontology mapping, observable, finding, procedure, temporal context, statement context, and other
                 properties required by the selected pattern. Once the information for an element has been completed,
-                clicking the build button will show it as a card in the workspace.
+                clicking the build button adds it as a card in the workspace.
               </p>
 
               <p>
@@ -962,7 +962,7 @@ function Tutorial() {
 
               <p>
                 The current page should be considered the entry point for HL7 FHIR preparation rather
-                than as a complete end-to-end FHIR export workflow, which is still under implementation.
+                than a complete end-to-end FHIR export workflow, which is still under implementation.
                 It helps structure the source data into coherent groups that may later correspond to resource fragments,
                 profiles, or implementation-specific mapping units.
               </p>
