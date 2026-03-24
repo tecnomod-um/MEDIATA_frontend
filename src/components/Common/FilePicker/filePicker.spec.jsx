@@ -9,9 +9,11 @@ import { vi } from "vitest";
 beforeEach(() => {
   vi.useFakeTimers()
 })
-afterEach(() => {
-  vi.runOnlyPendingTimers()
-  vi.useRealTimers()
+afterEach(async () => {
+  await act(async () => {
+    vi.runOnlyPendingTimers();
+  });
+  vi.useRealTimers();
 })
 
 describe('FilePicker', () => {

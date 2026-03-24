@@ -135,8 +135,10 @@ describe('<Nodes />', () => {
     user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
   });
 
-  afterEach(() => {
-    vi.runOnlyPendingTimers();
+  afterEach(async () => {
+    await act(async () => {
+      vi.runOnlyPendingTimers();
+    });
   });
 
   afterAll(() => {
@@ -292,7 +294,9 @@ describe('<Nodes />', () => {
   it('always renders SchemaTray and ToastContainer', async () => {
     mockGetNodeList.mockResolvedValueOnce([]);
 
-    render(<Nodes />);
+    await act(async () => {
+      render(<Nodes />);
+    });
 
     expect(await screen.findByTestId('schema-tray')).toBeInTheDocument();
     expect(screen.getByTestId('toast-container')).toBeInTheDocument();

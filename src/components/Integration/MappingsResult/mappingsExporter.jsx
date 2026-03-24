@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import MappingsResultStyles from "./mappingsResult.module.css";
+import TooltipPopup from "../../Common/TooltipPopup/tooltipPopup";
+import { useAuth } from "../../../context/authContext";
 
 // Exports the integration mappings object to CSV
 function generateMappingsCSV(mappings) {
@@ -58,6 +60,12 @@ function generateMappingsCSV(mappings) {
 
 function MappingsExporter({ mappings }) {
   const navigate = useNavigate();
+  const { capabilities } = useAuth();
+
+  const hasSemanticAlignment = !!capabilities?.semanticAlignment;
+
+  const arrowWrapperRef = useRef(null);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   const handleUploadMappings = () => {
     try {
@@ -81,6 +89,8 @@ function MappingsExporter({ mappings }) {
   };
 
   const handleNavigateToSemanticAlignment = () => {
+    if (!hasSemanticAlignment) return;
+
     try {
       const csvString = generateMappingsCSV(mappings);
       const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
@@ -101,15 +111,42 @@ function MappingsExporter({ mappings }) {
 
   return (
     <div className={MappingsResultStyles.uploadMappingsContainer}>
-      <button onClick={handleUploadMappings} className={MappingsResultStyles.uploadMappingsButton}>
+      <button
+        onClick={handleUploadMappings}
+        className={MappingsResultStyles.uploadMappingsButton}
+        type="button"
+      >
         Download Mappings
       </button>
-      <button
-        className={MappingsResultStyles.uploadArrowButton}
-        onClick={handleNavigateToSemanticAlignment}
+
+      <div
+        ref={arrowWrapperRef}
+        className={MappingsResultStyles.uploadArrowButtonWrapper}
+        onMouseEnter={() => {
+          if (!hasSemanticAlignment) setShowTooltip(true);
+        }}
+        onMouseLeave={() => setShowTooltip(false)}
       >
-        <ArrowForwardIcon sx={{ fontSize: 16 }} />
-      </button>
+        <button
+          className={`${MappingsResultStyles.uploadArrowButton} ${
+            !hasSemanticAlignment ? MappingsResultStyles.uploadArrowButtonDisabled : ""
+          }`}
+          onClick={handleNavigateToSemanticAlignment}
+          disabled={!hasSemanticAlignment}
+          aria-disabled={!hasSemanticAlignment}
+          type="button"
+        >
+          <ArrowForwardIcon sx={{ fontSize: 16 }} />
+        </button>
+
+        {showTooltip && arrowWrapperRef.current && (
+          <TooltipPopup
+            message="This deployment does not include Semantic Alignment."
+            buttonRef={arrowWrapperRef}
+            onClose={() => setShowTooltip(false)}
+          />
+        )}
+      </div>
     </div>
   );
 }

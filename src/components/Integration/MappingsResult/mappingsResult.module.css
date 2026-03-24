@@ -219,3 +219,13 @@
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+
+.uploadArrowButtonWrapper {
+  display: inline-flex;
+  position: relative;
+}
+
+.uploadArrowButtonDisabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

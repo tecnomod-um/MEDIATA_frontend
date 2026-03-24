@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
@@ -256,17 +256,19 @@ describe('AuthProvider & useAuth', () => {
     );
   }
 
-  it('on mount with tokens in storage, sets auth=true and loading=false, and sets up axios', () => {
+  it('on mount with tokens in storage, sets auth=true and loading=false, and sets up axios', async () => {
     localStorage.setItem('jwtToken', 'dummy');
     localStorage.setItem('kerberosTGT', 'tgt');
 
-    render(
-      <NodeProvider>
-        <AuthProvider>
-          <AuthTester />
-        </AuthProvider>
-      </NodeProvider>
-    );
+    await act(async () => {
+      render(
+        <NodeProvider>
+          <AuthProvider>
+            <AuthTester />
+          </AuthProvider>
+        </NodeProvider>
+      );
+    });
 
     expect(mockSetupNodeAxiosInterceptors).toHaveBeenCalled();
     expect(screen.getByTestId('loading')).toHaveTextContent('false');
@@ -284,7 +286,9 @@ describe('AuthProvider & useAuth', () => {
 
     expect(screen.getByTestId('auth')).toHaveTextContent('false');
 
-    fireEvent.click(screen.getByText('login'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('login'));
+    });
 
     await waitFor(() => {
       expect(localStorage.getItem('jwtToken')).toBe('tok');
@@ -305,7 +309,9 @@ describe('AuthProvider & useAuth', () => {
       </NodeProvider>
     );
 
-    fireEvent.click(screen.getByText('login'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('login'));
+    });
 
     await waitFor(() => {
       expect(screen.getByTestId('auth')).toHaveTextContent('true');
@@ -314,7 +320,9 @@ describe('AuthProvider & useAuth', () => {
     fireEvent.click(screen.getByText('add-node'));
     expect(screen.getByTestId('selectedCount')).toHaveTextContent('1');
 
-    fireEvent.click(screen.getByText('logout'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('logout'));
+    });
 
     expect(localStorage.getItem('jwtToken')).toBeNull();
     expect(localStorage.getItem('kerberosTGT')).toBeNull();
@@ -376,14 +384,16 @@ describe('AuthProvider & useAuth', () => {
       </NodeProvider>
     );
 
-    fireEvent.click(screen.getByText('login'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('login'));
+    });
 
     await waitFor(() => {
       expect(localStorage.getItem('jwtNodeTokens')).toBeNull();
     });
   });
 
-  it('logout() clears jwtNodeTokens', () => {
+  it('logout() clears jwtNodeTokens', async () => {
     localStorage.setItem('jwtToken', 'x');
     localStorage.setItem('kerberosTGT', 'y');
     localStorage.setItem('jwtNodeTokens', 'node-tokens');
@@ -396,11 +406,13 @@ describe('AuthProvider & useAuth', () => {
       </NodeProvider>
     );
 
-    fireEvent.click(screen.getByText('logout'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('logout'));
+    });
     expect(localStorage.getItem('jwtNodeTokens')).toBeNull();
   });
 
-  it('logout() clears selectedNodes from localStorage', () => {
+  it('logout() clears selectedNodes from localStorage', async () => {
     localStorage.setItem('jwtToken', 'x');
     localStorage.setItem('kerberosTGT', 'y');
     localStorage.setItem('selectedNodes', JSON.stringify([{ id: 1, name: 'Node' }]));
@@ -413,7 +425,9 @@ describe('AuthProvider & useAuth', () => {
       </NodeProvider>
     );
 
-    fireEvent.click(screen.getByText('logout'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('logout'));
+    });
     expect(localStorage.getItem('selectedNodes')).toBeNull();
   });
 
@@ -428,7 +442,9 @@ describe('AuthProvider & useAuth', () => {
 
     expect(screen.getByTestId('capsLoaded')).toHaveTextContent('false');
 
-    fireEvent.click(screen.getByText('login'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('login'));
+    });
 
     await waitFor(() => {
       expect(screen.getByTestId('capsLoaded')).toHaveTextContent('true');
@@ -449,7 +465,9 @@ describe('AuthProvider & useAuth', () => {
       </NodeProvider>
     );
 
-    fireEvent.click(screen.getByText('login'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('login'));
+    });
 
     await waitFor(() => {
       expect(screen.getByTestId('capsLoaded')).toHaveTextContent('true');
