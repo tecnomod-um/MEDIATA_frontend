@@ -135,8 +135,10 @@ describe('<Nodes />', () => {
     user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
   });
 
-  afterEach(() => {
-    vi.runOnlyPendingTimers();
+  afterEach(async () => {
+    await act(async () => {
+      vi.runOnlyPendingTimers();
+    });
   });
 
   afterAll(() => {
