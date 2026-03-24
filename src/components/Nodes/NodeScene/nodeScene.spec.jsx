@@ -1,8 +1,8 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import NodeScene from './nodeScene';
-import { vi } from "vitest";
+import { vi, beforeAll, afterAll } from "vitest";
 vi.mock('@react-three/fiber', () => {
   const React = require('react');
 
@@ -24,7 +24,9 @@ vi.mock('@react-three/fiber', () => {
   return {
     Canvas: ({ children, onCreated }) => {
       React.useEffect(() => {
-        onCreated?.({ gl: mockGl });
+        if (onCreated) {
+          act(() => { onCreated({ gl: mockGl }); });
+        }
       }, [onCreated]);
       return <div data-testid="canvas">{children}</div>;
     },
@@ -74,6 +76,27 @@ vi.mock('./draggableNodes', () => {
 });
 
 describe('NodeScene', () => {
+  let restoreConsoleError;
+
+  beforeAll(() => {
+    const realError = console.error;
+    const spy = vi.spyOn(console, 'error').mockImplementation((msg, ...rest) => {
+      const s = String(msg);
+      if (
+        s.includes('is using incorrect casing. Use PascalCase for React components') ||
+        s.includes('is unrecognized in this browser')
+      ) {
+        return;
+      }
+      realError(msg, ...rest);
+    });
+    restoreConsoleError = () => spy.mockRestore();
+  });
+
+  afterAll(() => {
+    restoreConsoleError?.();
+  });
+
   const baseNodes = [
     { nodeId: 'n1', name: 'Node One', color: '#f00', position: { x: 0, y: 0 } },
     { nodeId: 'n2', name: 'Node Two', color: '#0f0', position: { x: 100, y: 100 } },

@@ -9,13 +9,12 @@ import ToolTray from './toolTray';
 
 vi.mock('react-switch', () => ({
   __esModule: true,
-  default: ({ checked, onChange, ...rest }) => (
+  default: ({ checked, onChange, 'aria-label': ariaLabel }) => (
     <input
       type="checkbox"
-      aria-label={rest['aria-label'] || 'mock-switch'}
+      aria-label={ariaLabel || 'mock-switch'}
       checked={checked}
       onChange={() => onChange(!checked)}
-      {...rest}
     />
   ),
 }));

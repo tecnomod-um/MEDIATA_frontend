@@ -84,7 +84,7 @@ vi.mock("@mui/icons-material/Close", () => ({
 
 vi.mock("@mui/icons-material/InfoOutlined", () => ({
   __esModule: true,
-  default: () => <span data-testid="InfoOutlinedIcon" />,
+  default: React.forwardRef((props, ref) => <span ref={ref} data-testid="InfoOutlinedIcon" />),
 }));
 
 vi.mock("@mui/icons-material/Description", () => ({
