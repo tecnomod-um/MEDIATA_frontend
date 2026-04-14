@@ -76,7 +76,8 @@ function captureBlobContent() {
   };
   return {
     // Returns the content array of the blob at the given index (default: 0 = first blob = CSV).
-    getContent: (index = 0) => allContents[index],
+    // Returns undefined if the index is out of bounds.
+    getContent: (index = 0) => (index >= 0 && index < allContents.length ? allContents[index] : undefined),
     getAllContents: () => allContents,
     restore: () => { global.Blob = originalBlob; },
   };
