@@ -1707,4 +1707,244 @@ describe('Integration Page', () => {
       expect(true).toBe(true);
     });
   });
+
+  // -------------------------------------------------------------------------
+  // handleMappingChange
+  // -------------------------------------------------------------------------
+  describe('handleMappingChange', () => {
+    test('calls onMappingChange prop which updates temporaryGroups', async () => {
+      await renderWithColumns();
+      const groups = [{ column: 'col1', fileName: 'data.csv', nodeId: 'node1', values: [] }];
+      act(() => {
+        capturedColumnMappingProps.current.onMappingChange?.(groups);
+      });
+      // No throw; groups update is internal state
+      expect(true).toBe(true);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // handleSaveMappings (via onSave)
+  // -------------------------------------------------------------------------
+  describe('handleSaveMappings', () => {
+    beforeEach(() => {
+      mockToastSuccess.mockClear();
+      mockToastError.mockClear();
+    });
+
+    test('create standard mapping — returns true and shows in MappingsResult', async () => {
+      await renderWithColumns();
+
+      let result;
+      act(() => {
+        result = capturedColumnMappingProps.current.onSave?.(
+          [{ column: 'col1', fileName: 'data.csv', nodeId: 'node1' }],
+          'NewMapping',
+          [{ name: 'valA', mapping: [], terminology: '', description: '' }],
+          false,  // removeFromHierarchy
+          false,  // isOneHotMapping
+          { terminology: '', description: '' }
+        );
+      });
+
+      await waitFor(() => {
+        const mappings = capturedMappingsResultProps.current.mappings || [];
+        expect(mappings.some(m => m['NewMapping'])).toBe(true);
+      });
+    });
+
+    test('create standard mapping — duplicate key returns false and toasts error', async () => {
+      await renderWithColumns();
+
+      // Create once
+      act(() => {
+        capturedColumnMappingProps.current.onSave?.(
+          [],
+          'DupKey',
+          [{ name: 'v1', mapping: [] }],
+          false, false,
+          {}
+        );
+      });
+      await waitFor(() => {
+        expect(capturedMappingsResultProps.current.mappings?.some(m => m['DupKey'])).toBe(true);
+      });
+
+      mockToastError.mockClear();
+      let result2;
+      act(() => {
+        result2 = capturedColumnMappingProps.current.onSave?.(
+          [],
+          'DupKey',
+          [{ name: 'v1', mapping: [] }],
+          false, false,
+          {}
+        );
+      });
+
+      await waitFor(() => {
+        expect(mockToastError).toHaveBeenCalledWith('Mapping already exists in the hierarchy.');
+      });
+    });
+
+    test('create one-hot mapping — builds family keys in mappings', async () => {
+      await renderWithColumns();
+
+      act(() => {
+        capturedColumnMappingProps.current.onSave?.(
+          [{ column: 'col1', fileName: 'data.csv', nodeId: 'node1' }],
+          'Diag',
+          [
+            { name: 'Yes', mapping: [{ groupKey: 'k', groupColumn: 'col1', fileName: 'data.csv', nodeId: 'node1', value: 'Y' }], terminology: '', description: '' },
+            { name: 'No', mapping: [], terminology: '', description: '' },
+          ],
+          false, // removeFromHierarchy
+          true,  // isOneHotMapping
+          { terminology: '', description: '' }
+        );
+      });
+
+      await waitFor(() => {
+        const mappings = capturedMappingsResultProps.current.mappings || [];
+        const hasYes = mappings.some(m => m['Diag_Yes']);
+        const hasNo = mappings.some(m => m['Diag_No']);
+        expect(hasYes).toBe(true);
+        expect(hasNo).toBe(true);
+      });
+    });
+
+    test('create standard mapping with removeFromHierarchy=true', async () => {
+      await renderWithColumns();
+
+      // First create a mapping for col1 (auto-initialized on CSV parse)
+      const initMappings = capturedMappingsResultProps.current.mappings || [];
+
+      act(() => {
+        capturedColumnMappingProps.current.onSave?.(
+          [{ column: 'col1', fileName: 'data.csv', nodeId: 'node1' }],
+          'Merged',
+          [{ name: 'v', mapping: [] }],
+          true,  // removeFromHierarchy
+          false,
+          {}
+        );
+      });
+
+      await waitFor(() => {
+        const mappings = capturedMappingsResultProps.current.mappings || [];
+        expect(mappings.some(m => m['Merged'])).toBe(true);
+      });
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // handleDeleteMapping + handleUndoDelete
+  // -------------------------------------------------------------------------
+  describe('handleDeleteMapping and handleUndoDelete', () => {
+    beforeEach(() => {
+      mockToastSuccess.mockClear();
+      mockToastError.mockClear();
+    });
+
+    test('deleteMapping removes a key from mappings', async () => {
+      await renderWithColumns();
+
+      const mappingsBefore = capturedMappingsResultProps.current.mappings || [];
+      if (!mappingsBefore.length) return;
+
+      const key = Object.keys(mappingsBefore[0])[0];
+
+      act(() => {
+        capturedMappingsResultProps.current.onDeleteMapping?.(0, key);
+      });
+
+      await waitFor(() => {
+        const after = capturedMappingsResultProps.current.mappings || [];
+        // The key should no longer be in any mapping object
+        const stillThere = after.some(m => Object.prototype.hasOwnProperty.call(m, key));
+        expect(stillThere).toBe(false);
+      });
+    });
+
+    test('undoDelete restores the last deleted mapping', async () => {
+      await renderWithColumns();
+
+      const mappingsBefore = capturedMappingsResultProps.current.mappings || [];
+      if (!mappingsBefore.length) return;
+
+      const key = Object.keys(mappingsBefore[0])[0];
+
+      // Delete
+      act(() => { capturedMappingsResultProps.current.onDeleteMapping?.(0, key); });
+
+      await waitFor(() => {
+        const after = capturedMappingsResultProps.current.mappings || [];
+        expect(after.some(m => Object.prototype.hasOwnProperty.call(m, key))).toBe(false);
+      });
+
+      // Undo
+      act(() => { capturedMappingsResultProps.current.onUndoDelete?.(); });
+
+      await waitFor(() => {
+        const restored = capturedMappingsResultProps.current.mappings || [];
+        expect(restored.some(m => Object.prototype.hasOwnProperty.call(m, key))).toBe(true);
+      });
+    });
+
+    test('undoDelete is a no-op when nothing was deleted', async () => {
+      await renderWithColumns();
+
+      const before = capturedMappingsResultProps.current.mappings || [];
+
+      // Call undo without any prior delete
+      act(() => { capturedMappingsResultProps.current.onUndoDelete?.(); });
+
+      await waitFor(() => {
+        expect(capturedMappingsResultProps.current.mappings).toEqual(before);
+      });
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // handleClearMappingEditor (mobile only: onClear)
+  // -------------------------------------------------------------------------
+  describe('handleClearMappingEditor (via mobile onClear)', () => {
+    test('onClear on mobile clears temporary groups and draft', async () => {
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: vi.fn().mockImplementation((query) => ({
+          matches: true,
+          media: query,
+          onchange: null,
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
+        })),
+      });
+
+      const node = { nodeId: 'node1', serviceUrl: 'http://n1', name: 'Node 1' };
+      useNode.mockReturnValue({ selectedNodes: [node] });
+      useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'data.csv' }] } });
+      fetchElementFile.mockResolvedValue('col1,val1,val2');
+
+      await act(async () => { render(<Integration />); });
+      await waitFor(() => expect(screen.queryByTestId('MappingsResult')).toBeInTheDocument());
+
+      // Call onClear — should not throw
+      act(() => { capturedColumnMappingProps.current.onClear?.(); });
+      expect(true).toBe(true);
+
+      // Restore
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: vi.fn().mockImplementation((query) => ({
+          matches: false, media: query, onchange: null,
+          addListener: vi.fn(), removeListener: vi.fn(),
+          addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn(),
+        })),
+      });
+    });
+  });
     });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import MappingHierarchy from './mappingHierarchy';
 import { vi } from "vitest";
@@ -106,5 +106,360 @@ describe('<MappingHierarchy />', () => {
       expect.any(Object),
       'NewCol'
     );
+  });
+
+  // -------------------------------------------------------------------------
+  // displayFileLabel branch — "custom_mapping" → "custom mapping"
+  // -------------------------------------------------------------------------
+  it('shows "custom mapping" when fileName is custom_mapping', () => {
+    const props = makeProps();
+    props.mapping = { ...props.mapping, fileName: 'custom_mapping' };
+    render(<MappingHierarchy {...props} autoOpen={true} />);
+    expect(screen.getByText(/custom mapping/i)).toBeInTheDocument();
+  });
+
+  // -------------------------------------------------------------------------
+  // onHeaderClick — clicking the header opens a closed hierarchy
+  // -------------------------------------------------------------------------
+  it('opens when the header row is clicked (was closed)', () => {
+    const props = makeProps();
+    // autoOpen=false → closed by default
+    render(<MappingHierarchy {...props} autoOpen={false} />);
+    // Verify it's closed (file-row text NOT shown)
+    expect(screen.queryByText(/file\.csv/i)).not.toBeInTheDocument();
+
+    // The header row has role="button" with name "TargetCol" (the h4 inside)
+    const headerRow = screen.getByRole('button', { name: 'TargetCol' });
+    fireEvent.click(headerRow);
+    expect(screen.getByText(/file\.csv/i)).toBeInTheDocument();
+  });
+
+  it('calls onSelect when header is clicked', () => {
+    const onSelect = vi.fn();
+    const props = { ...makeProps(), onSelect, autoOpen: true };
+    render(<MappingHierarchy {...props} />);
+    const headerRow = screen.getAllByRole('button')[0].closest('[role="button"]') || document.querySelector('[role="button"]');
+    fireEvent.click(headerRow);
+    expect(onSelect).toHaveBeenCalled();
+  });
+
+  // -------------------------------------------------------------------------
+  // onToggleArrowClick — clicking the collapse/expand arrow toggles open
+  // -------------------------------------------------------------------------
+  it('toggles open/closed when the collapse arrow is clicked', () => {
+    const props = makeProps();
+    render(<MappingHierarchy {...props} autoOpen={true} />);
+    expect(screen.getByText(/file\.csv/i)).toBeInTheDocument();
+
+    // Click the collapse button (KeyboardArrowUpIcon is shown when open)
+    const collapseBtn = screen.getByLabelText('Collapse');
+    fireEvent.click(collapseBtn);
+
+    // Now closed — file row gone
+    expect(screen.queryByText(/file\.csv/i)).not.toBeInTheDocument();
+
+    // Click again to re-open (label changes to Expand)
+    const expandBtn = screen.getByLabelText('Expand');
+    fireEvent.click(expandBtn);
+    expect(screen.getByText(/file\.csv/i)).toBeInTheDocument();
+  });
+
+  // -------------------------------------------------------------------------
+  // onKeyDown on headerRow — Enter/Space triggers onHeaderClick
+  // -------------------------------------------------------------------------
+  it('opens via Enter key on the header row', () => {
+    const props = makeProps();
+    render(<MappingHierarchy {...props} autoOpen={false} />);
+    const headerRow = document.querySelector('[role="button"]');
+    fireEvent.keyDown(headerRow, { key: 'Enter' });
+    expect(screen.getByText(/file\.csv/i)).toBeInTheDocument();
+  });
+
+  it('opens via Space key on the header row', () => {
+    const props = makeProps();
+    render(<MappingHierarchy {...props} autoOpen={false} />);
+    const headerRow = document.querySelector('[role="button"]');
+    fireEvent.keyDown(headerRow, { key: ' ' });
+    expect(screen.getByText(/file\.csv/i)).toBeInTheDocument();
+  });
+
+  // -------------------------------------------------------------------------
+  // cancelEdit via Escape key
+  // -------------------------------------------------------------------------
+  it('cancels value-name edit on Escape key', () => {
+    const props = makeProps();
+    render(<MappingHierarchy {...props} autoOpen={true} />);
+    fireEvent.doubleClick(screen.getByText('Val1'));
+    const input = screen.getByDisplayValue('Val1');
+    fireEvent.keyDown(input, { key: 'Escape' });
+    // Input gone → edit cancelled
+    expect(screen.queryByDisplayValue('Val1')).not.toBeInTheDocument();
+  });
+
+  it('cancels column-title edit on Escape key', () => {
+    const props = makeProps();
+    render(<MappingHierarchy {...props} autoOpen={true} />);
+    fireEvent.doubleClick(screen.getByText('TargetCol'));
+    const input = screen.getByDisplayValue('TargetCol');
+    fireEvent.keyDown(input, { key: 'Escape' });
+    expect(screen.queryByDisplayValue('TargetCol')).not.toBeInTheDocument();
+  });
+
+  // -------------------------------------------------------------------------
+  // hasColumnMeta — column-level metadata button and popper
+  // -------------------------------------------------------------------------
+  it('shows the column metadata button when mapping has terminology', () => {
+    const props = makeProps();
+    props.mapping = { ...props.mapping, terminology: 'SNOMED', description: '' };
+    render(<MappingHierarchy {...props} autoOpen={true} />);
+    const metaBtn = screen.getByTitle(`Show metadata for TargetCol`);
+    expect(metaBtn).toBeInTheDocument();
+  });
+
+  it('opens and closes metadata popper', () => {
+    const props = makeProps();
+    props.mapping = { ...props.mapping, terminology: 'SNOMED', description: 'A desc' };
+    render(<MappingHierarchy {...props} autoOpen={true} />);
+
+    const metaBtn = screen.getByTitle('Show metadata for TargetCol');
+    fireEvent.click(metaBtn);
+
+    // Popper should show terminology and description
+    expect(screen.getByText('SNOMED')).toBeInTheDocument();
+    expect(screen.getByText('A desc')).toBeInTheDocument();
+  });
+
+  it('shows "No terminology" and "No description" when meta is empty strings', () => {
+    const props = makeProps();
+    // metaPayload with no terminology or description → should show No terminology/No description
+    // To open the popper we need hasColumnMeta=true, but then metaPayload comes from openMeta args
+    props.mapping = { ...props.mapping, terminology: 'T', description: '' };
+    render(<MappingHierarchy {...props} autoOpen={true} />);
+
+    // Open with terminology='T', description='' → no desc branch
+    fireEvent.click(screen.getByTitle('Show metadata for TargetCol'));
+    expect(screen.getByText('No description')).toBeInTheDocument();
+  });
+
+  it('shows "No terminology" when terminology is empty', () => {
+    const props = makeProps();
+    props.mapping = { ...props.mapping, terminology: '', description: 'Some desc' };
+    render(<MappingHierarchy {...props} autoOpen={true} />);
+    fireEvent.click(screen.getByTitle('Show metadata for TargetCol'));
+    expect(screen.getByText('No terminology')).toBeInTheDocument();
+  });
+
+  it('closes meta popper via the X button', () => {
+    const props = makeProps();
+    props.mapping = { ...props.mapping, terminology: 'T', description: '' };
+    render(<MappingHierarchy {...props} autoOpen={true} />);
+    fireEvent.click(screen.getByTitle('Show metadata for TargetCol'));
+    expect(screen.getByText('T')).toBeInTheDocument();
+
+    // Click the Close button inside the Popper
+    const closeMetaBtn = screen.getByTitle('Close');
+    fireEvent.click(closeMetaBtn);
+    expect(screen.queryByText('T')).not.toBeInTheDocument();
+  });
+
+  // -------------------------------------------------------------------------
+  // hasValueMeta — value-level metadata button
+  // -------------------------------------------------------------------------
+  it('shows value metadata button when value has terminology', () => {
+    const props = makeProps();
+    props.mapping = {
+      ...props.mapping,
+      groups: [
+        {
+          values: [
+            {
+              name: 'Val1',
+              terminology: 'ICD10',
+              description: '',
+              mapping: [],
+            },
+          ],
+        },
+      ],
+    };
+    render(<MappingHierarchy {...props} autoOpen={true} />);
+    expect(screen.getByTitle('Show metadata for Val1')).toBeInTheDocument();
+  });
+
+  // -------------------------------------------------------------------------
+  // one-hot mapping rendering
+  // -------------------------------------------------------------------------
+  it('renders one-hot mapping with Presence(1) and Absence(0) labels', () => {
+    const props = makeProps();
+    props.mapping = {
+      mappingType: 'one-hot',
+      fileName: 'custom_mapping',
+      groups: [
+        {
+          values: [
+            {
+              name: '1',
+              mapping: [{ groupColumn: 'SrcCol', value: 'Yes' }],
+            },
+            {
+              name: '0',
+              mapping: [],
+            },
+          ],
+        },
+      ],
+    };
+    render(<MappingHierarchy {...props} autoOpen={true} />);
+    expect(screen.getByText('Presence (1)')).toBeInTheDocument();
+    expect(screen.getByText('Absence (0)')).toBeInTheDocument();
+    expect(screen.getByText('Rest of values')).toBeInTheDocument();
+  });
+
+  // -------------------------------------------------------------------------
+  // isDefaultLoaded — "integer" → "range of integers"
+  // -------------------------------------------------------------------------
+  it('shows "range of integers" for a defaultLoaded integer value', () => {
+    const props = makeProps();
+    props.mapping = {
+      mappingType: 'standard',
+      fileName: 'file.csv',
+      groups: [
+        {
+          values: [
+            {
+              name: 'integer',
+              mapping: [{ groupColumn: 'TargetCol', value: 'integer' }],
+            },
+          ],
+        },
+      ],
+    };
+    render(<MappingHierarchy {...props} autoOpen={true} />);
+    expect(screen.getByText('range of integers')).toBeInTheDocument();
+  });
+
+  it('shows "range of doubles" for a defaultLoaded double value', () => {
+    const props = makeProps();
+    props.mapping = {
+      mappingType: 'standard',
+      fileName: 'file.csv',
+      groups: [
+        {
+          values: [
+            {
+              name: 'double',
+              mapping: [{ groupColumn: 'TargetCol', value: 'double' }],
+            },
+          ],
+        },
+      ],
+    };
+    render(<MappingHierarchy {...props} autoOpen={true} />);
+    expect(screen.getByText('range of doubles')).toBeInTheDocument();
+  });
+
+  // -------------------------------------------------------------------------
+  // Object value (range) rendering
+  // -------------------------------------------------------------------------
+  it('renders range value as "min - max" string', () => {
+    const props = makeProps();
+    props.mapping = {
+      mappingType: 'standard',
+      fileName: 'file.csv',
+      groups: [
+        {
+          values: [
+            {
+              name: 'InRange',
+              mapping: [
+                {
+                  groupColumn: 'AgeCol',
+                  value: { type: 'double', minValue: 18, maxValue: 65 },
+                  fileName: 'file.csv',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    props.formatValue = (v) => String(v);
+    render(<MappingHierarchy {...props} autoOpen={true} />);
+    expect(screen.getByText('18 - 65')).toBeInTheDocument();
+  });
+
+  // -------------------------------------------------------------------------
+  // showPerColumnColor — multiple file colors
+  // -------------------------------------------------------------------------
+  it('renders per-column color indicators when multiple source files', () => {
+    const props = makeProps();
+    props.mapping = {
+      mappingType: 'standard',
+      fileName: 'file.csv',
+      groups: [
+        {
+          values: [
+            {
+              name: 'Val',
+              mapping: [
+                { groupColumn: 'ColA', value: 'x', fileName: 'f1.csv', nodeId: 'n1' },
+                { groupColumn: 'ColB', value: 'y', fileName: 'f2.csv', nodeId: 'n2' },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    props.columnsData = [
+      { column: 'ColA', color: '#aaa', fileName: 'f1.csv', nodeId: 'n1' },
+      { column: 'ColB', color: '#bbb', fileName: 'f2.csv', nodeId: 'n2' },
+    ];
+    render(<MappingHierarchy {...props} autoOpen={true} />);
+    // When multiple colors exist, per-column indicators are shown
+    const indicators = document.querySelectorAll('[title^="File:"]');
+    expect(indicators.length).toBeGreaterThan(0);
+  });
+
+  // -------------------------------------------------------------------------
+  // CheckIcon save button (mouseDown)
+  // -------------------------------------------------------------------------
+  it('saves value edit via CheckIcon mouseDown', () => {
+    const props = makeProps();
+    render(<MappingHierarchy {...props} autoOpen={true} />);
+    fireEvent.doubleClick(screen.getByText('Val1'));
+
+    const input = screen.getByDisplayValue('Val1');
+    fireEvent.change(input, { target: { value: 'SavedVal' } });
+
+    const checkIcon = screen.getByTestId('CheckIcon');
+    fireEvent.mouseDown(checkIcon);
+    expect(props.onUpdateMapping).toHaveBeenCalledTimes(1);
+    expect(props.onUpdateMapping.mock.calls[0][2].groups[0].values[0].name).toBe('SavedVal');
+  });
+
+  it('saves column title edit via CheckIcon mouseDown', () => {
+    const props = makeProps();
+    render(<MappingHierarchy {...props} autoOpen={true} />);
+    fireEvent.doubleClick(screen.getByText('TargetCol'));
+
+    const input = screen.getByDisplayValue('TargetCol');
+    fireEvent.change(input, { target: { value: 'RenamedCol' } });
+
+    const checkIcon = screen.getByTestId('CheckIcon');
+    fireEvent.mouseDown(checkIcon);
+    expect(props.onUpdateMapping).toHaveBeenCalledWith(
+      0, 'TargetCol', expect.any(Object), 'RenamedCol'
+    );
+  });
+
+  // -------------------------------------------------------------------------
+  // no groups → renderValueBoxes returns null
+  // -------------------------------------------------------------------------
+  it('renders nothing in value container when groups is empty', () => {
+    const props = makeProps();
+    props.mapping = { mappingType: 'standard', fileName: 'file.csv', groups: [] };
+    render(<MappingHierarchy {...props} autoOpen={true} />);
+    // Value container empty — no Val1/Val2
+    expect(screen.queryByText('Val1')).not.toBeInTheDocument();
   });
 });

@@ -579,4 +579,163 @@ describe('rebuildMappingsFromSpec', () => {
     const result = rebuildMappingsFromSpec(spec);
     expect(result[0]['field1'].fileName).toBe('custom_mapping');
   });
+
+  // -----------------------------------------------------------------------
+  // right.var branch — logic["=="] with the var on the RIGHT side
+  // -----------------------------------------------------------------------
+  it('rebuilds standard mapping when var is on the right side of == (constant == var)', () => {
+    const spec = makeSpec({
+      mappings: [
+        {
+          id: 'm1',
+          targetField: 'status',
+          mappingType: 'standard',
+          sourceConfigFile: 'cfg',
+          inputs: [],
+          rules: [
+            {
+              id: 'r1',
+              // constant == var  (right has var, left is constant)
+              logic: { '==': ['Active', { var: 'node1::file.csv::code' }] },
+              then: { kind: 'constant', value: 'Active' },
+            },
+          ],
+        },
+      ],
+    });
+
+    const result = rebuildMappingsFromSpec(spec);
+    expect(result).toHaveLength(1);
+    const val = result[0]['status'].groups[0].values[0];
+    expect(val.mapping[0].value).toBe('Active');   // left (the constant) becomes the value
+    expect(val.mapping[0].groupColumn).toBe('code');
+  });
+
+  // -----------------------------------------------------------------------
+  // and clause with missing lower or upper → returns []
+  // -----------------------------------------------------------------------
+  it('and clause with only >= (no <=) returns no entries', () => {
+    const spec = makeSpec({
+      mappings: [
+        {
+          id: 'm1',
+          targetField: 'age',
+          mappingType: 'standard',
+          sourceConfigFile: 'cfg',
+          inputs: [],
+          rules: [
+            {
+              id: 'r1',
+              // Only >= present, no <= → lower is set but upper is null → returns []
+              logic: {
+                and: [
+                  { '>=': [{ to_number: [{ var: 'node1::file.csv::age' }] }, 18] },
+                ],
+              },
+              then: { kind: 'constant', value: 'Adult' },
+            },
+          ],
+        },
+      ],
+    });
+
+    const result = rebuildMappingsFromSpec(spec);
+    // Entry is built but with empty mapping array (no entries from and-logic)
+    const val = result[0]['age'].groups[0].values[0];
+    expect(val.mapping).toEqual([]);
+  });
+
+  it('and clause with mismatched vars returns no entries', () => {
+    const spec = makeSpec({
+      mappings: [
+        {
+          id: 'm1',
+          targetField: 'score',
+          mappingType: 'standard',
+          sourceConfigFile: 'cfg',
+          inputs: [],
+          rules: [
+            {
+              id: 'r1',
+              // lowerVar !== upperVar → returns []
+              logic: {
+                and: [
+                  { '>=': [{ to_number: [{ var: 'n1::f.csv::col_a' }] }, 10] },
+                  { '<=': [{ to_number: [{ var: 'n1::f.csv::col_b' }] }, 20] },
+                ],
+              },
+              then: { kind: 'constant', value: 'Mid' },
+            },
+          ],
+        },
+      ],
+    });
+
+    const result = rebuildMappingsFromSpec(spec);
+    const val = result[0]['score'].groups[0].values[0];
+    expect(val.mapping).toEqual([]);
+  });
+
+  // -----------------------------------------------------------------------
+  // buildGroupsFromLoadedEntries deduplication
+  // -----------------------------------------------------------------------
+  it('deduplicates identical string values within the same group', () => {
+    // Two rules with the same (nodeId, fileName, column, value) → only one entry
+    const spec = makeSpec({
+      mappings: [
+        {
+          id: 'm1',
+          targetField: 'status',
+          mappingType: 'standard',
+          sourceConfigFile: 'cfg',
+          inputs: [],
+          rules: [
+            {
+              id: 'r1',
+              logic: { '==': [{ var: 'n1::file.csv::code' }, 'A'] },
+              then: { kind: 'constant', value: 'Active' },
+            },
+            {
+              id: 'r2',
+              // same var and same constant value → duplicate entry
+              logic: { '==': [{ var: 'n1::file.csv::code' }, 'A'] },
+              then: { kind: 'constant', value: 'Active2' },
+            },
+          ],
+        },
+      ],
+    });
+
+    const result = rebuildMappingsFromSpec(spec);
+    // columns should contain 'code' exactly once despite two rules sharing it
+    expect(result[0]['status'].columns).toEqual(['code']);
+  });
+
+  it('deduplicates identical range values (object) within the same group', () => {
+    const rangeLogic = {
+      and: [
+        { '>=': [{ to_number: [{ var: 'n1::f.csv::val' }] }, 5] },
+        { '<=': [{ to_number: [{ var: 'n1::f.csv::val' }] }, 10] },
+      ],
+    };
+    const spec = makeSpec({
+      mappings: [
+        {
+          id: 'm1',
+          targetField: 'range',
+          mappingType: 'standard',
+          sourceConfigFile: 'cfg',
+          inputs: [],
+          rules: [
+            { id: 'r1', logic: rangeLogic, then: { kind: 'constant', value: 'Low' } },
+            { id: 'r2', logic: rangeLogic, then: { kind: 'constant', value: 'Low2' } },
+          ],
+        },
+      ],
+    });
+
+    const result = rebuildMappingsFromSpec(spec);
+    // columns should contain 'val' exactly once
+    expect(result[0]['range'].columns).toEqual(['val']);
+  });
 });

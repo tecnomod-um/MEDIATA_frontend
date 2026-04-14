@@ -166,4 +166,77 @@ describe('<ClusterDetailPanel />', () => {
     expect(onAdd).toHaveBeenCalledWith(el3);
     expect(onDragEnd).toHaveBeenCalledTimes(1);
   });
+
+  // -------------------------------------------------------------------------
+  // Uncovered branches
+  // -------------------------------------------------------------------------
+
+  it('disables Add button and shows empty select when no available elements', () => {
+    // All elements are already in the cluster → available = []
+    render(
+      <ClusterDetailPanel
+        cluster={{ name: 'Full', elements: [el1, el2, el3] }}
+        allElements={[el1, el2, el3]}
+        onRemoveElement={onRemove}
+        onAddElement={onAdd}
+        onBack={onBack}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+      />
+    );
+
+    const addBtn = screen.getByRole('button', { name: /\+ add/i });
+    // toAdd is '' → disabled
+    expect(addBtn).toBeDisabled();
+  });
+
+  it('does not call onAddElement if dropped elementId is not in allElements', () => {
+    setup();
+
+    const dropZone = screen.getByRole('region');
+    const dataTransfer = {
+      data: {
+        'app/element': JSON.stringify({ elementId: 99 }), // not in allElements
+      },
+      setData(f, v) { this.data[f] = v; },
+      getData(f) { return this.data[f]; },
+    };
+
+    fireEvent.drop(dropZone, { dataTransfer });
+
+    // el with id=99 not found → onAdd not called
+    expect(onAdd).not.toHaveBeenCalled();
+    // onDragEnd is still called regardless
+    expect(onDragEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call onAddElement if clicked Add but toAdd does not match', () => {
+    // Build a panel where available element id is a string that parseInt fails on
+    const weird = { id: 'abc', label: 'Weird', description: 'x' };
+    render(
+      <ClusterDetailPanel
+        cluster={{ name: 'C', elements: [el1, el2] }}
+        allElements={[el1, el2, weird]}
+        onRemoveElement={onRemove}
+        onAddElement={onAdd}
+        onBack={onBack}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+      />
+    );
+
+    // toAdd = 'abc' (the weird element id)
+    const addBtn = screen.getByRole('button', { name: /\+ add/i });
+    fireEvent.click(addBtn);
+
+    // parseInt('abc', 10) = NaN → allElements.find(x => x.id === NaN) = undefined → no call
+    expect(onAdd).not.toHaveBeenCalled();
+  });
+
+  it('calls onDragEnd when drag ends on a list item', () => {
+    setup();
+    const firstItem = screen.getAllByRole('listitem')[0];
+    fireEvent.dragEnd(firstItem);
+    expect(onDragEnd).toHaveBeenCalledTimes(1);
+  });
 });
