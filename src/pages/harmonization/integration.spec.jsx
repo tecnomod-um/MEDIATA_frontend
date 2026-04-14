@@ -8,11 +8,16 @@ import {
   fetchElementFile,
   setParseConfigs,
   fetchSchemaFromBackend,
+  suggestMappings,
 } from '../../util/petitionHandler';
+import { normalizeUploadedSpec, collectSpecSources, rebuildMappingsFromSpec } from '../../util/uploadedMappingSpec';
 import { useLocation } from 'react-router-dom';
 import { updateNodeAxiosBaseURL } from '../../util/nodeAxiosSetup';
 import { generateDistinctColors } from '../../util/colors';
 import { vi } from "vitest";
+
+const capturedMappingsResultProps = vi.hoisted(() => ({ current: {} }));
+const capturedColumnMappingProps = vi.hoisted(() => ({ current: {} }));
 
 vi.mock('react-router-dom', () => ({
   useLocation: vi.fn(),
@@ -27,6 +32,18 @@ vi.mock('../../util/petitionHandler', () => ({
   fetchElementFile: vi.fn(),
   setParseConfigs: vi.fn(() => Promise.resolve()),
   fetchSchemaFromBackend: vi.fn(() => Promise.resolve({ schema: { foo: 'bar' } })),
+  suggestMappings: vi.fn(),
+  enrichMappingsStart: vi.fn(),
+  getEnrichMappingsStatus: vi.fn(),
+  getEnrichMappingsResult: vi.fn(),
+  getParseConfigsStatus: vi.fn(),
+  getParseConfigsResult: vi.fn(),
+}));
+
+vi.mock('../../util/uploadedMappingSpec', () => ({
+  normalizeUploadedSpec: vi.fn((x) => x),
+  collectSpecSources: vi.fn(() => []),
+  rebuildMappingsFromSpec: vi.fn(() => []),
 }));
 
 vi.mock('../../util/nodeAxiosSetup', () => ({
@@ -35,7 +52,10 @@ vi.mock('../../util/nodeAxiosSetup', () => ({
 
 vi.mock('../../components/Integration/ColumnMapping/columnMapping', () => ({
   __esModule: true,
-  default: () => <div data-testid="ColumnMapping" />,
+  default: (props) => {
+    capturedColumnMappingProps.current = props;
+    return <div data-testid="ColumnMapping" />;
+  },
 }));
 
 vi.mock('../../components/Integration/ColumnSearchList/columnSearchList', () => ({
@@ -106,7 +126,10 @@ vi.mock('../../components/Common/FilePicker/filePicker', () => ({
 
 vi.mock('../../components/Integration/MappingsResult/mappingsResult', () => ({
   __esModule: true,
-  default: () => <div data-testid="MappingsResult" />,
+  default: (props) => {
+    capturedMappingsResultProps.current = props;
+    return <div data-testid="MappingsResult" />;
+  },
 }));
 
 const mockToastSuccess = vi.hoisted(() => vi.fn());
