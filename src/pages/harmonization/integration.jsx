@@ -27,6 +27,24 @@ import {
   buildOneHotDraft as buildOneHotDraftUtil,
 } from "./integrationUtils";
 
+/**
+ * On mobile, wraps children in the mobilePanel div (controlling visibility via
+ * activeMobilePanel). On desktop, returns children directly so the component
+ * participates in the flex layout exactly as before — no extra DOM element.
+ */
+function PanelWrapper({ isMobile, panel, activeMobilePanel, styles, children }) {
+  if (!isMobile) return children;
+  return (
+    <div
+      className={`${styles.mobilePanel}${
+        activeMobilePanel === panel ? ` ${styles.mobilePanelActive}` : ""
+      }`}
+    >
+      {children}
+    </div>
+  );
+}
+
 function Integration() {
   const location = useLocation();
   const { selectedNodes } = useNode();
@@ -1215,6 +1233,76 @@ function Integration() {
     }, [isMobile, loadReferencedElementFiles]
   );
 
+  // ---------------------------------------------------------------------------
+  // Shared interaction callbacks (used in both desktop and mobile layouts)
+  // ---------------------------------------------------------------------------
+
+  const handleColumnClick = useCallback(
+    (col) => {
+      const alreadyExists = temporaryGroups.some(
+        (g) => g.column === col.column && g.fileName === col.fileName && g.nodeId === col.nodeId
+      );
+      if (!alreadyExists) setTemporaryGroups((prev) => [...prev, col]);
+      setEditTarget(null);
+    },
+    [temporaryGroups]
+  );
+
+  const handleDragStart = useCallback((e, column) => {
+    e.dataTransfer.setData("column", JSON.stringify(column));
+  }, []);
+
+  // After a successful save, advance to the hierarchy panel on mobile.
+  const handleSave = useCallback(
+    (...args) => {
+      const ok = handleSaveMappings(...args);
+      if (ok) setActiveMobilePanel("hierarchy");
+      return ok;
+    },
+    [handleSaveMappings]
+  );
+
+  // After suggesting mappings, advance to the hierarchy panel on mobile.
+  const handleSuggestAndNavigate = useCallback(
+    async (mode) => {
+      await handleSuggestMappings(mode);
+      if (isMobile) setActiveMobilePanel("hierarchy");
+    },
+    [handleSuggestMappings, isMobile]
+  );
+
+  // After selecting a mapping, advance to the mapping editor panel on mobile.
+  const handleSelectMapping = useCallback(
+    (mappingIndex, mappingKey) => {
+      const nextId = `${mappingIndex}::${mappingKey}`;
+      if (selectedMappingId === nextId) return;
+      setSelectedMappingId(nextId);
+
+      const mapping = mappings[mappingIndex]?.[mappingKey];
+      if (!mapping) return;
+
+      const isOneHot = mapping?.mappingType === "one-hot";
+
+      const draft = isOneHot
+        ? buildOneHotDraft(mappingKey, mappings, columnsData)
+        : buildStandardDraft(mappingKey, mapping, columnsData);
+
+      if (draft) setLoadedDraft(draft);
+
+      if (isOneHot) {
+        const base = mappingKey.includes("_")
+          ? mappingKey.slice(0, mappingKey.lastIndexOf("_"))
+          : mappingKey;
+        setEditTarget({ index: mappingIndex, key: mappingKey, type: "one-hot", base });
+      } else {
+        setEditTarget({ index: mappingIndex, key: mappingKey, type: "standard" });
+      }
+
+      if (isMobile) setActiveMobilePanel("mapping");
+    },
+    [selectedMappingId, mappings, columnsData, isMobile, buildOneHotDraft, buildStandardDraft]
+  );
+
   return (
     <div className={IntegrationStyles.pageContainer}>
       <FileMapperModal
@@ -1241,294 +1329,124 @@ function Integration() {
       )}
 
       <div className={IntegrationStyles.mappingContainer}>
-        {/* MOBILE */}
-        {isMobile ? (
-          <>
-            {columnsData.length > 0 && (
-              <div className={IntegrationStyles.mobileNav} role="tablist" aria-label="Integration panels">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeMobilePanel === "columns"}
-                  className={`${IntegrationStyles.mobileNavBtn} ${activeMobilePanel === "columns" ? IntegrationStyles.mobileNavBtnActive : ""
-                    }`}
-                  onClick={() => setActiveMobilePanel("columns")}
-                >
-                  Columns
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeMobilePanel === "mapping"}
-                  className={`${IntegrationStyles.mobileNavBtn} ${activeMobilePanel === "mapping" ? IntegrationStyles.mobileNavBtnActive : ""
-                    }`}
-                  onClick={() => setActiveMobilePanel("mapping")}
-                >
-                  Mapping
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeMobilePanel === "hierarchy"}
-                  className={`${IntegrationStyles.mobileNavBtn} ${activeMobilePanel === "hierarchy" ? IntegrationStyles.mobileNavBtnActive : ""
-                    }`}
-                  onClick={() => setActiveMobilePanel("hierarchy")}
-                >
-                  Hierarchy
-                </button>
-              </div>
-            )}
-
-            <CSSTransition
-              in={!!columnsData.length}
-              classNames={{
-                enter: IntegrationStyles.columnsSectionEnter,
-                enterActive: IntegrationStyles.columnsSectionEnterActive,
-                exit: IntegrationStyles.columnsSectionExit,
-                exitActive: IntegrationStyles.columnsSectionExitActive,
-              }}
-              timeout={500}
-              unmountOnExit
-            >
-              <div
-                className={`${IntegrationStyles.columnsSection} ${IntegrationStyles.mobilePanel} ${activeMobilePanel === "columns" ? IntegrationStyles.mobilePanelActive : ""
-                  }`}
+        {/* Mobile tab navigation — only rendered when on a mobile viewport */}
+        {isMobile && columnsData.length > 0 && (
+          <div className={IntegrationStyles.mobileNav} role="tablist" aria-label="Integration panels">
+            {["columns", "mapping", "hierarchy"].map((panel) => (
+              <button
+                key={panel}
+                type="button"
+                role="tab"
+                aria-selected={activeMobilePanel === panel}
+                className={`${IntegrationStyles.mobileNavBtn}${
+                  activeMobilePanel === panel ? ` ${IntegrationStyles.mobileNavBtnActive}` : ""
+                }`}
+                onClick={() => setActiveMobilePanel(panel)}
               >
-                <ColumnSearchList
-                  columnsData={columnsData}
-                  handleColumnClick={(col) => {
-                    const alreadyExists = temporaryGroups.some(
-                      (g) => g.column === col.column && g.fileName === col.fileName && g.nodeId === col.nodeId
-                    );
-                    if (!alreadyExists) setTemporaryGroups((prev) => [...prev, col]);
-                    setEditTarget(null);
-
-                    // no auto navigation; user can add multiple, then tap Mapping tab
-                  }}
-
-                  handleDragStart={(e, column) => {
-                    e.dataTransfer.setData("column", JSON.stringify(column));
-                  }}
-                />
-              </div>
-            </CSSTransition>
-
-            <CSSTransition
-              in={!!columnsData.length}
-              classNames={{
-                enter: IntegrationStyles.columnMappingEnter,
-                enterActive: IntegrationStyles.columnMappingEnterActive,
-                exit: IntegrationStyles.columnMappingExit,
-                exitActive: IntegrationStyles.columnMappingExitActive,
-              }}
-              timeout={500}
-              unmountOnExit
-            >
-              <div
-                className={`${IntegrationStyles.mobilePanel} ${activeMobilePanel === "mapping" ? IntegrationStyles.mobilePanelActive : ""
-                  }`}
-              >
-                <ColumnMapping
-                  columnsData={columnsData}
-                  onMappingChange={handleMappingChange}
-                  groups={temporaryGroups}
-                  onSave={(...args) => {
-                    const ok = handleSaveMappings(...args);
-                    if (ok) setActiveMobilePanel("hierarchy");
-                    return ok;
-                  }}
-                  onClear={handleClearMappingEditor}
-                  schema={schema}
-                  loadedDraft={loadedDraft}
-                  onSuggestMappings={async (mode) => {
-                    await handleSuggestMappings(mode);
-                    setActiveMobilePanel("hierarchy");
-                  }}
-                  hasExistingMappings={mappings?.length > 0}
-                  onGenerateMetadata={handleGenerateMetadata}
-                  isGenerateMetadataLoading={isGenerateMetadataLoading}
-                  generateMetadataProgress={generateMetadataProgress}
-                />
-              </div>
-            </CSSTransition>
-
-            <CSSTransition
-              in={!!columnsData.length}
-              classNames={{
-                enter: IntegrationStyles.resultingSectionEnter,
-                enterActive: IntegrationStyles.resultingSectionEnterActive,
-                exit: IntegrationStyles.resultingSectionExit,
-                exitActive: IntegrationStyles.resultingSectionExitActive,
-              }}
-              timeout={500}
-              unmountOnExit
-            >
-              <div
-                className={`${IntegrationStyles.mobilePanel} ${activeMobilePanel === "hierarchy" ? IntegrationStyles.mobilePanelActive : ""
-                  }`}
-              >
-                <MappingsResult
-                  mappings={mappings}
-                  schema={schema}
-                  columnsData={columnsData}
-                  deletedItems={deletedItems}
-                  processingStatus={processingStatus}
-                  onUndoDelete={handleUndoDelete}
-                  onDeleteMapping={handleDeleteMapping}
-                  onOpenFileMapper={() => setIsFileMapperOpen(true)}
-                  formatValue={formatValue}
-                  setMappings={setMappings}
-                  onUploadMappings={handleUploadMappingsSpec}
-                  onSelectMapping={(mappingIndex, mappingKey) => {
-                    const nextId = `${mappingIndex}::${mappingKey}`;
-                    if (selectedMappingId === nextId) return;
-                    setSelectedMappingId(nextId);
-
-                    const mapping = mappings[mappingIndex]?.[mappingKey];
-                    if (!mapping) return;
-
-                    const isOneHot = mapping?.mappingType === "one-hot";
-
-                    const draft = isOneHot
-                      ? buildOneHotDraft(mappingKey, mappings, columnsData)
-                      : buildStandardDraft(mappingKey, mapping, columnsData);
-
-                    if (draft) setLoadedDraft(draft);
-
-                    if (isOneHot) {
-                      const base = mappingKey.includes("_")
-                        ? mappingKey.slice(0, mappingKey.lastIndexOf("_"))
-                        : mappingKey;
-                      setEditTarget({ index: mappingIndex, key: mappingKey, type: "one-hot", base });
-                    } else {
-                      setEditTarget({ index: mappingIndex, key: mappingKey, type: "standard" });
-                    }
-
-                    if (isMobile) setActiveMobilePanel("mapping");
-                  }}
-
-                />
-              </div>
-            </CSSTransition>
-          </>
-        ) : (
-          /* DESKTOP (restore original layout) */
-          <>
-            <CSSTransition
-              in={!!columnsData.length}
-              classNames={{
-                enter: IntegrationStyles.columnsSectionEnter,
-                enterActive: IntegrationStyles.columnsSectionEnterActive,
-                exit: IntegrationStyles.columnsSectionExit,
-                exitActive: IntegrationStyles.columnsSectionExitActive,
-              }}
-              timeout={500}
-              unmountOnExit
-            >
-              <div className={IntegrationStyles.columnsSection}>
-                <ColumnSearchList
-                  columnsData={columnsData}
-                  handleColumnClick={(col) => {
-                    const alreadyExists = temporaryGroups.some(
-                      (g) => g.column === col.column && g.fileName === col.fileName && g.nodeId === col.nodeId
-                    );
-                    if (!alreadyExists) setTemporaryGroups((prev) => [...prev, col]);
-                    setEditTarget(null);
-
-                    // no auto navigation; user can add multiple, then tap Mapping tab
-                  }}
-
-                  handleDragStart={(e, column) => {
-                    e.dataTransfer.setData("column", JSON.stringify(column));
-                  }}
-                />
-              </div>
-            </CSSTransition>
-
-            <CSSTransition
-              in={!!columnsData.length}
-              classNames={{
-                enter: IntegrationStyles.columnMappingEnter,
-                enterActive: IntegrationStyles.columnMappingEnterActive,
-                exit: IntegrationStyles.columnMappingExit,
-                exitActive: IntegrationStyles.columnMappingExitActive,
-              }}
-              timeout={500}
-              unmountOnExit
-            >
-              <ColumnMapping
-                columnsData={columnsData}
-                onMappingChange={handleMappingChange}
-                groups={temporaryGroups}
-                onSave={(...args) => {
-                  const ok = handleSaveMappings(...args);
-                  if (ok) setActiveMobilePanel("hierarchy");
-                  return ok;
-                }}
-                schema={schema}
-                loadedDraft={loadedDraft}
-                onSuggestMappings={handleSuggestMappings}
-                hasExistingMappings={mappings?.length > 0}
-                onGenerateMetadata={handleGenerateMetadata}
-                isGenerateMetadataLoading={isGenerateMetadataLoading}
-                generateMetadataProgress={generateMetadataProgress}
-              />
-            </CSSTransition>
-            <CSSTransition
-              in={!!columnsData.length}
-              classNames={{
-                enter: IntegrationStyles.resultingSectionEnter,
-                enterActive: IntegrationStyles.resultingSectionEnterActive,
-                exit: IntegrationStyles.resultingSectionExit,
-                exitActive: IntegrationStyles.resultingSectionExitActive,
-              }}
-              timeout={500}
-              unmountOnExit
-            >
-              <MappingsResult
-                mappings={mappings}
-                schema={schema}
-                columnsData={columnsData}
-                deletedItems={deletedItems}
-                processingStatus={processingStatus}
-                onUndoDelete={handleUndoDelete}
-                onDeleteMapping={handleDeleteMapping}
-                onOpenFileMapper={() => setIsFileMapperOpen(true)}
-                formatValue={formatValue}
-                setMappings={setMappings}
-                onUploadMappings={handleUploadMappingsSpec}
-                onSelectMapping={(mappingIndex, mappingKey) => {
-                  const nextId = `${mappingIndex}::${mappingKey}`;
-                  if (selectedMappingId === nextId) return;
-                  setSelectedMappingId(nextId);
-
-                  const mapping = mappings[mappingIndex]?.[mappingKey];
-                  if (!mapping) return;
-
-                  const isOneHot = mapping?.mappingType === "one-hot";
-
-                  const draft = isOneHot
-                    ? buildOneHotDraft(mappingKey, mappings, columnsData)
-                    : buildStandardDraft(mappingKey, mapping, columnsData);
-
-                  if (draft) setLoadedDraft(draft);
-
-                  if (isOneHot) {
-                    const base = mappingKey.includes("_")
-                      ? mappingKey.slice(0, mappingKey.lastIndexOf("_"))
-                      : mappingKey;
-                    setEditTarget({ index: mappingIndex, key: mappingKey, type: "one-hot", base });
-                  } else {
-                    setEditTarget({ index: mappingIndex, key: mappingKey, type: "standard" });
-                  }
-
-                  if (isMobile) setActiveMobilePanel("mapping");
-                }}
-
-              />
-            </CSSTransition>
-          </>
+                {panel.charAt(0).toUpperCase() + panel.slice(1)}
+              </button>
+            ))}
+          </div>
         )}
+
+        {/* Columns panel */}
+        <CSSTransition
+          in={!!columnsData.length}
+          classNames={{
+            enter: IntegrationStyles.columnsSectionEnter,
+            enterActive: IntegrationStyles.columnsSectionEnterActive,
+            exit: IntegrationStyles.columnsSectionExit,
+            exitActive: IntegrationStyles.columnsSectionExitActive,
+          }}
+          timeout={500}
+          unmountOnExit
+        >
+          <div
+            className={`${IntegrationStyles.columnsSection}${
+              isMobile
+                ? ` ${IntegrationStyles.mobilePanel}${
+                    activeMobilePanel === "columns" ? ` ${IntegrationStyles.mobilePanelActive}` : ""
+                  }`
+                : ""
+            }`}
+          >
+            <ColumnSearchList
+              columnsData={columnsData}
+              handleColumnClick={handleColumnClick}
+              handleDragStart={handleDragStart}
+            />
+          </div>
+        </CSSTransition>
+
+        {/* Column mapping editor panel */}
+        <CSSTransition
+          in={!!columnsData.length}
+          classNames={{
+            enter: IntegrationStyles.columnMappingEnter,
+            enterActive: IntegrationStyles.columnMappingEnterActive,
+            exit: IntegrationStyles.columnMappingExit,
+            exitActive: IntegrationStyles.columnMappingExitActive,
+          }}
+          timeout={500}
+          unmountOnExit
+        >
+          <PanelWrapper
+            isMobile={isMobile}
+            panel="mapping"
+            activeMobilePanel={activeMobilePanel}
+            styles={IntegrationStyles}
+          >
+            <ColumnMapping
+              columnsData={columnsData}
+              onMappingChange={handleMappingChange}
+              groups={temporaryGroups}
+              onSave={handleSave}
+              {...(isMobile && { onClear: handleClearMappingEditor })}
+              schema={schema}
+              loadedDraft={loadedDraft}
+              onSuggestMappings={handleSuggestAndNavigate}
+              hasExistingMappings={mappings?.length > 0}
+              onGenerateMetadata={handleGenerateMetadata}
+              isGenerateMetadataLoading={isGenerateMetadataLoading}
+              generateMetadataProgress={generateMetadataProgress}
+            />
+          </PanelWrapper>
+        </CSSTransition>
+
+        {/* Mappings hierarchy / results panel */}
+        <CSSTransition
+          in={!!columnsData.length}
+          classNames={{
+            enter: IntegrationStyles.resultingSectionEnter,
+            enterActive: IntegrationStyles.resultingSectionEnterActive,
+            exit: IntegrationStyles.resultingSectionExit,
+            exitActive: IntegrationStyles.resultingSectionExitActive,
+          }}
+          timeout={500}
+          unmountOnExit
+        >
+          <PanelWrapper
+            isMobile={isMobile}
+            panel="hierarchy"
+            activeMobilePanel={activeMobilePanel}
+            styles={IntegrationStyles}
+          >
+            <MappingsResult
+              mappings={mappings}
+              schema={schema}
+              columnsData={columnsData}
+              deletedItems={deletedItems}
+              processingStatus={processingStatus}
+              onUndoDelete={handleUndoDelete}
+              onDeleteMapping={handleDeleteMapping}
+              onOpenFileMapper={() => setIsFileMapperOpen(true)}
+              formatValue={formatValue}
+              setMappings={setMappings}
+              onUploadMappings={handleUploadMappingsSpec}
+              onSelectMapping={handleSelectMapping}
+            />
+          </PanelWrapper>
+        </CSSTransition>
       </div>
       {columnsData.length > 0 && (
         <SchemaTray
