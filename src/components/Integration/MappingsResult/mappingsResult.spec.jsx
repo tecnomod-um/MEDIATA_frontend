@@ -69,13 +69,15 @@ vi.mock('../../Common/TooltipPopup/tooltipPopup', () => ({
 
 function captureBlobContent() {
   const originalBlob = global.Blob;
-  let capturedContent;
+  const allContents = [];
   global.Blob = function(content, options) {
-    capturedContent = content;
+    allContents.push(content);
     return new originalBlob(content, options);
   };
   return {
-    getContent: () => capturedContent,
+    // Returns the content array of the blob at the given index (default: 0 = first blob = CSV).
+    getContent: (index = 0) => allContents[index],
+    getAllContents: () => allContents,
     restore: () => { global.Blob = originalBlob; },
   };
 }
@@ -150,14 +152,14 @@ describe('<MappingsExporter />', () => {
 
     expect(global.URL.createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
     expect(toast.success).toHaveBeenCalledWith(
-      'Mappings CSV generated successfully!'
+      'Mappings CSV and mapping spec downloaded successfully!'
     );
   });
 
   it('encodes CSV and navigates to /semanticalignment with base64 payload', async () => {
     render(<MappingsExporter mappings={sampleMappings} />);
 
-    fireEvent.click(screen.getAllByRole('button')[1]);
+    fireEvent.click(screen.getAllByRole('button')[2]);
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/semanticalignment', {
@@ -178,7 +180,7 @@ describe('<MappingsExporter />', () => {
     fireEvent.click(screen.getByText(/download mappings/i));
 
     expect(toast.error).toHaveBeenCalledWith(
-      expect.stringContaining('Error generating CSV')
+      expect.stringContaining('Error generating downloads')
     );
   });
 
@@ -190,7 +192,7 @@ describe('<MappingsExporter />', () => {
     });
 
     render(<MappingsExporter mappings={sampleMappings} />);
-    fireEvent.click(screen.getAllByRole('button')[1]);
+    fireEvent.click(screen.getAllByRole('button')[2]);
 
     expect(toast.error).toHaveBeenCalledWith(
       'Error processing CSV for RDF Builder.'
@@ -203,7 +205,7 @@ describe('<MappingsExporter />', () => {
     mockUseAuth.mockImplementation(() => ({ capabilities: { semanticAlignment: false } }));
     render(<MappingsExporter mappings={sampleMappings} />);
 
-    const arrowBtn = screen.getAllByRole('button')[1];
+    const arrowBtn = screen.getAllByRole('button')[2];
     expect(arrowBtn).toBeDisabled();
     expect(arrowBtn).toHaveAttribute('aria-disabled', 'true');
   });
@@ -212,7 +214,7 @@ describe('<MappingsExporter />', () => {
     mockUseAuth.mockImplementation(() => ({ capabilities: { semanticAlignment: false } }));
     render(<MappingsExporter mappings={sampleMappings} />);
 
-    fireEvent.click(screen.getAllByRole('button')[1]);
+    fireEvent.click(screen.getAllByRole('button')[2]);
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
@@ -220,7 +222,7 @@ describe('<MappingsExporter />', () => {
     mockUseAuth.mockImplementation(() => ({ capabilities: { semanticAlignment: false } }));
     render(<MappingsExporter mappings={sampleMappings} />);
 
-    const arrowBtn = screen.getAllByRole('button')[1];
+    const arrowBtn = screen.getAllByRole('button')[2];
     fireEvent.mouseEnter(arrowBtn.parentElement);
 
     expect(screen.getByTestId('tooltip-popup')).toBeInTheDocument();
@@ -236,7 +238,7 @@ describe('<MappingsExporter />', () => {
     mockUseAuth.mockImplementation(() => ({ capabilities: { semanticAlignment: false } }));
     render(<MappingsExporter mappings={sampleMappings} />);
 
-    const arrowBtn = screen.getAllByRole('button')[1];
+    const arrowBtn = screen.getAllByRole('button')[2];
     fireEvent.mouseEnter(arrowBtn.parentElement);
     expect(screen.getByTestId('tooltip-popup')).toBeInTheDocument();
 
@@ -247,7 +249,7 @@ describe('<MappingsExporter />', () => {
   it('does not show tooltip on hover when semanticAlignment is enabled', () => {
     render(<MappingsExporter mappings={sampleMappings} />);
 
-    const arrowBtn = screen.getAllByRole('button')[1];
+    const arrowBtn = screen.getAllByRole('button')[2];
     fireEvent.mouseEnter(arrowBtn.parentElement);
 
     expect(screen.queryByTestId('tooltip-popup')).not.toBeInTheDocument();
@@ -319,6 +321,83 @@ describe('<MappingsExporter />', () => {
     blobSpy.restore();
 
     expect(blobSpy.getContent()?.[0]).toBe('DateCol,date,earliest:2020-01-01,latest:2023-12-31');
+  });
+
+  it('creates both a CSV blob and a JSON spec blob on download', () => {
+    const blobSpy = captureBlobContent();
+    render(<MappingsExporter mappings={sampleMappings} />);
+    fireEvent.click(screen.getByText(/download mappings/i));
+    blobSpy.restore();
+
+    const allContents = blobSpy.getAllContents();
+    expect(allContents).toHaveLength(2);
+    // First blob is CSV
+    expect(typeof allContents[0][0]).toBe('string');
+    // Second blob is the JSON mapping spec
+    expect(() => JSON.parse(allContents[1][0])).not.toThrow();
+    const spec = JSON.parse(allContents[1][0]);
+    expect(spec).toHaveProperty('specVersion', '2.0.0');
+    expect(spec).toHaveProperty('ruleLanguage', 'json-logic');
+    expect(spec).toHaveProperty('mappings');
+    expect(global.URL.createObjectURL).toHaveBeenCalledTimes(2);
+  });
+
+  it('includes the schema in the mapping spec when provided', () => {
+    const schema = { type: 'object', properties: { TargetCol: { type: 'string' } } };
+    const blobSpy = captureBlobContent();
+    render(<MappingsExporter mappings={sampleMappings} schema={schema} />);
+    fireEvent.click(screen.getByText(/download mappings/i));
+    blobSpy.restore();
+
+    const spec = JSON.parse(blobSpy.getAllContents()[1][0]);
+    expect(spec.targetSchema).toEqual(schema);
+  });
+
+  it('calls onUploadMappings with parsed JSON when a valid file is uploaded', async () => {
+    const onUploadMappings = vi.fn();
+    const validSpec = { specVersion: '2.0.0', mappings: [] };
+    const jsonString = JSON.stringify(validSpec);
+    // jsdom does not implement File.prototype.text, so we mock it on the instance
+    const file = new File([jsonString], 'spec.json', { type: 'application/json' });
+    file.text = vi.fn().mockResolvedValue(jsonString);
+
+    render(<MappingsExporter mappings={sampleMappings} onUploadMappings={onUploadMappings} />);
+
+    const fileInput = document.querySelector('input[type="file"]');
+    Object.defineProperty(fileInput, 'files', { value: [file], configurable: true });
+    fireEvent.change(fileInput);
+
+    await waitFor(() => {
+      expect(onUploadMappings).toHaveBeenCalledWith(validSpec);
+    });
+  });
+
+  it('shows error toast when uploaded file contains invalid JSON', async () => {
+    const onUploadMappings = vi.fn();
+    const file = new File(['not-json'], 'bad.json', { type: 'application/json' });
+    // jsdom does not implement File.prototype.text, so we mock it on the instance
+    file.text = vi.fn().mockResolvedValue('not-json');
+
+    render(<MappingsExporter mappings={sampleMappings} onUploadMappings={onUploadMappings} />);
+
+    const fileInput = document.querySelector('input[type="file"]');
+    Object.defineProperty(fileInput, 'files', { value: [file], configurable: true });
+    fireEvent.change(fileInput);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Error loading mapping spec'));
+    });
+    expect(onUploadMappings).not.toHaveBeenCalled();
+  });
+
+  it('clicking upload button triggers the hidden file input', () => {
+    render(<MappingsExporter mappings={sampleMappings} />);
+
+    const fileInput = document.querySelector('input[type="file"]');
+    const clickSpy = vi.spyOn(fileInput, 'click');
+
+    fireEvent.click(screen.getByText(/upload mappings/i));
+    expect(clickSpy).toHaveBeenCalled();
   });
 });
 
