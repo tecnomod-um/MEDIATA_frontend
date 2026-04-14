@@ -406,6 +406,25 @@ describe("buildStandardDraft", () => {
     expect(draft.customValues).toEqual([]);
     expect(draft.groups).toEqual([]);
   });
+
+  it("uses empty string for snomedTerm when terminology is null/undefined", () => {
+    const mappingNoTerm = {
+      terminology: "T",
+      description: "D",
+      groups: [{ values: [{ name: "X", terminology: null, description: null, mapping: null }] }],
+    };
+    const draft = buildStandardDraft("Key", mappingNoTerm, columnsData);
+    expect(draft.customValues[0].snomedTerm).toBe("");
+    expect(draft.customValues[0].mapping).toEqual([]);
+    expect(draft.valueDescriptions[draft.customValues[0].id]).toBe("");
+  });
+
+  it("uses empty string for unionTerminology when mapping.terminology is falsy", () => {
+    const mappingNoUnionTerm = { terminology: null, description: null, groups: [] };
+    const draft = buildStandardDraft("Key2", mappingNoUnionTerm, columnsData);
+    expect(draft.unionTerminology).toBe("");
+    expect(draft.unionDescription).toBe("");
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -514,6 +533,11 @@ describe("buildOneHotDraft", () => {
     expect(buildOneHotDraft("NoUnderscore", mappings, columnsData)).toBeNull();
   });
 
+  it("returns null when base is empty string (key starts with underscore)", () => {
+    // "_value" → lastIndexOf("_") = 0 → slice(0,0) = "" → !base → null
+    expect(buildOneHotDraft("_value", mappings, columnsData)).toBeNull();
+  });
+
   it("returns null when no family members found", () => {
     expect(buildOneHotDraft("Missing_val", mappings, columnsData)).toBeNull();
   });
@@ -557,5 +581,34 @@ describe("buildOneHotDraft", () => {
   it("sets unionTerminology from first family member", () => {
     const draft = buildOneHotDraft("Sex_male", mappings, columnsData);
     expect(draft.unionTerminology).toBe("SNOMED");
+  });
+
+  it("uses empty strings when family member has no '1' value", () => {
+    // A one-hot mapping with no value named "1" → ones is undefined → falsy branches
+    const mappingsNoOnes = [
+      {
+        Age_young: {
+          mappingType: "one-hot",
+          terminology: null,
+          description: null,
+          groups: [{ values: [{ name: "0", terminology: "T0", description: "zero", mapping: [] }] }],
+        },
+        Age_old: {
+          mappingType: "one-hot",
+          terminology: null,
+          description: null,
+          groups: [{ values: [{ name: "0", terminology: null, description: null, mapping: null }] }],
+        },
+      },
+    ];
+    const draft = buildOneHotDraft("Age_young", mappingsNoOnes, columnsData);
+    expect(draft).not.toBeNull();
+    // ones is undefined → snomedTerm = ""
+    expect(draft.customValues[0].snomedTerm).toBe("");
+    expect(draft.customValues[0].mapping).toEqual([]);
+    expect(draft.valueDescriptions[draft.customValues[0].id]).toBe("");
+    // unionTerminology falls back to "" when first.terminology is null
+    expect(draft.unionTerminology).toBe("");
+    expect(draft.unionDescription).toBe("");
   });
 });

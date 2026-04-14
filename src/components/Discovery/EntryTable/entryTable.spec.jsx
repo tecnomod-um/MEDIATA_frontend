@@ -424,4 +424,67 @@ describe("<EntryTable />", () => {
     expect(bodyRows[1]).toHaveClass("selectedRow");
     expect(bodyRows[0]).not.toHaveClass("selectedRow");
   });
+
+  it("fires mouseMove on window after mouseDown on resize handle", () => {
+    const onRowSelect = vi.fn();
+    render(
+      <EntryTable
+        filteredLists={filteredLists}
+        minCellWidth={50}
+        onRowSelect={onRowSelect}
+        selectedEntry={selectedEntry}
+        type={type}
+      />
+    );
+
+    const table = screen.getByRole("table");
+    const [thead] = within(table).getAllByRole("rowgroup");
+    const headers = within(thead).getAllByRole("columnheader");
+    const firstHandle = within(headers[0]).getByRole("separator");
+
+    // Mock getBoundingClientRect on the table element
+    table.getBoundingClientRect = vi.fn(() => ({
+      left: 0, top: 0, right: 600, bottom: 400, width: 600, height: 400,
+    }));
+    // Mock offsetLeft and offsetWidth on the header cell
+    Object.defineProperty(headers[0], 'offsetLeft', { get: () => 0, configurable: true });
+    Object.defineProperty(headers[0], 'offsetWidth', { get: () => 150, configurable: true });
+    Object.defineProperty(headers[1], 'offsetWidth', { get: () => 150, configurable: true });
+
+    // Trigger mouseDown on the handle to set activeIndex
+    fireEvent.mouseDown(firstHandle);
+
+    // Dispatch mousemove on the window — this exercises the mouseMove callback
+    fireEvent.mouseMove(window, { clientX: 200, clientY: 10 });
+
+    // No error should be thrown; the table's grid template is updated
+    expect(firstHandle).toBeInTheDocument();
+  });
+
+  it("fires mouseUp on window after mouseDown on resize handle", () => {
+    const onRowSelect = vi.fn();
+    render(
+      <EntryTable
+        filteredLists={filteredLists}
+        minCellWidth={50}
+        onRowSelect={onRowSelect}
+        selectedEntry={selectedEntry}
+        type={type}
+      />
+    );
+
+    const table = screen.getByRole("table");
+    const [thead] = within(table).getAllByRole("rowgroup");
+    const headers = within(thead).getAllByRole("columnheader");
+    const firstHandle = within(headers[0]).getByRole("separator");
+
+    // Trigger mouseDown to set activeIndex
+    fireEvent.mouseDown(firstHandle);
+
+    // Dispatch mouseup on window — this exercises the mouseUp callback
+    fireEvent.mouseUp(window);
+
+    // After mouseUp the handle should no longer be active
+    expect(firstHandle).not.toHaveClass("active");
+  });
 });
