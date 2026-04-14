@@ -649,9 +649,7 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
               />
               {showHeaderTooltip && (
                 <TooltipPopup
-                  message={
-                    "Create a column in the datasets with a given name.\nIt's values will be set based on the defined mappings from the selected columns."
-                  }
+                  message={"Create a column in the datasets with a given name.\nIt's values will be set based on the defined mappings from the selected columns."}
                   buttonRef={headerTooltipButtonRef}
                   onClose={() => setShowHeaderTooltip(false)}
                   offsetY={-10}

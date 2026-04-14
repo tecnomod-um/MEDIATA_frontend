@@ -13,6 +13,8 @@ import FileExplorer from "../../components/Common/FileExplorer/fileExplorer";
 import SchemaTray from "../../components/Common/SchemaTray/schemaTray";
 import MappingsResult from "../../components/Integration/MappingsResult/mappingsResult";
 import { generateDistinctColors } from "../../util/colors";
+import { buildMappingSpec } from "../../util/mappingSpec";
+import { normalizeUploadedSpec, collectSpecSources, rebuildMappingsFromSpec } from "../../util/uploadedMappingSpec";
 
 function Integration() {
   const location = useLocation();
@@ -436,76 +438,82 @@ function Integration() {
     hasProcessedElementFilesRef.current = true;
     const elementFiles = location.state.elementFiles;
     const nodeMapping = {};
-  
+
     for (const { nodeId, fileName } of elementFiles) {
       if (!nodeMapping[nodeId]) nodeMapping[nodeId] = [];
       nodeMapping[nodeId].push(fileName);
     }
-  
+
     handleProcessSelectedElements(nodeMapping);
   }, [location.state, handleProcessSelectedElements]);
 
   const handleProcessMappings = async (selectedDatasets, currentMappings, cleanOpts) => {
     setProcessingStatus("processing");
-  
+
     try {
       const nodeFileMappings = {};
       let totalTargetDatasets = 0;
-  
+
       for (const [sourceKey, datasets] of Object.entries(selectedDatasets)) {
         if (!Array.isArray(datasets) || datasets.length === 0) continue;
-      
+
         const sep = String(sourceKey).indexOf("::");
         if (sep < 0) continue;
-      
+
         const nodeId = String(sourceKey).slice(0, sep);
         const fileName = String(sourceKey).slice(sep + 2);
-      
+
         if (!nodeId || !fileName) continue;
-      
+
         if (!nodeFileMappings[nodeId]) nodeFileMappings[nodeId] = {};
         nodeFileMappings[nodeId][fileName] = datasets;
         totalTargetDatasets += datasets.length;
       }
-  
+
       const jobs = [];
-  
+
+      const mappingSpec = buildMappingSpec({
+        mappings: currentMappings,
+        schema,
+        selectedDatasets,
+      });
+
       for (const node of selectedNodes) {
         const fileMappingsForNode = nodeFileMappings[node.nodeId];
         if (!fileMappingsForNode || Object.keys(fileMappingsForNode).length === 0) continue;
-  
+
         updateNodeAxiosBaseURL(node.serviceUrl);
-  
+
         const payload = {
-          fileMappings: JSON.stringify(fileMappingsForNode),
-          configs: JSON.stringify(currentMappings),
+          fileMappings: fileMappingsForNode,
+          mappingSpec,
           cleaningOptions: cleanOpts,
         };
-  
+
         const start = await setParseConfigs(payload);
-  
+
         if (start?.status !== 202 || !start?.data?.jobId) {
           throw new Error(
             start?.data?.message || `Failed to start parsing job for node ${node.name || node.nodeId}`
           );
         }
-  
+
         jobs.push({
           node,
           jobId: start.data.jobId,
         });
       }
-  
+
       if (!jobs.length) {
         setProcessingStatus("idle");
         throw new Error("No datasets selected.");
       }
-  
+
       showOrUpdateParseToast(
         `Starting processing for ${totalTargetDatasets} dataset${totalTargetDatasets !== 1 ? "s" : ""}`,
         0
       );
-  
+
       const nodeProgress = new Map(
         jobs.map(({ jobId, node }) => [
           jobId,
@@ -515,79 +523,82 @@ function Integration() {
           },
         ])
       );
-  
+
       const computeOverallPercent = () => {
         const values = Array.from(nodeProgress.values());
         if (!values.length) return 0;
         const total = values.reduce((acc, x) => acc + (Number(x.percent) || 0), 0);
         return Math.round(total / values.length);
       };
-  
+
       for (const { node, jobId } of jobs) {
         let finished = false;
-      
+
         while (!finished) {
           updateNodeAxiosBaseURL(node.serviceUrl);
-      
+
           const st = await getParseConfigsStatus(jobId);
           const pct = Math.max(0, Math.min(100, Number(st?.percent) || 0));
           const state = String(st?.state || "").toUpperCase();
-      
+
           let progressMessage = `Processing on ${node.name || node.nodeId}`;
           if (state === "DONE") {
             progressMessage = `Finalizing on ${node.name || node.nodeId}`;
           } else if (st?.message && state !== "DONE") {
             progressMessage = String(st.message).trim();
           }
-      
+
           nodeProgress.set(jobId, {
             percent: pct,
             message: progressMessage,
           });
-      
+
           showOrUpdateParseToast(progressMessage, computeOverallPercent());
-      
+
           if (state === "ERROR") {
             throw new Error(st?.message || `Processing failed on ${node.name || node.nodeId}`);
           }
-      
+
           if (state === "DONE") {
             let res = null;
             let attempts = 0;
-      
+
             while (attempts < 10) {
               updateNodeAxiosBaseURL(node.serviceUrl);
               res = await getParseConfigsResult(jobId);
-      
+
               if (res?.status === 200) break;
               if (res?.status !== 409) break;
-      
+
               attempts += 1;
               await new Promise((r) => setTimeout(r, 300));
             }
-      
+
             if (res?.status !== 200) {
               throw new Error(
                 res?.data?.message ||
-                  `Processed job finished but no result was available for ${node.name || node.nodeId}`
+                `Processed job finished but no result was available for ${node.name || node.nodeId}`
               );
             }
-      
+
             nodeProgress.set(jobId, {
               percent: 100,
               message: `Finished on ${node.name || node.nodeId}`,
             });
-      
-            showOrUpdateParseToast(`Finished on ${node.name || node.nodeId}`, computeOverallPercent());
-      
+
+            showOrUpdateParseToast(
+              `Finished on ${node.name || node.nodeId}`,
+              computeOverallPercent()
+            );
+
             finished = true;
             break;
           }
-      
+
           await new Promise((r) => setTimeout(r, 500));
         }
       }
-  
+
       closeParseToast();
       setProcessingStatus("success");
       toast.success("Files processed successfully.");
@@ -616,18 +627,7 @@ function Integration() {
     [mappingKeyExists]
   );
 
-  // Integration.jsx (only these functions need to be replaced)
-  // 1) handleSaveMappings (whole)
-  // 2) the MOBILE ColumnMapping onSave wrapper (whole snippet)
-
-  const handleSaveMappings = (
-    groups,
-    unionName,
-    customValues,
-    removeFromHierarchy,
-    isOneHotMapping,
-    unionMeta
-  ) => {
+  const handleSaveMappings = (groups, unionName, customValues, removeFromHierarchy, isOneHotMapping, unionMeta) => {
     const norm = (s) => String(s ?? "").trim();
     const normalizedUnion = norm(unionName);
     const normalizedCustomValues = (customValues || []).map((cv) => ({
@@ -635,10 +635,7 @@ function Integration() {
       name: norm(cv.name),
     }));
 
-    // Are we editing an existing mapping?
-    const isEditing =
-      !!editTarget &&
-      typeof editTarget.index === "number" &&
+    const isEditing = !!editTarget && typeof editTarget.index === "number" &&
       editTarget.key &&
       mappings?.[editTarget.index]?.[editTarget.key];
 
@@ -652,26 +649,28 @@ function Integration() {
       )
       : "";
 
-    // Only do dup checks when creating OR renaming
     const shouldCheckDup = (() => {
       if (!isEditing) return true;
-      if (isOneHotMapping) return normalizedUnion !== oldOneHotBase; // renaming base
-      return normalizedUnion !== norm(editTarget.key); // renaming standard key
+      if (isOneHotMapping) return normalizedUnion !== oldOneHotBase;
+      return normalizedUnion !== norm(editTarget.key);
     })();
+
+    const keysRemovedByThisSave = new Set(
+      removeFromHierarchy ? (groups || []).map((g) => String(g.column)) : []
+    );
 
     const mappingKeyExistsExcept = (key, excludeIndex, excludeKeysSet) => {
       return (mappings || []).some((obj, idx) => {
         return Object.keys(obj || {}).some((k) => {
           if (idx === excludeIndex && excludeKeysSet?.has(k)) return false;
+          if (keysRemovedByThisSave.has(k)) return false;
           return k === key;
         });
       });
     };
 
     const oneHotAnyExistsExcept = (base, cvs, excludeIndex, excludeKeysSet) => {
-      return (cvs || []).some((cv) =>
-        mappingKeyExistsExcept(`${base}_${cv.name}`, excludeIndex, excludeKeysSet)
-      );
+      return (cvs || []).some((cv) => mappingKeyExistsExcept(`${base}_${cv.name}`, excludeIndex, excludeKeysSet));
     };
 
     let excludeIndex = null;
@@ -711,9 +710,6 @@ function Integration() {
       }
     }
 
-    // ---------------------------
-    // NO-OP DETECTION (editing only)
-    // ---------------------------
     const stableStringify = (x) => {
       const seen = new WeakSet();
       return JSON.stringify(x, (k, v) => {
@@ -846,19 +842,13 @@ function Integration() {
       }
     }
 
-    // ---------------------------
-    // APPLY SAVE
-    // ---------------------------
-
-    // ONE-HOT
     if (isOneHotMapping) {
-      // Build family (CREATE defaults to custom_mapping; EDIT will preserve below)
       const newFamily = {};
       normalizedCustomValues.forEach((cv) => {
         const columnName = `${normalizedUnion}_${cv.name}`;
         newFamily[columnName] = {
           mappingType: "one-hot",
-          fileName: "custom_mapping", // CREATE default; EDIT will override/preserve per key
+          fileName: "custom_mapping",
           columns: (groups || []).map((g) => g.column),
           terminology: unionMeta?.terminology || "",
           description: unionMeta?.description || "",
@@ -879,7 +869,6 @@ function Integration() {
         };
       });
 
-      // EDIT IN PLACE: preserve original fileName(s)
       if (isEditing) {
         const baseToRemove = oldOneHotBase;
 
@@ -1213,8 +1202,134 @@ function Integration() {
         customValues,
         valueDescriptions,
       };
+    }, [buildGroupsFromMapping, collectOneHotFamily]
+  );
+
+  const loadReferencedElementFiles = useCallback(
+    async (sourceRefs) => {
+      if (!Array.isArray(sourceRefs) || sourceRefs.length === 0) {
+        return columnsData;
+      }
+
+      const existing = new Set(
+        columnsData.map((c) => `${c.nodeId}::${c.fileName}`)
+      );
+
+      const missingRefs = sourceRefs.filter(
+        ({ nodeId, fileName }) => !existing.has(`${nodeId}::${fileName}`)
+      );
+
+      if (missingRefs.length === 0) {
+        return columnsData;
+      }
+
+      const nodeById = new Map(
+        (selectedNodes || []).map((node) => [String(node.nodeId), node])
+      );
+
+      const availableFilesByNode = new Map(
+        (elementFileList || []).map((entry) => [
+          String(entry.nodeId),
+          new Set(entry.files || []),
+        ])
+      );
+
+      const missingSelectedNodes = [];
+      const missingFiles = [];
+
+      missingRefs.forEach(({ nodeId, fileName }) => {
+        if (!nodeById.has(String(nodeId))) {
+          missingSelectedNodes.push(nodeId);
+          return;
+        }
+
+        const fileSet = availableFilesByNode.get(String(nodeId));
+        if (!fileSet || !fileSet.has(fileName)) {
+          missingFiles.push(`${nodeId}::${fileName}`);
+        }
+      });
+
+      if (missingSelectedNodes.length > 0) {
+        throw new Error(
+          `The uploaded spec references node ids that are not currently selected: ${Array.from(
+            new Set(missingSelectedNodes)
+          ).join(", ")}`
+        );
+      }
+
+      if (missingFiles.length > 0) {
+        throw new Error(
+          `The uploaded spec references element files that were not found in the selected nodes: ${missingFiles.join(
+            ", "
+          )}`
+        );
+      }
+
+      let mergedCols = [...columnsData];
+      const fileColors = generateDistinctColors(missingRefs.length);
+      let colorIndex = 0;
+
+      for (const { nodeId, fileName } of missingRefs) {
+        const node = nodeById.get(String(nodeId));
+        updateNodeAxiosBaseURL(node.serviceUrl);
+
+        const text = await fetchElementFile(fileName);
+        const parsed = parseCSV(text);
+
+        parsed.forEach((col) => {
+          col.color = fileColors[colorIndex];
+          col.fileName = fileName;
+          col.nodeId = nodeId;
+        });
+
+        colorIndex += 1;
+        mergedCols = mergeColumnsData(mergedCols, parsed);
+      }
+
+      return mergedCols;
     },
-    [buildGroupsFromMapping, collectOneHotFamily]
+    [columnsData, elementFileList, selectedNodes, mergeColumnsData]
+  );
+
+  const handleUploadMappingsSpec = useCallback(
+    async (uploadedSpec) => {
+      try {
+        const spec = normalizeUploadedSpec(uploadedSpec);
+        const sourceRefs = collectSpecSources(spec);
+
+        if (sourceRefs.length === 0) {
+          throw new Error("The uploaded spec does not reference any source element files.");
+        }
+
+        const nextColumnsData = await loadReferencedElementFiles(sourceRefs);
+        const nextMappings = rebuildMappingsFromSpec(spec);
+
+        if (!nextMappings.length) {
+          throw new Error("The uploaded spec did not produce any loadable mappings.");
+        }
+
+        setColumnsData(nextColumnsData);
+        setMappings(nextMappings);
+        setTemporaryGroups([]);
+        setDeletedItems([]);
+        setLoadedDraft(null);
+        setSelectedMappingId(null);
+        setEditTarget(null);
+
+        if (spec.targetSchema) {
+          setSchema(spec.targetSchema);
+        }
+
+        if (isMobile) {
+          setActiveMobilePanel("hierarchy");
+        }
+
+        toast.success("Mapping spec loaded successfully.");
+      } catch (error) {
+        console.error("Failed to load uploaded mappings:", error);
+        toast.error(error?.message || "Failed to load uploaded mapping spec.");
+      }
+    }, [isMobile, loadReferencedElementFiles]
   );
 
   return (
@@ -1371,6 +1486,7 @@ function Integration() {
               >
                 <MappingsResult
                   mappings={mappings}
+                  schema={schema}
                   columnsData={columnsData}
                   deletedItems={deletedItems}
                   processingStatus={processingStatus}
@@ -1379,6 +1495,7 @@ function Integration() {
                   onOpenFileMapper={() => setIsFileMapperOpen(true)}
                   formatValue={formatValue}
                   setMappings={setMappings}
+                  onUploadMappings={handleUploadMappingsSpec}
                   onSelectMapping={(mappingIndex, mappingKey) => {
                     const nextId = `${mappingIndex}::${mappingKey}`;
                     if (selectedMappingId === nextId) return;
@@ -1487,6 +1604,7 @@ function Integration() {
             >
               <MappingsResult
                 mappings={mappings}
+                schema={schema}
                 columnsData={columnsData}
                 deletedItems={deletedItems}
                 processingStatus={processingStatus}
@@ -1495,6 +1613,7 @@ function Integration() {
                 onOpenFileMapper={() => setIsFileMapperOpen(true)}
                 formatValue={formatValue}
                 setMappings={setMappings}
+                onUploadMappings={handleUploadMappingsSpec}
                 onSelectMapping={(mappingIndex, mappingKey) => {
                   const nextId = `${mappingIndex}::${mappingKey}`;
                   if (selectedMappingId === nextId) return;

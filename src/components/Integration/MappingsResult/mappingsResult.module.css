@@ -37,163 +37,16 @@
   position: sticky;
   top: 0;
   left: 0;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--tooltray-background-color-transparent);
   padding: 5px 10px;
   font-size: var(--font-size-base);
   cursor: pointer;
   z-index: 2;
-  transition: background-color 0.3s ease-in-out;
+  transition: background-color var(--transition-duration-fast) ease-in-out;
 }
 
 .undoContainer:hover {
-  background-color: rgba(0, 0, 0, 0.4);
-}
-
-.bottomActions {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.uploadMappingsContainer {
-  display: flex;
-  width: 100%;
-  height: 54px;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.uploadMappingsButton {
-  flex: 1;
-  background-image: var(--button-gradient);
-  border: none;
-  color: var(--text-color-on-darkbg);
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  cursor: pointer;
-  text-align: center;
-  transition: background-color 0.2s ease-in-out;
-}
-
-.uploadMappingsButton:hover {
-  background-position: 100% 0;
-  background-color: var(--button-color-hover);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-.uploadArrowButton {
-  width: 64px;
-  background-color: #27ae60;
-  color: var(--text-color-on-darkbg);
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
-}
-
-.uploadArrowButton:hover {
-  background-color: #229a54;
-}
-
-.processMappingsButton {
-  min-height: 54px;
-  width: 100%;
-  user-select: none;
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  color: var(--text-color-on-darkbg);
-  cursor: pointer;
-  text-align: center;
-  border: none;
-  border-radius: 8px;
-  background-size: 300% 300%;
-  background-image: var(--button-gradient);
-  box-shadow: 0 5px 15px rgba(8, 36, 44, 0.4);
-  position: relative;
-  overflow: hidden;
-  transition: background-position 0.5s ease-in-out;
-}
-
-.processMappingsButton::before,
-.processMappingsButton::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  transform: rotate(40deg);
-  border-radius: 8px;
-  transition: left 0s;
-}
-
-.processMappingsButton::before {
-  background: linear-gradient(to right,
-      rgba(255, 255, 255, 0.2),
-      rgba(255, 255, 255, 0.1));
-  transition-delay: 0.1s;
-}
-
-.processMappingsButton::after {
-  background: linear-gradient(to right,
-      rgba(255, 255, 255, 0.1),
-      rgba(255, 255, 255, 0));
-  transition-delay: 0.3s;
-}
-
-.processMappingsButton:hover::before,
-.processMappingsButton:hover::after {
-  left: 100%;
-  transition: left 0.7s ease-in-out;
-}
-
-.processMappingsButton:hover {
-  background-position: 100% 0;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-.processMappingsButton:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.loader {
-  border: var(--spinner-border-width-md) solid var(--spinner-border-base);
-  border-top: var(--spinner-border-width-md) solid var(--spinner-border-top);
-  border-radius: 50%;
-  width: 1.2em;
-  height: 1.2em;
-  animation: spin var(--spinner-duration-normal) linear infinite;
-  display: inline-block;
-  vertical-align: middle;
-  margin-top: -2px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@media screen and (max-width: 768px) {
-  .resultingSection {
-    max-width: 100%;
-    height: 100%;
-    max-height: none;
-    overflow: hidden; /* scrollableContainer handles scrolling */
-  }
-
-  .scrollableContainer {
-    max-height: calc(100% - 120px);
-  }
+  background-color: var(--tooltray-background-color);
 }
 
 .searchRow {
@@ -214,18 +67,192 @@
   background-color: var(--background-color-card);
   color: var(--text-color-primary);
   font-size: var(--font-size-base);
-
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
+.bottomActions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.exportActions {
+  width: 100%;
+}
+
+.topExportRow {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  width: 100%;
+  height: 54px;
+  gap: 4px;
+}
+
+.downloadWithArrow {
+  display: grid;
+  grid-template-columns: 1fr 35px;
+  width: 100%;
+  height: 54px;
+  gap: 0;
+}
+
+.uploadMappingsButton,
+.downloadMappingsButton {
+  min-width: 0;
+  height: 54px;
+  border: none;
+  color: var(--text-color-on-darkbg);
+  font-size: var(--font-size-base);
+  font-weight: 400;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-align: center;
+  background-image: var(--button-gradient);
+  transition:
+    background-position var(--transition-duration-fast) ease-in-out,
+    background-color var(--transition-duration-fast) ease-in-out,
+    box-shadow var(--transition-duration-fast) ease-in-out;
+}
+
+.uploadMappingsButton {
+  border-radius: 8px;
+}
+
+.downloadMappingsButton {
+  border-radius: 8px 0 0 8px;
+}
+
+.uploadMappingsButton:hover,
+.downloadMappingsButton:hover {
+  background-position: 100% 0;
+  background-color: var(--button-color-hover);
+  box-shadow: var(--box-shadow-md);
+}
+
 .uploadArrowButtonWrapper {
-  display: inline-flex;
   position: relative;
+  width: 35px;
+  height: 54px;
+}
+
+.uploadArrowButton {
+  width: 100%;
+  height: 100%;
+  background-color: var(--button-success);
+  color: var(--text-color-on-darkbg);
+  border: none;
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color var(--transition-duration-fast) ease-in-out;
+}
+
+.uploadArrowButton:hover {
+  background-color: var(--button-success-hover);
 }
 
 .uploadArrowButtonDisabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.processMappingsButton {
+  min-height: 54px;
+  width: 100%;
+  user-select: none;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--text-color-on-darkbg);
+  cursor: pointer;
+  text-align: center;
+  border: none;
+  border-radius: 8px;
+  background-size: 300% 300%;
+  background-image: var(--button-gradient);
+  box-shadow: var(--button-color-shadow);
+  position: relative;
+  overflow: hidden;
+  transition:
+    background-position var(--transition-duration-slow) ease-in-out,
+    box-shadow var(--transition-duration-fast) ease-in-out;
+}
+
+.processMappingsButton::before,
+.processMappingsButton::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  transform: rotate(40deg);
+  border-radius: 8px;
+  transition: left 0s;
+}
+
+.processMappingsButton::before {
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0.1)
+  );
+  transition-delay: 0.1s;
+}
+
+.processMappingsButton::after {
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0)
+  );
+  transition-delay: 0.3s;
+}
+
+.processMappingsButton:hover::before,
+.processMappingsButton:hover::after {
+  left: 100%;
+  transition: left 0.7s ease-in-out;
+}
+
+.processMappingsButton:hover {
+  background-position: 100% 0;
+  box-shadow: var(--box-shadow-md);
+}
+
+.processMappingsButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.loader {
+  border: var(--spinner-border-width-md) solid var(--spinner-border-base);
+  border-top: var(--spinner-border-width-md) solid var(--spinner-border-top);
+  border-radius: 50%;
+  width: 1.2em;
+  height: 1.2em;
+  animation: spin var(--spinner-duration-normal) linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+  margin-top: -2px;
+}
+
+@media screen and (max-width: 768px) {
+  .resultingSection {
+    max-width: 100%;
+    height: 100%;
+    max-height: none;
+    overflow: hidden;
+  }
+
+  .scrollableContainer {
+    max-height: calc(100% - 120px);
+  }
 }
