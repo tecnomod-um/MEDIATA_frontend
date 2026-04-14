@@ -739,3 +739,136 @@ describe('rebuildMappingsFromSpec', () => {
     expect(result[0]['range'].columns).toEqual(['val']);
   });
 });
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Branch coverage for uncovered lines: 35, 57-58, 100, 203
+// ──────────────────────────────────────────────────────────────────────────────
+
+describe('collectSpecSources – branch gaps', () => {
+  // Line 35: parseVarName with no "::" separator returns column=raw, empty ids
+  it('handles a rule var name without "::" separator (no sourceId part)', () => {
+    const spec = makeSpec({
+      mappings: [
+        {
+          id: 'm1',
+          targetField: 'field',
+          mappingType: 'standard',
+          sourceConfigFile: '',
+          inputs: [],
+          rules: [
+            {
+              id: 'r1',
+              // varName has no "::" so parseVarName returns empty nodeId/fileName
+              logic: { '==': [{ var: 'bareColumn' }, 'X'] },
+              then: { kind: 'constant', value: 'X' },
+            },
+          ],
+        },
+      ],
+    });
+    // Should not throw; it just collects an entry with empty nodeId/fileName
+    const sources = collectSpecSources(spec);
+    expect(sources).toEqual([]);
+  });
+
+  // Lines 57-58: unwrapJsonLogicArgs receives Array and null/undefined
+  it('collects sources when rule logic is an or-of-arrays (triggers Array.isArray path)', () => {
+    const spec = makeSpec({
+      mappings: [
+        {
+          id: 'm1',
+          targetField: 'f',
+          mappingType: 'standard',
+          sourceConfigFile: '',
+          inputs: [],
+          rules: [
+            {
+              id: 'r1',
+              // or whose value is an array (triggers the Array.isArray branch in unwrapJsonLogicArgs)
+              logic: { or: [{ '==': [{ var: 'n1::file.csv::col' }, 'A'] }, { '==': [{ var: 'n1::file.csv::col' }, 'B'] }] },
+              then: { kind: 'constant', value: 'A' },
+            },
+          ],
+        },
+      ],
+    });
+    const sources = collectSpecSources(spec);
+    expect(sources).toEqual([{ nodeId: 'n1', fileName: 'file.csv' }]);
+  });
+
+  // Line 58: unwrapJsonLogicArgs with null → returns []
+  it('handles is_integer rule whose logic value wraps null argument (no var key)', () => {
+    const spec = makeSpec({
+      mappings: [
+        {
+          id: 'm1',
+          targetField: 'f',
+          mappingType: 'standard',
+          sourceConfigFile: '',
+          inputs: [],
+          rules: [
+            {
+              id: 'r1',
+              // is_integer with null as the argument → unwrapJsonLogicArgs(null) returns []
+              logic: { is_integer: null },
+              then: { kind: 'constant', value: 'integer' },
+            },
+          ],
+        },
+      ],
+    });
+    const sources = collectSpecSources(spec);
+    // null arg → refArg is undefined → early return []
+    expect(sources).toEqual([]);
+  });
+
+  // Line 100: extractLogicEntries returns [] for "==" when neither side has .var
+  it('ignores == rule where neither operand is a var reference', () => {
+    const spec = makeSpec({
+      mappings: [
+        {
+          id: 'm1',
+          targetField: 'f',
+          mappingType: 'standard',
+          sourceConfigFile: '',
+          inputs: [],
+          rules: [
+            {
+              id: 'r1',
+              // Both operands are literals, not vars → hits the final "return []" at line 100
+              logic: { '==': ['literal_a', 'literal_b'] },
+              then: { kind: 'constant', value: 'A' },
+            },
+          ],
+        },
+      ],
+    });
+    const sources = collectSpecSources(spec);
+    expect(sources).toEqual([]);
+  });
+
+  // Line 203: extractLogicEntries returns [] when and-range logic doesn't match expected pattern
+  it('returns [] for and-logic that has only one clause (incomplete range)', () => {
+    const spec = makeSpec({
+      mappings: [
+        {
+          id: 'm1',
+          targetField: 'f',
+          mappingType: 'standard',
+          sourceConfigFile: '',
+          inputs: [],
+          rules: [
+            {
+              id: 'r1',
+              // and with only one entry – can't build a range → returns []
+              logic: { and: [{ '>=': [{ to_number: [{ var: 'n1::f.csv::v' }] }, 5] }] },
+              then: { kind: 'constant', value: 'Low' },
+            },
+          ],
+        },
+      ],
+    });
+    const sources = collectSpecSources(spec);
+    expect(sources).toEqual([]);
+  });
+});

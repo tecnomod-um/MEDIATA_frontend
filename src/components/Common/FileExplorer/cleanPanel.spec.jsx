@@ -402,152 +402,164 @@ describe('CleanPanel', () => {
   });
 
   describe('Validation logic - handleApply', () => {
+    // Helper: find a switch by text content of its ToggleRow ancestor
+    function findSwitch(label) {
+      return screen.getAllByRole('switch').find((sw) => {
+        const row = sw.closest('[role="switch"]');
+        return row?.textContent?.includes(label);
+      });
+    }
+
+    // Helper: enable an option switch
+    function enableOption(label) {
+      const sw = findSwitch(label);
+      if (sw) fireEvent.click(sw);
+      return sw;
+    }
+
     beforeEach(() => {
-      jest.spyOn(require('react-toastify').toast, 'error');
+      jest.clearAllMocks();
     });
 
-    it('validates standardizeNumeric requires numericColumns', () => {
-      render(<CleanPanel {...defaultProps} />);
-    
-      expect(screen.getByText('Standardize numeric fields')).toBeInTheDocument();
-    
-      expect(
-        screen.getByPlaceholderText(/Comma-separated, e\.g\. age,height,weight/i)
-      ).toBeInTheDocument();
-    });
-
-    it('validates fillMissingValues requires fillStrategy', () => {
+    it('validates standardizeNumeric – shows error when no numericColumns entered', () => {
       const { toast } = require('react-toastify');
       render(<CleanPanel {...defaultProps} />);
-      
-      // Find fillMissingValues switch by searching for the text
-      const allText = document.body.textContent || '';
-      if (allText.includes('Fill missing')) {
-        // Component has this option, we can test it
-        expect(toast.error).toBeDefined();
-      }
+      enableOption('Standardize numeric');
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/numeric column/i));
+    });
+
+    it('validates fillMissingValues – shows error when fillStrategy is empty', () => {
+      const { toast } = require('react-toastify');
+      render(<CleanPanel {...defaultProps} />);
+      enableOption('Fill missing');
+      // Clear the fill-strategy select so it's blank
+      const selects = screen.getAllByRole('combobox');
+      const strategySelect = selects.find((s) => s.value === 'mean' || s.value === '');
+      if (strategySelect) fireEvent.change(strategySelect, { target: { value: '' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/fill strategy/i));
     });
 
     it('validates fillMissingValues with constant strategy requires fillConstantValue', () => {
       const { toast } = require('react-toastify');
       render(<CleanPanel {...defaultProps} />);
-      
-      // This validates that the validation logic exists
-      const applyButton = screen.getByTitle(/apply cleaning/i);
-      expect(applyButton).toBeInTheDocument();
+      enableOption('Fill missing');
+      // Switch strategy to 'constant'
+      const selects = screen.getAllByRole('combobox');
+      const strategySelect = selects.find((s) => s.value === 'mean');
+      if (strategySelect) fireEvent.change(strategySelect, { target: { value: 'constant' } });
+      // Leave constant value blank
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/constant value/i));
     });
 
-    it('validates replaceValues with invalid JSON shows error', () => {
+    it('validates replaceValues – shows error on invalid JSON in replacement map', () => {
       const { toast } = require('react-toastify');
       render(<CleanPanel {...defaultProps} />);
-      
-      // The component has JSON validation in handleApply
-      // We verify the validation logic exists
-      const applyButton = screen.getByTitle(/apply cleaning/i);
-      expect(applyButton).toBeInTheDocument();
-      expect(toast.error).toBeDefined();
+      enableOption('Replace values');
+      // Type invalid JSON into the replacement map textarea
+      const textarea = screen.getAllByRole('textbox').find(
+        (el) => el.closest('[data-testid="json-map-editor"]') != null
+      );
+      if (textarea) fireEvent.change(textarea, { target: { value: 'not-json' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/replacement map/i));
     });
 
-    it('validates convertDataTypes with invalid JSON shows error', () => {
+    it('validates padValues – shows error when padLength is 0', () => {
       const { toast } = require('react-toastify');
       render(<CleanPanel {...defaultProps} />);
-      
-      // The component has type conversion validation
-      const applyButton = screen.getByTitle(/apply cleaning/i);
-      expect(applyButton).toBeInTheDocument();
+      enableOption('Pad values');
+      // padLength defaults to 0, so validation should fire
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/pad length/i));
     });
 
-    it('validates padValues requires padLength greater than 0', () => {
+    it('validates splitColumn – shows error when columnToSplit is empty', () => {
       const { toast } = require('react-toastify');
       render(<CleanPanel {...defaultProps} />);
-      
-      // Validation for pad values exists in handleApply
-      expect(toast.error).toBeDefined();
+      enableOption('Split column');
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/column to split/i));
     });
 
-    it('validates splitColumn requires columnToSplit', () => {
+    it('validates mergeColumns – shows error when fewer than 2 columns', () => {
       const { toast } = require('react-toastify');
       render(<CleanPanel {...defaultProps} />);
-      
-      // Validation exists in the component
-      const applyButton = screen.getByTitle(/apply cleaning/i);
-      expect(applyButton).toBeInTheDocument();
+      enableOption('Merge columns');
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/at least 2 columns/i));
     });
 
-    it('validates mergeColumns requires at least 2 columns', () => {
+    it('validates removeRowsWithPattern – shows error when column or pattern is empty', () => {
       const { toast } = require('react-toastify');
       render(<CleanPanel {...defaultProps} />);
-      
-      // Validation logic is present
-      expect(toast.error).toBeDefined();
+      enableOption('Remove rows with pattern');
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/row filter column/i));
     });
 
-    it('validates mergeColumns requires mergedColumnName', () => {
+    it('validates keepOnlyNumericRows – shows error when no columns specified', () => {
       const { toast } = require('react-toastify');
       render(<CleanPanel {...defaultProps} />);
-      
-      const applyButton = screen.getByTitle(/apply cleaning/i);
-      expect(applyButton).toBeInTheDocument();
+      enableOption('Keep only numeric rows');
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/validation column/i));
     });
 
-    it('validates removeRowsWithPattern requires column and pattern', () => {
+    it('validates normalizeData – shows error when no normalizeColumns entered', () => {
       const { toast } = require('react-toastify');
       render(<CleanPanel {...defaultProps} />);
-      
-      expect(toast.error).toBeDefined();
+      enableOption('Normalize data');
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/columns to normalize/i));
     });
 
-    it('validates keepOnlyNumericRows requires numericValidationColumns', () => {
+    it('validates standardizeData – shows error when no standardizeColumns entered', () => {
       const { toast } = require('react-toastify');
       render(<CleanPanel {...defaultProps} />);
-      
-      const applyButton = screen.getByTitle(/apply cleaning/i);
-      expect(applyButton).toBeInTheDocument();
+      enableOption('Standardize (Z-score)');
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/columns to standardize/i));
     });
 
-    it('validates normalizeData requires normalizeColumns', () => {
+    it('validates binData – shows error when binColumn is empty', () => {
       const { toast } = require('react-toastify');
       render(<CleanPanel {...defaultProps} />);
-      
-      expect(toast.error).toBeDefined();
+      enableOption('Bin numeric');
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/bin column/i));
     });
 
-    it('validates standardizeData requires standardizeColumns', () => {
+    it('validates mergeSimilarValues – shows error when no fuzzyMatchColumns', () => {
       const { toast } = require('react-toastify');
       render(<CleanPanel {...defaultProps} />);
-      
-      const applyButton = screen.getByTitle(/apply cleaning/i);
-      expect(applyButton).toBeInTheDocument();
+      enableOption('Merge similar values');
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/columns for fuzzy/i));
     });
 
-    it('validates binData requires binColumn', () => {
-      const { toast } = require('react-toastify');
+    it('normalizeData: entering columns + clicking Apply calls onApply', () => {
       render(<CleanPanel {...defaultProps} />);
-      
-      expect(toast.error).toBeDefined();
+      enableOption('Normalize data');
+      const colInput = screen.getByPlaceholderText('colA,colB');
+      fireEvent.change(colInput, { target: { value: 'col1,col2' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(defaultProps.onApply).toHaveBeenCalledWith(
+        expect.objectContaining({ normalizeData: true, normalizeColumns: ['col1', 'col2'] })
+      );
     });
 
-    it('validates binData requires at least 2 binEdges', () => {
-      const { toast } = require('react-toastify');
+    it('mergeSimilarValues: entering columns + clicking Apply calls onApply', () => {
       render(<CleanPanel {...defaultProps} />);
-      
-      const applyButton = screen.getByTitle(/apply cleaning/i);
-      expect(applyButton).toBeInTheDocument();
-    });
-
-    it('validates mergeSimilarValues requires fuzzyMatchColumns', () => {
-      const { toast } = require('react-toastify');
-      render(<CleanPanel {...defaultProps} />);
-      
-      expect(toast.error).toBeDefined();
-    });
-
-    it('validates mergeSimilarValues threshold must be between 0 and 1', () => {
-      const { toast } = require('react-toastify');
-      render(<CleanPanel {...defaultProps} />);
-      
-      const applyButton = screen.getByTitle(/apply cleaning/i);
-      expect(applyButton).toBeInTheDocument();
+      enableOption('Merge similar values');
+      const inputs = screen.getAllByPlaceholderText('colA,colB');
+      fireEvent.change(inputs[inputs.length - 1], { target: { value: 'name' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(defaultProps.onApply).toHaveBeenCalledWith(
+        expect.objectContaining({ mergeSimilarValues: true, fuzzyMatchColumns: ['name'] })
+      );
     });
   });
 
