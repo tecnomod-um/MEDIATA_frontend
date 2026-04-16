@@ -1323,9 +1323,6 @@ describe('Integration Page', () => {
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
-  // -------------------------------------------------------------------------
-  // Helper: render Integration with columns already loaded (desktop, no mobile)
-  // -------------------------------------------------------------------------
   const renderWithColumns = async () => {
     const node = { nodeId: 'node1', serviceUrl: 'http://n1', name: 'Node 1' };
     useNode.mockReturnValue({ selectedNodes: [node] });
@@ -1338,9 +1335,6 @@ describe('Integration Page', () => {
     await waitFor(() => expect(screen.queryByTestId('MappingsResult')).toBeInTheDocument());
   };
 
-  // -------------------------------------------------------------------------
-  // handleSuggestMappings
-  // -------------------------------------------------------------------------
   describe('handleSuggestMappings', () => {
     beforeEach(() => {
       mockToastSuccess.mockClear();
@@ -1416,9 +1410,6 @@ describe('Integration Page', () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // handleUploadMappingsSpec
-  // -------------------------------------------------------------------------
   describe('handleUploadMappingsSpec', () => {
     beforeEach(() => {
       mockToastSuccess.mockClear();
@@ -1526,9 +1517,6 @@ describe('Integration Page', () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // onSelectMapping (standard)
-  // -------------------------------------------------------------------------
   test('onSelectMapping sets loadedDraft for a standard mapping', async () => {
     await renderWithColumns();
 
@@ -1552,9 +1540,6 @@ describe('Integration Page', () => {
     expect(true).toBe(true);
   });
 
-  // -------------------------------------------------------------------------
-  // Mobile layout — PanelWrapper, tab navigation, and mobile callbacks
-  // -------------------------------------------------------------------------
   describe('Mobile layout', () => {
     const renderMobile = async () => {
       // Override matchMedia to report a mobile viewport
@@ -1664,9 +1649,6 @@ describe('Integration Page', () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // Desktop: onClear NOT passed, named callbacks work correctly
-  // -------------------------------------------------------------------------
   describe('Desktop callbacks', () => {
     test('onClear prop is NOT passed to ColumnMapping on desktop', async () => {
       await renderWithColumns();
@@ -1711,9 +1693,6 @@ describe('Integration Page', () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // handleMappingChange
-  // -------------------------------------------------------------------------
   describe('handleMappingChange', () => {
     test('calls onMappingChange prop which updates temporaryGroups', async () => {
       await renderWithColumns();
@@ -1726,9 +1705,6 @@ describe('Integration Page', () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // handleSaveMappings (via onSave)
-  // -------------------------------------------------------------------------
   describe('handleSaveMappings', () => {
     beforeEach(() => {
       mockToastSuccess.mockClear();
@@ -1840,9 +1816,6 @@ describe('Integration Page', () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // handleDeleteMapping + handleUndoDelete
-  // -------------------------------------------------------------------------
   describe('handleDeleteMapping and handleUndoDelete', () => {
     beforeEach(() => {
       mockToastSuccess.mockClear();
@@ -1908,9 +1881,6 @@ describe('Integration Page', () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // handleClearMappingEditor (mobile only: onClear)
-  // -------------------------------------------------------------------------
   describe('handleClearMappingEditor (via mobile onClear)', () => {
     test('onClear on mobile clears temporary groups and draft', async () => {
       Object.defineProperty(window, 'matchMedia', {
@@ -1951,9 +1921,6 @@ describe('Integration Page', () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // handleGenerateMetadata
-  // -------------------------------------------------------------------------
   describe('handleGenerateMetadata', () => {
     beforeEach(() => {
       mockToastSuccess.mockClear();
@@ -2127,9 +2094,6 @@ describe('Integration Page', () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // handleProcessMappings (via FileMapperModal.onSend)
-  // -------------------------------------------------------------------------
   describe('handleProcessMappings', () => {
     beforeEach(() => {
       mockToastSuccess.mockClear();

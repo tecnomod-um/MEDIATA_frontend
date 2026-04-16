@@ -108,9 +108,6 @@ describe('<MappingHierarchy />', () => {
     );
   });
 
-  // -------------------------------------------------------------------------
-  // displayFileLabel branch — "custom_mapping" → "custom mapping"
-  // -------------------------------------------------------------------------
   it('shows "custom mapping" when fileName is custom_mapping', () => {
     const props = makeProps();
     props.mapping = { ...props.mapping, fileName: 'custom_mapping' };
@@ -118,9 +115,6 @@ describe('<MappingHierarchy />', () => {
     expect(screen.getByText(/custom mapping/i)).toBeInTheDocument();
   });
 
-  // -------------------------------------------------------------------------
-  // onHeaderClick — clicking the header opens a closed hierarchy
-  // -------------------------------------------------------------------------
   it('opens when the header row is clicked (was closed)', () => {
     const props = makeProps();
     // autoOpen=false → closed by default
@@ -143,9 +137,6 @@ describe('<MappingHierarchy />', () => {
     expect(onSelect).toHaveBeenCalled();
   });
 
-  // -------------------------------------------------------------------------
-  // onToggleArrowClick — clicking the collapse/expand arrow toggles open
-  // -------------------------------------------------------------------------
   it('toggles open/closed when the collapse arrow is clicked', () => {
     const props = makeProps();
     render(<MappingHierarchy {...props} autoOpen={true} />);
@@ -164,9 +155,6 @@ describe('<MappingHierarchy />', () => {
     expect(screen.getByText(/file\.csv/i)).toBeInTheDocument();
   });
 
-  // -------------------------------------------------------------------------
-  // onKeyDown on headerRow — Enter/Space triggers onHeaderClick
-  // -------------------------------------------------------------------------
   it('opens via Enter key on the header row', () => {
     const props = makeProps();
     render(<MappingHierarchy {...props} autoOpen={false} />);
@@ -183,9 +171,6 @@ describe('<MappingHierarchy />', () => {
     expect(screen.getByText(/file\.csv/i)).toBeInTheDocument();
   });
 
-  // -------------------------------------------------------------------------
-  // cancelEdit via Escape key
-  // -------------------------------------------------------------------------
   it('cancels value-name edit on Escape key', () => {
     const props = makeProps();
     render(<MappingHierarchy {...props} autoOpen={true} />);
@@ -205,9 +190,6 @@ describe('<MappingHierarchy />', () => {
     expect(screen.queryByDisplayValue('TargetCol')).not.toBeInTheDocument();
   });
 
-  // -------------------------------------------------------------------------
-  // hasColumnMeta — column-level metadata button and popper
-  // -------------------------------------------------------------------------
   it('shows the column metadata button when mapping has terminology', () => {
     const props = makeProps();
     props.mapping = { ...props.mapping, terminology: 'SNOMED', description: '' };
@@ -262,9 +244,6 @@ describe('<MappingHierarchy />', () => {
     expect(screen.queryByText('T')).not.toBeInTheDocument();
   });
 
-  // -------------------------------------------------------------------------
-  // hasValueMeta — value-level metadata button
-  // -------------------------------------------------------------------------
   it('shows value metadata button when value has terminology', () => {
     const props = makeProps();
     props.mapping = {
@@ -286,9 +265,6 @@ describe('<MappingHierarchy />', () => {
     expect(screen.getByTitle('Show metadata for Val1')).toBeInTheDocument();
   });
 
-  // -------------------------------------------------------------------------
-  // one-hot mapping rendering
-  // -------------------------------------------------------------------------
   it('renders one-hot mapping with Presence(1) and Absence(0) labels', () => {
     const props = makeProps();
     props.mapping = {
@@ -315,9 +291,6 @@ describe('<MappingHierarchy />', () => {
     expect(screen.getByText('Rest of values')).toBeInTheDocument();
   });
 
-  // -------------------------------------------------------------------------
-  // isDefaultLoaded — "integer" → "range of integers"
-  // -------------------------------------------------------------------------
   it('shows "range of integers" for a defaultLoaded integer value', () => {
     const props = makeProps();
     props.mapping = {
@@ -358,9 +331,6 @@ describe('<MappingHierarchy />', () => {
     expect(screen.getByText('range of doubles')).toBeInTheDocument();
   });
 
-  // -------------------------------------------------------------------------
-  // Object value (range) rendering
-  // -------------------------------------------------------------------------
   it('renders range value as "min - max" string', () => {
     const props = makeProps();
     props.mapping = {
@@ -388,9 +358,6 @@ describe('<MappingHierarchy />', () => {
     expect(screen.getByText('18 - 65')).toBeInTheDocument();
   });
 
-  // -------------------------------------------------------------------------
-  // showPerColumnColor — multiple file colors
-  // -------------------------------------------------------------------------
   it('renders per-column color indicators when multiple source files', () => {
     const props = makeProps();
     props.mapping = {
@@ -420,9 +387,6 @@ describe('<MappingHierarchy />', () => {
     expect(indicators.length).toBeGreaterThan(0);
   });
 
-  // -------------------------------------------------------------------------
-  // CheckIcon save button (mouseDown)
-  // -------------------------------------------------------------------------
   it('saves value edit via CheckIcon mouseDown', () => {
     const props = makeProps();
     render(<MappingHierarchy {...props} autoOpen={true} />);
@@ -452,9 +416,6 @@ describe('<MappingHierarchy />', () => {
     );
   });
 
-  // -------------------------------------------------------------------------
-  // no groups → renderValueBoxes returns null
-  // -------------------------------------------------------------------------
   it('renders nothing in value container when groups is empty', () => {
     const props = makeProps();
     props.mapping = { mappingType: 'standard', fileName: 'file.csv', groups: [] };

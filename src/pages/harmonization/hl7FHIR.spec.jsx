@@ -180,9 +180,6 @@ describe("<HL7FHIR />", () => {
     consoleError.mockRestore();
   });
 
-  // ---------------------------------------------------------------------------
-  // parseCsvData edge cases (double / date / unknown-header / empty)
-  // ---------------------------------------------------------------------------
   it("parseCsvData: double type → data has min/max", async () => {
     class DoubleReader {
       readAsText() {
@@ -277,9 +274,6 @@ describe("<HL7FHIR />", () => {
     global.FileReader = FakeReader;
   });
 
-  // ---------------------------------------------------------------------------
-  // handleFormChange / handleSelectElement
-  // ---------------------------------------------------------------------------
   it("handleFormChange: updates form values for current element", async () => {
     global.FileReader = FakeReader;
     render(<HL7FHIR />);
@@ -304,9 +298,6 @@ describe("<HL7FHIR />", () => {
     });
   });
 
-  // ---------------------------------------------------------------------------
-  // ClusterDetailPanel (select cluster → panel switches; onMoveElement callback)
-  // ---------------------------------------------------------------------------
   it("ClusterDetailPanel: selecting a cluster switches away from cluster list", async () => {
     global.FileReader = FakeReader;
     render(<HL7FHIR />);

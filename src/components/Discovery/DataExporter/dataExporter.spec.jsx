@@ -115,9 +115,6 @@ describe('<DataExporter />', () => {
     expect(linkMocks[1].click).toHaveBeenCalled();
   });
 
-  // -------------------------------------------------------------------------
-  // Branch coverage: truthy paths for dateFeatures (mean/stdDev present)
-  // -------------------------------------------------------------------------
   it('includes mean and stdDev in CSV when dateFeature has them', () => {
     const dataWithDateValues = {
       ...sampleData,
@@ -150,9 +147,6 @@ describe('<DataExporter />', () => {
     expect(dateRow['Std. Dev.']).toBe('2.35');
   });
 
-  // -------------------------------------------------------------------------
-  // Branch coverage: null categorical fields → "N/A" fallback
-  // -------------------------------------------------------------------------
   it('uses "N/A" for null categorical fields', () => {
     const dataWithNullCat = {
       continuousFeatures: [],

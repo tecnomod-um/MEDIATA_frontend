@@ -167,9 +167,6 @@ describe('<ClusterDetailPanel />', () => {
     expect(onDragEnd).toHaveBeenCalledTimes(1);
   });
 
-  // -------------------------------------------------------------------------
-  // Uncovered branches
-  // -------------------------------------------------------------------------
 
   it('disables Add button and shows empty select when no available elements', () => {
     // All elements are already in the cluster → available = []
