@@ -1968,18 +1968,15 @@ describe('CleanPanel - Validation Logic', () => {
     });
   });
 
-  describe('Switch onChange handlers', () => {
-    it('firing Switch input change events covers all Switch onChange callbacks', () => {
+  describe('Switch toggles', () => {
+    it('toggling each option switch changes its checked state', () => {
       render(<CleanPanel {...defaultProps} />);
-      // The Switch mock renders as input[type=checkbox][role=switch]
-      // Clicking each covers their individual onChange arrow functions
       const switchInputs = document.querySelectorAll('input[type="checkbox"][role="switch"]');
       expect(switchInputs.length).toBeGreaterThan(0);
       switchInputs.forEach(inp => {
-        if (!inp.disabled) {
-          fireEvent.click(inp);
-        }
+        if (!inp.disabled) fireEvent.click(inp);
       });
+      expect(Array.from(switchInputs).every(inp => inp.disabled || inp.checked)).toBe(true);
     });
   });
 
@@ -1991,265 +1988,162 @@ describe('CleanPanel - Validation Logic', () => {
       if (sw) fireEvent.click(sw);
     }
 
+    function getActiveJsonEditorTextarea() {
+      return screen.getAllByRole('textbox').find(
+        el => el.closest('[data-testid="json-map-editor"]') && !el.disabled
+      );
+    }
+
     beforeEach(() => {
       vi.clearAllMocks();
     });
 
-    it('replaceValues: empty string textarea shows "cannot be empty" error (line 263)', () => {
+    it('replaceValues: shows error when map text is empty', () => {
       render(<CleanPanel {...defaultProps} />);
       enableOption('Replace values');
-      // Set textarea to empty string to trigger the "Empty JSON" branch
-      const textarea = screen.getAllByRole('textbox').find(
-        el => el.closest('[data-testid="json-map-editor"]') && !el.disabled
-      );
-      if (textarea) {
-        fireEvent.change(textarea, { target: { value: '' } });
-        fireEvent.click(screen.getByTitle(/apply cleaning/i));
-        expect(toast.error).toHaveBeenCalledWith('Replacement map cannot be empty.');
-      }
+      fireEvent.change(getActiveJsonEditorTextarea(), { target: { value: '' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith('Replacement map cannot be empty.');
     });
 
-    it('replaceValues: array JSON shows "must be a JSON object" error (line 261)', () => {
+    it('replaceValues: shows error when map is not a JSON object', () => {
       render(<CleanPanel {...defaultProps} />);
       enableOption('Replace values');
-      const textarea = screen.getAllByRole('textbox').find(
-        el => el.closest('[data-testid="json-map-editor"]') && !el.disabled
-      );
-      if (textarea) {
-        fireEvent.change(textarea, { target: { value: '[1,2,3]' } });
-        fireEvent.click(screen.getByTitle(/apply cleaning/i));
-        expect(toast.error).toHaveBeenCalledWith(
-          expect.stringContaining('must be a JSON object')
-        );
-      }
+      fireEvent.change(getActiveJsonEditorTextarea(), { target: { value: '[1,2,3]' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('must be a JSON object'));
     });
 
-    it('replaceValues: valid map sets replacementMap on payload (line 270)', () => {
+    it('replaceValues: calls onApply with parsed replacementMap', () => {
       const onApply = vi.fn();
       render(<CleanPanel {...defaultProps} onApply={onApply} />);
       enableOption('Replace values');
-      const textarea = screen.getAllByRole('textbox').find(
-        el => el.closest('[data-testid="json-map-editor"]') && !el.disabled
+      fireEvent.change(getActiveJsonEditorTextarea(), { target: { value: '{"old":"new"}' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(onApply).toHaveBeenCalledWith(
+        expect.objectContaining({ replacementMap: { old: 'new' } })
       );
-      if (textarea) {
-        fireEvent.change(textarea, { target: { value: '{"old":"new"}' } });
-        fireEvent.click(screen.getByTitle(/apply cleaning/i));
-        expect(onApply).toHaveBeenCalledWith(
-          expect.objectContaining({ replacementMap: { old: 'new' } })
-        );
-      }
     });
 
-    it('convertDataTypes: empty string textarea shows "cannot be empty" error (line 280)', () => {
+    it('convertDataTypes: shows error when type conversion map text is empty', () => {
       render(<CleanPanel {...defaultProps} />);
       enableOption('Convert data types');
-      const textareas = screen.getAllByRole('textbox').filter(
-        el => el.closest('[data-testid="json-map-editor"]') && !el.disabled
-      );
-      const textarea = textareas[0];
-      if (textarea) {
-        fireEvent.change(textarea, { target: { value: '' } });
-        fireEvent.click(screen.getByTitle(/apply cleaning/i));
-        expect(toast.error).toHaveBeenCalledWith('Type conversion map cannot be empty.');
-      }
+      fireEvent.change(getActiveJsonEditorTextarea(), { target: { value: '' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith('Type conversion map cannot be empty.');
     });
 
-    it('convertDataTypes: array JSON shows "must be a JSON object" error (line 278)', () => {
+    it('convertDataTypes: shows error when type conversion map is not a JSON object', () => {
       render(<CleanPanel {...defaultProps} />);
       enableOption('Convert data types');
-      const textareas = screen.getAllByRole('textbox').filter(
-        el => el.closest('[data-testid="json-map-editor"]') && !el.disabled
-      );
-      // Second json-map-editor textarea (convertDataTypes comes after replaceValues)
-      const textarea = textareas[0];
-      if (textarea) {
-        fireEvent.change(textarea, { target: { value: '[1,2,3]' } });
-        fireEvent.click(screen.getByTitle(/apply cleaning/i));
-        expect(toast.error).toHaveBeenCalledWith(
-          expect.stringContaining('must be a JSON object')
-        );
-      }
+      fireEvent.change(getActiveJsonEditorTextarea(), { target: { value: '[1,2,3]' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('must be a JSON object'));
     });
 
-    it('convertDataTypes: valid map sets typeConversionMap on payload (line 287)', () => {
+    it('convertDataTypes: calls onApply with parsed typeConversionMap', () => {
       const onApply = vi.fn();
       render(<CleanPanel {...defaultProps} onApply={onApply} />);
       enableOption('Convert data types');
-      const textareas = screen.getAllByRole('textbox').filter(
-        el => el.closest('[data-testid="json-map-editor"]') && !el.disabled
+      fireEvent.change(getActiveJsonEditorTextarea(), { target: { value: '{"age":"integer"}' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(onApply).toHaveBeenCalledWith(
+        expect.objectContaining({ typeConversionMap: { age: 'integer' } })
       );
-      const textarea = textareas[0];
-      if (textarea) {
-        fireEvent.change(textarea, { target: { value: '{"age":"integer"}' } });
-        fireEvent.click(screen.getByTitle(/apply cleaning/i));
-        expect(onApply).toHaveBeenCalledWith(
-          expect.objectContaining({ typeConversionMap: { age: 'integer' } })
-        );
-      }
     });
 
-
-    it('padValues: valid padLength calls onApply and processes padCharacter', () => {
+    it('padValues: calls onApply when padLength is valid', () => {
       const onApply = vi.fn();
       render(<CleanPanel {...defaultProps} onApply={onApply} />);
       enableOption('Pad values');
-      // Set padLength > 0
-      const numberInput = screen.getAllByRole('spinbutton').find(el =>
-        el.closest('[role="switch"]')?.textContent?.includes('Pad values') ||
-        el.closest('[class]')?.textContent?.includes('Pad length')
-      );
-      if (numberInput) fireEvent.change(numberInput, { target: { value: '5' } });
-      // Change padCharacter field (input next to "Pad char")
-      const textInputs = screen.getAllByRole('textbox').filter(el =>
-        !el.closest('[data-testid="json-map-editor"]') && !el.disabled
-      );
+      const [padLengthInput] = screen.getAllByRole('spinbutton').filter(el => !el.disabled);
+      fireEvent.change(padLengthInput, { target: { value: '5' } });
       fireEvent.click(screen.getByTitle(/apply cleaning/i));
-      // Either padCharacter path is covered or validation passes
-      expect(true).toBe(true);
+      expect(onApply).toHaveBeenCalledWith(expect.objectContaining({ padValues: true }));
     });
 
-    it('mergeColumns: mergedColumnName required when 2+ columns provided', () => {
+    it('mergeColumns: shows error when mergedColumnName is cleared', () => {
       render(<CleanPanel {...defaultProps} />);
       enableOption('Merge columns');
-      // Provide 2 columns but clear mergedColumnName
-      const inputs = screen.getAllByRole('textbox').filter(el =>
-        !el.closest('[data-testid="json-map-editor"]') && !el.disabled
+      const [mergeInput] = screen.getAllByPlaceholderText('colA,colB').filter(el => !el.disabled);
+      fireEvent.change(mergeInput, { target: { value: 'col1,col2' } });
+      const mergedNameInput = screen.getAllByRole('textbox').find(
+        el => !el.closest('[data-testid="json-map-editor"]') && !el.disabled && el.value === 'merged_column'
       );
-      // columnsToMerge input has placeholder 'colA,colB'
-      const mergeInput = screen.getAllByPlaceholderText('colA,colB').find(el => !el.disabled);
-      if (mergeInput) fireEvent.change(mergeInput, { target: { value: 'col1,col2' } });
-      // Clear the mergedColumnName input (has a value by default)
-      const mergedNameInput = inputs.find(el =>
-        el.closest('[role="switch"]')?.textContent?.includes('Merge columns') && el.value === 'merged_column'
-      );
-      if (mergedNameInput) fireEvent.change(mergedNameInput, { target: { value: '' } });
+      fireEvent.change(mergedNameInput, { target: { value: '' } });
       fireEvent.click(screen.getByTitle(/apply cleaning/i));
       expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/merged column name|at least 2 columns/i));
     });
 
-    it('mergeSimilarValues: threshold > 1 shows error', () => {
+    it('mergeSimilarValues: shows error when threshold is above 1', () => {
       render(<CleanPanel {...defaultProps} />);
       enableOption('Merge similar values');
-      const fuzzyInput = screen.getAllByPlaceholderText('colA,colB').find(el => !el.disabled);
-      if (fuzzyInput) fireEvent.change(fuzzyInput, { target: { value: 'name' } });
-      // Set threshold > 1
-      const thresholdInput = screen.getAllByRole('spinbutton').find(el => !el.disabled);
-      if (thresholdInput) fireEvent.change(thresholdInput, { target: { value: '2' } });
+      const [fuzzyInput] = screen.getAllByPlaceholderText('colA,colB').filter(el => !el.disabled);
+      fireEvent.change(fuzzyInput, { target: { value: 'name' } });
+      const [thresholdInput] = screen.getAllByRole('spinbutton').filter(el => !el.disabled);
+      fireEvent.change(thresholdInput, { target: { value: '2' } });
       fireEvent.click(screen.getByTitle(/apply cleaning/i));
       expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/threshold/i));
     });
 
-    it('covers sub-field onChange handlers via specific selectors', () => {
+    it('sub-field inputs update state when their option is enabled', () => {
       render(<CleanPanel {...defaultProps} />);
 
-      // Strip prefix: prefixToStrip (line 1042)
       enableOption('Strip prefix');
-      const prefixInp = document.querySelector('input[placeholder="e.g. ID-"]');
-      if (prefixInp && !prefixInp.disabled) fireEvent.change(prefixInp, { target: { value: 'pre_' } });
+      fireEvent.change(document.querySelector('input[placeholder="e.g. ID-"]'), { target: { value: 'pre_' } });
 
-      // Strip suffix: suffixToStrip (line 1075)
       enableOption('Strip suffix');
-      const suffixInp = document.querySelector('input[placeholder="e.g. _old"]');
-      if (suffixInp && !suffixInp.disabled) fireEvent.change(suffixInp, { target: { value: '_suf' } });
+      fireEvent.change(document.querySelector('input[placeholder="e.g. _old"]'), { target: { value: '_suf' } });
 
-      // Pad values: padDirection select (1118) and padCharacter (line 1143)
       enableOption('Pad values');
-      const padCharInp = document.querySelector('input[placeholder="Single character"]');
-      if (padCharInp && !padCharInp.disabled) fireEvent.change(padCharInp, { target: { value: '0' } });
-      // Change padDirection select (line 1118)
+      fireEvent.change(document.querySelector('input[placeholder="Single character"]'), { target: { value: '0' } });
       const padDirSel = Array.from(document.querySelectorAll('select')).find(
         s => !s.disabled && Array.from(s.options).some(o => o.value === 'left')
       );
-      if (padDirSel) fireEvent.change(padDirSel, { target: { value: 'left' } });
+      fireEvent.change(padDirSel, { target: { value: 'left' } });
 
-      // Standardize phone numbers: phoneFormat select (line 1333) and defaultCountryCode (line 1347)
       enableOption('Standardize phone numbers');
-      const ccInp = document.querySelector('input[placeholder="+1"]');
-      if (ccInp && !ccInp.disabled) fireEvent.change(ccInp, { target: { value: '+44' } });
-      // Change phoneFormat select (line 1333)
+      fireEvent.change(document.querySelector('input[placeholder="+1"]'), { target: { value: '+44' } });
       const phoneFmtSel = Array.from(document.querySelectorAll('select')).find(
         s => !s.disabled && Array.from(s.options).some(o => o.value === 'international')
       );
-      if (phoneFmtSel) fireEvent.change(phoneFmtSel, { target: { value: 'international' } });
+      fireEvent.change(phoneFmtSel, { target: { value: 'international' } });
 
-      // Split column: columnToSplit, splitDelimiter, newColumnNames (lines 1395, 1405, 1415)
       enableOption('Split column');
-      const newNamesInp = document.querySelector('input[placeholder="Optional: colA,colB"]');
-      if (newNamesInp && !newNamesInp.disabled) {
-        // All Split column inputs: columnToSplit has no placeholder, splitDelimiter has value ","
-        const splitInputs = Array.from(document.querySelectorAll('input:not([type="checkbox"]):not([type="number"])'))
-          .filter(el => !el.disabled && el.closest('[role="switch"]')?.textContent?.includes('Split column'));
-        splitInputs.forEach(el => fireEvent.change(el, { target: { value: 'test' } }));
-      }
+      Array.from(document.querySelectorAll('input:not([type="checkbox"]):not([type="number"])'))
+        .filter(el => !el.disabled && el.closest('[role="switch"]')?.textContent?.includes('Split column'))
+        .forEach(el => fireEvent.change(el, { target: { value: 'test' } }));
 
-      // Merge columns: mergeDelimiter (line 1472) — columnsToMerge handled elsewhere
       enableOption('Merge columns');
-      const mergeInputs = Array.from(document.querySelectorAll('input:not([type="checkbox"]):not([type="number"])'))
-        .filter(el => !el.disabled && el.closest('[role="switch"]')?.textContent?.includes('Merge columns'));
-      mergeInputs.forEach(el => fireEvent.change(el, { target: { value: 'test' } }));
+      Array.from(document.querySelectorAll('input:not([type="checkbox"]):not([type="number"])'))
+        .filter(el => !el.disabled && el.closest('[role="switch"]')?.textContent?.includes('Merge columns'))
+        .forEach(el => fireEvent.change(el, { target: { value: 'test' } }));
 
-      // Remove rows with pattern: rowFilterColumn, rowFilterPattern (lines 1525, 1535)
       enableOption('Remove rows with pattern');
-      const filterInp = document.querySelector('input[placeholder="e.g. ^(test|dummy)$"]');
-      if (filterInp && !filterInp.disabled) {
-        const patternInputs = Array.from(document.querySelectorAll('input:not([type="checkbox"]):not([type="number"])'))
-          .filter(el => !el.disabled && el.closest('[role="switch"]')?.textContent?.includes('Remove rows'));
-        patternInputs.forEach(el => fireEvent.change(el, { target: { value: 'test' } }));
-      }
+      Array.from(document.querySelectorAll('input:not([type="checkbox"]):not([type="number"])'))
+        .filter(el => !el.disabled && el.closest('[role="switch"]')?.textContent?.includes('Remove rows'))
+        .forEach(el => fireEvent.change(el, { target: { value: 'test' } }));
     });
 
-    it('fillMissingValues: fillConstantValue and fillColumns onChange covered', () => {
+    it('fillMissingValues: shows constant value field when strategy is set to constant', () => {
       render(<CleanPanel {...defaultProps} />);
       enableOption('Fill missing');
       const stratSelect = Array.from(document.querySelectorAll('select')).find(s => s.value === 'mean');
-      if (stratSelect) fireEvent.change(stratSelect, { target: { value: 'constant' } });
-      const constInp = document.querySelector('input[placeholder="Value to use for blanks"]');
-      if (constInp && !constInp.disabled) fireEvent.change(constInp, { target: { value: 'N/A' } });
-      const fillColsInp = document.querySelector('input[placeholder="Blank = all columns; or list: colA,colB"]');
-      if (fillColsInp && !fillColsInp.disabled) fireEvent.change(fillColsInp, { target: { value: 'colA' } });
+      fireEvent.change(stratSelect, { target: { value: 'constant' } });
+      expect(document.querySelector('input[placeholder="Value to use for blanks"]')).toBeInTheDocument();
+      fireEvent.change(document.querySelector('input[placeholder="Value to use for blanks"]'), { target: { value: 'N/A' } });
+      fireEvent.change(document.querySelector('input[placeholder="Blank = all columns; or list: colA,colB"]'), { target: { value: 'colA' } });
     });
 
-    it('standardizeNumeric: removeLeadingZeros and roundDecimals/decimalPlaces onChange covered', () => {
+    it('standardizeNumeric: toggling removeLeadingZeros and roundDecimals updates state', () => {
       render(<CleanPanel {...defaultProps} />);
       enableOption('Standardize numeric');
-      // removeLeadingZeros and roundDecimals are non-switch checkboxes
       const plainCheckboxes = document.querySelectorAll('input[type="checkbox"]:not([role="switch"])');
       plainCheckboxes.forEach(cb => { if (!cb.disabled) fireEvent.click(cb); });
-      // After roundDecimals=true, decimalPlaces spinbutton appears
-      const spinbuttons = document.querySelectorAll('input[type="number"]');
-      spinbuttons.forEach(inp => { if (!inp.disabled) fireEvent.change(inp, { target: { value: '3' } }); });
-    });
-
-    it('padValues: calls onApply with padCharacter when padLength > 0', () => {
-      const onApply = vi.fn();
-      render(<CleanPanel show busy={false} selectedCount={5} onClose={vi.fn()} onApply={onApply} />);
-      enableOption('Pad values');
-      // Set padLength > 0
-      const spinbuttons = screen.getAllByRole('spinbutton').filter(el => !el.disabled);
-      if (spinbuttons.length > 0) {
-        fireEvent.change(spinbuttons[0], { target: { value: '5' } });
-      }
-      fireEvent.click(screen.getByTitle(/apply cleaning/i));
-      if (toast.error.mock.calls.length === 0) {
-        expect(onApply).toHaveBeenCalledWith(expect.objectContaining({ padValues: true }));
-      }
-    });
-
-    it('standardizeNumeric: roundDecimals shows decimalPlaces input', () => {
-      render(<CleanPanel {...defaultProps} />);
-      enableOption('Standardize numeric');
-      // Enable roundDecimals checkbox
-      const checkboxes = document.querySelectorAll('input[type="checkbox"]:not([role="switch"])');
-      const roundCheckbox = Array.from(checkboxes).find(
-        cb => cb.closest('label')?.textContent?.includes('Round decimals')
-      );
-      if (roundCheckbox && !roundCheckbox.disabled) {
-        fireEvent.click(roundCheckbox);
-        // Now decimalPlaces input should appear; change it
-        const spinbuttons = screen.getAllByRole('spinbutton').filter(el => !el.disabled);
-        spinbuttons.forEach(inp => fireEvent.change(inp, { target: { value: '3' } }));
-      }
-      expect(true).toBe(true);
+      document.querySelectorAll('input[type="number"]').forEach(inp => {
+        if (!inp.disabled) fireEvent.change(inp, { target: { value: '3' } });
+      });
+      expect(Array.from(plainCheckboxes).some(cb => cb.checked)).toBe(true);
     });
   });
 });
