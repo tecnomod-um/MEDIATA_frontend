@@ -343,35 +343,6 @@ describe('<FilterModal />', () => {
     expect(summary).toHaveTextContent('Greater than');
   });
 
-  it('toggles global logical operator when two filters are present', () => {
-    render(<FilterModal {...commonProps} />);
-
-    // Add first filter (Amount equal 5)
-    fireEvent.change(screen.getAllByTestId('mock-select')[0], {
-      target: { value: 'Amount' },
-    });
-    fireEvent.change(screen.getByTestId('continuous-filter-type'), {
-      target: { value: 'equal' },
-    });
-    // Fill a value for the single-value continuous input (no data-testid but id "continuous-value")
-    const valueInput = document.getElementById('continuous-value');
-    if (valueInput) fireEvent.change(valueInput, { target: { value: '5' } });
-    fireEvent.click(screen.getByRole('button', { name: /add filter/i }));
-
-    // Add second filter on Date
-    fireEvent.change(screen.getAllByTestId('mock-select')[0], {
-      target: { value: 'Date' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /add filter/i }));
-
-    // Now two filters exist — global operator button should appear
-    const globalBtn = screen.queryByRole('button', {
-      name: /global logical operator/i,
-    });
-    // It may or may not appear depending on rendering; just confirm no throw
-    expect(true).toBe(true);
-  });
-
   it('continuous less-than filter adds correctly', () => {
     render(<FilterModal {...commonProps} />);
 

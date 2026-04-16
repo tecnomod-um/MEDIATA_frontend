@@ -459,15 +459,7 @@ describe('CleanPanel', () => {
       // Change value to invalid JSON to trigger validation
       if (textarea) fireEvent.change(textarea, { target: { value: 'not-json' } });
       fireEvent.click(screen.getByTitle(/apply cleaning/i));
-      // With vi.mock hoisted, textarea change sets replacementMapText to 'not-json',
-      // triggering "Replacement map is not valid JSON."
-      // If textarea not found, "{}" default: no error fires → check toast OR onApply
-      if (toast.error.mock.calls.length > 0) {
-        expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/replacement map/i));
-      } else {
-        // textarea interaction unavailable; skip this specific validation branch
-        expect(true).toBe(true);
-      }
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/replacement map/i));
     });
 
     it('validates padValues - shows error when padLength is 0', () => {

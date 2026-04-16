@@ -1517,17 +1517,14 @@ describe('Integration Page', () => {
     });
   });
 
-  test('onSelectMapping sets loadedDraft for a standard mapping', async () => {
+  test('onSelectMapping wires a valid callback to MappingsResult', async () => {
     await renderWithColumns();
 
-    // Mappings are initialised by initializeMappings after file load; at least
-    // one mapping entry should exist in capturedMappingsResultProps.
     await waitFor(() =>
       expect(capturedMappingsResultProps.current.onSelectMapping).toBeTypeOf('function')
     );
 
     act(() => {
-      // Simulate clicking the first mapping key that was created
       const mappings = capturedMappingsResultProps.current.mappings || [];
       if (mappings.length) {
         const key = Object.keys(mappings[0])[0];
@@ -1535,9 +1532,7 @@ describe('Integration Page', () => {
       }
     });
 
-    // No assertion on loadedDraft since we can't access state directly,
-    // but the call must not throw.
-    expect(true).toBe(true);
+    expect(screen.getByTestId('ColumnMapping')).toBeInTheDocument();
   });
 
   describe('Mobile layout', () => {
@@ -1655,53 +1650,33 @@ describe('Integration Page', () => {
       expect(capturedColumnMappingProps.current.onClear).toBeUndefined();
     });
 
-    test('handleColumnClick adds a column to temporaryGroups', async () => {
+    test('onMappingChange callback is wired and does not throw', async () => {
       await renderWithColumns();
       const col = { column: 'col1', fileName: 'data.csv', nodeId: 'node1' };
       act(() => { capturedColumnMappingProps.current.onMappingChange?.([col]); });
-      // No throw — groups state updated
-      expect(true).toBe(true);
-    });
-
-    test('handleDragStart is wired: dataTransfer.setData would be called', () => {
-      // handleDragStart is a stable callback; just verify it exists after render
-      // (actual drag events are covered by ColumnSearchList's own tests)
-      expect(typeof handleDragStart === 'undefined' || true).toBe(true);
-    });
-
-    test('handleSelectMapping with a standard mapping sets loadedDraft without throwing', async () => {
-      await renderWithColumns();
-      act(() => {
-        const mappings = capturedMappingsResultProps.current.mappings || [];
-        if (mappings.length) {
-          const key = Object.keys(mappings[0])[0];
-          capturedMappingsResultProps.current.onSelectMapping(0, key);
-        }
-      });
-      expect(true).toBe(true);
+      expect(screen.getByTestId('ColumnMapping')).toBeInTheDocument();
     });
 
     test('handleSelectMapping called twice with same id is a no-op on second call', async () => {
       await renderWithColumns();
-      const mappings = capturedMappingsResultProps.current.mappings || [];
-      if (!mappings.length) return;
-      const key = Object.keys(mappings[0])[0];
+      await waitFor(() =>
+        expect(capturedMappingsResultProps.current.mappings?.length).toBeGreaterThan(0)
+      );
+      const key = Object.keys(capturedMappingsResultProps.current.mappings[0])[0];
       act(() => { capturedMappingsResultProps.current.onSelectMapping(0, key); });
       act(() => { capturedMappingsResultProps.current.onSelectMapping(0, key); });
-      // Should not throw
-      expect(true).toBe(true);
+      expect(screen.getByTestId('ColumnMapping')).toBeInTheDocument();
     });
   });
 
   describe('handleMappingChange', () => {
-    test('calls onMappingChange prop which updates temporaryGroups', async () => {
+    test('onMappingChange prop is wired and component remains mounted after call', async () => {
       await renderWithColumns();
       const groups = [{ column: 'col1', fileName: 'data.csv', nodeId: 'node1', values: [] }];
       act(() => {
         capturedColumnMappingProps.current.onMappingChange?.(groups);
       });
-      // No throw; groups update is internal state
-      expect(true).toBe(true);
+      expect(screen.getByTestId('ColumnMapping')).toBeInTheDocument();
     });
   });
 
@@ -1905,9 +1880,9 @@ describe('Integration Page', () => {
       await act(async () => { render(<Integration />); });
       await waitFor(() => expect(screen.queryByTestId('MappingsResult')).toBeInTheDocument());
 
-      // Call onClear — should not throw
+      // Call onClear — verify ColumnMapping remains mounted after state reset
       act(() => { capturedColumnMappingProps.current.onClear?.(); });
-      expect(true).toBe(true);
+      expect(screen.getByTestId('ColumnMapping')).toBeInTheDocument();
 
       // Restore
       Object.defineProperty(window, 'matchMedia', {
@@ -2091,25 +2066,6 @@ describe('Integration Page', () => {
         expect(mockToastError).toHaveBeenCalledWith('Network error')
       );
       consoleSpy.mockRestore();
-    });
-  });
-
-  describe('handleProcessMappings', () => {
-    beforeEach(() => {
-      mockToastSuccess.mockClear();
-      mockToastError.mockClear();
-    });
-
-    test('throws and shows error when no datasets are selected', async () => {
-      const { toast } = await import('react-toastify');
-      await renderWithColumns();
-
-      const capturedFileMapperProps = {};
-      // We need to get the onSend prop from FileMapperModal
-      // The mock captures props - let me use a different approach:
-      // Actually FileMapperModal is mocked and doesn't capture props
-      // We can't easily call onSend; skip this test path
-      expect(true).toBe(true);
     });
   });
 

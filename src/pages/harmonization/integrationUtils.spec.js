@@ -12,9 +12,6 @@ import {
   makeId,
 } from "./integrationUtils";
 
-// ---------------------------------------------------------------------------
-// parseCSV
-// ---------------------------------------------------------------------------
 describe("parseCSV", () => {
   it("parses a single row with values", () => {
     const result = parseCSV("col1,val1,val2");
@@ -47,9 +44,6 @@ describe("parseCSV", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// formatValue
-// ---------------------------------------------------------------------------
 describe("formatValue", () => {
   it("formats a valid date string to ISO date portion", () => {
     expect(formatValue("2024-03-15", "date")).toBe("2024-03-15");
@@ -89,9 +83,6 @@ describe("formatValue", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// extractHierarchy
-// ---------------------------------------------------------------------------
 describe("extractHierarchy", () => {
   it("returns the hierarchy array from a valid response", () => {
     const res = { hierarchy: [{ a: 1 }, { b: 2 }] };
@@ -127,9 +118,6 @@ describe("extractHierarchy", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// normalizeEnrichStep
-// ---------------------------------------------------------------------------
 describe("normalizeEnrichStep", () => {
   it("returns the message unchanged when no batch clause", () => {
     expect(normalizeEnrichStep("Processing records")).toBe("Processing records");
@@ -160,9 +148,6 @@ describe("normalizeEnrichStep", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// mergeColumnsData
-// ---------------------------------------------------------------------------
 describe("mergeColumnsData", () => {
   it("appends a new column entry that doesn't exist yet", () => {
     const existing = [{ column: "col1", fileName: "f.csv", nodeId: "n1", values: ["a"] }];
@@ -214,9 +199,6 @@ describe("mergeColumnsData", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// makeId
-// ---------------------------------------------------------------------------
 describe("makeId", () => {
   it("returns a non-empty string", () => {
     const id = makeId();
@@ -230,9 +212,6 @@ describe("makeId", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// buildGroupsFromMapping
-// ---------------------------------------------------------------------------
 describe("buildGroupsFromMapping", () => {
   const columnsData = [
     { nodeId: "n1", fileName: "f.csv", column: "col1", values: ["a"] },
@@ -318,9 +297,6 @@ describe("buildGroupsFromMapping", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// buildStandardDraft
-// ---------------------------------------------------------------------------
 describe("buildStandardDraft", () => {
   const columnsData = [
     { nodeId: "n1", fileName: "f.csv", column: "col1", values: ["a"] },
@@ -427,9 +403,6 @@ describe("buildStandardDraft", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// collectOneHotFamily
-// ---------------------------------------------------------------------------
 describe("collectOneHotFamily", () => {
   const mappings = [
     {
@@ -480,9 +453,6 @@ describe("collectOneHotFamily", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// buildOneHotDraft
-// ---------------------------------------------------------------------------
 describe("buildOneHotDraft", () => {
   const columnsData = [
     { nodeId: "n1", fileName: "f.csv", column: "sex", values: ["M", "F"] },

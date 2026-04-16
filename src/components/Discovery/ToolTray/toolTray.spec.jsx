@@ -46,8 +46,12 @@ vi.mock('../ElementExporter/elementExporter', () => ({
 
 vi.mock('../CompareFilesModal/compareFilesModal', () => ({
   __esModule: true,
-  default: ({ isOpen }) =>
-    isOpen ? <div data-testid="compare-modal" /> : null,
+  default: ({ isOpen, closeModal }) =>
+    isOpen ? (
+      <div data-testid="compare-modal">
+        <button data-testid="close-modal-btn" onClick={closeModal}>Close</button>
+      </div>
+    ) : null,
 }));
 
 vi.mock('../../../util/petitionHandler', () => ({
@@ -76,8 +80,6 @@ vi.mock('./toolTray.module.css', () => ({
     }
   ),
 }));
-
-vi.useFakeTimers();
 
 const basicFeature = (name, type, file = 'fileA.csv') => ({
   featureName: name,
@@ -120,6 +122,11 @@ function getDefaultProps() {
 describe('<ToolTray/>', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('renders core sections & children when open', () => {
@@ -188,12 +195,7 @@ describe('<ToolTray/>', () => {
     expect(props.toggleToolTray).toHaveBeenCalled();
   });
 
-  describe('<ToolTray/> (extra coverage)', () => {
-    beforeEach(() => {
-      vi.clearAllMocks();
-    });
-
-    it('renders closed state with right-chevron when isToolTrayOpen=false', () => {
+  it('renders closed state with right-chevron when isToolTrayOpen=false', () => {
       const props = { ...getDefaultProps(), isToolTrayOpen: false };
       render(<ToolTray {...props} />);
 
@@ -292,10 +294,6 @@ describe('<ToolTray/>', () => {
     });
 
     describe('toggleFeatureType error handling', () => {
-      beforeEach(() => {
-        vi.clearAllMocks();
-      });
-
       it('toasts an error when recalc response has "cannot be converted"', async () => {
         recalculateFeature.mockResolvedValue({
           message: 'Cannot be converted to categorical',
@@ -490,17 +488,14 @@ describe('<ToolTray/>', () => {
       expect(result.categoricalFeatures.some((f) => f.featureName === 'Fruit')).toBe(true);
     });
 
-    it('closes the compare modal via its closeModal callback', () => {
+    it('closes the compare modal when its closeModal callback is invoked', () => {
       render(<ToolTray {...getDefaultProps()} />);
 
-      // Open the modal first
       fireEvent.click(screen.getByRole('button', { name: /integrity metrics/i }));
       expect(screen.getByTestId('compare-modal')).toBeInTheDocument();
 
-      // The mock passes isOpen=false to CompareFilesModal when closeModal is called;
-      // we simulate that by clicking the button again which sets isCompareModalOpen to false
-      // In practice closeModal is called internally — just verify toggling works
-      expect(screen.getByTestId('compare-modal')).toBeInTheDocument();
+      fireEvent.click(screen.getByTestId('close-modal-btn'));
+      expect(screen.queryByTestId('compare-modal')).not.toBeInTheDocument();
     });
 
     it('creates ripple effect on file toggle click', () => {
@@ -622,5 +617,4 @@ describe('<ToolTray/>', () => {
       await waitFor(() => expect(recalculateFeature).toHaveBeenCalled());
       await waitFor(() => expect(props.setData).toHaveBeenCalled());
     });
-  });
 });

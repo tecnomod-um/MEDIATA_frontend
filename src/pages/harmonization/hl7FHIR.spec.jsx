@@ -334,7 +334,7 @@ describe("<HL7FHIR />", () => {
     if (elementId !== undefined) {
       act(() => { clusterProps.onMoveElement(elementId, clusterProps.clusters[0].id); });
     }
-    expect(true).toBe(true);
+    expect(screen.getByTestId('cluster-list')).toBeInTheDocument();
   });
 
   it("handleMoveElement: element not found returns same clusters", async () => {
