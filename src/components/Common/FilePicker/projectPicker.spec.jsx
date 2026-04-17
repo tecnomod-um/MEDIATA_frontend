@@ -35,7 +35,7 @@ describe("<ProjectPicker />", () => {
   });
 
   afterEach(() => {
-    vi.runOnlyPendingTimers();
+    vi.clearAllTimers();
     vi.useRealTimers();
     delete HTMLElement.prototype.scrollHeight;
   });

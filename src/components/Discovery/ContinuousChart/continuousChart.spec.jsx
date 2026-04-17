@@ -4,10 +4,13 @@ import '@testing-library/jest-dom';
 import ContinuousChart from './continuousChart';
 import { vi } from "vitest";
 
+const capturedBarProps = vi.hoisted(() => ({ current: null }));
+
 vi.mock('react-chartjs-2', () => {
   const ReactInside = require('react');
   return {
     Bar: ReactInside.forwardRef(({ data, options }, ref) => {
+      capturedBarProps.current = { data, options };
       return (
         <div
           data-testid="mock-bar"
@@ -106,5 +109,29 @@ describe('<ContinuousChart />', () => {
     fireEvent.keyDown(container, { key: 'Enter' });
     
     expect(onClick).toHaveBeenCalled();
+  });
+
+  it('tooltip title callback returns the correct bin range label', () => {
+    render(<ContinuousChart feature={FEATURE} showOutliers={true} />);
+
+    const titleCb = capturedBarProps.current?.options?.plugins?.tooltip?.callbacks?.title;
+    expect(typeof titleCb).toBe('function');
+    expect(titleCb([{ dataIndex: 2 }])).toBe('2–3');
+  });
+
+  it('tooltip title callback returns empty string for out-of-range index', () => {
+    render(<ContinuousChart feature={FEATURE} showOutliers={true} />);
+
+    const titleCb = capturedBarProps.current?.options?.plugins?.tooltip?.callbacks?.title;
+    expect(typeof titleCb).toBe('function');
+    expect(titleCb([{ dataIndex: 99 }])).toBe('');
+  });
+
+  it('tooltip label callback returns null', () => {
+    render(<ContinuousChart feature={FEATURE} showOutliers={true} />);
+
+    const labelCb = capturedBarProps.current?.options?.plugins?.tooltip?.callbacks?.label;
+    expect(typeof labelCb).toBe('function');
+    expect(labelCb()).toBeNull();
   });
 });
