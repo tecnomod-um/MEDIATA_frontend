@@ -14,7 +14,10 @@ import SchemaTray from "../../components/Common/SchemaTray/schemaTray";
 import MappingsResult from "../../components/Integration/MappingsResult/mappingsResult";
 import { generateDistinctColors } from "../../util/colors";
 import { buildMappingSpec } from "../../util/mappingSpec";
-import { normalizeUploadedSpec, collectSpecSources, rebuildMappingsFromSpec } from "../../util/uploadedMappingSpec";
+import UploadedMappingsResolutionModal from "../../components/Integration/UploadedMappingsResolutionModal/uploadedMappingsResolutionModal";
+import { normalizeUploadedSpec, collectSpecSources, rebuildMappingsFromSpec, applyUploadedSpecResolutions, reconcileMappingsWithColumnsData } from "../../util/uploadedMappingSpec";
+import { fetchLiveElementFilesByNode, analyzeUploadedSpecAvailabilityLive, checkReplacementFileCompatibility } from "../../util/uploadedMappingResolution";
+import Papa from "papaparse";
 
 function Integration() {
   const location = useLocation();
@@ -36,12 +39,32 @@ function Integration() {
   const [isMobile, setIsMobile] = useState(false);
   const [isGenerateMetadataLoading, setIsGenerateMetadataLoading] = useState(false);
   const [generateMetadataProgress, setGenerateMetadataProgress] = useState(0);
+
+  const [isUploadResolutionOpen, setIsUploadResolutionOpen] = useState(false);
+  const [pendingUploadSpec, setPendingUploadSpec] = useState(null);
+  const [pendingUploadMissingRefs, setPendingUploadMissingRefs] = useState([]);
+  const [pendingUploadRequiredColumnsBySource, setPendingUploadRequiredColumnsBySource] = useState({});
+
   const hasProcessedElementFilesRef = useRef(false);
   const enrichPollRef = useRef(null);
   const lastEnrichMsgRef = useRef("");
   const lastEnrichStepRef = useRef("");
   const enrichToastIdRef = useRef(null);
   const parseToastIdRef = useRef(null);
+
+  const refreshElementFileListFromBackend = useCallback(async () => {
+    const liveFilesByNode = await fetchLiveElementFilesByNode(selectedNodes);
+
+    const nextElementFileList = Array.from(liveFilesByNode.values()).map((entry) => ({
+      nodeId: entry.nodeId,
+      nodeName: entry.nodeName,
+      files: entry.files,
+    }));
+
+    setElementFileList(nextElementFileList);
+
+    return nextElementFileList;
+  }, [selectedNodes]);
 
   useEffect(() => {
     return () => {
@@ -93,10 +116,16 @@ function Integration() {
   }, [selectedNodes]);
 
   const parseCSV = (text) => {
-    const lines = text.trim().split("\n");
-    return lines.map((line) => {
-      const [column, ...values] = line.split(",");
-      return { column, values };
+    const result = Papa.parse(text, {
+      skipEmptyLines: true,
+    });
+
+    return result.data.map((row) => {
+      const [column, ...values] = row;
+      return {
+        column: column?.trim?.() ?? "",
+        values: values.map((v) => (typeof v === "string" ? v.trim() : v)),
+      };
     });
   };
 
@@ -1206,10 +1235,12 @@ function Integration() {
   );
 
   const loadReferencedElementFiles = useCallback(
-    async (sourceRefs) => {
+    async (sourceRefs, providedElementFileList = null) => {
       if (!Array.isArray(sourceRefs) || sourceRefs.length === 0) {
         return columnsData;
       }
+
+      const currentElementFileList = providedElementFileList || elementFileList;
 
       const existing = new Set(
         columnsData.map((c) => `${c.nodeId}::${c.fileName}`)
@@ -1228,7 +1259,7 @@ function Integration() {
       );
 
       const availableFilesByNode = new Map(
-        (elementFileList || []).map((entry) => [
+        (currentElementFileList || []).map((entry) => [
           String(entry.nodeId),
           new Set(entry.files || []),
         ])
@@ -1291,45 +1322,122 @@ function Integration() {
     [columnsData, elementFileList, selectedNodes, mergeColumnsData]
   );
 
+  const applyUploadedSpecToState = useCallback(
+    async (specToLoad, providedElementFileList = null) => {
+      const sourceRefs = collectSpecSources(specToLoad);
+
+      if (sourceRefs.length === 0) {
+        throw new Error("The uploaded spec does not reference any source element files.");
+      }
+
+      const nextColumnsData = await loadReferencedElementFiles(
+        sourceRefs,
+        providedElementFileList
+      );
+
+      const rebuiltMappings = rebuildMappingsFromSpec(specToLoad);
+      const nextMappings = reconcileMappingsWithColumnsData(
+        rebuiltMappings,
+        nextColumnsData
+      );
+
+      if (!nextMappings.length) {
+        throw new Error("The uploaded spec did not produce any loadable mappings.");
+      }
+
+      setColumnsData(nextColumnsData);
+      setMappings(nextMappings);
+      setTemporaryGroups([]);
+      setDeletedItems([]);
+      setLoadedDraft(null);
+      setSelectedMappingId(null);
+      setEditTarget(null);
+
+      if (specToLoad.targetSchema) {
+        setSchema(specToLoad.targetSchema);
+      }
+
+      if (isMobile) {
+        setActiveMobilePanel("hierarchy");
+      }
+
+      toast.success("Mapping spec loaded successfully.");
+    },
+    [isMobile, loadReferencedElementFiles]
+  );
+
+  const handleConfirmUploadResolution = useCallback(
+    async (resolutionMap) => {
+      try {
+        const rewrittenSpec = applyUploadedSpecResolutions(
+          pendingUploadSpec,
+          resolutionMap
+        );
+
+        const { nextElementFileList } = await refreshElementFileListFromBackend();
+
+        setIsUploadResolutionOpen(false);
+        setPendingUploadSpec(null);
+        setPendingUploadMissingRefs([]);
+        setPendingUploadRequiredColumnsBySource({});
+
+        await applyUploadedSpecToState(rewrittenSpec, nextElementFileList);
+      } catch (error) {
+        console.error("Failed to resolve uploaded mappings:", error);
+        toast.error(error?.message || "Failed to resolve uploaded mapping spec.");
+      }
+    },
+    [pendingUploadSpec, refreshElementFileListFromBackend, applyUploadedSpecToState]
+  );
+
+  const handleCloseUploadResolution = useCallback(() => {
+    setIsUploadResolutionOpen(false);
+    setPendingUploadSpec(null);
+    setPendingUploadMissingRefs([]);
+    setPendingUploadRequiredColumnsBySource({});
+  }, []);
+
+  const handleCheckUploadResolutionCompatibility = useCallback(
+    async (sourceId, replacementNodeId, replacementFileName) => {
+      return checkReplacementFileCompatibility({
+        selectedNodes,
+        sourceId,
+        replacementNodeId,
+        replacementFileName,
+        requiredColumnsBySource: pendingUploadRequiredColumnsBySource,
+      });
+    },
+    [selectedNodes, pendingUploadRequiredColumnsBySource]
+  );
+
   const handleUploadMappingsSpec = useCallback(
     async (uploadedSpec) => {
       try {
         const spec = normalizeUploadedSpec(uploadedSpec);
-        const sourceRefs = collectSpecSources(spec);
 
-        if (sourceRefs.length === 0) {
-          throw new Error("The uploaded spec does not reference any source element files.");
+        const { liveFilesByNode, nextElementFileList } = await refreshElementFileListFromBackend();
+
+        const availability = await analyzeUploadedSpecAvailabilityLive(
+          spec,
+          selectedNodes,
+          liveFilesByNode
+        );
+
+        if (availability.requiresResolution) {
+          setPendingUploadSpec(spec);
+          setPendingUploadMissingRefs(availability.missing);
+          setPendingUploadRequiredColumnsBySource(availability.requiredColumnsBySource || {});
+          setIsUploadResolutionOpen(true);
+          return;
         }
 
-        const nextColumnsData = await loadReferencedElementFiles(sourceRefs);
-        const nextMappings = rebuildMappingsFromSpec(spec);
-
-        if (!nextMappings.length) {
-          throw new Error("The uploaded spec did not produce any loadable mappings.");
-        }
-
-        setColumnsData(nextColumnsData);
-        setMappings(nextMappings);
-        setTemporaryGroups([]);
-        setDeletedItems([]);
-        setLoadedDraft(null);
-        setSelectedMappingId(null);
-        setEditTarget(null);
-
-        if (spec.targetSchema) {
-          setSchema(spec.targetSchema);
-        }
-
-        if (isMobile) {
-          setActiveMobilePanel("hierarchy");
-        }
-
-        toast.success("Mapping spec loaded successfully.");
+        await applyUploadedSpecToState(spec, nextElementFileList);
       } catch (error) {
         console.error("Failed to load uploaded mappings:", error);
         toast.error(error?.message || "Failed to load uploaded mapping spec.");
       }
-    }, [isMobile, loadReferencedElementFiles]
+    },
+    [selectedNodes, refreshElementFileListFromBackend, applyUploadedSpecToState]
   );
 
   return (
@@ -1345,7 +1453,13 @@ function Integration() {
         nodes={selectedNodes}
         onSend={handleProcessMappings}
       />
-
+      <UploadedMappingsResolutionModal
+        isOpen={isUploadResolutionOpen}
+        closeModal={handleCloseUploadResolution}
+        missingRefs={pendingUploadMissingRefs}
+        onConfirm={handleConfirmUploadResolution}
+        onCheckCompatibility={handleCheckUploadResolutionCompatibility}
+      />
       {!columnsData.length && (
         <FileExplorer
           nodes={selectedNodes}

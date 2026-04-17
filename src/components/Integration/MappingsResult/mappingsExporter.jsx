@@ -82,22 +82,23 @@ function MappingsExporter({ mappings, schema, onUploadMappings }) {
 
   const handleDownloadMappings = () => {
     try {
-      const csvString = generateMappingsCSV(mappings);
-      const csvBlob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
-
+      // const csvString = generateMappingsCSV(mappings);
+      // const csvBlob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+  
       const mappingSpec = buildMappingSpec({
         mappings,
         schema,
       });
-
+  
       const specBlob = new Blob(
         [JSON.stringify(mappingSpec, null, 2)],
         { type: "application/json;charset=utf-8;" }
       );
-
-      downloadBlob(csvBlob, "mappings_elements.csv");
+  
+      // downloadBlob(csvBlob, "mappings_elements.csv");
       downloadBlob(specBlob, "mapping_spec.json");
-      toast.success("Mappings CSV and mapping spec downloaded successfully!");
+  
+      toast.success("Mapping spec downloaded successfully!");
     } catch (error) {
       console.error("Failed to generate downloads:", error);
       toast.error(`Error generating downloads: ${error.message}`);

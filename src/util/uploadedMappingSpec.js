@@ -1,3 +1,139 @@
+function analyzeUploadedSpecAvailability(spec, selectedNodes, elementFileList) {
+  const sourceRefs = collectSpecSources(spec);
+
+  const selectedNodeIds = new Set((selectedNodes || []).map((n) => String(n.nodeId)));
+  const filesByNode = new Map(
+    (elementFileList || []).map((entry) => [
+      String(entry.nodeId),
+      Array.isArray(entry.files) ? entry.files : [],
+    ])
+  );
+
+  const resolved = [];
+  const missing = [];
+
+  sourceRefs.forEach((ref) => {
+    const nodeId = String(ref.nodeId || "");
+    const fileName = String(ref.fileName || "");
+    const sourceId = `${nodeId}::${fileName}`;
+
+    const nodeSelected = selectedNodeIds.has(nodeId);
+    const nodeFiles = filesByNode.get(nodeId) || [];
+    const fileExists = nodeSelected && nodeFiles.includes(fileName);
+
+    if (nodeSelected && fileExists) {
+      resolved.push({ ...ref, sourceId });
+      return;
+    }
+
+    let candidateNodes = [];
+
+    if (!nodeSelected) {
+      candidateNodes = (selectedNodes || []).map((n) => ({
+        nodeId: String(n.nodeId),
+        nodeName: n.name || String(n.nodeId),
+        files: filesByNode.get(String(n.nodeId)) || [],
+      }));
+    } else {
+      candidateNodes = [
+        {
+          nodeId,
+          nodeName:
+            (selectedNodes || []).find((n) => String(n.nodeId) === nodeId)?.name || nodeId,
+          files: nodeFiles,
+        },
+      ];
+    }
+
+    missing.push({
+      sourceId,
+      nodeId,
+      fileName,
+      reason: !nodeSelected ? "missing-node" : "missing-file",
+      candidateNodes,
+    });
+  });
+
+  return {
+    sourceRefs,
+    resolved,
+    missing,
+    requiresResolution: missing.length > 0,
+  };
+}
+
+function applyUploadedSpecResolutions(spec, resolutionMap) {
+  const cloned = JSON.parse(JSON.stringify(spec || {}));
+
+  const rewriteSourceId = (sourceId) => {
+    const key = String(sourceId || "");
+    const replacement = resolutionMap?.[key]?.sourceId;
+    return replacement || key;
+  };
+
+  const rewriteVarName = (varName) => {
+    const parsed = parseVarName(varName);
+    if (!parsed.sourceId || !parsed.column) return varName;
+
+    const nextSourceId = rewriteSourceId(parsed.sourceId);
+    return `${nextSourceId}::${parsed.column}`;
+  };
+
+  const walkLogic = (node) => {
+    if (Array.isArray(node)) {
+      node.forEach(walkLogic);
+      return;
+    }
+
+    if (!node || typeof node !== "object") return;
+
+    if (Object.prototype.hasOwnProperty.call(node, "var")) {
+      if (typeof node.var === "string") {
+        node.var = rewriteVarName(node.var);
+      } else if (Array.isArray(node.var) && typeof node.var[0] === "string") {
+        node.var[0] = rewriteVarName(node.var[0]);
+      }
+    }
+
+    Object.values(node).forEach(walkLogic);
+  };
+
+  (cloned.sources || []).forEach((source) => {
+    const nextSourceId = rewriteSourceId(source.sourceId);
+    const parsed = parseSourceId(nextSourceId);
+    source.sourceId = nextSourceId;
+    source.nodeId = parsed.nodeId;
+    source.fileName = parsed.fileName;
+  });
+
+  (cloned.datasetBindings || []).forEach((binding) => {
+    const nextSourceId = rewriteSourceId(binding.sourceId);
+    const parsed = parseSourceId(nextSourceId);
+    binding.sourceId = nextSourceId;
+    binding.nodeId = parsed.nodeId;
+    binding.elementFileName = parsed.fileName;
+  });
+
+  (cloned.mappings || []).forEach((mappingDef) => {
+    (mappingDef.inputs || []).forEach((input) => {
+      input.sourceId = rewriteSourceId(input.sourceId);
+    });
+
+    (mappingDef.rules || []).forEach((rule) => {
+      if (rule?.then?.sourceId) {
+        rule.then.sourceId = rewriteSourceId(rule.then.sourceId);
+      }
+      walkLogic(rule?.logic);
+    });
+
+    (mappingDef.outputs || []).forEach((output) => {
+      walkLogic(output?.logic);
+    });
+  });
+
+  return cloned;
+}
+
 function normalizeUploadedSpec(spec) {
   if (!spec || typeof spec !== "object" || Array.isArray(spec)) {
     throw new Error("Uploaded file is not a valid mapping spec object.");
@@ -393,8 +529,96 @@ function rebuildMappingsFromSpec(spec) {
   return rebuilt;
 }
 
+function reconcileMappingsWithColumnsData(mappings, columnsData) {
+  const availableColumns = new Map();
+
+  (columnsData || []).forEach((col) => {
+    const key = `${col.nodeId}::${col.fileName}::${col.column}`;
+    availableColumns.set(key, {
+      nodeId: col.nodeId,
+      fileName: col.fileName,
+      column: col.column,
+    });
+  });
+
+  return (mappings || []).map((mappingObj) => {
+    const nextObj = {};
+
+    Object.entries(mappingObj || {}).forEach(([mappingKey, mapping]) => {
+      const nextGroups = (mapping?.groups || []).map((group) => ({
+        ...group,
+        values: (group?.values || []).map((valueObj) => ({
+          ...valueObj,
+          mapping: (valueObj?.mapping || []).filter((m) => {
+            const key = `${m.nodeId}::${m.fileName}::${m.groupColumn}`;
+            return availableColumns.has(key);
+          }),
+        })),
+      }));
+
+      nextObj[mappingKey] = {
+        ...mapping,
+        groups: nextGroups,
+        columns: Array.from(
+          new Set(
+            nextGroups.flatMap((g) =>
+              (g?.values || []).flatMap((v) =>
+                (v?.mapping || []).map((m) => m.groupColumn)
+              )
+            )
+          )
+        ),
+      };
+    });
+
+    return nextObj;
+  });
+}
+
+function collectRequiredColumnsBySource(spec) {
+  const found = new Map();
+
+  const addColumn = (nodeId, fileName, column) => {
+    const safeNodeId = String(nodeId || "");
+    const safeFileName = String(fileName || "");
+    const safeColumn = String(column || "").trim();
+
+    if (!safeNodeId || !safeFileName || !safeColumn) return;
+
+    const sourceId = `${safeNodeId}::${safeFileName}`;
+
+    if (!found.has(sourceId)) {
+      found.set(sourceId, new Set());
+    }
+
+    found.get(sourceId).add(safeColumn);
+  };
+
+  (spec?.mappings || []).forEach((mappingDef) => {
+    (mappingDef?.rules || []).forEach((rule) => {
+      extractLogicEntries(rule?.logic).forEach((entry) => {
+        addColumn(entry.nodeId, entry.fileName, entry.groupColumn);
+      });
+    });
+
+    (mappingDef?.outputs || []).forEach((output) => {
+      extractLogicEntries(output?.logic).forEach((entry) => {
+        addColumn(entry.nodeId, entry.fileName, entry.groupColumn);
+      });
+    });
+  });
+
+  return Object.fromEntries(
+    Array.from(found.entries()).map(([sourceId, cols]) => [sourceId, Array.from(cols)])
+  );
+}
+
 export {
   normalizeUploadedSpec,
   collectSpecSources,
   rebuildMappingsFromSpec,
+  analyzeUploadedSpecAvailability,
+  applyUploadedSpecResolutions,
+  reconcileMappingsWithColumnsData,
+  collectRequiredColumnsBySource,
 };
