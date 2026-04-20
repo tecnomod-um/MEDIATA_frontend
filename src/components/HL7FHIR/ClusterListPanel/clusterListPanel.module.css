@@ -22,7 +22,7 @@
 .title {
   font-size: var(--font-size-lg);
   font-weight: 600;
-  color: var(--text-primary-color);
+  color: var(--text-color-primary);
   margin: 0;
 }
 
@@ -30,8 +30,8 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: var(--button-secondary-bg);
-  color: var(--button-secondary-text);
+  background: var(--button-add-mapping);
+  color: var(--text-color-on-darkbg);
   border: none;
   padding: 6px 10px;
   border-radius: 6px;
@@ -41,7 +41,7 @@
 }
 
 .regenBtn:hover {
-  background: var(--button-secondary-hover);
+  background: var(--button-add-mapping-hover);
   transform: scale(1.05);
 }
 
@@ -95,7 +95,7 @@
 }
 
 .item:nth-child(odd) {
-  background: rgba(var(--surface-rgb), 0.95);
+  background: var(--background-color-secondary);
 }
 
 .item:last-child {
@@ -105,22 +105,22 @@
 .item:hover,
 .item:focus {
   transform: translateX(4px);
-  background: var(--surface);
+  background: var(--background-color-secondary);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
   outline: none;
 }
 
 .item:focus-visible {
-  outline: 2px solid var(--accent-color);
+  outline: 2px solid var(--background-nav-tool-background-color-active);
 }
 
 .name {
   font-weight: 500;
-  color: var(--text-primary-color);
+  color: var(--text-color-primary);
 }
 
 .count {
-  background: var(--accent-color);
+  background: var(--background-nav-tool-background-color-active);
   font-size: var(--font-size-sm);
   padding: 2px 8px;
   border-radius: 12px;
@@ -128,7 +128,7 @@
 
 .instructions {
   font-size: var(--font-size-sm);
-  color: var(--text-secondary-color);
+  color: var(--text-color-secondary);
   margin-top: 12px;
   text-align: center;
 }

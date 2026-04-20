@@ -21,7 +21,7 @@
 
 .middlePanel {
   width: 50vw;
-  border-right: 1px solid #ddd;
+  border-right: 1px solid var(--border-color-secondary);
   padding: 10px;
   box-sizing: border-box;
   display: flex;
@@ -159,7 +159,7 @@
 }
 
 .controlBtn:active {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--box-shadow-sm);
 }
 
 @container controls-container (max-width: 2200px) {
@@ -251,7 +251,7 @@
     overflow-y: auto;
     overflow-x: hidden;
     background-color: var(--background-color-card);
-    border-bottom: 2px solid #ccc;
+    border-bottom: 2px solid var(--border-color);
   }
 
   .mobileTabs {

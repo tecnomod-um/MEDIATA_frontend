@@ -581,15 +581,15 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
       ? customValues[currentGroupIndex].name || ""
       : "";
 
-  const valueContentSuggestions = useMemo(() => unionEnumSuggestions || [], [unionEnumSuggestions]);
+  const valueContentSuggestions = useMemo(() => (unionEnumSuggestions || []).map((x) => String(x)), [unionEnumSuggestions]);
 
   const valueTerminologySuggestionLabelsFor = useCallback(
     (customValueId) => {
-      const schemaList = unionEnumSuggestions || [];
+      const schemaList = (unionEnumSuggestions || []).map((x) => String(x));
       const snomedList = (snomedValueTerminologySuggestions[customValueId] || []).map((s) => s.label);
 
       const schemaSet = new Set(schemaList.map((x) => x.toLowerCase()));
-      const snomedAppended = snomedList.filter((x) => !schemaSet.has(x.toLowerCase()));
+      const snomedAppended = snomedList.filter((x) => !schemaSet.has(String(x).toLowerCase()));
       return [...schemaList, ...snomedAppended];
     },
     [unionEnumSuggestions, snomedValueTerminologySuggestions]

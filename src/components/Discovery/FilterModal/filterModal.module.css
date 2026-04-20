@@ -248,7 +248,7 @@
   border: none;
   cursor: pointer;
   font-size: var(--font-size-md);
-  color: #d9534f;
+  color: var(--button-delete);
   margin-left: 5px;
 }
 
@@ -340,7 +340,7 @@
   justify-content: center;
   font-size: var(--font-size-base);
   text-align: right;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--box-shadow-sm);
 }
 
 .criteriaRow {
@@ -420,7 +420,7 @@
 :global(.react-select__menu) {
   background: var(--background-color-card) !important;
   border: 1px solid var(--border-color-secondary) !important;
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35) !important;
+  box-shadow: var(--box-shadow-xl) !important;
 }
 
 :global(.react-select__option) {

@@ -38,7 +38,7 @@
   overflow-x: visible;
   position: relative;
   direction: rtl;
-  border-right: 1px solid #ccc;
+  border-right: 1px solid var(--border-color);
   box-sizing: border-box;
 
   scrollbar-width: thin;

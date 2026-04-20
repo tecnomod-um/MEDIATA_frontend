@@ -19,7 +19,7 @@
 
 .middlePanel {
   flex: 1 1 auto;
-  border-right: 1px solid #ddd;
+  border-right: 1px solid var(--border-color-secondary);
   padding: 10px;
   box-sizing: border-box;
   display: flex;

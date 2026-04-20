@@ -35,12 +35,12 @@
 
 .button:hover {
     background-position: 100% 0;
-    background-color: var(----button-color-hover-light);
+    background-color: var(--button-color-hover);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .button:disabled {
-    background-color: #ccc;
+    background-color: var(--border-color);
     cursor: not-allowed;
 }
 

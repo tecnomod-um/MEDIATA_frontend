@@ -97,7 +97,7 @@
 
 .schemaDisplay {
   background-color: var(--text-color-on-darkbg);
-  border: 1px solid #eee;
+  border: 1px solid var(--border-color-tertiary);
   padding: 10px;
   border-radius: 4px;
   white-space: pre-wrap;
@@ -116,7 +116,7 @@
 
   margin: 0;
   background-color: var(--text-color-on-darkbg);
-  border: 1px solid #eee;
+  border: 1px solid var(--border-color-tertiary);
   padding: 10px;
   border-radius: 4px;
 

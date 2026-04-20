@@ -265,7 +265,7 @@
 }
 
 .railStyle {
-  background-color: "#ddd";
+  background-color: var(--border-color-secondary);
 }
 
 .bulletList {

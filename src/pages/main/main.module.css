@@ -234,7 +234,7 @@
 
 .linkListItem:hover {
   background-color: var(--background-color-tertiary);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--box-shadow-md);
 }
 
 .hoverSquare {

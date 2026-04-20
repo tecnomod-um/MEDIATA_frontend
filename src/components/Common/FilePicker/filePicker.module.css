@@ -19,7 +19,7 @@
   padding: 30px 40px;
   width: 90%;
   max-width: 500px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--box-shadow-lg);
   text-align: center;
   max-height: 80%;
 }
@@ -30,7 +30,7 @@
   padding: 30px 40px;
   width: 90%;
   max-width: 500px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--box-shadow-lg);
   text-align: center;
   max-height: 80%;
   overflow-y: auto;

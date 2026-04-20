@@ -38,10 +38,10 @@
   top: 10px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: #f8d7da;
+  background-color: var(--error-bg);
   color: #721c24;
   padding: 10px 20px;
-  border: 1px solid #f5c6cb;
+  border: 1px solid var(--error-border);
   border-radius: 5px;
   user-select: none;
   z-index: 1100;

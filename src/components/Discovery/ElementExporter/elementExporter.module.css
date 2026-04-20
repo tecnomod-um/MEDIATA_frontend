@@ -30,7 +30,7 @@
 }
 
 .smallGreenButton {
-    background-color: #28a745 !important;
+    background-color: var(--button-success) !important;
     color: var(--text-color-on-darkbg);
     padding: 10px 20px;
     border: none;
@@ -43,7 +43,7 @@
     transition: background-color 0.3s ease;
     box-sizing: border-box;
     max-width: 10%;
-    background-color: #218838;
+    background-color: var(--button-success-hover);
 }
 
 
