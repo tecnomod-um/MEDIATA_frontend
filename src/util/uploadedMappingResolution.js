@@ -44,7 +44,6 @@ function parseElementFileColumns(text) {
 
 async function analyzeUploadedSpecAvailabilityLive(spec, selectedNodes, liveFilesByNodeArg = null) {
   const sourceRefs = collectSpecSources(spec);
-  const requiredColumnsBySource = collectRequiredColumnsBySource(spec);
   const liveFilesByNode = liveFilesByNodeArg || await fetchLiveElementFilesByNode(selectedNodes);
 
   const selectedNodeIds = new Set((selectedNodes || []).map((n) => String(n.nodeId)));
@@ -96,16 +95,22 @@ async function analyzeUploadedSpecAvailabilityLive(spec, selectedNodes, liveFile
       fileName,
       displayFileName: fileName,
       displayNodeName: nodeEntry?.nodeName || "",
-      requiredColumns: requiredColumnsBySource[sourceId] || [],
       reason: !nodeSelected ? "missing-node" : "missing-file",
       candidateNodes,
     });
   });
 
+  const requiredColumnsBySource = missing.length > 0
+    ? collectRequiredColumnsBySource(spec)
+    : {};
+
   return {
     sourceRefs,
     resolved,
-    missing,
+    missing: missing.map((ref) => ({
+      ...ref,
+      requiredColumns: requiredColumnsBySource[ref.sourceId] || [],
+    })),
     requiresResolution: missing.length > 0,
     requiredColumnsBySource,
     liveFilesByNode,

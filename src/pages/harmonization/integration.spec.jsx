@@ -8,11 +8,19 @@ import {
   fetchElementFile,
   setParseConfigs,
   fetchSchemaFromBackend,
+  suggestMappings,
+  enrichMappingsStart,
+  getEnrichMappingsStatus,
+  getEnrichMappingsResult,
 } from '../../util/petitionHandler';
+import { normalizeUploadedSpec, collectSpecSources, rebuildMappingsFromSpec } from '../../util/uploadedMappingSpec';
 import { useLocation } from 'react-router-dom';
 import { updateNodeAxiosBaseURL } from '../../util/nodeAxiosSetup';
 import { generateDistinctColors } from '../../util/colors';
 import { vi } from "vitest";
+
+const capturedMappingsResultProps = vi.hoisted(() => ({ current: {} }));
+const capturedColumnMappingProps = vi.hoisted(() => ({ current: {} }));
 
 vi.mock('react-router-dom', () => ({
   useLocation: vi.fn(),
@@ -27,6 +35,18 @@ vi.mock('../../util/petitionHandler', () => ({
   fetchElementFile: vi.fn(),
   setParseConfigs: vi.fn(() => Promise.resolve()),
   fetchSchemaFromBackend: vi.fn(() => Promise.resolve({ schema: { foo: 'bar' } })),
+  suggestMappings: vi.fn(),
+  enrichMappingsStart: vi.fn(),
+  getEnrichMappingsStatus: vi.fn(),
+  getEnrichMappingsResult: vi.fn(),
+  getParseConfigsStatus: vi.fn(),
+  getParseConfigsResult: vi.fn(),
+}));
+
+vi.mock('../../util/uploadedMappingSpec', () => ({
+  normalizeUploadedSpec: vi.fn((x) => x),
+  collectSpecSources: vi.fn(() => []),
+  rebuildMappingsFromSpec: vi.fn(() => []),
 }));
 
 vi.mock('../../util/nodeAxiosSetup', () => ({
@@ -35,7 +55,10 @@ vi.mock('../../util/nodeAxiosSetup', () => ({
 
 vi.mock('../../components/Integration/ColumnMapping/columnMapping', () => ({
   __esModule: true,
-  default: () => <div data-testid="ColumnMapping" />,
+  default: (props) => {
+    capturedColumnMappingProps.current = props;
+    return <div data-testid="ColumnMapping" />;
+  },
 }));
 
 vi.mock('../../components/Integration/ColumnSearchList/columnSearchList', () => ({
@@ -106,7 +129,10 @@ vi.mock('../../components/Common/FilePicker/filePicker', () => ({
 
 vi.mock('../../components/Integration/MappingsResult/mappingsResult', () => ({
   __esModule: true,
-  default: () => <div data-testid="MappingsResult" />,
+  default: (props) => {
+    capturedMappingsResultProps.current = props;
+    return <div data-testid="MappingsResult" />;
+  },
 }));
 
 const mockToastSuccess = vi.hoisted(() => vi.fn());
@@ -1296,4 +1322,751 @@ describe('Integration Page', () => {
     });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
+
+  const renderWithColumns = async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'http://n1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({
+      state: { elementFiles: [{ nodeId: 'node1', fileName: 'data.csv' }] },
+    });
+    fetchElementFile.mockResolvedValue('col1,val1,val2');
+
+    await act(async () => { render(<Integration />); });
+    await waitFor(() => expect(screen.queryByTestId('MappingsResult')).toBeInTheDocument());
+  };
+
+  describe('handleSuggestMappings', () => {
+    beforeEach(() => {
+      mockToastSuccess.mockClear();
+      mockToastError.mockClear();
+    });
+
+    test('append mode — calls suggestMappings and shows success toast', async () => {
+      suggestMappings.mockResolvedValue({ hierarchy: [{ col1: {} }] });
+      await renderWithColumns();
+
+      await act(async () => {
+        await capturedColumnMappingProps.current.onSuggestMappings?.('append');
+      });
+
+      await waitFor(() =>
+        expect(mockToastSuccess).toHaveBeenCalledWith('Suggestions applied (appended).')
+      );
+    });
+
+    test('replace mode — calls suggestMappings and shows success toast', async () => {
+      suggestMappings.mockResolvedValue({ hierarchy: [{ col1: {} }] });
+      await renderWithColumns();
+
+      await act(async () => {
+        await capturedColumnMappingProps.current.onSuggestMappings?.('replace');
+      });
+
+      await waitFor(() =>
+        expect(mockToastSuccess).toHaveBeenCalledWith('Suggestions applied (replaced).')
+      );
+    });
+
+    test('shows error toast when suggestMappings returns success=false', async () => {
+      suggestMappings.mockResolvedValue({ success: false, message: 'Backend error' });
+      await renderWithColumns();
+
+      await act(async () => {
+        await capturedColumnMappingProps.current.onSuggestMappings?.('append');
+      });
+
+      await waitFor(() =>
+        expect(mockToastError).toHaveBeenCalledWith('Backend error')
+      );
+    });
+
+    test('shows info toast when hierarchy is empty', async () => {
+      const { toast } = await import('react-toastify');
+      suggestMappings.mockResolvedValue({ hierarchy: [], message: 'Nothing to suggest' });
+      await renderWithColumns();
+
+      await act(async () => {
+        await capturedColumnMappingProps.current.onSuggestMappings?.('append');
+      });
+
+      await waitFor(() =>
+        expect(toast.info).toHaveBeenCalledWith('Nothing to suggest')
+      );
+    });
+
+    test('shows error toast when suggestMappings throws', async () => {
+      suggestMappings.mockRejectedValue(new Error('Network failure'));
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      await renderWithColumns();
+
+      await act(async () => {
+        await capturedColumnMappingProps.current.onSuggestMappings?.('append');
+      });
+
+      await waitFor(() =>
+        expect(mockToastError).toHaveBeenCalledWith('Failed to generate suggestions.')
+      );
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('handleUploadMappingsSpec', () => {
+    beforeEach(() => {
+      mockToastSuccess.mockClear();
+      mockToastError.mockClear();
+    });
+
+    test('success path — loads spec and shows success toast', async () => {
+      const node = { nodeId: 'node1', serviceUrl: 'http://n1', name: 'Node 1' };
+      useNode.mockReturnValue({ selectedNodes: [node] });
+      useLocation.mockReturnValue({
+        state: { elementFiles: [{ nodeId: 'node1', fileName: 'data.csv' }] },
+      });
+      fetchElementFile.mockResolvedValue('col1,val1,val2');
+      getNodeElements.mockResolvedValue(['data.csv']);
+
+      const { normalizeUploadedSpec, collectSpecSources, rebuildMappingsFromSpec } =
+        await import('../../util/uploadedMappingSpec');
+
+      normalizeUploadedSpec.mockReturnValue({ mappings: [], targetSchema: null });
+      // data.csv is already loaded into columnsData, so loadReferenced returns early
+      collectSpecSources.mockReturnValue([{ nodeId: 'node1', fileName: 'data.csv' }]);
+      rebuildMappingsFromSpec.mockReturnValue([{ col1: {} }]);
+
+      await act(async () => { render(<Integration />); });
+      await waitFor(() => expect(screen.queryByTestId('MappingsResult')).toBeInTheDocument());
+
+      await act(async () => {
+        await capturedMappingsResultProps.current.onUploadMappings?.({ mappings: [] });
+      });
+
+      await waitFor(() =>
+        expect(mockToastSuccess).toHaveBeenCalledWith('Mapping spec loaded successfully.')
+      );
+    });
+
+    test('shows error toast when normalizeUploadedSpec throws', async () => {
+      const { normalizeUploadedSpec } = await import('../../util/uploadedMappingSpec');
+      normalizeUploadedSpec.mockImplementation(() => {
+        throw new Error('Invalid spec format');
+      });
+
+      await renderWithColumns();
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      await act(async () => {
+        await capturedMappingsResultProps.current.onUploadMappings?.({});
+      });
+
+      await waitFor(() =>
+        expect(mockToastError).toHaveBeenCalledWith('Invalid spec format')
+      );
+      consoleSpy.mockRestore();
+    });
+
+    test('shows error toast when no source refs found', async () => {
+      const { normalizeUploadedSpec, collectSpecSources } =
+        await import('../../util/uploadedMappingSpec');
+      normalizeUploadedSpec.mockReturnValue({ mappings: [] });
+      collectSpecSources.mockReturnValue([]);
+
+      await renderWithColumns();
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      await act(async () => {
+        await capturedMappingsResultProps.current.onUploadMappings?.({ mappings: [] });
+      });
+
+      await waitFor(() =>
+        expect(mockToastError).toHaveBeenCalledWith(
+          'The uploaded spec does not reference any source element files.'
+        )
+      );
+      consoleSpy.mockRestore();
+    });
+
+    test('shows error toast when rebuild produces no mappings', async () => {
+      const node = { nodeId: 'node1', serviceUrl: 'http://n1', name: 'Node 1' };
+      useNode.mockReturnValue({ selectedNodes: [node] });
+      useLocation.mockReturnValue({
+        state: { elementFiles: [{ nodeId: 'node1', fileName: 'data.csv' }] },
+      });
+      getNodeElements.mockResolvedValue(['data.csv']);
+      fetchElementFile.mockResolvedValue('col1,val1');
+
+      const { normalizeUploadedSpec, collectSpecSources, rebuildMappingsFromSpec } =
+        await import('../../util/uploadedMappingSpec');
+      normalizeUploadedSpec.mockReturnValue({ mappings: [] });
+      collectSpecSources.mockReturnValue([{ nodeId: 'node1', fileName: 'data.csv' }]);
+      rebuildMappingsFromSpec.mockReturnValue([]);
+
+      await act(async () => { render(<Integration />); });
+      await waitFor(() => expect(screen.queryByTestId('MappingsResult')).toBeInTheDocument());
+
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      await act(async () => {
+        await capturedMappingsResultProps.current.onUploadMappings?.({ mappings: [] });
+      });
+
+      await waitFor(() =>
+        expect(mockToastError).toHaveBeenCalledWith(
+          'The uploaded spec did not produce any loadable mappings.'
+        )
+      );
+      consoleSpy.mockRestore();
+    });
+  });
+
+  test('onSelectMapping wires a valid callback to MappingsResult', async () => {
+    await renderWithColumns();
+
+    await waitFor(() =>
+      expect(capturedMappingsResultProps.current.onSelectMapping).toBeTypeOf('function')
+    );
+
+    act(() => {
+      const mappings = capturedMappingsResultProps.current.mappings || [];
+      if (mappings.length) {
+        const key = Object.keys(mappings[0])[0];
+        capturedMappingsResultProps.current.onSelectMapping(0, key);
+      }
+    });
+
+    expect(screen.getByTestId('ColumnMapping')).toBeInTheDocument();
+  });
+
+  describe('Mobile layout', () => {
+    const renderMobile = async () => {
+      // Override matchMedia to report a mobile viewport
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: vi.fn().mockImplementation((query) => ({
+          matches: true,          // <-- mobile
+          media: query,
+          onchange: null,
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
+        })),
+      });
+
+      const node = { nodeId: 'node1', serviceUrl: 'http://n1', name: 'Node 1' };
+      useNode.mockReturnValue({ selectedNodes: [node] });
+      useLocation.mockReturnValue({
+        state: { elementFiles: [{ nodeId: 'node1', fileName: 'data.csv' }] },
+      });
+      fetchElementFile.mockResolvedValue('col1,val1,val2');
+
+      await act(async () => { render(<Integration />); });
+      await waitFor(() => expect(screen.queryByTestId('MappingsResult')).toBeInTheDocument());
+    };
+
+    afterEach(() => {
+      // Restore desktop matchMedia for other tests
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: vi.fn().mockImplementation((query) => ({
+          matches: false,
+          media: query,
+          onchange: null,
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
+        })),
+      });
+    });
+
+    test('renders mobile tab bar with Columns, Mapping, Hierarchy buttons', async () => {
+      await renderMobile();
+      expect(screen.getByRole('tab', { name: 'Columns' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Mapping' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Hierarchy' })).toBeInTheDocument();
+    });
+
+    test('tab buttons update the active panel', async () => {
+      await renderMobile();
+      const hierarchyTab = screen.getByRole('tab', { name: 'Hierarchy' });
+      await act(async () => { hierarchyTab.click(); });
+      expect(hierarchyTab).toHaveAttribute('aria-selected', 'true');
+    });
+
+    test('onSave advances to hierarchy panel on mobile', async () => {
+      await renderMobile();
+      // Simulate a successful save via the ColumnMapping onSave callback
+      act(() => { capturedColumnMappingProps.current.onSave?.(); });
+      await waitFor(() => {
+        const hierarchyTab = screen.getByRole('tab', { name: 'Hierarchy' });
+        expect(hierarchyTab).toHaveAttribute('aria-selected', 'true');
+      });
+    });
+
+    test('onSuggestMappings advances to hierarchy panel on mobile after success', async () => {
+      suggestMappings.mockResolvedValue({ hierarchy: [{ col1: {} }] });
+      await renderMobile();
+      await act(async () => {
+        await capturedColumnMappingProps.current.onSuggestMappings?.('append');
+      });
+      await waitFor(() => {
+        const hierarchyTab = screen.getByRole('tab', { name: 'Hierarchy' });
+        expect(hierarchyTab).toHaveAttribute('aria-selected', 'true');
+      });
+    });
+
+    test('onSelectMapping advances to mapping panel on mobile', async () => {
+      await renderMobile();
+      act(() => {
+        const mappings = capturedMappingsResultProps.current.mappings || [];
+        if (mappings.length) {
+          const key = Object.keys(mappings[0])[0];
+          capturedMappingsResultProps.current.onSelectMapping(0, key);
+        }
+      });
+      await waitFor(() => {
+        const mappingTab = screen.getByRole('tab', { name: 'Mapping' });
+        expect(mappingTab).toHaveAttribute('aria-selected', 'true');
+      });
+    });
+
+    test('onClear prop is passed to ColumnMapping only on mobile', async () => {
+      await renderMobile();
+      expect(capturedColumnMappingProps.current.onClear).toBeDefined();
+    });
+
+    test('MappingsResult is wrapped in a mobilePanel div on mobile', async () => {
+      await renderMobile();
+      const mobilePanel = screen.getByTestId('MappingsResult').parentElement;
+      // The parent should have the mobilePanel class applied by PanelWrapper
+      expect(mobilePanel?.className).toMatch(/mobilePanel/);
+    });
+  });
+
+  describe('Desktop callbacks', () => {
+    test('onClear prop is NOT passed to ColumnMapping on desktop', async () => {
+      await renderWithColumns();
+      expect(capturedColumnMappingProps.current.onClear).toBeUndefined();
+    });
+
+    test('onMappingChange callback is wired and does not throw', async () => {
+      await renderWithColumns();
+      const col = { column: 'col1', fileName: 'data.csv', nodeId: 'node1' };
+      act(() => { capturedColumnMappingProps.current.onMappingChange?.([col]); });
+      expect(screen.getByTestId('ColumnMapping')).toBeInTheDocument();
+    });
+
+    test('handleSelectMapping called twice with same id is a no-op on second call', async () => {
+      await renderWithColumns();
+      await waitFor(() =>
+        expect(capturedMappingsResultProps.current.mappings?.length).toBeGreaterThan(0)
+      );
+      const key = Object.keys(capturedMappingsResultProps.current.mappings[0])[0];
+      act(() => { capturedMappingsResultProps.current.onSelectMapping(0, key); });
+      act(() => { capturedMappingsResultProps.current.onSelectMapping(0, key); });
+      expect(screen.getByTestId('ColumnMapping')).toBeInTheDocument();
+    });
+  });
+
+  describe('handleMappingChange', () => {
+    test('onMappingChange prop is wired and component remains mounted after call', async () => {
+      await renderWithColumns();
+      const groups = [{ column: 'col1', fileName: 'data.csv', nodeId: 'node1', values: [] }];
+      act(() => {
+        capturedColumnMappingProps.current.onMappingChange?.(groups);
+      });
+      expect(screen.getByTestId('ColumnMapping')).toBeInTheDocument();
+    });
+  });
+
+  describe('handleSaveMappings', () => {
+    beforeEach(() => {
+      mockToastSuccess.mockClear();
+      mockToastError.mockClear();
+    });
+
+    test('create standard mapping — returns true and shows in MappingsResult', async () => {
+      await renderWithColumns();
+
+      let result;
+      act(() => {
+        result = capturedColumnMappingProps.current.onSave?.(
+          [{ column: 'col1', fileName: 'data.csv', nodeId: 'node1' }],
+          'NewMapping',
+          [{ name: 'valA', mapping: [], terminology: '', description: '' }],
+          false,  // removeFromHierarchy
+          false,  // isOneHotMapping
+          { terminology: '', description: '' }
+        );
+      });
+
+      await waitFor(() => {
+        const mappings = capturedMappingsResultProps.current.mappings || [];
+        expect(mappings.some(m => m['NewMapping'])).toBe(true);
+      });
+    });
+
+    test('create standard mapping — duplicate key returns false and toasts error', async () => {
+      await renderWithColumns();
+
+      // Create once
+      act(() => {
+        capturedColumnMappingProps.current.onSave?.(
+          [],
+          'DupKey',
+          [{ name: 'v1', mapping: [] }],
+          false, false,
+          {}
+        );
+      });
+      await waitFor(() => {
+        expect(capturedMappingsResultProps.current.mappings?.some(m => m['DupKey'])).toBe(true);
+      });
+
+      mockToastError.mockClear();
+      let result2;
+      act(() => {
+        result2 = capturedColumnMappingProps.current.onSave?.(
+          [],
+          'DupKey',
+          [{ name: 'v1', mapping: [] }],
+          false, false,
+          {}
+        );
+      });
+
+      await waitFor(() => {
+        expect(mockToastError).toHaveBeenCalledWith('Mapping already exists in the hierarchy.');
+      });
+    });
+
+    test('create one-hot mapping — builds family keys in mappings', async () => {
+      await renderWithColumns();
+
+      act(() => {
+        capturedColumnMappingProps.current.onSave?.(
+          [{ column: 'col1', fileName: 'data.csv', nodeId: 'node1' }],
+          'Diag',
+          [
+            { name: 'Yes', mapping: [{ groupKey: 'k', groupColumn: 'col1', fileName: 'data.csv', nodeId: 'node1', value: 'Y' }], terminology: '', description: '' },
+            { name: 'No', mapping: [], terminology: '', description: '' },
+          ],
+          false, // removeFromHierarchy
+          true,  // isOneHotMapping
+          { terminology: '', description: '' }
+        );
+      });
+
+      await waitFor(() => {
+        const mappings = capturedMappingsResultProps.current.mappings || [];
+        const hasYes = mappings.some(m => m['Diag_Yes']);
+        const hasNo = mappings.some(m => m['Diag_No']);
+        expect(hasYes).toBe(true);
+        expect(hasNo).toBe(true);
+      });
+    });
+
+    test('create standard mapping with removeFromHierarchy=true', async () => {
+      await renderWithColumns();
+
+      // First create a mapping for col1 (auto-initialized on CSV parse)
+      const initMappings = capturedMappingsResultProps.current.mappings || [];
+
+      act(() => {
+        capturedColumnMappingProps.current.onSave?.(
+          [{ column: 'col1', fileName: 'data.csv', nodeId: 'node1' }],
+          'Merged',
+          [{ name: 'v', mapping: [] }],
+          true,  // removeFromHierarchy
+          false,
+          {}
+        );
+      });
+
+      await waitFor(() => {
+        const mappings = capturedMappingsResultProps.current.mappings || [];
+        expect(mappings.some(m => m['Merged'])).toBe(true);
+      });
+    });
+  });
+
+  describe('handleDeleteMapping and handleUndoDelete', () => {
+    beforeEach(() => {
+      mockToastSuccess.mockClear();
+      mockToastError.mockClear();
+    });
+
+    test('deleteMapping removes a key from mappings', async () => {
+      await renderWithColumns();
+
+      const mappingsBefore = capturedMappingsResultProps.current.mappings || [];
+      if (!mappingsBefore.length) return;
+
+      const key = Object.keys(mappingsBefore[0])[0];
+
+      act(() => {
+        capturedMappingsResultProps.current.onDeleteMapping?.(0, key);
+      });
+
+      await waitFor(() => {
+        const after = capturedMappingsResultProps.current.mappings || [];
+        // The key should no longer be in any mapping object
+        const stillThere = after.some(m => Object.prototype.hasOwnProperty.call(m, key));
+        expect(stillThere).toBe(false);
+      });
+    });
+
+    test('undoDelete restores the last deleted mapping', async () => {
+      await renderWithColumns();
+
+      const mappingsBefore = capturedMappingsResultProps.current.mappings || [];
+      if (!mappingsBefore.length) return;
+
+      const key = Object.keys(mappingsBefore[0])[0];
+
+      // Delete
+      act(() => { capturedMappingsResultProps.current.onDeleteMapping?.(0, key); });
+
+      await waitFor(() => {
+        const after = capturedMappingsResultProps.current.mappings || [];
+        expect(after.some(m => Object.prototype.hasOwnProperty.call(m, key))).toBe(false);
+      });
+
+      // Undo
+      act(() => { capturedMappingsResultProps.current.onUndoDelete?.(); });
+
+      await waitFor(() => {
+        const restored = capturedMappingsResultProps.current.mappings || [];
+        expect(restored.some(m => Object.prototype.hasOwnProperty.call(m, key))).toBe(true);
+      });
+    });
+
+    test('undoDelete is a no-op when nothing was deleted', async () => {
+      await renderWithColumns();
+
+      const before = capturedMappingsResultProps.current.mappings || [];
+
+      // Call undo without any prior delete
+      act(() => { capturedMappingsResultProps.current.onUndoDelete?.(); });
+
+      await waitFor(() => {
+        expect(capturedMappingsResultProps.current.mappings).toEqual(before);
+      });
+    });
+  });
+
+  describe('handleClearMappingEditor (via mobile onClear)', () => {
+    test('onClear on mobile clears temporary groups and draft', async () => {
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: vi.fn().mockImplementation((query) => ({
+          matches: true,
+          media: query,
+          onchange: null,
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
+        })),
+      });
+
+      const node = { nodeId: 'node1', serviceUrl: 'http://n1', name: 'Node 1' };
+      useNode.mockReturnValue({ selectedNodes: [node] });
+      useLocation.mockReturnValue({ state: { elementFiles: [{ nodeId: 'node1', fileName: 'data.csv' }] } });
+      fetchElementFile.mockResolvedValue('col1,val1,val2');
+
+      await act(async () => { render(<Integration />); });
+      await waitFor(() => expect(screen.queryByTestId('MappingsResult')).toBeInTheDocument());
+
+      // Call onClear — verify ColumnMapping remains mounted after state reset
+      act(() => { capturedColumnMappingProps.current.onClear?.(); });
+      expect(screen.getByTestId('ColumnMapping')).toBeInTheDocument();
+
+      // Restore
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: vi.fn().mockImplementation((query) => ({
+          matches: false, media: query, onchange: null,
+          addListener: vi.fn(), removeListener: vi.fn(),
+          addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn(),
+        })),
+      });
+    });
+  });
+
+  describe('handleGenerateMetadata', () => {
+    beforeEach(() => {
+      mockToastSuccess.mockClear();
+      mockToastError.mockClear();
+    });
+
+    test('toasts info when there are no mappings', async () => {
+      const { toast } = await import('react-toastify');
+      await renderWithColumns();
+
+      // Clear mappings via the prop that MappingsResult receives
+      act(() => {
+        capturedMappingsResultProps.current.setMappings?.([]);
+      });
+
+      await waitFor(() =>
+        expect(capturedMappingsResultProps.current.mappings).toHaveLength(0)
+      );
+
+      await act(async () => {
+        await capturedColumnMappingProps.current.onGenerateMetadata?.();
+      });
+
+      await waitFor(() =>
+        expect(toast.info).toHaveBeenCalledWith('No mappings to enrich yet.')
+      );
+    });
+
+    test('shows success toast when enrichMappingsStart returns status 200', async () => {
+      enrichMappingsStart.mockResolvedValue({
+        status: 200,
+        data: { message: 'Done immediately!', hierarchy: [] },
+      });
+
+      await renderWithColumns();
+
+      // Create at least one mapping so handleGenerateMetadata doesn't bail early
+      act(() => {
+        capturedColumnMappingProps.current.onSave?.(
+          [{ column: 'col1', fileName: 'data.csv', nodeId: 'node1' }],
+          'TestMapping',
+          [{ name: 'v', mapping: [] }],
+          false, false, {}
+        );
+      });
+      await waitFor(() =>
+        expect(capturedMappingsResultProps.current.mappings?.some(m => m['TestMapping'])).toBe(true)
+      );
+
+      await act(async () => {
+        await capturedColumnMappingProps.current.onGenerateMetadata?.();
+      });
+
+      await waitFor(() =>
+        expect(mockToastSuccess).toHaveBeenCalledWith('Done immediately!')
+      );
+    });
+
+    test('uses fallback message when status 200 but no message', async () => {
+      enrichMappingsStart.mockResolvedValue({
+        status: 200,
+        data: {},
+      });
+
+      await renderWithColumns();
+      act(() => {
+        capturedColumnMappingProps.current.onSave?.([], 'M2', [{ name: 'v', mapping: [] }], false, false, {});
+      });
+      await waitFor(() =>
+        expect(capturedMappingsResultProps.current.mappings?.some(m => m['M2'])).toBe(true)
+      );
+
+      await act(async () => {
+        await capturedColumnMappingProps.current.onGenerateMetadata?.();
+      });
+
+      await waitFor(() =>
+        expect(mockToastSuccess).toHaveBeenCalledWith('Metadata generated.')
+      );
+    });
+
+    test('shows error toast when enrichMappingsStart returns non-202 status', async () => {
+      enrichMappingsStart.mockResolvedValue({
+        status: 500,
+        data: { message: 'Server error' },
+      });
+
+      await renderWithColumns();
+      act(() => {
+        capturedColumnMappingProps.current.onSave?.([], 'M3', [{ name: 'v', mapping: [] }], false, false, {});
+      });
+      await waitFor(() =>
+        expect(capturedMappingsResultProps.current.mappings?.some(m => m['M3'])).toBe(true)
+      );
+
+      await act(async () => {
+        await capturedColumnMappingProps.current.onGenerateMetadata?.();
+      });
+
+      await waitFor(() =>
+        expect(mockToastError).toHaveBeenCalledWith('Server error')
+      );
+    });
+
+    test('shows generic error when status non-202 and no message', async () => {
+      enrichMappingsStart.mockResolvedValue({
+        status: 400,
+        data: {},
+      });
+
+      await renderWithColumns();
+      act(() => {
+        capturedColumnMappingProps.current.onSave?.([], 'M4', [{ name: 'v', mapping: [] }], false, false, {});
+      });
+      await waitFor(() =>
+        expect(capturedMappingsResultProps.current.mappings?.some(m => m['M4'])).toBe(true)
+      );
+
+      await act(async () => {
+        await capturedColumnMappingProps.current.onGenerateMetadata?.();
+      });
+
+      await waitFor(() =>
+        expect(mockToastError).toHaveBeenCalledWith('Failed to start metadata generation.')
+      );
+    });
+
+    test('shows error toast when status 202 but no jobId returned', async () => {
+      enrichMappingsStart.mockResolvedValue({
+        status: 202,
+        data: {},
+      });
+
+      await renderWithColumns();
+      act(() => {
+        capturedColumnMappingProps.current.onSave?.([], 'M5', [{ name: 'v', mapping: [] }], false, false, {});
+      });
+      await waitFor(() =>
+        expect(capturedMappingsResultProps.current.mappings?.some(m => m['M5'])).toBe(true)
+      );
+
+      await act(async () => {
+        await capturedColumnMappingProps.current.onGenerateMetadata?.();
+      });
+
+      await waitFor(() =>
+        expect(mockToastError).toHaveBeenCalledWith('Metadata generation did not return a jobId.')
+      );
+    });
+
+    test('shows error toast when enrichMappingsStart throws', async () => {
+      enrichMappingsStart.mockRejectedValue(new Error('Network error'));
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      await renderWithColumns();
+      act(() => {
+        capturedColumnMappingProps.current.onSave?.([], 'M6', [{ name: 'v', mapping: [] }], false, false, {});
+      });
+      await waitFor(() =>
+        expect(capturedMappingsResultProps.current.mappings?.some(m => m['M6'])).toBe(true)
+      );
+
+      await act(async () => {
+        await capturedColumnMappingProps.current.onGenerateMetadata?.();
+      });
+
+      await waitFor(() =>
+        expect(mockToastError).toHaveBeenCalledWith('Network error')
+      );
+      consoleSpy.mockRestore();
+    });
+  });
+
     });

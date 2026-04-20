@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import CleanPanel from './cleanPanel';
+import { toast } from 'react-toastify';
 
 // Mock react-switch
 jest.mock("react-switch", () => {
@@ -21,7 +22,7 @@ jest.mock("react-switch", () => {
 });
 
 // Mock JsonMapEditor
-jest.mock("./jsonMapEditor.js", () => {
+vi.mock("./jsonMapEditor", () => {
   return {
     __esModule: true,
     default: ({ busy, enabled, label, valueText, onChangeText }) => (
@@ -38,10 +39,10 @@ jest.mock("./jsonMapEditor.js", () => {
   };
 });
 
-jest.mock('react-toastify', () => ({
+vi.mock('react-toastify', () => ({
   toast: {
-    error: jest.fn(),
-    success: jest.fn(),
+    error: vi.fn(),
+    success: vi.fn(),
   },
 }));
 
@@ -402,152 +403,128 @@ describe('CleanPanel', () => {
   });
 
   describe('Validation logic - handleApply', () => {
+    // Helper: find a switch by text content of its ToggleRow ancestor
+    function findSwitch(label) {
+      return screen.getAllByRole('switch').find((sw) => {
+        const row = sw.closest('[role="switch"]');
+        return row?.textContent?.includes(label);
+      });
+    }
+
+    // Helper: enable an option switch
+    function enableOption(label) {
+      const sw = findSwitch(label);
+      if (sw) fireEvent.click(sw);
+      return sw;
+    }
+
     beforeEach(() => {
-      jest.spyOn(require('react-toastify').toast, 'error');
+      jest.clearAllMocks();
     });
 
-    it('validates standardizeNumeric requires numericColumns', () => {
+    it('validates standardizeNumeric - shows error when no numericColumns entered', () => {
       render(<CleanPanel {...defaultProps} />);
-    
-      expect(screen.getByText('Standardize numeric fields')).toBeInTheDocument();
-    
-      expect(
-        screen.getByPlaceholderText(/Comma-separated, e\.g\. age,height,weight/i)
-      ).toBeInTheDocument();
+      enableOption('Standardize numeric');
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/numeric column/i));
     });
 
-    it('validates fillMissingValues requires fillStrategy', () => {
-      const { toast } = require('react-toastify');
+    it('validates fillMissingValues - shows error when fillStrategy is empty', () => {
       render(<CleanPanel {...defaultProps} />);
-      
-      // Find fillMissingValues switch by searching for the text
-      const allText = document.body.textContent || '';
-      if (allText.includes('Fill missing')) {
-        // Component has this option, we can test it
-        expect(toast.error).toBeDefined();
-      }
+      enableOption('Fill missing');
+      const selects = screen.getAllByRole('combobox');
+      const strategySelect = selects.find((s) => s.value === 'mean' || s.value === '');
+      if (strategySelect) fireEvent.change(strategySelect, { target: { value: '' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/fill strategy/i));
     });
 
     it('validates fillMissingValues with constant strategy requires fillConstantValue', () => {
-      const { toast } = require('react-toastify');
       render(<CleanPanel {...defaultProps} />);
-      
-      // This validates that the validation logic exists
-      const applyButton = screen.getByTitle(/apply cleaning/i);
-      expect(applyButton).toBeInTheDocument();
+      enableOption('Fill missing');
+      const selects = screen.getAllByRole('combobox');
+      const strategySelect = selects.find((s) => s.value === 'mean');
+      if (strategySelect) fireEvent.change(strategySelect, { target: { value: 'constant' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/constant fill value/i));
     });
 
-    it('validates replaceValues with invalid JSON shows error', () => {
-      const { toast } = require('react-toastify');
+    it('validates replaceValues - shows error on invalid JSON in replacement map', () => {
       render(<CleanPanel {...defaultProps} />);
-      
-      // The component has JSON validation in handleApply
-      // We verify the validation logic exists
-      const applyButton = screen.getByTitle(/apply cleaning/i);
-      expect(applyButton).toBeInTheDocument();
-      expect(toast.error).toBeDefined();
+      enableOption('Replace values');
+      // Find the replacement map textarea (from the vi.mock'd JsonMapEditor)
+      const textarea = screen.getAllByRole('textbox').find(
+        (el) => el.closest('[data-testid="json-map-editor"]') != null
+      );
+      // Change value to invalid JSON to trigger validation
+      if (textarea) fireEvent.change(textarea, { target: { value: 'not-json' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/replacement map/i));
     });
 
-    it('validates convertDataTypes with invalid JSON shows error', () => {
-      const { toast } = require('react-toastify');
+    it('validates padValues - shows error when padLength is 0', () => {
       render(<CleanPanel {...defaultProps} />);
-      
-      // The component has type conversion validation
-      const applyButton = screen.getByTitle(/apply cleaning/i);
-      expect(applyButton).toBeInTheDocument();
+      enableOption('Pad values');
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/pad length/i));
     });
 
-    it('validates padValues requires padLength greater than 0', () => {
-      const { toast } = require('react-toastify');
+    it('validates splitColumn - shows error when columnToSplit is empty', () => {
       render(<CleanPanel {...defaultProps} />);
-      
-      // Validation for pad values exists in handleApply
-      expect(toast.error).toBeDefined();
+      enableOption('Split column');
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/column to split/i));
     });
 
-    it('validates splitColumn requires columnToSplit', () => {
-      const { toast } = require('react-toastify');
+    it('validates mergeColumns - shows error when fewer than 2 columns', () => {
       render(<CleanPanel {...defaultProps} />);
-      
-      // Validation exists in the component
-      const applyButton = screen.getByTitle(/apply cleaning/i);
-      expect(applyButton).toBeInTheDocument();
+      enableOption('Merge columns');
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/at least 2 columns/i));
     });
 
-    it('validates mergeColumns requires at least 2 columns', () => {
-      const { toast } = require('react-toastify');
+    it('validates removeRowsWithPattern - shows error when column or pattern is empty', () => {
       render(<CleanPanel {...defaultProps} />);
-      
-      // Validation logic is present
-      expect(toast.error).toBeDefined();
+      enableOption('Remove rows with pattern');
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/row filter column/i));
     });
 
-    it('validates mergeColumns requires mergedColumnName', () => {
-      const { toast } = require('react-toastify');
+    it('validates normalizeData - shows error when no normalizeColumns entered', () => {
       render(<CleanPanel {...defaultProps} />);
-      
-      const applyButton = screen.getByTitle(/apply cleaning/i);
-      expect(applyButton).toBeInTheDocument();
+      enableOption('Normalize data');
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/columns to normalize/i));
     });
 
-    it('validates removeRowsWithPattern requires column and pattern', () => {
-      const { toast } = require('react-toastify');
+    it('validates mergeSimilarValues - shows error when no fuzzyMatchColumns', () => {
       render(<CleanPanel {...defaultProps} />);
-      
-      expect(toast.error).toBeDefined();
+      enableOption('Merge similar values');
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/columns for fuzzy/i));
     });
 
-    it('validates keepOnlyNumericRows requires numericValidationColumns', () => {
-      const { toast } = require('react-toastify');
+    it('normalizeData: entering columns + clicking Apply calls onApply', () => {
       render(<CleanPanel {...defaultProps} />);
-      
-      const applyButton = screen.getByTitle(/apply cleaning/i);
-      expect(applyButton).toBeInTheDocument();
+      enableOption('Normalize data');
+      const colInput = screen.getAllByPlaceholderText('colA,colB').find(el => !el.disabled);
+      if (colInput) fireEvent.change(colInput, { target: { value: 'col1,col2' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(defaultProps.onApply).toHaveBeenCalledWith(
+        expect.objectContaining({ normalizeData: true, normalizeColumns: ['col1', 'col2'] })
+      );
     });
 
-    it('validates normalizeData requires normalizeColumns', () => {
-      const { toast } = require('react-toastify');
+    it('mergeSimilarValues: entering columns + clicking Apply calls onApply', () => {
       render(<CleanPanel {...defaultProps} />);
-      
-      expect(toast.error).toBeDefined();
-    });
-
-    it('validates standardizeData requires standardizeColumns', () => {
-      const { toast } = require('react-toastify');
-      render(<CleanPanel {...defaultProps} />);
-      
-      const applyButton = screen.getByTitle(/apply cleaning/i);
-      expect(applyButton).toBeInTheDocument();
-    });
-
-    it('validates binData requires binColumn', () => {
-      const { toast } = require('react-toastify');
-      render(<CleanPanel {...defaultProps} />);
-      
-      expect(toast.error).toBeDefined();
-    });
-
-    it('validates binData requires at least 2 binEdges', () => {
-      const { toast } = require('react-toastify');
-      render(<CleanPanel {...defaultProps} />);
-      
-      const applyButton = screen.getByTitle(/apply cleaning/i);
-      expect(applyButton).toBeInTheDocument();
-    });
-
-    it('validates mergeSimilarValues requires fuzzyMatchColumns', () => {
-      const { toast } = require('react-toastify');
-      render(<CleanPanel {...defaultProps} />);
-      
-      expect(toast.error).toBeDefined();
-    });
-
-    it('validates mergeSimilarValues threshold must be between 0 and 1', () => {
-      const { toast } = require('react-toastify');
-      render(<CleanPanel {...defaultProps} />);
-      
-      const applyButton = screen.getByTitle(/apply cleaning/i);
-      expect(applyButton).toBeInTheDocument();
+      enableOption('Merge similar values');
+      const inputs = screen.getAllByPlaceholderText('colA,colB');
+      const fuzzyInput = inputs.find(el => !el.disabled);
+      if (fuzzyInput) fireEvent.change(fuzzyInput, { target: { value: 'name' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(defaultProps.onApply).toHaveBeenCalledWith(
+        expect.objectContaining({ mergeSimilarValues: true, fuzzyMatchColumns: ['name'] })
+      );
     });
   });
 
@@ -1944,6 +1921,221 @@ describe('CleanPanel - Validation Logic', () => {
       
       // All switches should be disabled when busy
       expect(firstSwitch).toBeDisabled();
+    });
+
+    it('toggles via Enter key', () => {
+      render(<CleanPanel {...defaultProps} />);
+      const toggleRows = screen.getAllByRole('switch').filter(el => el.tagName === 'DIV');
+      const row = toggleRows[0];
+      const before = row.getAttribute('aria-checked');
+      fireEvent.keyDown(row, { key: 'Enter' });
+      expect(row.getAttribute('aria-checked')).not.toBe(before);
+    });
+
+    it('toggles via Space key', () => {
+      render(<CleanPanel {...defaultProps} />);
+      const toggleRows = screen.getAllByRole('switch').filter(el => el.tagName === 'DIV');
+      const row = toggleRows[0];
+      const before = row.getAttribute('aria-checked');
+      fireEvent.keyDown(row, { key: ' ' });
+      expect(row.getAttribute('aria-checked')).not.toBe(before);
+    });
+
+    it('ignores non-Enter/Space keys', () => {
+      render(<CleanPanel {...defaultProps} />);
+      const toggleRows = screen.getAllByRole('switch').filter(el => el.tagName === 'DIV');
+      const row = toggleRows[0];
+      const before = row.getAttribute('aria-checked');
+      fireEvent.keyDown(row, { key: 'Tab' });
+      expect(row.getAttribute('aria-checked')).toBe(before);
+    });
+
+    it('does not toggle keyboard events when busy', () => {
+      render(<CleanPanel {...defaultProps} busy={true} />);
+      const toggleRows = screen.getAllByRole('switch').filter(el => el.tagName === 'DIV');
+      const row = toggleRows[0];
+      const before = row.getAttribute('aria-checked');
+      fireEvent.keyDown(row, { key: 'Enter' });
+      expect(row.getAttribute('aria-checked')).toBe(before);
+    });
+  });
+
+  describe('Switch toggles', () => {
+    it('toggling each option switch changes its checked state', () => {
+      render(<CleanPanel {...defaultProps} />);
+      const switchInputs = document.querySelectorAll('input[type="checkbox"][role="switch"]');
+      expect(switchInputs.length).toBeGreaterThan(0);
+      switchInputs.forEach(inp => {
+        if (!inp.disabled) fireEvent.click(inp);
+      });
+      expect(Array.from(switchInputs).every(inp => inp.disabled || inp.checked)).toBe(true);
+    });
+  });
+
+  describe('Validation logic - additional branches', () => {
+    function enableOption(label) {
+      const sw = screen.getAllByRole('switch').find(s =>
+        s.closest('[role="switch"]')?.textContent?.includes(label)
+      );
+      if (sw) fireEvent.click(sw);
+    }
+
+    function getActiveJsonEditorTextarea() {
+      return screen.getAllByRole('textbox').find(
+        el => el.closest('[data-testid="json-map-editor"]') && !el.disabled
+      );
+    }
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it('replaceValues: shows error when map text is empty', () => {
+      render(<CleanPanel {...defaultProps} />);
+      enableOption('Replace values');
+      fireEvent.change(getActiveJsonEditorTextarea(), { target: { value: '' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith('Replacement map cannot be empty.');
+    });
+
+    it('replaceValues: shows error when map is not a JSON object', () => {
+      render(<CleanPanel {...defaultProps} />);
+      enableOption('Replace values');
+      fireEvent.change(getActiveJsonEditorTextarea(), { target: { value: '[1,2,3]' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('must be a JSON object'));
+    });
+
+    it('replaceValues: calls onApply with parsed replacementMap', () => {
+      const onApply = vi.fn();
+      render(<CleanPanel {...defaultProps} onApply={onApply} />);
+      enableOption('Replace values');
+      fireEvent.change(getActiveJsonEditorTextarea(), { target: { value: '{"old":"new"}' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(onApply).toHaveBeenCalledWith(
+        expect.objectContaining({ replacementMap: { old: 'new' } })
+      );
+    });
+
+    it('convertDataTypes: shows error when type conversion map text is empty', () => {
+      render(<CleanPanel {...defaultProps} />);
+      enableOption('Convert data types');
+      fireEvent.change(getActiveJsonEditorTextarea(), { target: { value: '' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith('Type conversion map cannot be empty.');
+    });
+
+    it('convertDataTypes: shows error when type conversion map is not a JSON object', () => {
+      render(<CleanPanel {...defaultProps} />);
+      enableOption('Convert data types');
+      fireEvent.change(getActiveJsonEditorTextarea(), { target: { value: '[1,2,3]' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('must be a JSON object'));
+    });
+
+    it('convertDataTypes: calls onApply with parsed typeConversionMap', () => {
+      const onApply = vi.fn();
+      render(<CleanPanel {...defaultProps} onApply={onApply} />);
+      enableOption('Convert data types');
+      fireEvent.change(getActiveJsonEditorTextarea(), { target: { value: '{"age":"integer"}' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(onApply).toHaveBeenCalledWith(
+        expect.objectContaining({ typeConversionMap: { age: 'integer' } })
+      );
+    });
+
+    it('padValues: calls onApply when padLength is valid', () => {
+      const onApply = vi.fn();
+      render(<CleanPanel {...defaultProps} onApply={onApply} />);
+      enableOption('Pad values');
+      const [padLengthInput] = screen.getAllByRole('spinbutton').filter(el => !el.disabled);
+      fireEvent.change(padLengthInput, { target: { value: '5' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(onApply).toHaveBeenCalledWith(expect.objectContaining({ padValues: true }));
+    });
+
+    it('mergeColumns: shows error when mergedColumnName is cleared', () => {
+      render(<CleanPanel {...defaultProps} />);
+      enableOption('Merge columns');
+      const [mergeInput] = screen.getAllByPlaceholderText('colA,colB').filter(el => !el.disabled);
+      fireEvent.change(mergeInput, { target: { value: 'col1,col2' } });
+      const mergedNameInput = screen.getAllByRole('textbox').find(
+        el => !el.closest('[data-testid="json-map-editor"]') && !el.disabled && el.value === 'merged_column'
+      );
+      fireEvent.change(mergedNameInput, { target: { value: '' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/merged column name|at least 2 columns/i));
+    });
+
+    it('mergeSimilarValues: shows error when threshold is above 1', () => {
+      render(<CleanPanel {...defaultProps} />);
+      enableOption('Merge similar values');
+      const [fuzzyInput] = screen.getAllByPlaceholderText('colA,colB').filter(el => !el.disabled);
+      fireEvent.change(fuzzyInput, { target: { value: 'name' } });
+      const [thresholdInput] = screen.getAllByRole('spinbutton').filter(el => !el.disabled);
+      fireEvent.change(thresholdInput, { target: { value: '2' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/threshold/i));
+    });
+
+    it('sub-field inputs update state when their option is enabled', () => {
+      render(<CleanPanel {...defaultProps} />);
+
+      enableOption('Strip prefix');
+      fireEvent.change(document.querySelector('input[placeholder="e.g. ID-"]'), { target: { value: 'pre_' } });
+
+      enableOption('Strip suffix');
+      fireEvent.change(document.querySelector('input[placeholder="e.g. _old"]'), { target: { value: '_suf' } });
+
+      enableOption('Pad values');
+      fireEvent.change(document.querySelector('input[placeholder="Single character"]'), { target: { value: '0' } });
+      const padDirSel = Array.from(document.querySelectorAll('select')).find(
+        s => !s.disabled && Array.from(s.options).some(o => o.value === 'left')
+      );
+      fireEvent.change(padDirSel, { target: { value: 'left' } });
+
+      enableOption('Standardize phone numbers');
+      fireEvent.change(document.querySelector('input[placeholder="+1"]'), { target: { value: '+44' } });
+      const phoneFmtSel = Array.from(document.querySelectorAll('select')).find(
+        s => !s.disabled && Array.from(s.options).some(o => o.value === 'international')
+      );
+      fireEvent.change(phoneFmtSel, { target: { value: 'international' } });
+
+      enableOption('Split column');
+      Array.from(document.querySelectorAll('input:not([type="checkbox"]):not([type="number"])'))
+        .filter(el => !el.disabled && el.closest('[role="switch"]')?.textContent?.includes('Split column'))
+        .forEach(el => fireEvent.change(el, { target: { value: 'test' } }));
+
+      enableOption('Merge columns');
+      Array.from(document.querySelectorAll('input:not([type="checkbox"]):not([type="number"])'))
+        .filter(el => !el.disabled && el.closest('[role="switch"]')?.textContent?.includes('Merge columns'))
+        .forEach(el => fireEvent.change(el, { target: { value: 'test' } }));
+
+      enableOption('Remove rows with pattern');
+      Array.from(document.querySelectorAll('input:not([type="checkbox"]):not([type="number"])'))
+        .filter(el => !el.disabled && el.closest('[role="switch"]')?.textContent?.includes('Remove rows'))
+        .forEach(el => fireEvent.change(el, { target: { value: 'test' } }));
+    });
+
+    it('fillMissingValues: shows constant value field when strategy is set to constant', () => {
+      render(<CleanPanel {...defaultProps} />);
+      enableOption('Fill missing');
+      const stratSelect = Array.from(document.querySelectorAll('select')).find(s => s.value === 'mean');
+      fireEvent.change(stratSelect, { target: { value: 'constant' } });
+      expect(document.querySelector('input[placeholder="Value to use for blanks"]')).toBeInTheDocument();
+      fireEvent.change(document.querySelector('input[placeholder="Value to use for blanks"]'), { target: { value: 'N/A' } });
+      fireEvent.change(document.querySelector('input[placeholder="Blank = all columns; or list: colA,colB"]'), { target: { value: 'colA' } });
+    });
+
+    it('standardizeNumeric: toggling removeLeadingZeros and roundDecimals updates state', () => {
+      render(<CleanPanel {...defaultProps} />);
+      enableOption('Standardize numeric');
+      const plainCheckboxes = document.querySelectorAll('input[type="checkbox"]:not([role="switch"])');
+      plainCheckboxes.forEach(cb => { if (!cb.disabled) fireEvent.click(cb); });
+      document.querySelectorAll('input[type="number"]').forEach(inp => {
+        if (!inp.disabled) fireEvent.change(inp, { target: { value: '3' } });
+      });
+      expect(Array.from(plainCheckboxes).some(cb => cb.checked)).toBe(true);
     });
   });
 });

@@ -90,7 +90,6 @@ function ElementExporter({ dataResults = [], activeFileIndices = [], combinedDat
     ];
   
     return Papa.unparse(rows, {
-      quotes: true,
       newline: "\n",
     });
   };
