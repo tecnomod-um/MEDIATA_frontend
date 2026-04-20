@@ -95,6 +95,7 @@ export const fetchSchemaFromBackend = async () => {
     const response = await axiosInstance.get('/nodes/schema');
     return response.data;
   } catch (error) {
+    if (error.response && error.response.status === 404) return null;
     throw error;
   }
 };

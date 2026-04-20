@@ -105,6 +105,12 @@ describe('petitionHandler', () => {
         .resolves.toEqual({ s: 2 });
     });
 
+    it('fetchSchemaFromBackend returns null when no schema exists', async () => {
+      axiosInstance.get.mockRejectedValue({ response: { status: 404 } });
+      await expect(petitionHandler.fetchSchemaFromBackend())
+        .resolves.toBeNull();
+    });
+
     it('removeSchemaFromBackend deletes schema', async () => {
       axiosInstance.delete.mockResolvedValue({ data: { deleted: true } });
       await expect(petitionHandler.removeSchemaFromBackend())

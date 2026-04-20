@@ -429,6 +429,21 @@ describe('SchemaTray • interaction details', () => {
     consoleErrorSpy.mockRestore();
   });
 
+  it('keeps missing backend schema quiet', async () => {
+    const setError = vi.fn();
+    fetchSchemaFromBackend.mockResolvedValue(null);
+
+    renderTray({ nodesFetched: true, setError });
+
+    await waitFor(() => {
+      expect(fetchSchemaFromBackend).toHaveBeenCalled();
+    });
+
+    expect(setError).not.toHaveBeenCalledWith(
+      'Failed fetching schema from backend'
+    );
+  });
+
   it('does not fetch from backend if externalSchema is provided', async () => {
     renderTray({ externalSchema: { title: 'External' }, nodesFetched: true });
 
