@@ -146,15 +146,13 @@ describe('<MappingsExporter />', () => {
     global.URL.createObjectURL.mockReturnValue?.('blob:url');
   });
 
-  it('creates a CSV file and shows success toast on download click', () => {
+  it('downloads only the mapping spec and shows success toast on download click', () => {
     render(<MappingsExporter mappings={sampleMappings} />);
 
     fireEvent.click(screen.getByText(/download mappings/i));
 
     expect(global.URL.createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
-    expect(toast.success).toHaveBeenCalledWith(
-      'Mappings CSV and mapping spec downloaded successfully!'
-    );
+    expect(toast.success).toHaveBeenCalledWith('Mapping spec downloaded successfully!');
   });
 
   it('encodes CSV and navigates to /semanticalignment with base64 payload', async () => {
@@ -256,91 +254,20 @@ describe('<MappingsExporter />', () => {
     expect(screen.queryByTestId('tooltip-popup')).not.toBeInTheDocument();
   });
 
-  it('generates correct CSV for integer mappings with min and max', () => {
-    const numericMappings = [
-      {
-        Amount: {
-          groups: [
-            {
-              values: [
-                { name: 'integer' },
-                { name: 'min:5' },
-                { name: 'max:100' },
-              ],
-            },
-          ],
-        },
-      },
-    ];
-
-    const blobSpy = captureBlobContent();
-    render(<MappingsExporter mappings={numericMappings} />);
-    fireEvent.click(screen.getByText(/download mappings/i));
-    blobSpy.restore();
-
-    expect(blobSpy.getContent()?.[0]).toBe('Amount,integer,min:5,max:100');
-    expect(toast.success).toHaveBeenCalled();
-  });
-
-  it('generates correct CSV for double mappings without min/max', () => {
-    const doubleMappings = [
-      {
-        Score: {
-          groups: [{ values: [{ name: 'double' }] }],
-        },
-      },
-    ];
-
-    const blobSpy = captureBlobContent();
-    render(<MappingsExporter mappings={doubleMappings} />);
-    fireEvent.click(screen.getByText(/download mappings/i));
-    blobSpy.restore();
-
-    expect(blobSpy.getContent()?.[0]).toBe('Score,double,min:,max:');
-  });
-
-  it('generates correct CSV for date mappings with earliest and latest', () => {
-    const dateMappings = [
-      {
-        DateCol: {
-          groups: [
-            {
-              values: [
-                { name: 'date' },
-                { name: 'earliest:2020-01-01' },
-                { name: 'latest:2023-12-31' },
-              ],
-            },
-          ],
-        },
-      },
-    ];
-
-    const blobSpy = captureBlobContent();
-    render(<MappingsExporter mappings={dateMappings} />);
-    fireEvent.click(screen.getByText(/download mappings/i));
-    blobSpy.restore();
-
-    expect(blobSpy.getContent()?.[0]).toBe('DateCol,date,earliest:2020-01-01,latest:2023-12-31');
-  });
-
-  it('creates both a CSV blob and a JSON spec blob on download', () => {
+  it('creates a single JSON spec blob on download', () => {
     const blobSpy = captureBlobContent();
     render(<MappingsExporter mappings={sampleMappings} />);
     fireEvent.click(screen.getByText(/download mappings/i));
     blobSpy.restore();
 
     const allContents = blobSpy.getAllContents();
-    expect(allContents).toHaveLength(2);
-    // First blob is CSV
-    expect(typeof allContents[0][0]).toBe('string');
-    // Second blob is the JSON mapping spec
-    expect(() => JSON.parse(allContents[1][0])).not.toThrow();
-    const spec = JSON.parse(allContents[1][0]);
+    expect(allContents).toHaveLength(1);
+    expect(() => JSON.parse(allContents[0][0])).not.toThrow();
+    const spec = JSON.parse(allContents[0][0]);
     expect(spec).toHaveProperty('specVersion', '2.0.0');
     expect(spec).toHaveProperty('ruleLanguage', 'json-logic');
     expect(spec).toHaveProperty('mappings');
-    expect(global.URL.createObjectURL).toHaveBeenCalledTimes(2);
+    expect(global.URL.createObjectURL).toHaveBeenCalledTimes(1);
   });
 
   it('includes the schema in the mapping spec when provided', () => {
@@ -350,7 +277,7 @@ describe('<MappingsExporter />', () => {
     fireEvent.click(screen.getByText(/download mappings/i));
     blobSpy.restore();
 
-    const spec = JSON.parse(blobSpy.getAllContents()[1][0]);
+    const spec = JSON.parse(blobSpy.getAllContents()[0][0]);
     expect(spec.targetSchema).toEqual(schema);
   });
 

@@ -1,3 +1,5 @@
+import Papa from "papaparse";
+
 /**
  * Pure utility functions extracted from integration.jsx.
  * None of these functions depend on React state or hooks.
@@ -8,10 +10,18 @@
 // ---------------------------------------------------------------------------
 
 export const parseCSV = (text) => {
-  const lines = text.trim().split("\n");
-  return lines.map((line) => {
-    const [column, ...values] = line.split(",");
-    return { column, values };
+  const result = Papa.parse(String(text ?? ""), {
+    skipEmptyLines: "greedy",
+  });
+
+  return (result.data || []).map((row) => {
+    const cells = Array.isArray(row) ? row : [];
+    const [column, ...values] = cells;
+
+    return {
+      column: typeof column === "string" ? column.replace(/^\uFEFF/, "").trim() : "",
+      values: values.map((value) => (typeof value === "string" ? value.trim() : value)),
+    };
   });
 };
 

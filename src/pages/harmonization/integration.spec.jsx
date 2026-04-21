@@ -795,6 +795,31 @@ describe('Integration Page', () => {
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
   });
 
+  test('quoted CSV values from Discovery are passed to the UI without literal quote characters', async () => {
+    const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
+    useNode.mockReturnValue({ selectedNodes: [node] });
+    useLocation.mockReturnValue({
+      state: { elementFiles: [{ nodeId: 'node1', fileName: 'quoted.csv' }] }
+    });
+    fetchElementFile.mockResolvedValue('"quotedCol","Value, With Comma","Plain Value"');
+
+    await act(async () => {
+      render(<Integration />);
+    });
+
+    await waitFor(() => expect(fetchElementFile).toHaveBeenCalledWith('quoted.csv'));
+    await waitFor(() =>
+      expect(capturedMappingsResultProps.current.columnsData?.length).toBeGreaterThan(0)
+    );
+
+    expect(capturedMappingsResultProps.current.columnsData[0]).toMatchObject({
+      column: 'quotedCol',
+      values: ['Value, With Comma', 'Plain Value'],
+    });
+    expect(capturedMappingsResultProps.current.columnsData[0].column).not.toContain('"');
+    expect(capturedMappingsResultProps.current.columnsData[0].values.join(' | ')).not.toContain('"');
+  });
+
   test('mergeColumnsData deduplicates values', async () => {
     const node = { nodeId: 'node1', serviceUrl: 'url1', name: 'Node 1' };
     useNode.mockReturnValue({ selectedNodes: [node] });
