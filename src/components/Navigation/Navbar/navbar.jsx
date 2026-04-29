@@ -100,7 +100,7 @@ export default function Navbar() {
         </Link>
       </div>
 
-      <ul className={NavbarStyles.navlinks}>
+      <div className={NavbarStyles.navlinks}>
         <TransitionGroup component={null}>
           {showSystemTabs && (
             <CSSTransition
@@ -114,7 +114,7 @@ export default function Navbar() {
                 exitActive: NavbarStyles.fadeExitActive
               }}
             >
-              <div ref={extraOptionsRef} className={NavbarStyles.darkerContainer}>
+              <ul ref={extraOptionsRef} className={NavbarStyles.darkerContainer}>
                 <li
                   className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem} ${
                     discoveryMatch ? NavbarStyles.activeDarker : ""
@@ -185,7 +185,7 @@ export default function Navbar() {
                 <li className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem} ${NavbarStyles.darkerSwitchItem}`}>
                   <DarkSwitch />
                 </li>
-              </div>
+              </ul>
             </CSSTransition>
           )}
         </TransitionGroup>
@@ -204,53 +204,52 @@ export default function Navbar() {
           &#9776;
         </label>
 
-        <div
+        <ul
           id="main-menu"
           className={`${NavbarStyles.menu} ${menuOpen && animate ? NavbarStyles.animate : ""}`}
-          role="menu"
           aria-labelledby="menuToggle"
         >
-          <li className={NavbarStyles.listItem} role="none">
-            <CustomLink to="/" onClick={toggleMenu} role="menuitem">
+          <li className={NavbarStyles.listItem}>
+            <CustomLink to="/" onClick={toggleMenu}>
               Home
             </CustomLink>
           </li>
 
           {isAuthenticated && (
-            <li className={NavbarStyles.listItem} role="none">
-              <CustomLink to="/projects" onClick={toggleMenu} role="menuitem">
+            <li className={NavbarStyles.listItem}>
+              <CustomLink to="/projects" onClick={toggleMenu}>
                 Projects
               </CustomLink>
             </li>
           )}
 
           {!isAuthenticated ? (
-            <li className={NavbarStyles.listItem} role="none">
-              <CustomLink to="/login" onClick={toggleMenu} role="menuitem">
+            <li className={NavbarStyles.listItem}>
+              <CustomLink to="/login" onClick={toggleMenu}>
                 Login
               </CustomLink>
             </li>
           ) : (
-            <li className={NavbarStyles.listItem} role="none">
-              <CustomLink to="/login" onClick={handleLogout} role="menuitem">
+            <li className={NavbarStyles.listItem}>
+              <CustomLink to="/login" onClick={handleLogout}>
                 Logout
               </CustomLink>
             </li>
           )}
 
-          <li className={NavbarStyles.listItem} role="none">
-            <CustomLink to="/tutorial" onClick={toggleMenu} role="menuitem">
+          <li className={NavbarStyles.listItem}>
+            <CustomLink to="/tutorial" onClick={toggleMenu}>
               Tutorial
             </CustomLink>
           </li>
 
-          <li className={NavbarStyles.listItem} role="none">
-            <CustomLink to="/about" onClick={toggleMenu} role="menuitem">
+          <li className={NavbarStyles.listItem}>
+            <CustomLink to="/about" onClick={toggleMenu}>
               About
             </CustomLink>
           </li>
-        </div>
-      </ul>
+        </ul>
+      </div>
     </nav>
   );
 }

@@ -1312,12 +1312,12 @@ function Integration() {
 
         const { nextElementFileList } = await refreshElementFileListFromBackend();
 
+        await applyUploadedSpecToState(rewrittenSpec, nextElementFileList);
+
         setIsUploadResolutionOpen(false);
         setPendingUploadSpec(null);
         setPendingUploadMissingRefs([]);
         setPendingUploadRequiredColumnsBySource({});
-
-        await applyUploadedSpecToState(rewrittenSpec, nextElementFileList);
       } catch (error) {
         console.error("Failed to resolve uploaded mappings:", error);
         toast.error(error?.message || "Failed to resolve uploaded mapping spec.");

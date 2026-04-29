@@ -4,45 +4,84 @@ import MetadataDisplayStyles from "./metadataDisplay.module.css";
 import DatasetCard from "./datasetCard";
 import { IoMdClose } from "react-icons/io";
 
-// Component for rendering nested metadata display
-const MetadataDisplay = ({ isOpen, metadata, loadingMetadata, accessingNode, headerColor, nodeName, nodeDescription, closeModal, onAccessNode }) => {
+const MetadataDisplay = ({
+  isOpen,
+  metadata,
+  loadingMetadata,
+  accessingNode,
+  headerColor,
+  nodeName,
+  nodeDescription,
+  closeModal,
+  onAccessNode,
+}) => {
+  const datasets = Array.isArray(metadata?.dataset) ? metadata.dataset : [];
+
   return (
     <OverlayWrapper isOpen={isOpen} closeModal={closeModal}>
       <div className={MetadataDisplayStyles.modalContent}>
         <div
           className={MetadataDisplayStyles.header}
-          style={{ '--header-bg': headerColor }}
+          style={{ "--header-bg": headerColor }}
         >
-          <h2>{nodeName}</h2>
-          <p>{nodeDescription || "No node description provided."}</p>
+          <div className={MetadataDisplayStyles.modalTitle}>{nodeName}</div>
+          <div className={MetadataDisplayStyles.modalDescription}>
+            {nodeDescription || "No node description provided."}
+          </div>
+
           <button
+            type="button"
             className={MetadataDisplayStyles.closeBtn}
             onClick={closeModal}
+            aria-label="Close metadata modal"
           >
             <IoMdClose />
           </button>
         </div>
+
         <div className={MetadataDisplayStyles.body}>
           {loadingMetadata ? (
             <div className={MetadataDisplayStyles.placeholderContainer}>
               <div className={MetadataDisplayStyles.spinner} />
-              <p className={MetadataDisplayStyles.loadingText}>Loading metadata...</p>
+              <p className={MetadataDisplayStyles.loadingText}>
+                Loading metadata...
+              </p>
             </div>
           ) : !metadata ? (
             <div className={MetadataDisplayStyles.placeholderContainer}>
-              <p className={MetadataDisplayStyles.muted}>No metadata available.</p>
+              <p className={MetadataDisplayStyles.muted}>
+                No metadata available.
+              </p>
             </div>
           ) : (
             <>
-              {metadata["@context"] && (
-                <p className={MetadataDisplayStyles.contextLine}>
-                  <strong>Context:</strong> {metadata["@context"]}
-                </p>
-              )}
-              {Array.isArray(metadata.dataset) && metadata.dataset.length > 0 ? (
+              <div className={MetadataDisplayStyles.metadataSummary}>
+                {metadata["@context"] && (
+                  <p className={MetadataDisplayStyles.contextLine}>
+                    <strong>Context:</strong> {metadata["@context"]}
+                  </p>
+                )}
+
+                {metadata["@type"] && (
+                  <p className={MetadataDisplayStyles.contextLine}>
+                    <strong>Type:</strong> {metadata["@type"]}
+                  </p>
+                )}
+
+                {metadata.sourceFile && (
+                  <p className={MetadataDisplayStyles.contextLine}>
+                    <strong>Source File:</strong> {metadata.sourceFile}
+                  </p>
+                )}
+              </div>
+
+              {datasets.length > 0 ? (
                 <div className={MetadataDisplayStyles.datasetsContainer}>
-                  {metadata.dataset.map((ds, index) => (
-                    <DatasetCard key={index} dataset={ds} />
+                  {datasets.map((dataset, index) => (
+                    <DatasetCard
+                      key={dataset.uri || dataset.identifier || index}
+                      dataset={dataset}
+                    />
                   ))}
                 </div>
               ) : (
@@ -56,6 +95,7 @@ const MetadataDisplay = ({ isOpen, metadata, loadingMetadata, accessingNode, hea
 
         <div className={MetadataDisplayStyles.footer}>
           <button
+            type="button"
             className={MetadataDisplayStyles.accessButton}
             onClick={onAccessNode}
             disabled={accessingNode}

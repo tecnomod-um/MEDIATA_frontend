@@ -69,10 +69,19 @@ describe('petitionHandler', () => {
   });
 
   describe('getNodeMetadata', () => {
-    it('returns data on success', async () => {
+    it('wraps raw metadata payloads and encodes the node id on success', async () => {
       axiosInstance.get.mockResolvedValue({ data: { m: true } });
+      await expect(petitionHandler.getNodeMetadata('node/a b'))
+        .resolves.toEqual({ metadata: { m: true } });
+      expect(axiosInstance.get).toHaveBeenCalledWith(
+        `/nodes/connect/metadata/${encodeURIComponent('node/a b')}`
+      );
+    });
+
+    it('preserves the backend metadata wrapper when already provided', async () => {
+      axiosInstance.get.mockResolvedValue({ data: { metadata: { m: true } } });
       await expect(petitionHandler.getNodeMetadata('n'))
-        .resolves.toEqual({ m: true });
+        .resolves.toEqual({ metadata: { m: true } });
     });
 
     it('on 404 returns { metadata: null }', async () => {

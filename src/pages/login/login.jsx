@@ -33,7 +33,7 @@ const Login = () => {
   };
 
   return (
-    <div className={LoginStyles.container}>
+    <main className={LoginStyles.container}>
       <CSSTransition
         in={true}
         appear={true}
@@ -61,8 +61,6 @@ const Login = () => {
             onChange={(e) => setUsername(e.target.value)}
             required
             autoComplete="username"
-            aria-label="Username"
-            aria-required="true"
             aria-invalid={errorMessage ? "true" : "false"}
             aria-describedby={errorMessage ? "login-error" : undefined}
           />
@@ -77,8 +75,6 @@ const Login = () => {
             onChange={(e) => setPassword(e.target.value)}
             required
             autoComplete="current-password"
-            aria-label="Password"
-            aria-required="true"
             aria-invalid={errorMessage ? "true" : "false"}
             aria-describedby={errorMessage ? "login-error" : undefined}
           />
@@ -106,7 +102,7 @@ const Login = () => {
           </button>
         </form>
       </CSSTransition>
-    </div>
+    </main>
   );
 };
 

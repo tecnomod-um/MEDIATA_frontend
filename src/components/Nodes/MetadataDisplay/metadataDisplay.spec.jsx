@@ -5,6 +5,9 @@ import DatasetCard from './datasetCard';
 import '@testing-library/jest-dom';
 import { vi } from "vitest";
 
+const getByExactTextContent = (text) =>
+  screen.getByText((_, element) => element?.textContent === text);
+
 vi.mock(
   '../../Common/OverlayWrapper/overlayWrapper',
   () => ({
@@ -63,9 +66,11 @@ describe('MetadataDisplay', () => {
     expect(screen.getByText(/No metadata available\./i)).toBeInTheDocument();
   });
 
-  it('renders context and dataset titles when metadata provided', () => {
+  it('renders metadata summary details and dataset titles when metadata provided', () => {
     const md = {
       '@context': 'http://example.com',
+      '@type': 'DatasetCatalog',
+      sourceFile: 'catalog.ttl',
       dataset: [{ title: 'DS1' }, { title: 'DS2' }],
     };
 
@@ -82,7 +87,15 @@ describe('MetadataDisplay', () => {
     const contextParagraph = screen.getByText((_, el) =>
       el.tagName === 'P' && /Context:\s*http:\/\/example\.com/i.test(el.textContent)
     );
+    const typeParagraph = screen.getByText((_, el) =>
+      el.tagName === 'P' && /Type:\s*DatasetCatalog/i.test(el.textContent)
+    );
+    const sourceFileParagraph = screen.getByText((_, el) =>
+      el.tagName === 'P' && /Source File:\s*catalog\.ttl/i.test(el.textContent)
+    );
     expect(contextParagraph).toBeInTheDocument();
+    expect(typeParagraph).toBeInTheDocument();
+    expect(sourceFileParagraph).toBeInTheDocument();
     expect(screen.getByText('DS1')).toBeInTheDocument();
     expect(screen.getByText('DS2')).toBeInTheDocument();
   });
@@ -149,16 +162,19 @@ describe('DatasetCard', () => {
     expect(screen.getByText('My Data')).toBeInTheDocument();
     expect(screen.getByText(/Line1/)).toBeInTheDocument();
     expect(screen.getByText('ID123')).toBeInTheDocument();
-    expect(screen.getByText(/Contact Point:/i)).toBeInTheDocument();
-    expect(screen.getByText(/email:/i)).toBeInTheDocument();
+    expect(screen.getByText('Responsibility and Contact')).toBeInTheDocument();
+    expect(screen.getByText('Contact Point')).toBeInTheDocument();
+    expect(getByExactTextContent('Email:')).toBeInTheDocument();
     expect(screen.getByText('a@b.com')).toBeInTheDocument();
-    expect(screen.getByText(/Distributions:/i)).toBeInTheDocument();
+    expect(screen.getByText('Distributions')).toBeInTheDocument();
     expect(screen.getByText('Dist A')).toBeInTheDocument();
     expect(screen.getByText('json')).toBeInTheDocument();
     expect(screen.getByText('MIT')).toBeInTheDocument();
-    expect(screen.getByText('one, two')).toBeInTheDocument();
-    expect(screen.getByText(/Additional Fields:/i)).toBeInTheDocument();
-    expect(screen.getByText(/customField:/i)).toBeInTheDocument();
+    expect(screen.getByText('Additional Distribution Fields')).toBeInTheDocument();
+    expect(screen.getByText('one')).toBeInTheDocument();
+    expect(screen.getByText('two')).toBeInTheDocument();
+    expect(screen.getByText('Additional Dataset Fields')).toBeInTheDocument();
+    expect(screen.getByText('Custom Field')).toBeInTheDocument();
     expect(screen.getByText('CustomValue')).toBeInTheDocument();
   });
 });

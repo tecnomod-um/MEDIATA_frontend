@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import {
+  analyzeUploadedSpecAvailability,
+  applyUploadedSpecResolutions,
+  collectRequiredColumnsBySource,
   normalizeUploadedSpec,
   collectSpecSources,
+  reconcileMappingsWithColumnsData,
   rebuildMappingsFromSpec,
 } from './uploadedMappingSpec';
 
@@ -737,6 +741,257 @@ describe('rebuildMappingsFromSpec', () => {
     const result = rebuildMappingsFromSpec(spec);
     // columns should contain 'val' exactly once
     expect(result[0]['range'].columns).toEqual(['val']);
+  });
+});
+
+describe('analyzeUploadedSpecAvailability', () => {
+  it('separates resolved sources from missing-file and missing-node references', () => {
+    const spec = makeSpec({
+      sources: [{ sourceId: 'node1::present.csv' }],
+      mappings: [
+        {
+          targetField: 'status',
+          mappingType: 'standard',
+          inputs: [{ sourceId: 'node2::missing.csv' }],
+          rules: [
+            {
+              logic: { '==': [{ var: 'node3::ghost.csv::code' }, 'A'] },
+              then: { kind: 'constant', value: 'Active' },
+            },
+          ],
+        },
+      ],
+    });
+
+    const result = analyzeUploadedSpecAvailability(
+      spec,
+      [
+        { nodeId: 'node1', name: 'Node 1' },
+        { nodeId: 'node2', name: 'Node 2' },
+      ],
+      [
+        { nodeId: 'node1', files: ['present.csv'] },
+        { nodeId: 'node2', files: ['other.csv'] },
+      ]
+    );
+
+    expect(result.requiresResolution).toBe(true);
+    expect(result.resolved).toEqual([
+      {
+        nodeId: 'node1',
+        fileName: 'present.csv',
+        sourceId: 'node1::present.csv',
+      },
+    ]);
+    expect(result.missing).toEqual([
+      {
+        sourceId: 'node2::missing.csv',
+        nodeId: 'node2',
+        fileName: 'missing.csv',
+        reason: 'missing-file',
+        candidateNodes: [
+          {
+            nodeId: 'node2',
+            nodeName: 'Node 2',
+            files: ['other.csv'],
+          },
+        ],
+      },
+      {
+        sourceId: 'node3::ghost.csv',
+        nodeId: 'node3',
+        fileName: 'ghost.csv',
+        reason: 'missing-node',
+        candidateNodes: [
+          {
+            nodeId: 'node1',
+            nodeName: 'Node 1',
+            files: ['present.csv'],
+          },
+          {
+            nodeId: 'node2',
+            nodeName: 'Node 2',
+            files: ['other.csv'],
+          },
+        ],
+      },
+    ]);
+  });
+});
+
+describe('applyUploadedSpecResolutions', () => {
+  it('rewrites sources, dataset bindings, inputs, logic vars, and output refs', () => {
+    const spec = makeSpec({
+      sources: [
+        {
+          sourceId: 'node-old::source.csv',
+          nodeId: 'node-old',
+          fileName: 'source.csv',
+        },
+      ],
+      datasetBindings: [
+        {
+          sourceId: 'node-old::source.csv',
+          nodeId: 'node-old',
+          elementFileName: 'source.csv',
+        },
+      ],
+      mappings: [
+        {
+          targetField: 'status',
+          mappingType: 'standard',
+          inputs: [{ sourceId: 'node-old::source.csv' }],
+          rules: [
+            {
+              then: {
+                kind: 'copy',
+                sourceId: 'node-old::source.csv',
+              },
+              logic: {
+                direct: { var: 'node-old::source.csv::code' },
+                wrapped: { var: ['node-old::source.csv::status'] },
+                untouched: { var: 'plain_column' },
+              },
+            },
+          ],
+          outputs: [
+            {
+              logic: {
+                nested: { var: 'node-old::source.csv::result_col' },
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const result = applyUploadedSpecResolutions(spec, {
+      'node-old::source.csv': {
+        sourceId: 'node-new::replacement.csv',
+      },
+    });
+
+    expect(result.sources).toEqual([
+      {
+        sourceId: 'node-new::replacement.csv',
+        nodeId: 'node-new',
+        fileName: 'replacement.csv',
+      },
+    ]);
+    expect(result.datasetBindings).toEqual([
+      {
+        sourceId: 'node-new::replacement.csv',
+        nodeId: 'node-new',
+        elementFileName: 'replacement.csv',
+      },
+    ]);
+    expect(result.mappings[0].inputs).toEqual([
+      {
+        sourceId: 'node-new::replacement.csv',
+      },
+    ]);
+    expect(result.mappings[0].rules[0].then.sourceId).toBe('node-new::replacement.csv');
+    expect(result.mappings[0].rules[0].logic.direct.var).toBe('node-new::replacement.csv::code');
+    expect(result.mappings[0].rules[0].logic.wrapped.var[0]).toBe('node-new::replacement.csv::status');
+    expect(result.mappings[0].rules[0].logic.untouched.var).toBe('plain_column');
+    expect(result.mappings[0].outputs[0].logic.nested.var).toBe('node-new::replacement.csv::result_col');
+
+    expect(spec.sources[0].sourceId).toBe('node-old::source.csv');
+  });
+});
+
+describe('reconcileMappingsWithColumnsData', () => {
+  it('drops unavailable mapping entries and recalculates the mapped columns list', () => {
+    const mappings = [
+      {
+        status: {
+          columns: ['stale'],
+          groups: [
+            {
+              column: 'status',
+              values: [
+                {
+                  name: 'Active',
+                  mapping: [
+                    {
+                      nodeId: 'node1',
+                      fileName: 'file.csv',
+                      groupColumn: 'code',
+                      value: 'A',
+                    },
+                    {
+                      nodeId: 'node1',
+                      fileName: 'file.csv',
+                      groupColumn: 'missing',
+                      value: 'B',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ];
+
+    const result = reconcileMappingsWithColumnsData(mappings, [
+      { nodeId: 'node1', fileName: 'file.csv', column: 'code' },
+    ]);
+
+    expect(result[0].status.groups[0].values[0].mapping).toEqual([
+      {
+        nodeId: 'node1',
+        fileName: 'file.csv',
+        groupColumn: 'code',
+        value: 'A',
+      },
+    ]);
+    expect(result[0].status.columns).toEqual(['code']);
+  });
+});
+
+describe('collectRequiredColumnsBySource', () => {
+  it('groups unique required columns by source across rules and one-hot outputs', () => {
+    const spec = makeSpec({
+      mappings: [
+        {
+          targetField: 'status',
+          mappingType: 'standard',
+          rules: [
+            {
+              logic: {
+                or: [
+                  { '==': [{ var: 'node1::file.csv::code' }, 'A'] },
+                  { is_integer: [{ var: 'node1::file.csv::age' }] },
+                  { '==': [{ var: 'node1::file.csv::code' }, 'B'] },
+                ],
+              },
+              then: { kind: 'constant', value: 'Active' },
+            },
+          ],
+        },
+        {
+          groupName: 'visits',
+          mappingType: 'one-hot',
+          outputs: [
+            {
+              targetField: 'recent_visit',
+              logic: {
+                and: [
+                  { '>=': [{ to_date: [{ var: 'node2::visits.csv::visit_date' }] }, '2024-01-01'] },
+                  { '<=': [{ to_date: [{ var: 'node2::visits.csv::visit_date' }] }, '2024-12-31'] },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(collectRequiredColumnsBySource(spec)).toEqual({
+      'node1::file.csv': ['code', 'age'],
+      'node2::visits.csv': ['visit_date'],
+    });
   });
 });
 

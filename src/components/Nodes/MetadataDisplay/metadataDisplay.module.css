@@ -6,6 +6,8 @@
   display: flex;
   flex-direction: column;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  max-width: 95vw;
+  max-height: 95vh;
 }
 
 .header {
@@ -15,24 +17,50 @@
   background-color: var(--header-bg);
 }
 
-.header h2 {
+.modalTitle {
   margin: 0 0 6px 0;
   font-weight: 600;
   font-size: var(--font-size-xl);
+  padding-right: 40px;
+  color: var(--text-color-on-darkbg);
+  line-height: 1.2;
 }
 
-.header p {
+.modalDescription {
   margin: 0;
   font-size: var(--font-size-base);
+  padding-right: 40px;
+  color: var(--text-color-on-darkbg);
+  line-height: 1.5;
+}
+
+.closeBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-color-on-darkbg);
+  cursor: pointer;
+  font-size: var(--font-size-lg);
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.closeBtn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 .body {
-  padding: 15px 20px;
+  padding: 16px 20px;
   overflow-y: auto;
-  overflow-x: auto;
+  overflow-x: hidden;
   max-height: 70vh;
   max-width: 100%;
-  align-self: center;
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
@@ -51,8 +79,23 @@
   background-color: var(--scrollbar-track);
 }
 
+.metadataSummary {
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color-secondary);
+  border-radius: 6px;
+  background-color: var(--background-color-3);
+}
+
 .contextLine {
-  margin-bottom: 1rem;
+  margin: 0 0 6px 0;
+  color: var(--text-color-secondary);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.contextLine:last-child {
+  margin-bottom: 0;
 }
 
 .placeholderContainer {
@@ -72,6 +115,16 @@
 .loadingText {
   color: var(--text-color-secondary);
   margin: 0;
+}
+
+.spinner {
+  width: var(--spinner-size-lg);
+  height: var(--spinner-size-lg);
+  border: var(--spinner-border-width-md) solid var(--spinner-border-base-secondary);
+  border-top: var(--spinner-border-width-md) solid var(--spinner-border-top-secondary);
+  border-radius: 50%;
+  animation: spin var(--spinner-duration-fast) linear infinite;
+  margin-bottom: 15px;
 }
 
 .footer {
@@ -101,82 +154,160 @@
   box-shadow: var(--button-color-shadow);
 }
 
-.accessButton:hover {
+.accessButton:hover:not(:disabled) {
   background-position: 100% 0;
   background-color: var(--button-color-hover);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
+.accessButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Dataset layout */
+
 .datasetsContainer {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
-  align-items: center;
+  gap: 16px;
+  align-items: flex-start;
   justify-content: center;
 }
 
 .datasetCard {
-  flex: 1 1 350px;
-  max-width: 600px;
+  flex: 1 1 520px;
+  max-width: 860px;
+  min-width: 320px;
   border: 1px solid var(--border-color-secondary);
-  border-radius: 4px;
-  padding: 12px 16px;
+  border-radius: 8px;
+  padding: 18px 20px;
   background-color: var(--background-color-3);
   box-sizing: border-box;
   position: relative;
+  color: var(--text-color-primary);
+  text-align: left;
 }
 
 .datasetTitle {
   font-size: var(--font-size-lg);
-  font-weight: 600;
-  margin: 0 0 8px 0;
+  font-weight: 700;
+  margin: 0 0 14px 0;
   color: var(--text-color-primary);
+  text-align: center;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
+/* Sections */
+
+.metadataSection {
+  margin-top: 14px;
+}
+
+.metadataSection:first-of-type {
+  margin-top: 0;
+}
+
+.sectionTitle {
+  margin: 0 0 8px 0;
+  padding-bottom: 5px;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--text-color-primary);
+  border-bottom: 1px solid var(--border-color-secondary);
+  text-align: left;
+}
+
+.subsectionTitle {
+  margin: 10px 0 8px 0;
+  font-size: var(--font-size-sm, 0.9rem);
+  font-weight: 700;
+  color: var(--text-color-primary);
+  text-align: left;
+}
+
+.cardItemTitle {
+  margin: 0 0 10px 0;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--text-color-primary);
+  text-align: left;
+}
+
+.sectionEmpty {
+  margin: 4px 0 0 0;
+  color: var(--text-color-muted);
+  font-style: italic;
+  font-size: 0.95rem;
+}
+
+/* Fields */
+
 .fieldRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: 165px minmax(0, 1fr);
+  gap: 12px;
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  align-items: start;
+  text-align: left;
 }
 
 .fieldLabel {
-  flex: 0 0 110px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-color-secondary);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .fieldValue {
-  flex: 1;
   color: var(--text-color-primary);
   max-width: 100%;
-  white-space: pre-wrap;
-  text-overflow: ellipsis;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
-.distributionCard {
-  border: 1px solid var(--border-color);
-  padding: 10px;
-  border-radius: 4px;
-  margin-top: 6px;
-  background-color: var(--background-color-4);
+/* Values */
+
+.valueList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-.distributionCard h6 {
-  margin: 0 0 8px 0;
-  font-size: var(--font-size-base);
-  font-weight: 600;
+.valueList li {
+  margin: 0 0 4px 0;
 }
 
-.distSection {
-  margin-top: 10px;
+.valueList li:last-child {
+  margin-bottom: 0;
 }
 
-.extraFields {
-  margin-top: 8px;
+.nestedObject {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   padding-left: 10px;
   border-left: 2px solid var(--border-color-secondary);
+}
+
+.nestedRow {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.nestedLabel {
+  font-weight: 600;
+  color: var(--text-color-secondary);
+}
+
+.nestedValue {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .objectList {
@@ -184,84 +315,151 @@
   margin: 2px 0;
   padding: 4px 0 4px 16px;
   border-left: 2px solid var(--border-color-secondary);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .objectList li {
   margin-bottom: 4px;
 }
 
-.spinner {
-  width: var(--spinner-size-lg);
-  height: var(--spinner-size-lg);
-  border: var(--spinner-border-width-md) solid var(--spinner-border-base-secondary);
-  border-top: var(--spinner-border-width-md) solid var(--spinner-border-top-secondary);
-  border-radius: 50%;
-  animation: spin var(--spinner-duration-fast) linear infinite;
-  margin-bottom: 15px;
+.objectList li:last-child {
+  margin-bottom: 0;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+/* Links */
 
-.closeBtn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  border: none;
-  background: transparent;
-  color: var(--text-color-on-darkbg);
-  cursor: pointer;
-  font-size: var(--font-size-lg);
-  padding: 6px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.3s ease-in-out;
-}
-
-.closeBtn:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-}
-
-.modalContent,
-.body,
-.datasetCard,
-.distributionCard {
-  color: var(--text-color-primary);
-}
-
-.contextLine {
-  color: var(--text-color-secondary);
-}
-
-.distributionCard h6,
-.datasetTitle,
-.datasetCard h6 {
-  color: var(--text-color-primary);
-}
-
-.fieldLabel {
-  color: var(--text-color-secondary);
-}
-
-.muted {
-  color: var(--text-color-muted);
+.compactLink {
+  display: inline-block;
+  max-width: 100%;
+  color: var(--heading-color);
+  text-decoration: underline;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
 }
 
 .datasetCard a,
 .distributionCard a,
+.variableCard a,
 .body a {
   color: var(--heading-color);
-  text-decoration: underline;
-  overflow-wrap: anywhere;
-  word-break: break-word;
 }
 
 .datasetCard a:visited,
 .distributionCard a:visited,
+.variableCard a:visited,
 .body a:visited {
   color: var(--heading-color);
+}
+
+/* Distribution and variable cards */
+
+.distributionCard,
+.variableCard {
+  border: 1px solid var(--border-color);
+  padding: 12px 14px;
+  border-radius: 6px;
+  margin-top: 8px;
+  background-color: var(--background-color-4);
+  color: var(--text-color-primary);
+  text-align: left;
+}
+
+.distributionCard h6,
+.variableCard h6 {
+  margin: 0 0 10px 0;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--text-color-primary);
+  text-align: left;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.distSection,
+.variablesSection {
+  margin-top: 12px;
+}
+
+.variablesContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.extraFields {
+  margin-top: 10px;
+  padding-left: 12px;
+  border-left: 2px solid var(--border-color-secondary);
+}
+
+/* Compatibility with existing class names */
+
+.distributionCard .fieldRow,
+.variableCard .fieldRow {
+  grid-template-columns: 150px minmax(0, 1fr);
+}
+
+.distSection .sectionTitle,
+.variablesSection .sectionTitle {
+  margin-top: 0;
+}
+
+/* Animations */
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive */
+
+@media (max-width: 700px) {
+  .modalContent {
+    max-width: 98vw;
+    max-height: 98vh;
+  }
+
+  .body {
+    padding: 12px;
+  }
+
+  .datasetCard {
+    flex-basis: 100%;
+    min-width: 0;
+    padding: 14px;
+  }
+
+  .fieldRow,
+  .distributionCard .fieldRow,
+  .variableCard .fieldRow {
+    grid-template-columns: 1fr;
+    gap: 2px;
+    margin-bottom: 10px;
+  }
+
+  .nestedRow {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .fieldLabel {
+    font-weight: 700;
+  }
+
+  .compactLink {
+    white-space: normal;
+  }
+
+  .accessButton {
+    margin: 12px;
+  }
 }

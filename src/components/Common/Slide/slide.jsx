@@ -5,7 +5,7 @@ import SlideStyles from './slide.module.css';
 import useScrollFade from '../../../hooks/useScrollFade';
 
 // Slide carousel for images
-const Slide = ({ images, steps }) => {
+const Slide = ({ images, steps, label = "Slide images" }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const { ref, style } = useScrollFade();
 
@@ -17,7 +17,7 @@ const Slide = ({ images, steps }) => {
 
   return (
     <div ref={ref} className={SlideStyles.slideContainer} style={style}>
-      <div className={SlideStyles.imageContainer} role="region" aria-label="Slide images">
+      <div className={SlideStyles.imageContainer} role="region" aria-label={label}>
         {images.map((image, index) => (
           <img
             key={index}

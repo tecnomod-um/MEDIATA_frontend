@@ -111,6 +111,8 @@ vi.mock('../../components/Common/PageImage/pageImage', () => ({
 describe('<Tutorial /> + images.js', () => {
   it('renders the main sections and sidebar with correct offset', () => {
     render(<Tutorial />);
+    expect(screen.getByRole('main')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: /mediata tutorial/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Introduction/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Navigating the tool/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Selecting files/i })).toBeInTheDocument();

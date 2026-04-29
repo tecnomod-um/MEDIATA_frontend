@@ -143,6 +143,9 @@ function Tutorial() {
         <ScrollSidebar sections={sections} offset={55} />
       </aside>
 
+      <main className={TutorialStyles.mainContainer}>
+        <h1 className="visually-hidden">MEDIATA Tutorial</h1>
+
       <div id="Introduction" className={TutorialStyles.contentContainer}>
         <div className={TutorialStyles.textContainer}>
           <h2 className={TutorialStyles.centeredHeading}>Introduction</h2>
@@ -515,7 +518,11 @@ function Tutorial() {
                 of the controls used in this section.
               </p>
 
-              <Slide images={DiscoverySlides} steps={DiscoverySteps} />
+              <Slide
+                images={DiscoverySlides}
+                steps={DiscoverySteps}
+                label="Discovery slide images"
+              />
 
               <div className={TutorialStyles.controlsListSection}>
                 <div className={TutorialStyles.controlsListCard}>
@@ -625,7 +632,11 @@ function Tutorial() {
                 results panel for categorical features and a list of omitted features.
               </p>
 
-              <Slide images={AggregateSlides} steps={AggregateSteps} />
+              <Slide
+                images={AggregateSlides}
+                steps={AggregateSteps}
+                label="Aggregate discovery slide images"
+              />
 
               <p>
                 The upper matrix can display one of three statistics: <b>covariance</b>, <b>Pearson correlation</b>,
@@ -663,7 +674,11 @@ function Tutorial() {
                 files, which will determine the set of features available to work with.
               </p>
 
-              <Slide images={IntegrationSlides} steps={IntegrationSteps} />
+              <Slide
+                images={IntegrationSlides}
+                steps={IntegrationSteps}
+                label="Integration slide images"
+              />
 
               <p>
                 On the left, the feature column lists the names of the columns present in each dataset.
@@ -851,7 +866,11 @@ function Tutorial() {
                 fields required by that pattern.
               </p>
 
-              <Slide images={SemanticAlignmentSlides} steps={SemanticAlignmentSteps} />
+              <Slide
+                images={SemanticAlignmentSlides}
+                steps={SemanticAlignmentSteps}
+                label="Semantic alignment slide images"
+              />
 
               <p>
                 Three semantic statement patterns are currently supported:
@@ -969,6 +988,7 @@ function Tutorial() {
           </div>
         </div>
       </div>
+      </main>
     </div>
   );
 }

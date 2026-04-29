@@ -43,6 +43,7 @@ export const getNodeInfo = async (nodeId) => {
 };
 
 // Fetch node dataset descriptions
+/*
 export const getNodeMetadata = async (nodeId) => {
   try {
     const response = await axiosInstance.get(`/nodes/connect/metadata/${nodeId}`);
@@ -59,7 +60,31 @@ export const getNodeMetadata = async (nodeId) => {
     }
   }
 };
+*/export const getNodeMetadata = async (nodeId) => {
+  try {
+    const response = await axiosInstance.get(
+      `/nodes/connect/metadata/${encodeURIComponent(nodeId)}`
+    );
 
+    if (response.data?.metadata !== undefined) {
+      return response.data;
+    }
+
+    return { metadata: response.data };
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      return { metadata: null };
+    }
+
+    console.error("Error fetching node metadata:", error);
+
+    if (error.response && error.response.data && error.response.data.error) {
+      throw new Error(error.response.data.error);
+    }
+
+    throw error;
+  }
+};
 // Logs an error to the server
 export const logError = (error, info) => {
   axiosInstance.post(`/api/error`, {

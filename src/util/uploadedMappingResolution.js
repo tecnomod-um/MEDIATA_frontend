@@ -71,23 +71,17 @@ async function analyzeUploadedSpecAvailabilityLive(spec, selectedNodes, liveFile
       return;
     }
 
-    let candidateNodes = [];
-
-    if (!nodeSelected) {
-      candidateNodes = Array.from(liveFilesByNode.values()).map((entry) => ({
+    const candidateNodes = Array.from(liveFilesByNode.values())
+      .map((entry) => ({
         nodeId: entry.nodeId,
         nodeName: entry.nodeName,
         files: entry.files,
-      }));
-    } else {
-      candidateNodes = [
-        {
-          nodeId,
-          nodeName: nodeEntry?.nodeName || "",
-          files: nodeFiles,
-        },
-      ];
-    }
+      }))
+      .sort((a, b) => {
+        if (String(a.nodeId) === nodeId) return -1;
+        if (String(b.nodeId) === nodeId) return 1;
+        return 0;
+      });
 
     missing.push({
       sourceId,

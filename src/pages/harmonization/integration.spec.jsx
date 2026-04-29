@@ -21,6 +21,7 @@ import { vi } from "vitest";
 
 const capturedMappingsResultProps = vi.hoisted(() => ({ current: {} }));
 const capturedColumnMappingProps = vi.hoisted(() => ({ current: {} }));
+const capturedUploadResolutionProps = vi.hoisted(() => ({ current: {} }));
 
 vi.mock('react-router-dom', () => ({
   useLocation: vi.fn(),
@@ -47,6 +48,29 @@ vi.mock('../../util/uploadedMappingSpec', () => ({
   normalizeUploadedSpec: vi.fn((x) => x),
   collectSpecSources: vi.fn(() => []),
   rebuildMappingsFromSpec: vi.fn(() => []),
+  applyUploadedSpecResolutions: vi.fn((spec) => spec),
+}));
+
+vi.mock('../../util/uploadedMappingResolution', () => ({
+  fetchLiveElementFilesByNode: vi.fn(async (nodes = []) => new Map(
+    nodes.map((node) => [
+      String(node.nodeId),
+      {
+        nodeId: String(node.nodeId),
+        nodeName: node.name || String(node.nodeId),
+        files: ['data.csv'],
+      },
+    ])
+  )),
+  analyzeUploadedSpecAvailabilityLive: vi.fn(async () => ({
+    sourceRefs: [],
+    resolved: [],
+    missing: [],
+    requiresResolution: false,
+    requiredColumnsBySource: {},
+    liveFilesByNode: new Map(),
+  })),
+  checkReplacementFileCompatibility: vi.fn(),
 }));
 
 vi.mock('../../util/nodeAxiosSetup', () => ({
@@ -132,6 +156,14 @@ vi.mock('../../components/Integration/MappingsResult/mappingsResult', () => ({
   default: (props) => {
     capturedMappingsResultProps.current = props;
     return <div data-testid="MappingsResult" />;
+  },
+}));
+
+vi.mock('../../components/Integration/UploadedMappingsResolutionModal/uploadedMappingsResolutionModal', () => ({
+  __esModule: true,
+  default: (props) => {
+    capturedUploadResolutionProps.current = props;
+    return props.isOpen ? <div data-testid="UploadResolutionModal" /> : null;
   },
 }));
 
@@ -1538,6 +1570,68 @@ describe('Integration Page', () => {
           'The uploaded spec did not produce any loadable mappings.'
         )
       );
+      consoleSpy.mockRestore();
+    });
+
+    test('keeps resolution modal open when confirmed replacements fail to apply', async () => {
+      const node = { nodeId: 'node1', serviceUrl: 'http://n1', name: 'Node 1' };
+      useNode.mockReturnValue({ selectedNodes: [node] });
+      useLocation.mockReturnValue({
+        state: { elementFiles: [{ nodeId: 'node1', fileName: 'data.csv' }] },
+      });
+      fetchElementFile.mockResolvedValue('col1,val1,val2');
+
+      const { normalizeUploadedSpec, collectSpecSources, rebuildMappingsFromSpec } =
+        await import('../../util/uploadedMappingSpec');
+      const { analyzeUploadedSpecAvailabilityLive } =
+        await import('../../util/uploadedMappingResolution');
+
+      normalizeUploadedSpec.mockReturnValue({ mappings: [] });
+      collectSpecSources.mockReturnValue([{ nodeId: 'node1', fileName: 'missing.csv' }]);
+      rebuildMappingsFromSpec.mockReturnValue([{ TargetA: {} }]);
+      analyzeUploadedSpecAvailabilityLive.mockResolvedValueOnce({
+        sourceRefs: [{ nodeId: 'node1', fileName: 'missing.csv' }],
+        resolved: [],
+        missing: [
+          {
+            sourceId: 'node1::missing.csv',
+            nodeId: 'node1',
+            fileName: 'missing.csv',
+            reason: 'missing-file',
+            candidateNodes: [
+              { nodeId: 'node1', nodeName: 'Node 1', files: ['data.csv'] },
+            ],
+          },
+        ],
+        requiresResolution: true,
+        requiredColumnsBySource: {},
+        liveFilesByNode: new Map(),
+      });
+
+      await act(async () => { render(<Integration />); });
+      await waitFor(() => expect(screen.queryByTestId('MappingsResult')).toBeInTheDocument());
+
+      await act(async () => {
+        await capturedMappingsResultProps.current.onUploadMappings?.({ mappings: [] });
+      });
+
+      await waitFor(() =>
+        expect(screen.getByTestId('UploadResolutionModal')).toBeInTheDocument()
+      );
+
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      await act(async () => {
+        await capturedUploadResolutionProps.current.onConfirm?.({
+          'node1::missing.csv': { sourceId: 'node1::data.csv' },
+        });
+      });
+
+      await waitFor(() =>
+        expect(mockToastError).toHaveBeenCalledWith(
+          expect.stringContaining('The uploaded spec references element files')
+        )
+      );
+      expect(screen.getByTestId('UploadResolutionModal')).toBeInTheDocument();
       consoleSpy.mockRestore();
     });
   });

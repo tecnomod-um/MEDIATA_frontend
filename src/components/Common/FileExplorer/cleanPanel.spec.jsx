@@ -2079,42 +2079,45 @@ describe('CleanPanel - Validation Logic', () => {
     });
 
     it('sub-field inputs update state when their option is enabled', () => {
-      render(<CleanPanel {...defaultProps} />);
+      const onApply = vi.fn();
+      render(<CleanPanel {...defaultProps} onApply={onApply} />);
 
       enableOption('Strip prefix');
-      fireEvent.change(document.querySelector('input[placeholder="e.g. ID-"]'), { target: { value: 'pre_' } });
-
-      enableOption('Strip suffix');
-      fireEvent.change(document.querySelector('input[placeholder="e.g. _old"]'), { target: { value: '_suf' } });
-
-      enableOption('Pad values');
-      fireEvent.change(document.querySelector('input[placeholder="Single character"]'), { target: { value: '0' } });
-      const padDirSel = Array.from(document.querySelectorAll('select')).find(
-        s => !s.disabled && Array.from(s.options).some(o => o.value === 'left')
-      );
-      fireEvent.change(padDirSel, { target: { value: 'left' } });
+      fireEvent.change(screen.getByPlaceholderText('e.g. ID-'), {
+        target: { value: 'pre_' },
+      });
 
       enableOption('Standardize phone numbers');
-      fireEvent.change(document.querySelector('input[placeholder="+1"]'), { target: { value: '+44' } });
-      const phoneFmtSel = Array.from(document.querySelectorAll('select')).find(
-        s => !s.disabled && Array.from(s.options).some(o => o.value === 'international')
+      fireEvent.change(screen.getByPlaceholderText('+1'), {
+        target: { value: '+44' },
+      });
+      const phoneFormatSelect = Array.from(screen.getAllByRole('combobox')).find(
+        (el) => !el.disabled && Array.from(el.options).some((opt) => opt.value === 'international')
       );
-      fireEvent.change(phoneFmtSel, { target: { value: 'international' } });
+      fireEvent.change(phoneFormatSelect, { target: { value: 'international' } });
 
       enableOption('Split column');
-      Array.from(document.querySelectorAll('input:not([type="checkbox"]):not([type="number"])'))
-        .filter(el => !el.disabled && el.closest('[role="switch"]')?.textContent?.includes('Split column'))
-        .forEach(el => fireEvent.change(el, { target: { value: 'test' } }));
+      const splitRow = screen.getByText('Split column').closest('[role="switch"]');
+      const [splitColumnInput, splitDelimiterInput, splitNamesInput] = Array.from(
+        splitRow.querySelectorAll('input:not([type="checkbox"])')
+      );
+      fireEvent.change(splitColumnInput, { target: { value: 'full_name' } });
+      fireEvent.change(splitDelimiterInput, { target: { value: '|' } });
+      fireEvent.change(splitNamesInput, { target: { value: 'first,last' } });
 
-      enableOption('Merge columns');
-      Array.from(document.querySelectorAll('input:not([type="checkbox"]):not([type="number"])'))
-        .filter(el => !el.disabled && el.closest('[role="switch"]')?.textContent?.includes('Merge columns'))
-        .forEach(el => fireEvent.change(el, { target: { value: 'test' } }));
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
 
-      enableOption('Remove rows with pattern');
-      Array.from(document.querySelectorAll('input:not([type="checkbox"]):not([type="number"])'))
-        .filter(el => !el.disabled && el.closest('[role="switch"]')?.textContent?.includes('Remove rows'))
-        .forEach(el => fireEvent.change(el, { target: { value: 'test' } }));
+      expect(onApply).toHaveBeenCalledWith(expect.objectContaining({
+        stripPrefix: true,
+        prefixToStrip: 'pre_',
+        standardizePhoneNumbers: true,
+        phoneFormat: 'international',
+        defaultCountryCode: '+44',
+        splitColumn: true,
+        columnToSplit: 'full_name',
+        splitDelimiter: '|',
+        newColumnNames: ['first', 'last'],
+      }));
     });
 
     it('fillMissingValues: shows constant value field when strategy is set to constant', () => {
