@@ -15,7 +15,7 @@
   display: flex;
   flex-direction: column;
   background-color: var(--background-color-card);
-  border-radius: 8px;
+  border-radius: var(--space-2);
   padding: 30px 40px;
   width: 90%;
   max-width: 500px;
@@ -26,7 +26,7 @@
 
 .uploadModalContainer {
   background-color: var(--background-color-card);
-  border-radius: 8px;
+  border-radius: var(--space-2);
   padding: 30px 40px;
   width: 90%;
   max-width: 500px;
@@ -93,7 +93,7 @@
 }
 
 .nodeSection {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
 }
 
 .nodeTitle {
@@ -184,7 +184,7 @@
   cursor: pointer;
   font-size: var(--font-size-base);
   font-weight: 600;
-  margin-top: 20px;
+  margin-top: var(--space-5);
   background-size: 300% 100%;
   background-image: var(--button-gradient);
   box-shadow: var(--button-color-shadow);
@@ -207,7 +207,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .spinnerIcon {
@@ -248,7 +248,7 @@
   grid-template-columns: var(--project-thumb-size) 1fr 18px;
   gap: 14px;
   align-items: center;
-  padding: 12px;
+  padding: var(--space-3);
 
   border: none;
   border-bottom: 1px solid var(--project-row-border);
@@ -367,7 +367,7 @@
 .statsRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .statChip {
@@ -476,7 +476,7 @@
   .projectTopLine {
     align-items: center;
     flex-wrap: nowrap;
-    gap: 8px;
+    gap: var(--space-2);
     min-width: 0;
   }
 
@@ -515,13 +515,13 @@
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
-    gap: 8px;
+    gap: var(--space-2);
     flex-wrap: nowrap;
   }
 
   .statsRow {
     flex-wrap: nowrap;
-    gap: 8px;
+    gap: var(--space-2);
     width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
@@ -564,7 +564,7 @@
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   padding: 18px;
   color: var(--text-color-secondary);
   background: var(--project-row-bg);

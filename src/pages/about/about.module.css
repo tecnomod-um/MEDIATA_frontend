@@ -9,7 +9,7 @@
 }
 
 .mainHeader {
-  padding: 20px;
+  padding: var(--space-5);
   color: var(--text-color-dark);
   font-size: var(--font-size-2xl);
   text-align: center;
@@ -37,7 +37,7 @@
   font-size: var(--font-size-base);
   line-height: 1.5;
   color: var(--text-color-primary);
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
 }
 
 .memberList {
@@ -50,7 +50,7 @@
 }
 
 .memberItem {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
   display: flex;
   flex-direction: column;
 }

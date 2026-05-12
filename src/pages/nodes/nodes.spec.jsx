@@ -14,6 +14,7 @@ const mockNodeAuth = vi.fn();
 const mockNavigate = vi.fn();
 const mockSelectNode = vi.fn();
 const mockSelectNodes = vi.fn();
+const mockStoreNodeRoutingEntry = vi.fn();
 
 vi.mock('../../util/petitionHandler', () => ({
   getNodeList: (...args) => mockGetNodeList(...args),
@@ -29,6 +30,10 @@ vi.mock('../../config', () => ({
 
 vi.mock('../../util/colors', () => ({
   lightenColor: (c, amt) => `${c}-light-${amt}`,
+}));
+
+vi.mock('../../util/nodeAxiosSetup', () => ({
+  storeNodeRoutingEntry: (...args) => mockStoreNodeRoutingEntry(...args),
 }));
 
 vi.mock('./nodes.module.css', () => ({
@@ -88,7 +93,13 @@ vi.mock('../../components/Nodes/NodeScene/nodeScene', () => ({
 }));
 
 vi.mock('../../components/Nodes/MetadataDisplay/metadataDisplay', () => ({
-  default: ({ isOpen, loadingMetadata, metadata, onAccessNode }) =>
+  default: ({
+    isOpen,
+    loadingMetadata,
+    metadata,
+    fairDataPointEnabled,
+    onAccessNode,
+  }) =>
     isOpen ? (
       <div
         data-testid="metadata-display"
@@ -96,6 +107,7 @@ vi.mock('../../components/Nodes/MetadataDisplay/metadataDisplay', () => ({
         data-metadata={
           typeof metadata === 'string' ? metadata : JSON.stringify(metadata)
         }
+        data-fdp-enabled={String(fairDataPointEnabled)}
       >
         <button data-testid="access-node" onClick={onAccessNode}>
           Access
@@ -147,8 +159,8 @@ describe('<Nodes />', () => {
 
   it('fetches nodes, renders NodeScene, and calls toast.info', async () => {
     mockGetNodeList.mockResolvedValueOnce([
-      { nodeId: 'a', name: 'A' },
-      { nodeId: 'b', name: 'B' },
+      { nodeId: 'a', name: 'A', serviceUrl: 'https://a.example', proxyRequired: false, proxyBasePath: '/nodes/proxy/a' },
+      { nodeId: 'b', name: 'B', serviceUrl: 'http://b.example', proxyRequired: true, proxyBasePath: '/nodes/proxy/b' },
     ]);
 
     render(<Nodes />);
@@ -162,6 +174,14 @@ describe('<Nodes />', () => {
     expect(toast.info.mock.calls[0][0]).toMatch(
       /Double click nodes to enter them/i
     );
+    expect(mockStoreNodeRoutingEntry).toHaveBeenCalledWith('https://a.example', {
+      proxyRequired: false,
+      proxyBasePath: '/nodes/proxy/a',
+    });
+    expect(mockStoreNodeRoutingEntry).toHaveBeenCalledWith('http://b.example', {
+      proxyRequired: true,
+      proxyBasePath: '/nodes/proxy/b',
+    });
   });
 
   it('shows "No nodes connected to the system" on empty list', async () => {
@@ -188,7 +208,10 @@ describe('<Nodes />', () => {
     });
 
     it('opens metadata modal and loads details', async () => {
-      mockGetNodeMetadata.mockResolvedValueOnce({ metadata: 'DETAILS' });
+      mockGetNodeMetadata.mockResolvedValueOnce({
+        metadata: 'DETAILS',
+        fairDataPointEnabled: true,
+      });
 
       render(<Nodes />);
       await screen.findByTestId('node-scene');
@@ -206,6 +229,10 @@ describe('<Nodes />', () => {
         'data-metadata',
         'DETAILS'
       );
+      expect(screen.getByTestId('metadata-display')).toHaveAttribute(
+        'data-fdp-enabled',
+        'true'
+      );
     });
 
     it('access-node selects node and navigates', async () => {
@@ -213,6 +240,8 @@ describe('<Nodes />', () => {
       mockGetNodeInfo.mockResolvedValue({
         token: 'T',
         nodeInfo: { serviceUrl: 'URL', id: 'x' },
+        proxyRequired: true,
+        proxyBasePath: '/nodes/proxy/x',
       });
       mockNodeAuth.mockResolvedValue({ jwtNodeToken: 'JWT' });
 
@@ -229,6 +258,10 @@ describe('<Nodes />', () => {
           serviceUrl: 'URL',
           id: 'x',
         });
+      });
+      expect(mockStoreNodeRoutingEntry).toHaveBeenCalledWith('URL', {
+        proxyRequired: true,
+        proxyBasePath: '/nodes/proxy/x',
       });
 
       act(() => {
@@ -266,6 +299,8 @@ describe('<Nodes />', () => {
         Promise.resolve({
           token: `T-${nodeId}`,
           nodeInfo: { serviceUrl: `URL-${nodeId}`, id: nodeId },
+          proxyRequired: nodeId === 'y',
+          proxyBasePath: `/nodes/proxy/${nodeId}`,
         })
       );
       mockNodeAuth.mockImplementation((url, token) =>
@@ -285,6 +320,10 @@ describe('<Nodes />', () => {
           { serviceUrl: 'URL-x', id: 'x', jwtNodeToken: 'JWT-T-x' },
           { serviceUrl: 'URL-y', id: 'y', jwtNodeToken: 'JWT-T-y' },
         ]);
+      });
+      expect(mockStoreNodeRoutingEntry).toHaveBeenCalledWith('URL-y', {
+        proxyRequired: true,
+        proxyBasePath: '/nodes/proxy/y',
       });
 
       expect(mockNavigate).toHaveBeenCalledWith('/discovery');

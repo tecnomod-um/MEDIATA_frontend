@@ -4,7 +4,7 @@
   align-items: center;
   min-height: calc(100vh - 55px);
   background-color: var(--background-color-1);
-  padding: 20px;
+  padding: var(--space-5);
   animation: fadeIn 0.5s ease-in-out;
 }
 
@@ -20,7 +20,7 @@
 
 .title {
   font-size: var(--font-size-xl);
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
   color: var(--heading-color);
 }
 

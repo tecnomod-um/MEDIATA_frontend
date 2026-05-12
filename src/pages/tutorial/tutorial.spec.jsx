@@ -115,6 +115,8 @@ describe('<Tutorial /> + images.js', () => {
     expect(screen.getByRole('heading', { level: 1, name: /mediata tutorial/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Introduction/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Navigating the tool/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /FAIR Data Point/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /FAIR Data Point/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Selecting files/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Data cleaning/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /^Discovery$/i })).toBeInTheDocument();
@@ -131,7 +133,7 @@ describe('<Tutorial /> + images.js', () => {
     expect(nav).toBeInTheDocument();
     expect(nav).toHaveAttribute('data-offset', '55');
     const items = within(nav).getAllByRole('listitem');
-    expect(items.length).toBe(14);
+    expect(items.length).toBe(15);
   });
 
   it('renders four Slide components with images count matching the steps per section', () => {

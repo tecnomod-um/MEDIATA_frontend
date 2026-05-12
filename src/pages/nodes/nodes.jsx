@@ -10,6 +10,19 @@ import MetadataDisplay from "../../components/Nodes/MetadataDisplay/metadataDisp
 import JoinedNodesDisplay from "../../components/Nodes/JoinedNodesDisplay/joinedNodesDisplay";
 import SchemaTray from "../../components/Common/SchemaTray/schemaTray";
 import { lightenColor } from "../../util/colors";
+import { storeNodeRoutingEntry } from "../../util/nodeAxiosSetup";
+
+function buildFairDataPointUrl(node) {
+  const baseUrl = node?.serviceUrl || node?.ip;
+  if (typeof baseUrl !== "string" || baseUrl.trim() === "") return null;
+  return `${baseUrl.replace(/\/+$/, "")}/taniwha/fdp`;
+}
+
+function rememberNodeRouting(node, routing = {}) {
+  const serviceUrl = node?.serviceUrl || node?.ip;
+  if (!serviceUrl) return;
+  storeNodeRoutingEntry(serviceUrl, routing);
+}
 
 // Node selection page. Based on the 3D node scene
 const Nodes = () => {
@@ -20,6 +33,7 @@ const Nodes = () => {
   const [schema, setSchema] = useState(null);
   const [selectedNode, setSelectedNode] = useState(null);
   const [metadata, setMetadata] = useState(null);
+  const [fairDataPointEnabled, setFairDataPointEnabled] = useState(null);
   const [showMetadataModal, setShowMetadataModal] = useState(false);
   const [loadingMetadata, setLoadingMetadata] = useState(false);
   const [accessingNode, setAccessingNode] = useState(false);
@@ -34,6 +48,10 @@ const Nodes = () => {
       try {
         const data = await getNodeList();
         const newNodes = data.map((node) => {
+          rememberNodeRouting(node, {
+            proxyRequired: node.proxyRequired,
+            proxyBasePath: node.proxyBasePath,
+          });
           const existingNode = nodes.find((n) => n.nodeId === node.nodeId);
           return {
             ...node,
@@ -101,12 +119,18 @@ const Nodes = () => {
     const lighterHeaderColor = lightenColor(node.color, 20);
     setSelectedNode({ ...node, lighterHeaderColor });
     setMetadata(null);
+    setFairDataPointEnabled(null);
     setLoadingMetadata(true);
     setShowMetadataModal(true);
 
     try {
       const fetchedData = await getNodeMetadata(nodeId);
       setMetadata(fetchedData.metadata);
+      setFairDataPointEnabled(
+        typeof fetchedData.fairDataPointEnabled === "boolean"
+          ? fetchedData.fairDataPointEnabled
+          : null
+      );
     } catch (err) {
       console.error("Failed to fetch node metadata:", err);
       setError("Failed to fetch node metadata");
@@ -123,6 +147,10 @@ const Nodes = () => {
       if (response.error) throw new Error(response.error);
 
       const { token, nodeInfo } = response;
+      rememberNodeRouting(nodeInfo, {
+        proxyRequired: response.proxyRequired,
+        proxyBasePath: response.proxyBasePath,
+      });
       const validationResponse = await nodeAuth(nodeInfo.serviceUrl, token);
       if (validationResponse.error) throw new Error(validationResponse.error);
 
@@ -156,6 +184,10 @@ const Nodes = () => {
         const response = await getNodeInfo(node.nodeId);
         if (response.error) throw new Error(response.error);
         const { token, nodeInfo } = response;
+        rememberNodeRouting(nodeInfo, {
+          proxyRequired: response.proxyRequired,
+          proxyBasePath: response.proxyBasePath,
+        });
         const validationResponse = await nodeAuth(nodeInfo.serviceUrl, token);
         if (validationResponse.error) throw new Error(validationResponse.error);
         return { ...nodeInfo, jwtNodeToken: validationResponse.jwtNodeToken };
@@ -198,6 +230,8 @@ const Nodes = () => {
       <MetadataDisplay
         isOpen={showMetadataModal}
         metadata={metadata}
+        fairDataPointEnabled={fairDataPointEnabled}
+        fairDataPointUrl={buildFairDataPointUrl(selectedNode)}
         loadingMetadata={loadingMetadata}
         accessingNode={accessingNode}
         headerColor={selectedNode?.lighterHeaderColor || "#D2743C"}

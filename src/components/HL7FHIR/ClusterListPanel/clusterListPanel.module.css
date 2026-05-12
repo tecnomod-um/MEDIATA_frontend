@@ -1,8 +1,8 @@
 .wrapper {
   background-color: var(--background-color-card);
-  border-radius: 12px;
+  border-radius: var(--space-3);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  padding: 16px;
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -14,9 +14,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
   border-bottom: 1px solid var(--border-color);
-  padding-bottom: 8px;
+  padding-bottom: var(--space-2);
 }
 
 .title {
@@ -29,7 +29,7 @@
 .regenBtn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   background: var(--button-add-mapping);
   color: var(--text-color-on-darkbg);
   border: none;
@@ -81,8 +81,8 @@
   justify-content: space-between;
   align-items: center;
   background-color: var(--background-color-card) !important;
-  border-radius: 8px;
-  margin-bottom: 8px;
+  border-radius: var(--space-2);
+  margin-bottom: var(--space-2);
   padding: 10px 14px;
   cursor: pointer;
   position: relative;
@@ -123,13 +123,13 @@
   background: var(--background-nav-tool-background-color-active);
   font-size: var(--font-size-sm);
   padding: 2px 8px;
-  border-radius: 12px;
+  border-radius: var(--space-3);
 }
 
 .instructions {
   font-size: var(--font-size-sm);
   color: var(--text-color-secondary);
-  margin-top: 12px;
+  margin-top: var(--space-3);
   text-align: center;
 }
 

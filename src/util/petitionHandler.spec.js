@@ -1,6 +1,7 @@
 import * as petitionHandler from './petitionHandler';
 import axiosInstance from './axiosSetup';
-import nodeAxiosInstance, { updateNodeAxiosBaseURL } from './nodeAxiosSetup';
+import nodeAxiosInstance, { getResolvedNodeBaseURL, updateNodeAxiosBaseURL } from './nodeAxiosSetup';
+import config from '../config';
 import { vi } from "vitest";
 
 vi.mock('./axiosSetup', () => ({
@@ -21,6 +22,7 @@ vi.mock('./nodeAxiosSetup', () => {
   return {
     __esModule: true,
     default: instance,
+    getResolvedNodeBaseURL: vi.fn((serviceUrl) => serviceUrl),
     updateNodeAxiosBaseURL: vi.fn(),
   };
 });
@@ -79,9 +81,14 @@ describe('petitionHandler', () => {
     });
 
     it('preserves the backend metadata wrapper when already provided', async () => {
-      axiosInstance.get.mockResolvedValue({ data: { metadata: { m: true } } });
+      axiosInstance.get.mockResolvedValue({
+        data: { metadata: { m: true }, fairDataPointEnabled: true },
+      });
       await expect(petitionHandler.getNodeMetadata('n'))
-        .resolves.toEqual({ metadata: { m: true } });
+        .resolves.toEqual({
+          metadata: { m: true },
+          fairDataPointEnabled: true,
+        });
     });
 
     it('on 404 returns { metadata: null }', async () => {
@@ -89,6 +96,25 @@ describe('petitionHandler', () => {
       axiosInstance.get.mockRejectedValue(e);
       await expect(petitionHandler.getNodeMetadata('n'))
         .resolves.toEqual({ metadata: null });
+    });
+
+    it('preserves the FAIR Data Point flag from a 404 response', async () => {
+      const e = {
+        response: {
+          status: 404,
+          data: {
+            metadata: null,
+            fairDataPointEnabled: false,
+            error: "The file just doesn't exist.",
+          },
+        },
+      };
+      axiosInstance.get.mockRejectedValue(e);
+      await expect(petitionHandler.getNodeMetadata('n'))
+        .resolves.toEqual({
+          metadata: null,
+          fairDataPointEnabled: false,
+        });
     });
 
     it('throws Error(response.data.error) when other status', async () => {
@@ -217,10 +243,12 @@ describe('petitionHandler', () => {
     beforeEach(() => {
       nodeAxiosInstance.post.mockReset();
       updateNodeAxiosBaseURL.mockClear();
+      getResolvedNodeBaseURL.mockClear();
     });
 
-    it('on Unauthorized jwtNodeToken clears storage and throws', async () => {
+    it('on Unauthorized jwtNodeToken keeps the central session and throws', async () => {
       updateNodeAxiosBaseURL.mockClear();
+      localStorage.setItem('jwtToken', 'session-token');
       localStorage.setItem('jwtNodeTokens', '{"http://node":"old"}');
 
       nodeAxiosInstance.post.mockResolvedValue({
@@ -230,11 +258,12 @@ describe('petitionHandler', () => {
 
       await expect(
         petitionHandler.nodeAuth(svc, 'kt')
-      ).rejects.toThrow('Received an Unauthorized jwtNodeToken. JWT has been removed.');
+      ).rejects.toThrow('Node authorization failed. The node rejected the central session token or Kerberos service ticket.');
 
       expect(updateNodeAxiosBaseURL).toHaveBeenCalledWith(svc);
+      expect(getResolvedNodeBaseURL).toHaveBeenCalledWith(svc);
       expect(localStorage.getItem('jwtNodeTokens')).toBe('{}');
-      expect(localStorage.getItem('jwtToken')).toBeNull();
+      expect(localStorage.getItem('jwtToken')).toBe('session-token');
     });
 
     it('on success stores mapping and returns data', async () => {
@@ -244,9 +273,24 @@ describe('petitionHandler', () => {
       });
       const result = await petitionHandler.nodeAuth(svc, 'kt');
       expect(updateNodeAxiosBaseURL).toHaveBeenCalledWith(svc);
+      expect(getResolvedNodeBaseURL).toHaveBeenCalledWith(svc);
       const tokens = JSON.parse(localStorage.getItem('jwtNodeTokens'));
       expect(tokens[svc]).toBe('OK');
       expect(result).toEqual({ jwtNodeToken: 'OK', otherData: 'value' });
+    });
+
+    it('stores node token under the resolved proxy base URL', async () => {
+      const proxyBaseUrl = new URL('nodes/proxy/node-1', config.backendUrl).toString();
+      getResolvedNodeBaseURL.mockReturnValue(proxyBaseUrl);
+      nodeAxiosInstance.post.mockResolvedValue({
+        status: 200,
+        data: { jwtNodeToken: 'PROXY' }
+      });
+
+      await petitionHandler.nodeAuth(svc, 'kt');
+
+      const tokens = JSON.parse(localStorage.getItem('jwtNodeTokens'));
+      expect(tokens[proxyBaseUrl]).toBe('PROXY');
     });
 
     it('throws error on non-200 status', async () => {
@@ -261,6 +305,15 @@ describe('petitionHandler', () => {
     
       await expect(petitionHandler.nodeAuth(svc, 'kt'))
         .rejects.toBe(networkError);
+    });
+
+    it('converts 401 responses into a node authorization error', async () => {
+      nodeAxiosInstance.post.mockRejectedValue({
+        response: { status: 401 }
+      });
+
+      await expect(petitionHandler.nodeAuth(svc, 'kt'))
+        .rejects.toThrow('Node authorization failed. The node rejected the central session token or Kerberos service ticket.');
     });
   });
 

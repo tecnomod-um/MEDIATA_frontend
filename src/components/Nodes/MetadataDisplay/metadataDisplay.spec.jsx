@@ -1,9 +1,10 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import MetadataDisplay from './metadataDisplay';
 import DatasetCard from './datasetCard';
 import '@testing-library/jest-dom';
 import { vi } from "vitest";
+import { toast } from "react-toastify";
 
 const getByExactTextContent = (text) =>
   screen.getByText((_, element) => element?.textContent === text);
@@ -16,6 +17,13 @@ vi.mock(
       isOpen ? <div data-testid="overlay">{children}</div> : null,
   })
 );
+
+vi.mock('react-toastify', () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
 
 describe('MetadataDisplay', () => {
   const baseProps = {
@@ -59,11 +67,13 @@ describe('MetadataDisplay', () => {
         {...baseProps}
         isOpen
         metadata={null}
+        fairDataPointEnabled={false}
         loadingMetadata={false}
         accessingNode={false}
       />
     );
     expect(screen.getByText(/No metadata available\./i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /no fair data point configured/i })).toBeDisabled();
   });
 
   it('renders metadata summary details and dataset titles when metadata provided', () => {
@@ -79,11 +89,16 @@ describe('MetadataDisplay', () => {
         {...baseProps}
         isOpen
         metadata={md}
+        fairDataPointEnabled={true}
+        fairDataPointUrl="https://node.example/taniwha/fdp"
         loadingMetadata={false}
         accessingNode={false}
       />
     );
 
+    expect(
+      screen.getByRole('button', { name: /https:\/\/node\.example\/taniwha\/fdp/i })
+    ).toBeInTheDocument();
     const contextParagraph = screen.getByText((_, el) =>
       el.tagName === 'P' && /Context:\s*http:\/\/example\.com/i.test(el.textContent)
     );
@@ -98,6 +113,34 @@ describe('MetadataDisplay', () => {
     expect(sourceFileParagraph).toBeInTheDocument();
     expect(screen.getByText('DS1')).toBeInTheDocument();
     expect(screen.getByText('DS2')).toBeInTheDocument();
+  });
+
+  it('copies the fair data point URL and shows a success toast when clicked', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, {
+      clipboard: { writeText },
+    });
+
+    render(
+      <MetadataDisplay
+        {...baseProps}
+        isOpen
+        metadata={{}}
+        fairDataPointEnabled={true}
+        fairDataPointUrl="https://node.example/taniwha/fdp"
+        loadingMetadata={false}
+        accessingNode={false}
+      />
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /https:\/\/node\.example\/taniwha\/fdp/i })
+    );
+
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith('https://node.example/taniwha/fdp');
+      expect(toast.success).toHaveBeenCalledWith('FAIR URL copied to clipboard.');
+    });
   });
 
   it('access button toggles disabled state and invokes callback', () => {

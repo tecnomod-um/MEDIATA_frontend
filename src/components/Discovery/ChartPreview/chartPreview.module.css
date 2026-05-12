@@ -3,7 +3,7 @@
   height: 80vh;
   background: var(--background-color-card);
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: var(--space-2);
   box-shadow: 0 0 0 2px var(--background-color-card);
 
   display: flex;

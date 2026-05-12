@@ -81,7 +81,7 @@
 .detailHeader {
   display: flex;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
 }
 
 .backButton {
@@ -105,7 +105,7 @@
   color: var(--text-color-on-darkbg);
   border: none;
   padding: 6px 12px;
-  border-radius: 4px;
+  border-radius: var(--space-1);
   cursor: pointer;
   transition: background-color 0.3s;
 }
@@ -121,7 +121,7 @@
 }
 
 .clusterItem {
-  padding: 8px;
+  padding: var(--space-2);
   border-bottom: 1px solid var(--border-color-secondary);
   cursor: pointer;
   transition: background-color 0.3s;

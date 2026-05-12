@@ -1,7 +1,7 @@
 .suggestModal {
   padding: 0;
   background-color: var(--background-color-card);
-  border-radius: 8px;
+  border-radius: var(--space-2);
   width: clamp(420px, 52vw, 680px);
   min-height: 180px;
   max-height: min(70vh, calc(100dvh - 24px));
@@ -20,7 +20,7 @@
 }
 
 .footer {
-  padding: 12px 16px 16px;
+  padding: var(--space-3) var(--space-4) var(--space-4);
   display: flex;
   justify-content: flex-end;
   gap: 10px;
@@ -28,7 +28,7 @@
 
 .replaceBtn,
 .appendBtn {
-  border-radius: 8px;
+  border-radius: var(--space-2);
   padding: 10px 14px;
   font-size: var(--font-size-base);
   font-weight: 700;

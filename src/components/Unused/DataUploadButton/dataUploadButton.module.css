@@ -27,7 +27,7 @@
     max-width: 200px;
     height: 55px;
     font-weight: 600;
-    margin: 20px;
+    margin: var(--space-5);
     background-size: 300% 100%;
     background-image: var(--button-gradient);
     box-shadow: var(--button-color-shadow);

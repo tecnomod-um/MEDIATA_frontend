@@ -216,15 +216,18 @@ function renderNested(value) {
   return renderPrimitive(value);
 }
 
-function renderField(label, value, emptyMessage) {
+function renderField(label, value, emptyMessage, key, isDescriptionValue = false) {
   const empty = isEmptyValue(value);
+  const fieldValueClassName = isDescriptionValue
+    ? `${MetadataDisplayStyles.fieldValue} ${MetadataDisplayStyles.descriptionValue}`
+    : MetadataDisplayStyles.fieldValue;
 
   if (empty && !emptyMessage) return null;
 
   return (
-    <div className={MetadataDisplayStyles.fieldRow}>
+    <div key={key} className={MetadataDisplayStyles.fieldRow}>
       <div className={MetadataDisplayStyles.fieldLabel}>{label}</div>
-      <div className={MetadataDisplayStyles.fieldValue}>
+      <div className={fieldValueClassName}>
         {empty ? (
           <span className={MetadataDisplayStyles.muted}>{emptyMessage}</span>
         ) : React.isValidElement(value) ? (
@@ -238,11 +241,9 @@ function renderField(label, value, emptyMessage) {
 }
 
 function renderFieldGroup(source, fieldDefinitions) {
-  return fieldDefinitions.map(({ key, label, emptyMessage }) => (
-    <React.Fragment key={key}>
-      {renderField(label, source?.[key], emptyMessage)}
-    </React.Fragment>
-  ));
+  return fieldDefinitions.map(({ key, label, emptyMessage }) =>
+    renderField(label, source?.[key], emptyMessage, key, key === "description" || key === "definition")
+  );
 }
 
 function collectExtraFields(source, knownKeys) {
@@ -259,11 +260,9 @@ function renderExtraFields(title, extraFields) {
   return (
     <div className={MetadataDisplayStyles.extraFields}>
       <div className={MetadataDisplayStyles.subsectionTitle}>{title}</div>
-      {extraFields.map(([key, value]) => (
-        <React.Fragment key={key}>
-          {renderField(formatLabel(key), value)}
-        </React.Fragment>
-      ))}
+      {extraFields.map(([key, value]) =>
+        renderField(formatLabel(key), value, undefined, key, key === "description" || key === "definition")
+      )}
     </div>
   );
 }
@@ -343,11 +342,9 @@ const DatasetCard = ({ dataset }) => {
 
       {extraFields.length > 0 && (
         <MetadataSection title="Additional Dataset Fields">
-          {extraFields.map(([key, value]) => (
-            <React.Fragment key={key}>
-              {renderField(formatLabel(key), value)}
-            </React.Fragment>
-          ))}
+          {extraFields.map(([key, value]) =>
+            renderField(formatLabel(key), value, undefined, key, key === "description" || key === "definition")
+          )}
         </MetadataSection>
       )}
     </div>

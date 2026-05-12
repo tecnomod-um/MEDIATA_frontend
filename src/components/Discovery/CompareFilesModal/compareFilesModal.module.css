@@ -2,7 +2,7 @@
   background-color: var(--background-color-card);
   color: var(--text-color-primary);
   border: 1px solid var(--border-color-secondary);
-  padding: 24px;
+  padding: var(--space-6);
   border-radius: 10px;
   max-height: 80vh;
   overflow-y: auto;

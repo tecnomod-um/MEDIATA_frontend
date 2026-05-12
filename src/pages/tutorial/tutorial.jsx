@@ -12,6 +12,7 @@ import suggestionUsageGif from "../../resources/images/tutorial/8_suggestions.gi
 import changeFilesModalPng from "../../resources/images/tutorial/4_change_files_modal.png";
 import metadataGif from "../../resources/images/tutorial/9_metadata.gif";
 import fhirViewPng from "../../resources/images/tutorial/7_fhir.png";
+import fairDataPointIcon from "../../resources/images/FDPicon.svg";
 
 import { DiscoverySlides, AggregateSlides, IntegrationSlides, SemanticAlignmentSlides } from "./images";
 
@@ -57,6 +58,7 @@ function Tutorial() {
   const sections = useMemo(() => [
     'Introduction',
     'Navigating-the-tool',
+    'FAIR-Data-Point',
     'Selecting-files',
     'Data-cleaning',
     'Discovery',
@@ -268,6 +270,51 @@ function Tutorial() {
                 alt="Top navigation bar showing the available sections"
               />
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="FAIR-Data-Point" className={TutorialStyles.contentContainer}>
+        <div className={TutorialStyles.textContainer}>
+          <h2 className={TutorialStyles.centeredHeading}>FAIR Data Point</h2>
+          <div className={TutorialStyles.introText}>
+            <p>
+              Each Node can expose a FAIR Data Point, which publishes machine-readable metadata about the
+              datasets available at that institution. In MEDIATA, this metadata is generated from the datasets
+              stored on the Node.
+            </p>
+<p className={TutorialStyles.fdpParagraph}>
+  <button
+    type="button"
+    className={TutorialStyles.fdpBadgeButton}
+    aria-label="FAIR Data Point"
+  >
+    <span className={TutorialStyles.fdpIconBadge}>
+      <img
+        src={fairDataPointIcon}
+        alt=""
+        className={TutorialStyles.fdpIcon}
+      />
+    </span>
+    <span className={TutorialStyles.fdpBadgeLabel}>FAIR Data Point</span>
+  </button>
+
+  When a Node has a FAIR Data Point configured, the metadata panel shows a{" "}
+  <strong>FAIR Data Point</strong> button. Hovering the button reveals the
+  public FAIR Data Point URL, and clicking it copies that URL so that it can be
+  opened in an RDF-aware tool or shared with other systems.
+</p>
+            <p>
+              The FAIR Data Point is intended for machine-readable metadata discovery, not as a browser-oriented HTML page.
+              As such, it will usually return RDF/Turtle rather than a visual website. The root metadata typically links
+              to published catalog, dataset, and distribution resources, while the access helper endpoint explains how a
+              distribution can be used.
+            </p>
+            <p>
+              Access to metadata remains public, but access to the underlying data files is controlled separately.
+              In MEDIATA, by default files are configured not to leave the server.
+              This distinction is intrinsit to the FAIR principles: metadata may be openly discoverable even when the data itself must remain on-site.
+            </p>
           </div>
         </div>
       </div>

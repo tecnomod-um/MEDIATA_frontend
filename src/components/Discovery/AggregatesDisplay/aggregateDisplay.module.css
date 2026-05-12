@@ -191,7 +191,7 @@
 .noData {
   color: gray;
   text-align: center;
-  padding: 20px;
+  padding: var(--space-5);
   font-size: var(--font-size-md);
 }
 

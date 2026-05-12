@@ -8,7 +8,7 @@ import TooltipPopup from "../../Common/TooltipPopup/tooltipPopup";
 import ColumnMappingStyles from "./columnMapping.module.css";
 
 // List of custom values with their mappings
-function ValuesList({ customValues, groups, valueContentSuggestions, valueTerminologySuggestionLabelsFor, snomedValueTerminologySuggestions, isTooltipShown, tooltipRef, tooltipMessage, onTooltipClose, onValueNameChange, onValueSnomedChange, onAddMapping, onRemoveMapping, onRemoveValue, onOpenDescription, isLockedNumericValue, buttonRefs }) {
+function ValuesList({ customValues, groups, valueContentSuggestions, valueTerminologySuggestionLabelsFor, snomedValueTerminologySuggestions, isTooltipShown, tooltipRef, tooltipMessage, onTooltipClose, onValueNameChange, onValueSnomedChange, onAddMapping, onRemoveMapping, onRemoveValue, onOpenDescription, isLockedNumericValue, buttonRefs, containerRef, disableExitAnimation = false }) {
   const mappingRefs = useRef({});
 
   const formatValue = (value, type) => {
@@ -29,11 +29,13 @@ function ValuesList({ customValues, groups, valueContentSuggestions, valueTermin
   };
 
   return (
-    <TransitionGroup
+    <div
+      ref={containerRef}
       className={`${ColumnMappingStyles.valueListContainer} ${customValues.length ? ColumnMappingStyles.hasValues : ""
         }`}
     >
-      {customValues.map((customValue, index) => {
+      <TransitionGroup>
+        {customValues.map((customValue, index) => {
         if (!mappingRefs.current[customValue.id])
           mappingRefs.current[customValue.id] = React.createRef();
 
@@ -43,7 +45,7 @@ function ValuesList({ customValues, groups, valueContentSuggestions, valueTermin
         return (
           <CSSTransition
             key={customValue.id}
-            timeout={250}
+            timeout={disableExitAnimation ? { enter: 250, exit: 0 } : 250}
             classNames={{
               enter: ColumnMappingStyles.enter,
               enterActive: ColumnMappingStyles.enterActive,
@@ -52,6 +54,7 @@ function ValuesList({ customValues, groups, valueContentSuggestions, valueTermin
             }}
             nodeRef={mappingRefs.current[customValue.id]}
             onExit={() => {
+              if (disableExitAnimation) return;
               const node = mappingRefs.current[customValue.id]?.current;
               if (!node) return;
               const top = node.offsetTop;
@@ -224,7 +227,8 @@ function ValuesList({ customValues, groups, valueContentSuggestions, valueTermin
           </CSSTransition>
         );
       })}
-    </TransitionGroup>
+      </TransitionGroup>
+    </div>
   );
 }
 
