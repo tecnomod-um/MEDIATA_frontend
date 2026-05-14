@@ -39,7 +39,10 @@ const resolveProxyBaseURL = (proxyBasePath) => {
   if (/^https?:\/\//i.test(proxyBasePath)) return proxyBasePath;
 
   const normalizedProxyPath = proxyBasePath.replace(/^\/+/, "");
-  return new URL(normalizedProxyPath, config.backendUrl).toString();
+  const backendBase = config.backendUrl.endsWith("/")
+    ? config.backendUrl
+    : `${config.backendUrl}/`;
+  return new URL(normalizedProxyPath, backendBase).toString();
 };
 
 const isNodeValidationRequest = (value) => {

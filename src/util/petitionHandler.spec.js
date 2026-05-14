@@ -63,6 +63,26 @@ describe('petitionHandler', () => {
         .rejects.toThrow('bad id');
     });
 
+    it('clears stale session state when Kerberos service ticket generation fails', async () => {
+      localStorage.setItem('jwtToken', 'old-jwt');
+      localStorage.setItem('kerberosTGT', 'old-tgt');
+      localStorage.setItem('jwtNodeTokens', '{"node":"old-node-jwt"}');
+      const err = {
+        response: {
+          data: {
+            error: 'Failed to request Kerberos service ticket for node MEDIATA',
+          },
+        },
+      };
+      axiosInstance.get.mockRejectedValue(err);
+
+      await expect(petitionHandler.getNodeInfo('x'))
+        .rejects.toThrow('Session expired. Please log in again before accessing this node.');
+      expect(localStorage.getItem('jwtToken')).toBeNull();
+      expect(localStorage.getItem('kerberosTGT')).toBeNull();
+      expect(localStorage.getItem('jwtNodeTokens')).toBeNull();
+    });
+
     it('throws generic error otherwise', async () => {
       axiosInstance.get.mockRejectedValue(new TypeError('net'));
       await expect(petitionHandler.getNodeInfo('x'))

@@ -56,6 +56,7 @@ let mockReqUse;
 let mockResUse;
 let requestInterceptor;
 let proxiedNodeBaseUrl;
+let appConfig;
 
 beforeAll(async () => {
   mockReqUse = axios.__m.mockReqUse;
@@ -63,6 +64,7 @@ beforeAll(async () => {
 
   const mod = await import('../util/nodeAxiosSetup');
   const config = (await import('../config')).default;
+  appConfig = config;
   nodeAxiosInstance = mod.default;
   setupNodeAxiosInterceptors = mod.setupNodeAxiosInterceptors;
   updateNodeAxiosBaseURL = mod.updateNodeAxiosBaseURL;
@@ -287,7 +289,10 @@ describe('nodeAxiosSetup', () => {
         proxyBasePath: '/nodes/proxy/node-http',
       });
 
-      const expectedProxyBaseUrl = proxiedNodeBaseUrl.replace('/n1', '/node-http');
+      const expectedProxyBaseUrl = new URL(
+        'nodes/proxy/node-http',
+        appConfig.backendUrl.endsWith('/') ? appConfig.backendUrl : `${appConfig.backendUrl}/`
+      ).toString();
 
       expect(getResolvedNodeBaseURL('http://node-http'))
         .toBe(expectedProxyBaseUrl);

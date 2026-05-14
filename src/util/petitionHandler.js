@@ -36,9 +36,15 @@ export const getNodeInfo = async (nodeId) => {
     return response.data;
   } catch (error) {
     console.log(error);
-    if (error.response && error.response.data && error.response.data.error)
+    if (error.response && error.response.data && error.response.data.error) {
+      if (error.response.data.error.includes("Failed to request Kerberos service ticket")) {
+        localStorage.removeItem("jwtToken");
+        localStorage.removeItem("kerberosTGT");
+        localStorage.removeItem("jwtNodeTokens");
+        throw new Error("Session expired. Please log in again before accessing this node.");
+      }
       throw new Error(error.response.data.error);
-    else throw error;
+    } else throw error;
   }
 };
 
