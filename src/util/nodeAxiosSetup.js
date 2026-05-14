@@ -27,6 +27,7 @@ const isProxyBaseURL = (baseURL) => {
   try {
     const resolved = new URL(baseURL, window.location.origin);
     return resolved.pathname.startsWith("/taniwha-ws/nodes/proxy/")
+      || resolved.pathname.startsWith("/taniwha/nodes/proxy/")
       || resolved.pathname.startsWith("/nodes/proxy/");
   } catch {
     return baseURL.includes("/nodes/proxy/");

@@ -113,6 +113,25 @@ describe('nodeAxiosSetup', () => {
       expect(config.headers['X-Node-Authorization']).toBe('Bearer node-token');
     });
 
+    it('recognizes proxied requests under the /taniwha backend context path', () => {
+      const proxiedContextPathUrl = 'http://localhost:18088/taniwha/nodes/proxy/n1';
+      localStorage.setItem('jwtToken', 'session-token');
+      localStorage.setItem(
+        'jwtNodeTokens',
+        JSON.stringify({ [proxiedContextPathUrl]: 'node-token' })
+      );
+      const config = {
+        baseURL: proxiedContextPathUrl,
+        url: '/taniwha/api/files/datasets',
+        headers: {}
+      };
+
+      requestInterceptor(config);
+
+      expect(config.headers.Authorization).toBe('Bearer session-token');
+      expect(config.headers['X-Node-Authorization']).toBe('Bearer node-token');
+    });
+
     it('does not attach X-Node-Authorization during proxied node validation', () => {
       localStorage.setItem('jwtToken', 'session-token');
       localStorage.setItem(
