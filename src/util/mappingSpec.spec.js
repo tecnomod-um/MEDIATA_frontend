@@ -109,6 +109,41 @@ describe('buildMappingSpec', () => {
     expect(rule.then).toEqual({ kind: 'source-value', sourceId: 'n1::data.csv', column: 'age_col' });
   });
 
+  it('builds one passthrough rule per typed source entry', () => {
+    const mappings = [
+      {
+        Age: {
+          mappingType: 'standard',
+          fileName: '',
+          groups: [
+            {
+              values: [
+                {
+                  name: 'integer',
+                  terminology: '',
+                  description: '',
+                  mapping: [
+                    { nodeId: 'n1', fileName: 'a.csv', groupColumn: 'age', value: 'integer' },
+                    { nodeId: 'n2', fileName: 'b.csv', groupColumn: 'years', value: 'integer' },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ];
+
+    const result = buildMappingSpec({ mappings });
+    const rules = result.mappings[0].rules;
+
+    expect(rules).toHaveLength(2);
+    expect(rules[0].logic).toEqual({ is_integer: [{ var: 'n1::a.csv::age' }] });
+    expect(rules[0].then).toEqual({ kind: 'source-value', sourceId: 'n1::a.csv', column: 'age' });
+    expect(rules[1].logic).toEqual({ is_integer: [{ var: 'n2::b.csv::years' }] });
+    expect(rules[1].then).toEqual({ kind: 'source-value', sourceId: 'n2::b.csv', column: 'years' });
+  });
+
   it('builds a standard mapping with double type logic', () => {
     const mappings = [
       {

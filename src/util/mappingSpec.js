@@ -208,10 +208,39 @@ function buildStandardRule(valueObj, ruleIndex) {
   };
 }
 
+function buildTypePassthroughRule(valueObj, mappingEntry, ruleIndex) {
+  return {
+    id: `rule-${ruleIndex}`,
+    logic: buildTypeLogic(mappingEntry),
+    then: {
+      kind: "source-value",
+      sourceId: makeSourceId(mappingEntry.nodeId, mappingEntry.fileName),
+      column: mappingEntry.groupColumn,
+    },
+    metadata: {
+      terminology: normalizePrimitive(valueObj?.terminology),
+      description: normalizePrimitive(valueObj?.description),
+    },
+  };
+}
+
+function buildStandardRules(valueObj, ruleIndexPrefix) {
+  const mappingEntries = valueObj?.mapping || [];
+  const passthroughEntries = mappingEntries.filter(isTypePassthroughEntry);
+
+  if (passthroughEntries.length > 0) {
+    return passthroughEntries.map((entry, entryIndex) =>
+      buildTypePassthroughRule(valueObj, entry, `${ruleIndexPrefix}-${entryIndex}`)
+    );
+  }
+
+  return [buildStandardRule(valueObj, ruleIndexPrefix)];
+}
+
 function buildStandardMapping(mappingKey, mapping, mappingIndex) {
   const values = mapping?.groups?.flatMap((group) => group?.values || []) || [];
-  const rules = values.map((valueObj, valueIndex) =>
-    buildStandardRule(valueObj, `${mappingIndex}-${valueIndex}`)
+  const rules = values.flatMap((valueObj, valueIndex) =>
+    buildStandardRules(valueObj, `${mappingIndex}-${valueIndex}`)
   );
 
   const allEntries = values.flatMap((valueObj) => valueObj?.mapping || []);
