@@ -1,0 +1,130 @@
+.highlightsContainer {
+  width: 100%;
+  margin: 0 auto 16px;
+  box-shadow: var(--box-shadow-lg);
+  overflow: hidden;
+  background: var(--background-color-card);
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+  will-change: opacity;
+}
+
+.imageStage {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.98));
+}
+
+.baseImage {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.highlightBox {
+  position: absolute;
+  border: 3px solid var(--highlight-accent);
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: var(--box-shadow-xl);
+  transition:
+    top 0.28s ease,
+    left 0.28s ease,
+    width 0.28s ease,
+    height 0.28s ease,
+    border-color 0.28s ease,
+    box-shadow 0.28s ease;
+  pointer-events: none;
+}
+
+.stepButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  padding: 14px 16px 10px;
+  background-color: var(--background-color-card);
+}
+
+.stepButton {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 8px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  background-color: var(--background-color-3);
+  color: var(--text-color-primary);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-position 0.3s ease;
+}
+
+.stepButton:hover {
+  background-color: var(--background-color-card);
+  border-color: color-mix(in srgb, var(--button-color) 55%, var(--background-color-1));
+  box-shadow: var(--box-shadow-sm);
+}
+
+.activeStepButton {
+  border: none;
+  background-size: 300% 100%;
+  background-image: var(--button-gradient);
+  background-color: var(--button-color);
+  color: var(--text-color-on-darkbg);
+  box-shadow: var(--button-color-shadow);
+}
+
+.activeStepButton:hover {
+  background-position: 100% 0;
+  background-color: var(--button-color-hover);
+  color: var(--text-color-on-darkbg);
+  box-shadow: var(--box-shadow-md);
+}
+
+.stepButtonLabel {
+  line-height: 1.2;
+}
+
+.stepTextContainer {
+  padding: 0 18px 16px;
+  text-align: center;
+  background-color: var(--background-color-card);
+}
+
+.stepText {
+  font-size: var(--font-size-md);
+  line-height: 1.6;
+  margin-bottom: 0 !important;
+}
+
+@media (max-width: 768px) {
+  .highlightBox {
+    border-width: 2px;
+  }
+
+  .stepButtons {
+    gap: 8px;
+    padding-inline: 12px;
+  }
+
+  .stepButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .stepTextContainer {
+    padding: 0 14px 14px;
+  }
+
+  .stepText {
+    font-size: var(--font-size-base);
+  }
+}

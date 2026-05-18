@@ -1,7 +1,7 @@
-import React, { useMemo, useLayoutEffect } from "react";
+import React, { useLayoutEffect } from "react";
 import ScrollSidebar from "../../components/Common/ScrollSidebar/scrollSidebar";
 import TutorialStyles from "./tutorial.module.css";
-import Slide from '../../components/Common/Slide/slide';
+import ImageHighlights from "../../components/Common/ImageHighlights/imageHighlights";
 import PageImage from "../../components/Common/PageImage/pageImage";
 import projectPng from "../../resources/images/tutorial/5_project.png";
 import nodesGif from "../../resources/images/tutorial/1_nodes.gif";
@@ -16,6 +16,122 @@ import fairDataPointIcon from "../../resources/images/FDPicon.svg";
 
 import { DiscoverySlides, AggregateSlides, IntegrationSlides, SemanticAlignmentSlides } from "./images";
 
+const sections = [
+  "Introduction",
+  "Navigating-the-tool",
+  "FAIR-Data-Point",
+  "Selecting-files",
+  "Data-cleaning",
+  "Discovery",
+  "Discovery:-individual-metrics",
+  "Discovery:-aggregate-metrics",
+  "Integration",
+  "Integration:-creating-mappings",
+  "Integration:-semantic-enrichment",
+  "Integration:-updating-files",
+  "Semantic-alignment",
+  "Semantic-alignment:-generating-rdf",
+  "HL7-FHIR",
+];
+
+const DiscoverySteps = [
+  {
+    title: "Overview",
+    description: "Overall Discovery view.",
+  },
+  {
+    title: "Feature tables",
+    description: "Feature tables containing statistics.",
+    highlight: { top: 6.01, left: 13.25, width: 86.51, height: 61.94, color: "#ff7a59" },
+  },
+  {
+    title: "Charts",
+    description: "Graph representations of each feature.",
+    highlight: { top: 67.39, left: 13.25, width: 86.51, height: 31.97, color: "#2f80ed" },
+  },
+  {
+    title: "Sidebar",
+    description: "Sidebar containing most of the page controls.",
+    highlight: { top: 6.01, left: 0, width: 13.09, height: 93.35, color: "#27ae60" },
+  },
+];
+
+const AggregateSteps = [
+  {
+    title: "Overview",
+    description: "Aggregate statistics display.",
+  },
+  {
+    title: "Aggregate table",
+    description: "Aggregate statistics table.",
+    highlight: { top: 5.64, left: 13.1, width: 86.86, height: 64.98, color: "#ff7a59" },
+  },
+  {
+    title: "Chi-squared",
+    description: "Chi-Squared test results.",
+    highlight: { top: 72.46, left: 13.18, width: 43.17, height: 27.38, color: "#2f80ed" },
+  },
+  {
+    title: "Omitted features",
+    description: "List of omitted features in the calculations.",
+    highlight: { top: 72.46, left: 56.79, width: 43.17, height: 27.38, color: "#9b51e0" },
+  },
+  {
+    title: "Sidebar",
+    description: "Sidebar containing most of the page controls.",
+    highlight: { top: 5.64, left: 0, width: 13.1, height: 94.2, color: "#27ae60" },
+  },
+];
+
+const IntegrationSteps = [
+  {
+    title: "Overview",
+    description: "Integration display.",
+  },
+  {
+    title: "Feature column",
+    description: "Feature column, containing all the features present in the selected metadata files.",
+    highlight: { top: 7.79, left: 0.24, width: 19.59, height: 91.22, color: "#ff7a59" },
+  },
+  {
+    title: "Selected features",
+    description: "Features selected to map.",
+    highlight: { top: 7.79, left: 20.18, width: 59.29, height: 27.44, color: "#2f80ed" },
+  },
+  {
+    title: "Controls",
+    description: "Map building controls.",
+    highlight: { top: 35.97, left: 20.18, width: 59.29, height: 61.8, color: "#9b51e0" },
+  },
+  {
+    title: "Mappings result",
+    description: "Resulting map to be applied.",
+    highlight: { top: 8.53, left: 79.71, width: 20.18, height: 89.86, color: "#27ae60" },
+  },
+];
+
+const SemanticAlignmentSteps = [
+  {
+    title: "Overview",
+    description: "Overall Semantic Alignment view.",
+  },
+  {
+    title: "Mapped elements",
+    description: "Mapped elements sidebar, where the uploaded elements are listed and can be selected.",
+    highlight: { top: 8.18, left: 0.29, width: 19.71, height: 91.7, color: "#ff7a59" },
+  },
+  {
+    title: "Detail panel",
+    description: "Detail panel, where the semantic pattern and ontology-related fields are configured.",
+    highlight: { top: 8.18, left: 20.41, width: 49.29, height: 91.2, color: "#2f80ed" },
+  },
+  {
+    title: "Workspace",
+    description: "Workspace, where created semantic cards are displayed and organized visually.",
+    highlight: { top: 8.18, left: 70, width: 29.76, height: 91.2, color: "#27ae60" },
+  },
+];
+
 // Tutorial page for the platform
 function Tutorial() {
 
@@ -24,54 +140,6 @@ function Tutorial() {
       window.history.scrollRestoration = "manual";
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, []);
-
-  const DiscoverySteps = [
-    'Overall Discovery view.',
-    'Feature tables containing statistics.',
-    'Graph representations of each feature.',
-    'Sidebar containing most of the page controls.'
-  ];
-
-  const AggregateSteps = [
-    'Aggregate statistics display',
-    'Aggregate statistics table',
-    'Chi-Squared test results.',
-    'List of omitted features in the calculations.',
-    'Sidebar containing most of the page controls.'
-  ];
-
-  const IntegrationSteps = [
-    'Integration display',
-    'Feature column, containing all the features present in the selected metadata files.',
-    'Features selected to map.',
-    'Map building controls.',
-    'Resulting map to be applied.'
-  ];
-
-  const SemanticAlignmentSteps = [
-    'Overall Semantic Alignment view.',
-    'Mapped elements sidebar, where the uploaded elements are listed and can be selected.',
-    'Detail panel, where the semantic pattern and ontology-related fields are configured.',
-    'Workspace, where created semantic cards are displayed and organized visually.'
-  ];
-
-  const sections = useMemo(() => [
-    'Introduction',
-    'Navigating-the-tool',
-    'FAIR-Data-Point',
-    'Selecting-files',
-    'Data-cleaning',
-    'Discovery',
-    'Discovery:-individual-metrics',
-    'Discovery:-aggregate-metrics',
-    'Integration',
-    'Integration:-creating-mappings',
-    'Integration:-semantic-enrichment',
-    'Integration:-updating-files',
-    'Semantic-alignment',
-    'Semantic-alignment:-generating-rdf',
-    'HL7-FHIR'
-  ], []);
 
   const discoveryControls = [
     {
@@ -562,17 +630,19 @@ function Tutorial() {
                 relationships between features. By default, the view opens in the individual-metrics mode.
               </p>
 
+              <ImageHighlights
+                imageSrc={DiscoverySlides[0]}
+                imageAlt="Discovery interface"
+                steps={DiscoverySteps}
+                label="Discovery highlight walkthrough"
+              />
+
               <p>
-                In the individual view, three main areas can be distinguished: the feature tables, the charts,
+                The individual view lets you inspect each feature at a time, offering insights in its structure and
+                completeness. In this view, three main areas can be distinguished: the feature tables, the charts,
                 and the sidebar. The same sidebar remains available in the aggregate view and contains most
                 of the controls used in this section.
               </p>
-
-              <Slide
-                images={DiscoverySlides}
-                steps={DiscoverySteps}
-                label="Discovery slide images"
-              />
 
               <div className={TutorialStyles.controlsListSection}>
                 <div className={TutorialStyles.controlsListCard}>
@@ -682,10 +752,11 @@ function Tutorial() {
                 results panel for categorical features and a list of omitted features.
               </p>
 
-              <Slide
-                images={AggregateSlides}
+              <ImageHighlights
+                imageSrc={AggregateSlides[0]}
+                imageAlt="Aggregate Discovery interface"
                 steps={AggregateSteps}
-                label="Aggregate discovery slide images"
+                label="Aggregate discovery highlight walkthrough"
               />
 
               <p>
@@ -724,10 +795,11 @@ function Tutorial() {
                 files, which will determine the set of features available to work with.
               </p>
 
-              <Slide
-                images={IntegrationSlides}
+              <ImageHighlights
+                imageSrc={IntegrationSlides[0]}
+                imageAlt="Integration interface"
                 steps={IntegrationSteps}
-                label="Integration slide images"
+                label="Integration highlight walkthrough"
               />
 
               <p>
@@ -916,10 +988,11 @@ function Tutorial() {
                 fields required by that pattern.
               </p>
 
-              <Slide
-                images={SemanticAlignmentSlides}
+              <ImageHighlights
+                imageSrc={SemanticAlignmentSlides[0]}
+                imageAlt="Semantic alignment interface"
                 steps={SemanticAlignmentSteps}
-                label="Semantic alignment slide images"
+                label="Semantic alignment highlight walkthrough"
               />
 
               <p>
