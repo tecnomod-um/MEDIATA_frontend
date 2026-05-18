@@ -77,7 +77,7 @@ function Tutorial() {
     {
       title: "Selected feature & type switch",
       description:
-        "Shows the currently selected feature and allows recalculating it as categorical or continuous. This updates the statistics returned for that feature and changes how it is displayed.",
+        "Shows the currently selected feature and allows recalculating it as categorical or continuous. Select a feature by clicking its row in the table (the top search bar helps filter rows) or by clicking its histogram graph. Click the feature name to switch its type, which updates the statistics returned for that feature and changes how it is displayed.",
       accent: "green",
       icon: "bars",
     },
@@ -209,7 +209,9 @@ function Tutorial() {
                 enabling them to interact with their datasets and harmonize them simultaneously.
               </p>
               <p>
-                For local instances of the platform, use the default project (named <code>default</code>).
+                Use the project selector to choose which project's Nodes and files you want to work with; selecting a project loads
+                its Nodes into the Nodes view and makes the project's files available in the File Explorer. For local instances,
+                the default project (named <code>default</code>) typically contains the local Node (your PC).
               </p>
               <PageImage
                 imageSrc={projectPng}
@@ -302,18 +304,18 @@ function Tutorial() {
   When a Node has a FAIR Data Point configured, the metadata panel shows a{" "}
   <strong>FAIR Data Point</strong> button. Hovering the button reveals the
   public FAIR Data Point URL, and clicking it copies that URL so that it can be
-  opened in an RDF-aware tool or shared with other systems.
+  pasted into a browser tab, opened in an RDF-aware tool, or shared with other systems.
 </p>
             <p>
               The FAIR Data Point is intended for machine-readable metadata discovery, not as a browser-oriented HTML page.
-              As such, it will usually return RDF/Turtle rather than a visual website. The root metadata typically links
+              As such, it will return RDF/Turtle format rather than a visual website. The root metadata typically links
               to published catalog, dataset, and distribution resources, while the access helper endpoint explains how a
               distribution can be used.
             </p>
             <p>
               Access to metadata remains public, but access to the underlying data files is controlled separately.
               In MEDIATA, by default files are configured not to leave the server.
-              This distinction is intrinsit to the FAIR principles: metadata may be openly discoverable even when the data itself must remain on-site.
+              This distinction is intrinsic to the FAIR principles: metadata may be openly discoverable even when the data itself must remain on-site.
             </p>
           </div>
         </div>
@@ -353,7 +355,8 @@ function Tutorial() {
               will indicate that multiple files are selected in the top-right corner.
             </p>
             <p>
-              Other basic controls, such as renaming or deletion, are also available.
+              Other basic controls, such as renaming or deletion, are also available. You can navigate back to the node view
+              by pressing the backwards arrow button at the top left.
             </p>
           </div>
         </div>
@@ -370,9 +373,9 @@ function Tutorial() {
               configured before being applied to the selected files.
             </p>
             <p>
-              The panel includes a search box that allows you to quickly find available cleaning steps.
-              Each step can be enabled individually. The following table summarizes the available operations
-              and what each one does.
+              The panel includes a search box that allows you to find specific cleaning steps between all the
+              available options. Each step can be enabled individually. The following table summarizes the available
+              operations and what each one does.
             </p>
             <table className={TutorialStyles.variablesTable}>
               <thead>
