@@ -106,10 +106,10 @@ describe("Navbar", () => {
   it("shows Home, Login, About when unauthenticated", () => {
     render(<Navbar />);
 
-    expect(screen.getByRole("menuitem", { name: "Home" })).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "Login" })).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "About" })).toBeInTheDocument();
-    expect(screen.queryByRole("menuitem", { name: "Projects" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Home" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Login" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "About" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Projects" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Discovery" })).toBeNull();
   });
 
@@ -142,11 +142,11 @@ describe("Navbar", () => {
 
     fireEvent.click(screen.getByRole("checkbox", { name: "Toggle menu" }));
 
-    expect(screen.getByRole("menuitem", { name: "Home" })).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "Projects" })).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "Logout" })).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "Tutorial" })).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "About" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Home" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Projects" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Logout" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Tutorial" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "About" })).toBeInTheDocument();
   });
 
   it("calls logout + navigate on Logout click", () => {
@@ -162,7 +162,7 @@ describe("Navbar", () => {
 
     render(<Navbar />);
     fireEvent.click(screen.getByRole("checkbox", { name: "Toggle menu" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "Logout" }));
+    fireEvent.click(screen.getByRole("link", { name: "Logout" }));
 
     expect(logoutMock).toHaveBeenCalled();
     expect(navigateMock).toHaveBeenCalledWith("/");
@@ -207,7 +207,7 @@ describe("Navbar", () => {
     expect(screen.queryByRole("link", { name: "HL7 FHIR" })).toBeNull();
 
     fireEvent.click(screen.getByRole("checkbox", { name: "Toggle menu" }));
-    expect(screen.getByRole("menuitem", { name: "Projects" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Projects" })).toBeInTheDocument();
   });
 
   it("closes mobile menu on window resize above 768px", () => {

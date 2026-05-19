@@ -1,6 +1,7 @@
 import * as petitionHandler from './petitionHandler';
 import axiosInstance from './axiosSetup';
-import nodeAxiosInstance, { updateNodeAxiosBaseURL } from './nodeAxiosSetup';
+import nodeAxiosInstance, { getResolvedNodeBaseURL, updateNodeAxiosBaseURL } from './nodeAxiosSetup';
+import config from '../config';
 import { vi } from "vitest";
 
 vi.mock('./axiosSetup', () => ({
@@ -21,6 +22,7 @@ vi.mock('./nodeAxiosSetup', () => {
   return {
     __esModule: true,
     default: instance,
+    getResolvedNodeBaseURL: vi.fn((serviceUrl) => serviceUrl),
     updateNodeAxiosBaseURL: vi.fn(),
   };
 });
@@ -61,6 +63,26 @@ describe('petitionHandler', () => {
         .rejects.toThrow('bad id');
     });
 
+    it('clears stale session state when Kerberos service ticket generation fails', async () => {
+      localStorage.setItem('jwtToken', 'old-jwt');
+      localStorage.setItem('kerberosTGT', 'old-tgt');
+      localStorage.setItem('jwtNodeTokens', '{"node":"old-node-jwt"}');
+      const err = {
+        response: {
+          data: {
+            error: 'Failed to request Kerberos service ticket for node MEDIATA',
+          },
+        },
+      };
+      axiosInstance.get.mockRejectedValue(err);
+
+      await expect(petitionHandler.getNodeInfo('x'))
+        .rejects.toThrow('Session expired. Please log in again before accessing this node.');
+      expect(localStorage.getItem('jwtToken')).toBeNull();
+      expect(localStorage.getItem('kerberosTGT')).toBeNull();
+      expect(localStorage.getItem('jwtNodeTokens')).toBeNull();
+    });
+
     it('throws generic error otherwise', async () => {
       axiosInstance.get.mockRejectedValue(new TypeError('net'));
       await expect(petitionHandler.getNodeInfo('x'))
@@ -69,10 +91,24 @@ describe('petitionHandler', () => {
   });
 
   describe('getNodeMetadata', () => {
-    it('returns data on success', async () => {
+    it('wraps raw metadata payloads and encodes the node id on success', async () => {
       axiosInstance.get.mockResolvedValue({ data: { m: true } });
+      await expect(petitionHandler.getNodeMetadata('node/a b'))
+        .resolves.toEqual({ metadata: { m: true } });
+      expect(axiosInstance.get).toHaveBeenCalledWith(
+        `/nodes/connect/metadata/${encodeURIComponent('node/a b')}`
+      );
+    });
+
+    it('preserves the backend metadata wrapper when already provided', async () => {
+      axiosInstance.get.mockResolvedValue({
+        data: { metadata: { m: true }, fairDataPointEnabled: true },
+      });
       await expect(petitionHandler.getNodeMetadata('n'))
-        .resolves.toEqual({ m: true });
+        .resolves.toEqual({
+          metadata: { m: true },
+          fairDataPointEnabled: true,
+        });
     });
 
     it('on 404 returns { metadata: null }', async () => {
@@ -80,6 +116,25 @@ describe('petitionHandler', () => {
       axiosInstance.get.mockRejectedValue(e);
       await expect(petitionHandler.getNodeMetadata('n'))
         .resolves.toEqual({ metadata: null });
+    });
+
+    it('preserves the FAIR Data Point flag from a 404 response', async () => {
+      const e = {
+        response: {
+          status: 404,
+          data: {
+            metadata: null,
+            fairDataPointEnabled: false,
+            error: "The file just doesn't exist.",
+          },
+        },
+      };
+      axiosInstance.get.mockRejectedValue(e);
+      await expect(petitionHandler.getNodeMetadata('n'))
+        .resolves.toEqual({
+          metadata: null,
+          fairDataPointEnabled: false,
+        });
     });
 
     it('throws Error(response.data.error) when other status', async () => {
@@ -103,6 +158,12 @@ describe('petitionHandler', () => {
       axiosInstance.get.mockResolvedValue({ data: { s: 2 } });
       await expect(petitionHandler.fetchSchemaFromBackend())
         .resolves.toEqual({ s: 2 });
+    });
+
+    it('fetchSchemaFromBackend returns null when no schema exists', async () => {
+      axiosInstance.get.mockRejectedValue({ response: { status: 404 } });
+      await expect(petitionHandler.fetchSchemaFromBackend())
+        .resolves.toBeNull();
     });
 
     it('removeSchemaFromBackend deletes schema', async () => {
@@ -202,10 +263,12 @@ describe('petitionHandler', () => {
     beforeEach(() => {
       nodeAxiosInstance.post.mockReset();
       updateNodeAxiosBaseURL.mockClear();
+      getResolvedNodeBaseURL.mockClear();
     });
 
-    it('on Unauthorized jwtNodeToken clears storage and throws', async () => {
+    it('on Unauthorized jwtNodeToken keeps the central session and throws', async () => {
       updateNodeAxiosBaseURL.mockClear();
+      localStorage.setItem('jwtToken', 'session-token');
       localStorage.setItem('jwtNodeTokens', '{"http://node":"old"}');
 
       nodeAxiosInstance.post.mockResolvedValue({
@@ -215,11 +278,12 @@ describe('petitionHandler', () => {
 
       await expect(
         petitionHandler.nodeAuth(svc, 'kt')
-      ).rejects.toThrow('Received an Unauthorized jwtNodeToken. JWT has been removed.');
+      ).rejects.toThrow('Node authorization failed. The node rejected the central session token or Kerberos service ticket.');
 
       expect(updateNodeAxiosBaseURL).toHaveBeenCalledWith(svc);
+      expect(getResolvedNodeBaseURL).toHaveBeenCalledWith(svc);
       expect(localStorage.getItem('jwtNodeTokens')).toBe('{}');
-      expect(localStorage.getItem('jwtToken')).toBeNull();
+      expect(localStorage.getItem('jwtToken')).toBe('session-token');
     });
 
     it('on success stores mapping and returns data', async () => {
@@ -229,9 +293,24 @@ describe('petitionHandler', () => {
       });
       const result = await petitionHandler.nodeAuth(svc, 'kt');
       expect(updateNodeAxiosBaseURL).toHaveBeenCalledWith(svc);
+      expect(getResolvedNodeBaseURL).toHaveBeenCalledWith(svc);
       const tokens = JSON.parse(localStorage.getItem('jwtNodeTokens'));
       expect(tokens[svc]).toBe('OK');
       expect(result).toEqual({ jwtNodeToken: 'OK', otherData: 'value' });
+    });
+
+    it('stores node token under the resolved proxy base URL', async () => {
+      const proxyBaseUrl = new URL('nodes/proxy/node-1', config.backendUrl).toString();
+      getResolvedNodeBaseURL.mockReturnValue(proxyBaseUrl);
+      nodeAxiosInstance.post.mockResolvedValue({
+        status: 200,
+        data: { jwtNodeToken: 'PROXY' }
+      });
+
+      await petitionHandler.nodeAuth(svc, 'kt');
+
+      const tokens = JSON.parse(localStorage.getItem('jwtNodeTokens'));
+      expect(tokens[proxyBaseUrl]).toBe('PROXY');
     });
 
     it('throws error on non-200 status', async () => {
@@ -246,6 +325,15 @@ describe('petitionHandler', () => {
     
       await expect(petitionHandler.nodeAuth(svc, 'kt'))
         .rejects.toBe(networkError);
+    });
+
+    it('converts 401 responses into a node authorization error', async () => {
+      nodeAxiosInstance.post.mockRejectedValue({
+        response: { status: 401 }
+      });
+
+      await expect(petitionHandler.nodeAuth(svc, 'kt'))
+        .rejects.toThrow('Node authorization failed. The node rejected the central session token or Kerberos service ticket.');
     });
   });
 
@@ -536,6 +624,349 @@ describe('petitionHandler', () => {
 
       nodeAxiosInstance.post.mockRejectedValue(testError);
       await expect(petitionHandler.uploadFile(new Blob())).rejects.toThrow('Test error');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // getSystemCapabilities
+  // -------------------------------------------------------------------------
+  describe('getSystemCapabilities', () => {
+    it('returns data on success', async () => {
+      axiosInstance.get.mockResolvedValue({ data: { mode: 'full' } });
+      await expect(petitionHandler.getSystemCapabilities()).resolves.toEqual({ mode: 'full' });
+      expect(axiosInstance.get).toHaveBeenCalledWith('/api/system/capabilities');
+    });
+
+    it('propagates errors', async () => {
+      axiosInstance.get.mockRejectedValue(new Error('cap fail'));
+      await expect(petitionHandler.getSystemCapabilities()).rejects.toThrow('cap fail');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // cancelProcessSelectedDatasetsJob
+  // -------------------------------------------------------------------------
+  describe('cancelProcessSelectedDatasetsJob', () => {
+    it('posts to cancel endpoint and returns data', async () => {
+      nodeAxiosInstance.post.mockResolvedValue({ data: { cancelled: true } });
+      const result = await petitionHandler.cancelProcessSelectedDatasetsJob('job99');
+      expect(result).toEqual({ cancelled: true });
+      expect(nodeAxiosInstance.post).toHaveBeenCalledWith(
+        '/taniwha/api/data/processList/cancel/job99'
+      );
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // getParseConfigsStatus / getParseConfigsResult
+  // -------------------------------------------------------------------------
+  describe('getParseConfigsStatus', () => {
+    it('fetches parse job status', async () => {
+      nodeAxiosInstance.get.mockResolvedValue({ data: { state: 'RUNNING', percent: 50 } });
+      const result = await petitionHandler.getParseConfigsStatus('jid1');
+      expect(result).toEqual({ state: 'RUNNING', percent: 50 });
+      expect(nodeAxiosInstance.get).toHaveBeenCalledWith(
+        `/taniwha/api/harmonization/parse/status/${encodeURIComponent('jid1')}`
+      );
+    });
+  });
+
+  describe('getParseConfigsResult', () => {
+    it('returns status and data', async () => {
+      nodeAxiosInstance.get.mockResolvedValue({ status: 200, data: { result: 'ok' } });
+      const result = await petitionHandler.getParseConfigsResult('jid2');
+      expect(result).toEqual({ status: 200, data: { result: 'ok' } });
+      expect(nodeAxiosInstance.get).toHaveBeenCalledWith(
+        `/taniwha/api/harmonization/parse/result/${encodeURIComponent('jid2')}`,
+        { validateStatus: expect.any(Function) }
+      );
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // startCleanExplorerFile, getCleanExplorerFileStatus, getCleanExplorerFileResult
+  // -------------------------------------------------------------------------
+  describe('startCleanExplorerFile', () => {
+    it('returns status and data on success', async () => {
+      nodeAxiosInstance.post.mockResolvedValue({ status: 202, data: { jobId: 'cj1' } });
+      const result = await petitionHandler.startCleanExplorerFile('processed', 'data.csv', null);
+      expect(result).toEqual({ status: 202, data: { jobId: 'cj1' } });
+      expect(nodeAxiosInstance.post).toHaveBeenCalledWith(
+        '/taniwha/api/files/clean/start',
+        null,
+        expect.objectContaining({ params: { category: 'processed', name: 'data.csv' } })
+      );
+    });
+
+    it('passes cleaningOptions in body', async () => {
+      nodeAxiosInstance.post.mockResolvedValue({ status: 202, data: { jobId: 'cj2' } });
+      const opts = { removeNulls: true };
+      await petitionHandler.startCleanExplorerFile('raw', 'file.csv', opts);
+      expect(nodeAxiosInstance.post).toHaveBeenCalledWith(
+        '/taniwha/api/files/clean/start',
+        opts,
+        expect.objectContaining({ params: { category: 'raw', name: 'file.csv' } })
+      );
+    });
+  });
+
+  describe('getCleanExplorerFileStatus', () => {
+    it('fetches clean job status', async () => {
+      nodeAxiosInstance.get.mockResolvedValue({ data: { state: 'RUNNING' } });
+      const result = await petitionHandler.getCleanExplorerFileStatus('cjob1');
+      expect(result).toEqual({ state: 'RUNNING' });
+      expect(nodeAxiosInstance.get).toHaveBeenCalledWith(
+        `/taniwha/api/files/clean/status/${encodeURIComponent('cjob1')}`
+      );
+    });
+  });
+
+  describe('getCleanExplorerFileResult', () => {
+    it('returns status and data', async () => {
+      nodeAxiosInstance.get.mockResolvedValue({ status: 200, data: { cleaned: true } });
+      const result = await petitionHandler.getCleanExplorerFileResult('cjob2');
+      expect(result).toEqual({ status: 200, data: { cleaned: true } });
+      expect(nodeAxiosInstance.get).toHaveBeenCalledWith(
+        `/taniwha/api/files/clean/result/${encodeURIComponent('cjob2')}`,
+        { validateStatus: expect.any(Function) }
+      );
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // suggestMappings
+  // -------------------------------------------------------------------------
+  describe('suggestMappings', () => {
+    it('posts with string schema unchanged', async () => {
+      axiosInstance.post.mockResolvedValue({ data: { hierarchy: [] } });
+      const result = await petitionHandler.suggestMappings({
+        elementFiles: ['f.csv'],
+        schema: '{"type":"object"}',
+      });
+      expect(result).toEqual({ hierarchy: [] });
+      expect(axiosInstance.post).toHaveBeenCalledWith(
+        '/api/mappings/suggest',
+        { elementFiles: ['f.csv'], schema: '{"type":"object"}' },
+        expect.any(Object)
+      );
+    });
+
+    it('stringifies object schema', async () => {
+      axiosInstance.post.mockResolvedValue({ data: { hierarchy: [{}] } });
+      await petitionHandler.suggestMappings({ elementFiles: [], schema: { type: 'object' } });
+      const body = axiosInstance.post.mock.calls[0][1];
+      expect(typeof body.schema).toBe('string');
+    });
+
+    it('passes null when schema is null', async () => {
+      axiosInstance.post.mockResolvedValue({ data: {} });
+      await petitionHandler.suggestMappings({ elementFiles: [], schema: null });
+      const body = axiosInstance.post.mock.calls[0][1];
+      expect(body.schema).toBeNull();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // enrichMappingsStart
+  // -------------------------------------------------------------------------
+  describe('enrichMappingsStart', () => {
+    it('posts hierarchy and string schema', async () => {
+      axiosInstance.post.mockResolvedValue({ status: 202, data: { jobId: 'ej1' } });
+      const result = await petitionHandler.enrichMappingsStart({
+        hierarchy: [{}],
+        schema: '{"type":"object"}',
+      });
+      expect(result).toEqual({ status: 202, data: { jobId: 'ej1' } });
+      expect(axiosInstance.post).toHaveBeenCalledWith(
+        '/api/mappings/enrich',
+        { hierarchy: [{}], schema: '{"type":"object"}' },
+        expect.objectContaining({ validateStatus: expect.any(Function) })
+      );
+    });
+
+    it('stringifies object schema', async () => {
+      axiosInstance.post.mockResolvedValue({ status: 200, data: {} });
+      await petitionHandler.enrichMappingsStart({ hierarchy: [], schema: { a: 1 } });
+      const body = axiosInstance.post.mock.calls[0][1];
+      expect(typeof body.schema).toBe('string');
+    });
+
+    it('passes null when schema is null', async () => {
+      axiosInstance.post.mockResolvedValue({ status: 200, data: {} });
+      await petitionHandler.enrichMappingsStart({ hierarchy: [], schema: null });
+      const body = axiosInstance.post.mock.calls[0][1];
+      expect(body.schema).toBeNull();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // getEnrichMappingsStatus / getEnrichMappingsResult
+  // -------------------------------------------------------------------------
+  describe('getEnrichMappingsStatus', () => {
+    it('fetches enrich job status', async () => {
+      axiosInstance.get.mockResolvedValue({ data: { state: 'RUNNING', percent: 30 } });
+      const result = await petitionHandler.getEnrichMappingsStatus('ejob1');
+      expect(result).toEqual({ state: 'RUNNING', percent: 30 });
+      expect(axiosInstance.get).toHaveBeenCalledWith(
+        `/api/mappings/enrich/status/${encodeURIComponent('ejob1')}`
+      );
+    });
+  });
+
+  describe('getEnrichMappingsResult', () => {
+    it('returns status and data', async () => {
+      axiosInstance.get.mockResolvedValue({ status: 200, data: { hierarchy: [{}] } });
+      const result = await petitionHandler.getEnrichMappingsResult('ejob2');
+      expect(result).toEqual({ status: 200, data: { hierarchy: [{}] } });
+      expect(axiosInstance.get).toHaveBeenCalledWith(
+        `/api/mappings/enrich/result/${encodeURIComponent('ejob2')}`,
+        { validateStatus: expect.any(Function) }
+      );
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Error branches for node-axios functions
+  // -------------------------------------------------------------------------
+  describe('error branches for node-axios functions', () => {
+    beforeEach(() => {
+      console.error = vi.fn();
+    });
+
+    it('getNodeDatasets throws and logs on error', async () => {
+      nodeAxiosInstance.get.mockRejectedValue(new Error('ds fail'));
+      await expect(petitionHandler.getNodeDatasets()).rejects.toThrow('ds fail');
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('fetching datasets'),
+        expect.any(Error)
+      );
+    });
+
+    it('getNodeMappedDatasets throws and logs on error', async () => {
+      nodeAxiosInstance.get.mockRejectedValue(new Error('mds fail'));
+      await expect(petitionHandler.getNodeMappedDatasets()).rejects.toThrow('mds fail');
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('fetching datasets'),
+        expect.any(Error)
+      );
+    });
+
+    it('getNodeFHIR throws and logs on error', async () => {
+      nodeAxiosInstance.get.mockRejectedValue(new Error('fhir fail'));
+      await expect(petitionHandler.getNodeFHIR()).rejects.toThrow('fhir fail');
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('fetching datasets'),
+        expect.any(Error)
+      );
+    });
+
+    it('getNodeElements throws and logs on error', async () => {
+      nodeAxiosInstance.get.mockRejectedValue(new Error('el fail'));
+      await expect(petitionHandler.getNodeElements()).rejects.toThrow('el fail');
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('fetching datasets'),
+        expect.any(Error)
+      );
+    });
+
+    it('saveDatasetElements throws and logs on error', async () => {
+      nodeAxiosInstance.post.mockRejectedValue(new Error('save fail'));
+      await expect(petitionHandler.saveDatasetElements('f.csv', 'data')).rejects.toThrow('save fail');
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('saving dataset elements'),
+        expect.any(Error)
+      );
+    });
+
+    it('fetchElementFile throws and logs on error', async () => {
+      nodeAxiosInstance.get.mockRejectedValue(new Error('fetch fail'));
+      await expect(petitionHandler.fetchElementFile('x.csv')).rejects.toThrow('fetch fail');
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Error fetching element file'),
+        expect.any(Error)
+      );
+    });
+
+    it('listExplorerFiles throws and logs on error', async () => {
+      nodeAxiosInstance.get.mockRejectedValue(new Error('list fail'));
+      await expect(petitionHandler.listExplorerFiles('cat')).rejects.toThrow('list fail');
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('listing explorer files'),
+        expect.any(Error)
+      );
+    });
+
+    it('renameExplorerFile throws and logs on error', async () => {
+      nodeAxiosInstance.post.mockRejectedValue(new Error('rename fail'));
+      await expect(petitionHandler.renameExplorerFile('cat', 'old', 'new')).rejects.toThrow('rename fail');
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('renaming explorer file'),
+        expect.any(Error)
+      );
+    });
+
+    it('deleteExplorerFile throws and logs on error', async () => {
+      nodeAxiosInstance.delete.mockRejectedValue(new Error('del fail'));
+      await expect(petitionHandler.deleteExplorerFile('cat', 'file')).rejects.toThrow('del fail');
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('deleting explorer file'),
+        expect.any(Error)
+      );
+    });
+
+    it('fetchClasses throws and logs on error', async () => {
+      axiosInstance.get.mockRejectedValue(new Error('cls fail'));
+      await expect(petitionHandler.fetchClasses()).rejects.toThrow('cls fail');
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Error fetching types'),
+        expect.any(Error)
+      );
+    });
+
+    it('fetchClassFields throws and logs on error', async () => {
+      axiosInstance.get.mockRejectedValue(new Error('cf fail'));
+      await expect(petitionHandler.fetchClassFields('MyType')).rejects.toThrow('cf fail');
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Error fetching MyType fields'),
+        expect.any(Error)
+      );
+    });
+
+    it('fetchSuggestions throws and logs on error', async () => {
+      axiosInstance.get.mockRejectedValue(new Error('sug fail'));
+      await expect(petitionHandler.fetchSuggestions('q', 'type')).rejects.toThrow('sug fail');
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Error fetching type suggestions for query: q'),
+        expect.any(Error)
+      );
+    });
+
+    it('uploadSemanticMappingCsv throws and logs on error', async () => {
+      axiosInstance.post.mockRejectedValue(new Error('csv fail'));
+      await expect(petitionHandler.uploadSemanticMappingCsv('text')).rejects.toThrow('csv fail');
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Error uploading mapping CSV'),
+        expect.any(Error)
+      );
+    });
+
+    it('createInitialClusters throws and logs on error', async () => {
+      axiosInstance.post.mockRejectedValue(new Error('clust fail'));
+      await expect(petitionHandler.createInitialClusters('{}')).rejects.toThrow('clust fail');
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Error calling createClusters endpoint'),
+        expect.any(Error)
+      );
+    });
+
+    it('getNodeMetadata throws generic error when no response.data.error', async () => {
+      const plainErr = new Error('plain');
+      axiosInstance.get.mockRejectedValue(plainErr);
+      await expect(petitionHandler.getNodeMetadata('n')).rejects.toBe(plainErr);
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Error fetching node metadata'),
+        plainErr
+      );
     });
   });
 

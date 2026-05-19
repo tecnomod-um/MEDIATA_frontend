@@ -1,11 +1,13 @@
 .modalContent {
   background-color: var(--background-color-card);
-  border-radius: 8px;
+  border-radius: var(--space-2);
   margin: auto;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--box-shadow-lg);
+  max-width: 95vw;
+  max-height: 95vh;
 }
 
 .header {
@@ -15,24 +17,54 @@
   background-color: var(--header-bg);
 }
 
-.header h2 {
+.modalTitle {
   margin: 0 0 6px 0;
   font-weight: 600;
   font-size: var(--font-size-xl);
+  padding-right: 40px;
+  padding-left: 40px;
+  color: var(--text-color-on-darkbg);
+  line-height: 1.2;
+  text-align: center;
 }
 
-.header p {
+.modalDescription {
   margin: 0;
   font-size: var(--font-size-base);
+  padding-right: 40px;
+  padding-left: 40px;
+  color: var(--text-color-on-darkbg);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.closeBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-color-on-darkbg);
+  cursor: pointer;
+  font-size: var(--font-size-lg);
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--transition-duration-fast) var(--transition-ease);
+}
+
+.closeBtn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 .body {
-  padding: 15px 20px;
+  padding: var(--space-4) var(--space-5);
   overflow-y: auto;
-  overflow-x: auto;
+  overflow-x: hidden;
   max-height: 70vh;
   max-width: 100%;
-  align-self: center;
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
@@ -51,8 +83,46 @@
   background-color: var(--scrollbar-track);
 }
 
+.metadataSummary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-2);
+  align-items: stretch;
+  margin-bottom: var(--space-4);
+  padding: var(--space-2);
+  border: 1px solid var(--border-color-secondary);
+  border-radius: 6px;
+  background-color: var(--background-color-3);
+}
+
 .contextLine {
-  margin-bottom: 1rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-color-secondary);
+  border-radius: 6px;
+  background-color: var(--background-color-card);
+  margin: 0;
+  color: var(--text-color-secondary);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.summaryLabel {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--text-color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.summaryValue {
+  color: var(--text-color-secondary);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.45;
 }
 
 .placeholderContainer {
@@ -74,6 +144,16 @@
   margin: 0;
 }
 
+.spinner {
+  width: var(--spinner-size-lg);
+  height: var(--spinner-size-lg);
+  border: var(--spinner-border-width-md) solid var(--spinner-border-base-secondary);
+  border-top: var(--spinner-border-width-md) solid var(--spinner-border-top-secondary);
+  border-radius: 50%;
+  animation: spin var(--spinner-duration-fast) linear infinite;
+  margin-bottom: 15px;
+}
+
 .footer {
   padding: 15px;
   border-top: 1px solid var(--border-color-secondary);
@@ -87,7 +167,9 @@
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition:
+    background-color var(--transition-duration-fast) var(--transition-ease),
+    box-shadow var(--transition-duration-fast) var(--transition-ease);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -95,88 +177,185 @@
   max-width: 80%;
   height: 55px;
   font-weight: 600;
-  margin: 20px;
+  margin: var(--space-5);
   background-size: 300% 100%;
   background-image: var(--button-gradient);
   box-shadow: var(--button-color-shadow);
 }
 
-.accessButton:hover {
+.accessButton:hover:not(:disabled) {
   background-position: 100% 0;
-  background-color: var(----button-color-hover-light);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  background-color: var(--button-color-hover);
+  box-shadow: var(--box-shadow-lg);
 }
 
+.accessButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Dataset layout */
+
 .datasetsContainer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .datasetCard {
-  flex: 1 1 350px;
-  max-width: 600px;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
   border: 1px solid var(--border-color-secondary);
-  border-radius: 4px;
-  padding: 12px 16px;
+  border-radius: var(--space-2);
+  padding: var(--space-3) var(--space-3);
   background-color: var(--background-color-3);
   box-sizing: border-box;
   position: relative;
+  color: var(--text-color-primary);
+  text-align: left;
 }
 
 .datasetTitle {
   font-size: var(--font-size-lg);
-  font-weight: 600;
-  margin: 0 0 8px 0;
+  font-weight: 700;
+  margin: 0 0 var(--space-4) 0;
   color: var(--text-color-primary);
+  text-align: center;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
+/* Sections */
+
+.metadataSection {
+  margin-top: var(--space-3);
+}
+
+.metadataSection:first-of-type {
+  margin-top: 0;
+}
+
+.sectionTitle {
+  margin: 0 0 var(--space-2) 0;
+  padding-bottom: var(--space-1);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--text-color-primary);
+  border-bottom: 1px solid var(--border-color-secondary);
+  text-align: left;
+}
+
+.subsectionTitle {
+  margin: var(--space-2) 0 var(--space-2) 0;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text-color-primary);
+  text-align: left;
+}
+
+.cardItemTitle {
+  margin: 0 0 10px 0;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--text-color-primary);
+  text-align: left;
+}
+
+.sectionEmpty {
+  margin: 4px 0 0 0;
+  color: var(--text-color-muted);
+  font-style: italic;
+  font-size: var(--font-size-sm);
+}
+
+/* Fields */
+
 .fieldRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-3);
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
+  align-items: start;
+  text-align: left;
 }
 
 .fieldLabel {
-  flex: 0 0 110px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-color-secondary);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .fieldValue {
-  flex: 1;
   color: var(--text-color-primary);
   max-width: 100%;
-  white-space: pre-wrap;
-  text-overflow: ellipsis;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
-.distributionCard {
-  border: 1px solid var(--border-color);
-  padding: 10px;
-  border-radius: 4px;
-  margin-top: 6px;
-  background-color: var(--background-color-4);
+.descriptionValue {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+
+  inline-size: 0;
+  min-inline-size: 100%;
+  max-inline-size: 38ch;
+
+  overflow: hidden;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
 }
 
-.distributionCard h6 {
-  margin: 0 0 8px 0;
-  font-size: var(--font-size-base);
-  font-weight: 600;
+/* Values */
+
+.valueList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-.distSection {
-  margin-top: 10px;
+.valueList li {
+  margin: 0 0 4px 0;
 }
 
-.extraFields {
-  margin-top: 8px;
+.valueList li:last-child {
+  margin-bottom: 0;
+}
+
+.nestedObject {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
   padding-left: 10px;
   border-left: 2px solid var(--border-color-secondary);
+}
+
+.nestedRow {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  gap: var(--space-2);
+}
+
+.nestedLabel {
+  font-weight: 600;
+  color: var(--text-color-secondary);
+}
+
+.nestedValue {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .objectList {
@@ -184,84 +363,364 @@
   margin: 2px 0;
   padding: 4px 0 4px 16px;
   border-left: 2px solid var(--border-color-secondary);
-}
-
-.objectList li {
-  margin-bottom: 4px;
-}
-
-.spinner {
-  width: var(--spinner-size-lg);
-  height: var(--spinner-size-lg);
-  border: var(--spinner-border-width-md) solid var(--spinner-border-base-secondary);
-  border-top: var(--spinner-border-width-md) solid var(--spinner-border-top-secondary);
-  border-radius: 50%;
-  animation: spin var(--spinner-duration-fast) linear infinite;
-  margin-bottom: 15px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.closeBtn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  border: none;
-  background: transparent;
-  color: var(--text-color-on-darkbg);
-  cursor: pointer;
-  font-size: var(--font-size-lg);
-  padding: 6px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.3s ease-in-out;
-}
-
-.closeBtn:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-}
-
-.modalContent,
-.body,
-.datasetCard,
-.distributionCard {
-  color: var(--text-color-primary);
-}
-
-.contextLine {
-  color: var(--text-color-secondary);
-}
-
-.distributionCard h6,
-.datasetTitle,
-.datasetCard h6 {
-  color: var(--text-color-primary);
-}
-
-.fieldLabel {
-  color: var(--text-color-secondary);
-}
-
-.muted {
-  color: var(--text-color-muted);
-}
-
-.datasetCard a,
-.distributionCard a,
-.body a {
-  color: var(--heading-color);
-  text-decoration: underline;
+  max-width: 100%;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
+.objectList li {
+  margin-bottom: var(--space-1);
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.objectList li:last-child {
+  margin-bottom: 0;
+}
+
+/* Links */
+
+.compactLink {
+  display: inline-block;
+  max-width: 100%;
+  color: var(--heading-color);
+  text-decoration: underline;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+
+.datasetCard a,
+.distributionCard a,
+.variableCard a,
+.body a {
+  color: var(--heading-color);
+}
+
 .datasetCard a:visited,
 .distributionCard a:visited,
+.variableCard a:visited,
 .body a:visited {
   color: var(--heading-color);
+}
+
+/* Distribution and variable cards */
+
+.distributionCard,
+.variableCard {
+  border: 1px solid var(--border-color);
+  padding: var(--space-2) var(--space-3);
+  border-radius: 6px;
+  margin-top: var(--space-2);
+  background-color: var(--background-color-4);
+  color: var(--text-color-primary);
+  text-align: left;
+}
+
+.distributionCard h6,
+.variableCard h6 {
+  margin: 0 0 10px 0;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--text-color-primary);
+  text-align: left;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.distSection,
+.variablesSection {
+  margin-top: var(--space-3);
+}
+
+.variablesContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.extraFields {
+  margin-top: var(--space-2);
+  padding-left: var(--space-2);
+  border-left: 2px solid var(--border-color-secondary);
+}
+
+/* Compatibility with existing class names */
+
+.distributionCard .fieldRow,
+.variableCard .fieldRow {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.distSection .sectionTitle,
+.variablesSection .sectionTitle {
+  margin-top: 0;
+}
+
+/* FAIR Data Point button */
+
+.fdpButton {
+  position: absolute;
+  top: 50%;
+  left: 18px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  appearance: none;
+  transform: translateY(-50%);
+}
+
+.fdpIconBadge {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  border-radius: 999px;
+  background-color: var(--background-color-card);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--border-color-secondary);
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  box-shadow: var(--box-shadow-md);
+}
+
+.fdpIcon {
+  width: 52px;
+  height: 52px;
+  display: block;
+  object-fit: contain;
+  padding: 0;
+  margin: 0;
+}
+
+.fdpButtonLabel {
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  margin-left: -12px;
+  padding: 0 12px 0 16px;
+  border-radius: 999px;
+  background-color: var(--background-color-card);
+  color: var(--text-color-primary);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: var(--box-shadow-md);
+}
+
+.fdpButtonDisabled .fdpIconBadge,
+.fdpButtonDisabled .fdpButtonLabel {
+  background-color: var(--background-color-3);
+  color: var(--text-color-muted);
+  box-shadow: var(--box-shadow-sm);
+}
+
+.fdpButtonInteractive {
+  cursor: pointer;
+}
+
+.fdpButtonInteractive .fdpIconBadge,
+.fdpButtonInteractive .fdpButtonLabel {
+  transition:
+    box-shadow var(--transition-duration-fast) var(--transition-ease),
+    background-color var(--transition-duration-fast) var(--transition-ease);
+}
+
+.fdpButtonInteractive:hover .fdpIconBadge,
+.fdpButtonInteractive:hover .fdpButtonLabel {
+  box-shadow: var(--box-shadow-lg);
+}
+
+.fdpButtonInteractive:active .fdpIconBadge,
+.fdpButtonInteractive:active .fdpButtonLabel {
+  box-shadow: var(--box-shadow-lg);
+}
+
+.fdpButtonInteractive:focus-visible {
+  outline: none;
+}
+
+.fdpButtonInteractive:focus-visible .fdpIconBadge,
+.fdpButtonInteractive:focus-visible .fdpButtonLabel {
+  box-shadow: var(--box-shadow-xl);
+}
+
+/* Animations */
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive */
+
+@media (max-width: 700px) {
+  .modalContent {
+    max-width: 98vw;
+    max-height: 98vh;
+  }
+
+  .header {
+    padding: 15px 20px;
+  }
+
+.modalTitle {
+  padding-left: 58px;
+  padding-right: 40px;
+  font-size: var(--font-size-lg);
+  text-align: center;
+}
+
+.modalDescription {
+  padding-left: 58px;
+  padding-right: 40px;
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+  .body {
+    padding: var(--space-3);
+  }
+
+  .metadataSummary {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+    padding: var(--space-1);
+  }
+
+  .contextLine {
+    min-width: 0;
+    width: 100%;
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .datasetCard {
+    flex-basis: 100%;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    padding: 14px;
+  }
+
+  .fieldRow,
+  .distributionCard .fieldRow,
+  .variableCard .fieldRow {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+    margin-bottom: var(--space-2);
+  }
+
+  .nestedRow {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+
+  .fieldLabel {
+    font-weight: 700;
+  }
+
+  .compactLink {
+    white-space: normal;
+  }
+
+  .accessButton {
+    margin: var(--space-3);
+  }
+
+  .distributionCard,
+  .variableCard {
+    padding: var(--space-2);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .extraFields {
+    margin-top: var(--space-1);
+    padding-left: 0;
+    border-left: 0;
+    width: 100%;
+  }
+
+  .nestedObject {
+    padding-left: 0;
+    border-left: 0;
+    width: 100%;
+  }
+
+  .objectList {
+    padding-left: 0;
+    border-left: 0;
+    width: 100%;
+  }
+
+  .fieldRow,
+  .distributionCard .fieldRow,
+  .variableCard .fieldRow,
+  .nestedRow {
+    width: 100%;
+  }
+
+  .fdpButton {
+    left: 12px;
+  }
+
+  .fdpButtonLabel {
+    display: none;
+  }
+
+  .fdpIconBadge {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+  }
+
+  .fdpIcon {
+    width: 46px;
+    height: 46px;
+  }
+}
+
+@media (max-width: 420px) {
+.modalTitle {
+  padding-left: 52px;
+  padding-right: 40px;
+  font-size: var(--font-size-base);
+  text-align: center;
+}
+
+.modalDescription {
+  padding-left: 52px;
+  padding-right: 40px;
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+  .fdpIconBadge {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+  }
+
+  .fdpIcon {
+    width: 42px;
+    height: 42px;
+  }
 }

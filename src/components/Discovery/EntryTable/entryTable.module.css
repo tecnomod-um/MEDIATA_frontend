@@ -7,7 +7,7 @@
     scrollbar-color: var(--table-scrollbar-thumb) var(--table-scrollbar-track);
     background-color: var(--background-color-card);
     color: var(--text-color-muted);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--box-shadow-sm);
     border: 1px solid var(--border-color-secondary);
 }
 
@@ -31,7 +31,7 @@
     text-align: left;
     min-width: 80px;
     padding: 10px;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 1px solid var(--table-row-selected-bg);
 }
 
 .resSpan {

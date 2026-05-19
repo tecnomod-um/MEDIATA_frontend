@@ -1,5 +1,5 @@
 import axiosInstance from "./axiosSetup";
-import nodeAxiosInstance, { updateNodeAxiosBaseURL } from "./nodeAxiosSetup";
+import nodeAxiosInstance, { getResolvedNodeBaseURL, updateNodeAxiosBaseURL } from "./nodeAxiosSetup";
 // API request handlers for all backend and node petitions
 
 /* System petitions */
@@ -36,13 +36,20 @@ export const getNodeInfo = async (nodeId) => {
     return response.data;
   } catch (error) {
     console.log(error);
-    if (error.response && error.response.data && error.response.data.error)
+    if (error.response && error.response.data && error.response.data.error) {
+      if (error.response.data.error.includes("Failed to request Kerberos service ticket")) {
+        localStorage.removeItem("jwtToken");
+        localStorage.removeItem("kerberosTGT");
+        localStorage.removeItem("jwtNodeTokens");
+        throw new Error("Session expired. Please log in again before accessing this node.");
+      }
       throw new Error(error.response.data.error);
-    else throw error;
+    } else throw error;
   }
 };
 
 // Fetch node dataset descriptions
+/*
 export const getNodeMetadata = async (nodeId) => {
   try {
     const response = await axiosInstance.get(`/nodes/connect/metadata/${nodeId}`);
@@ -59,7 +66,44 @@ export const getNodeMetadata = async (nodeId) => {
     }
   }
 };
+*/export const getNodeMetadata = async (nodeId) => {
+  try {
+    const response = await axiosInstance.get(
+      `/nodes/connect/metadata/${encodeURIComponent(nodeId)}`
+    );
 
+    if (response.data?.metadata !== undefined) {
+      return response.data;
+    }
+
+    return { metadata: response.data };
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      if (
+        error.response.data &&
+        (
+          error.response.data.metadata !== undefined ||
+          error.response.data.fairDataPointEnabled !== undefined
+        )
+      ) {
+        return {
+          metadata: error.response.data.metadata ?? null,
+          fairDataPointEnabled: error.response.data.fairDataPointEnabled,
+        };
+      }
+
+      return { metadata: null };
+    }
+
+    console.error("Error fetching node metadata:", error);
+
+    if (error.response && error.response.data && error.response.data.error) {
+      throw new Error(error.response.data.error);
+    }
+
+    throw error;
+  }
+};
 // Logs an error to the server
 export const logError = (error, info) => {
   axiosInstance.post(`/api/error`, {
@@ -95,6 +139,7 @@ export const fetchSchemaFromBackend = async () => {
     const response = await axiosInstance.get('/nodes/schema');
     return response.data;
   } catch (error) {
+    if (error.response && error.response.status === 404) return null;
     throw error;
   }
 };
@@ -226,6 +271,7 @@ export const loginUser = async (username, password) => {
 export const nodeAuth = async (serviceUrl, kerberosToken) => {
   console.log(`Authenticating node with serviceUrl: ${serviceUrl}`);
   updateNodeAxiosBaseURL(serviceUrl);
+  const resolvedBaseUrl = getResolvedNodeBaseURL(serviceUrl);
 
   try {
     const response = await nodeAxiosInstance.post(
@@ -234,25 +280,25 @@ export const nodeAuth = async (serviceUrl, kerberosToken) => {
     );
     if (response.status === 200) {
       if (response.data.jwtNodeToken === "Unauthorized") {
-        localStorage.removeItem("jwtToken");
-
-        // Also remove any token mapping for this serviceUrl
         const tokensMapping = JSON.parse(localStorage.getItem("jwtNodeTokens") || "{}");
-        if (tokensMapping[serviceUrl]) {
-          delete tokensMapping[serviceUrl];
+        if (tokensMapping[resolvedBaseUrl]) {
+          delete tokensMapping[resolvedBaseUrl];
           localStorage.setItem("jwtNodeTokens", JSON.stringify(tokensMapping));
         }
-        throw new Error("Received an Unauthorized jwtNodeToken. JWT has been removed.");
+        throw new Error("Node authorization failed. The node rejected the central session token or Kerberos service ticket.");
       }
       // Otherwise, store the token as usual
       const tokensMapping = JSON.parse(localStorage.getItem("jwtNodeTokens") || "{}");
-      tokensMapping[serviceUrl] = response.data.jwtNodeToken;
+      tokensMapping[resolvedBaseUrl] = response.data.jwtNodeToken;
       localStorage.setItem("jwtNodeTokens", JSON.stringify(tokensMapping));
       return response.data;
     } else {
       throw new Error("Node auth failed");
     }
   } catch (error) {
+    if (error?.response && (error.response.status === 401 || error.response.status === 403)) {
+      throw new Error("Node authorization failed. The node rejected the central session token or Kerberos service ticket.");
+    }
     throw error;
   }
 };

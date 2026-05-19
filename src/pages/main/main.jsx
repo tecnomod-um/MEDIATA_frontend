@@ -43,7 +43,7 @@ function Main() {
   };
 
   return (
-    <div className={MainStyles.pageContainer}>
+    <main className={MainStyles.pageContainer}>
       <LandingIntroduction />
       <div className={MainStyles.mainContainer}>
         <section className={MainStyles.featuresSection}>
@@ -162,7 +162,7 @@ function Main() {
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }
 

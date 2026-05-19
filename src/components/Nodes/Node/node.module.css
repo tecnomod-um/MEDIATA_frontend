@@ -1,5 +1,5 @@
 .auraColor {
-    color: #c22535;
+    color: var(--error-color);
 }
 
 .textColor {

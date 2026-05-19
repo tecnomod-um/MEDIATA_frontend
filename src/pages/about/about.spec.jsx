@@ -8,6 +8,7 @@ describe('<About />', () => {
 
   it('renders the main header and team members', () => {
     render(<About />);
+    expect(screen.getByRole('main')).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { level: 1, name: /Taniwha - About Us/i })
     ).toBeInTheDocument();

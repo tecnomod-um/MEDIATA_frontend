@@ -35,8 +35,8 @@ vi.mock('@mui/icons-material/ChevronRight', () => ({
 const IMGS = ['a.jpg', 'b.jpg', 'c.jpg'];
 const STEPS = ['Step 1', 'Step 2', 'Step 3'];
 
-const setup = (images = IMGS, steps = STEPS) => {
-  render(<Slide images={images} steps={steps} />);
+const setup = (images = IMGS, steps = STEPS, props = {}) => {
+  render(<Slide images={images} steps={steps} {...props} />);
 
   const getActiveImageIndex = () => {
     const imgs = screen.queryAllByRole('img', { name: /Slide \d+/ });
@@ -86,6 +86,13 @@ describe('Slide basic rendering', () => {
     expect(buttons.map((b) => b.textContent)).toEqual(['1', '2', '3']);
     expect(buttons[0].className).toEqual(expect.stringContaining('activeControl'));
     expect(buttons[1].className).not.toEqual(expect.stringContaining('activeControl'));
+  });
+
+  it('uses a custom region label when provided', () => {
+    setup(IMGS, STEPS, { label: 'Discovery slide images' });
+    expect(
+      screen.getByRole('region', { name: /discovery slide images/i })
+    ).toBeInTheDocument();
   });
 
   it('renders safely with empty arrays', () => {

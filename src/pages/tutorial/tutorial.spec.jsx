@@ -33,7 +33,6 @@ vi.mock('./images', () => ({
     'RESOLVED:./a2.jpg',
     'RESOLVED:./a3.jpg',
     'RESOLVED:./a4.jpg',
-    'RESOLVED:./a5.jpg',
   ],
   IntegrationSlides: [
     'RESOLVED:./b1.jpg',
@@ -86,14 +85,14 @@ vi.mock('../../components/Common/ScrollSidebar/scrollSidebar', () => ({
   },
 }));
 
-vi.mock('../../components/Common/Slide/slide', () => ({
+vi.mock('../../components/Common/ImageHighlights/imageHighlights', () => ({
   __esModule: true,
   default: (props) => {
-    const { images = [], steps = [] } = props || {};
+    const { imageSrc = '', steps = [] } = props || {};
     return (
       <div
-        data-testid="slide"
-        data-images-count={images.length}
+        data-testid="image-highlights"
+        data-image-src={imageSrc}
         data-steps-count={steps.length}
       />
     );
@@ -111,8 +110,12 @@ vi.mock('../../components/Common/PageImage/pageImage', () => ({
 describe('<Tutorial /> + images.js', () => {
   it('renders the main sections and sidebar with correct offset', () => {
     render(<Tutorial />);
+    expect(screen.getByRole('main')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: /mediata tutorial/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Introduction/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Navigating the tool/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /FAIR Data Point/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /FAIR Data Point/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Selecting files/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Data cleaning/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /^Discovery$/i })).toBeInTheDocument();
@@ -129,21 +132,21 @@ describe('<Tutorial /> + images.js', () => {
     expect(nav).toBeInTheDocument();
     expect(nav).toHaveAttribute('data-offset', '55');
     const items = within(nav).getAllByRole('listitem');
-    expect(items.length).toBe(14);
+    expect(items.length).toBe(15);
   });
 
-  it('renders four Slide components with images count matching the steps per section', () => {
+  it('renders four ImageHighlights components with the expected step counts', () => {
     render(<Tutorial />);
-    const slides = screen.getAllByTestId('slide');
-    expect(slides.length).toBe(4);
-    expect(slides[0]).toHaveAttribute('data-images-count', '4');
-    expect(slides[0]).toHaveAttribute('data-steps-count', '4');
-    expect(slides[1]).toHaveAttribute('data-images-count', '5');
-    expect(slides[1]).toHaveAttribute('data-steps-count', '5');
-    expect(slides[2]).toHaveAttribute('data-images-count', '5');
-    expect(slides[2]).toHaveAttribute('data-steps-count', '5');
-    expect(slides[3]).toHaveAttribute('data-images-count', '4');
-    expect(slides[3]).toHaveAttribute('data-steps-count', '4');
+    const highlights = screen.getAllByTestId('image-highlights');
+    expect(highlights.length).toBe(4);
+    expect(highlights[0]).toHaveAttribute('data-image-src', 'RESOLVED:./1.jpg');
+    expect(highlights[0]).toHaveAttribute('data-steps-count', '4');
+    expect(highlights[1]).toHaveAttribute('data-image-src', 'RESOLVED:./a1.jpg');
+    expect(highlights[1]).toHaveAttribute('data-steps-count', '5');
+    expect(highlights[2]).toHaveAttribute('data-image-src', 'RESOLVED:./b1.jpg');
+    expect(highlights[2]).toHaveAttribute('data-steps-count', '5');
+    expect(highlights[3]).toHaveAttribute('data-image-src', 'RESOLVED:./c1.jpg');
+    expect(highlights[3]).toHaveAttribute('data-steps-count', '4');
   });
 
   it('renders the variable tables and key metric labels for individual metrics', () => {
@@ -175,7 +178,6 @@ describe('<Tutorial /> + images.js', () => {
       'RESOLVED:./a2.jpg',
       'RESOLVED:./a3.jpg',
       'RESOLVED:./a4.jpg',
-      'RESOLVED:./a5.jpg',
     ]);
     expect(IntegrationSlides).toEqual([
       'RESOLVED:./b1.jpg',

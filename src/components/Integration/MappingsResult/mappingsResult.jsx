@@ -3,7 +3,7 @@ import MappingsResultStyles from "./mappingsResult.module.css";
 import MappingHierarchy from "../MappingHierarchy/mappingHierarchy";
 import MappingsExporter from "./mappingsExporter";
 
-function MappingsResult({ mappings, columnsData, deletedItems, processingStatus, onUndoDelete, onDeleteMapping, onOpenFileMapper, formatValue, setMappings, onSelectMapping }) {
+function MappingsResult({ mappings, columnsData, deletedItems, processingStatus, onUndoDelete, onDeleteMapping, onOpenFileMapper, formatValue, setMappings, onSelectMapping, schema, onUploadMappings }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [autoOpenId, setAutoOpenId] = useState(null);
   const prevKeysRef = useRef(new Set());
@@ -37,10 +37,16 @@ function MappingsResult({ mappings, columnsData, deletedItems, processingStatus,
 
   const filteredMappings = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
-    if (!term) return mappings;
 
-    return mappings
-      .map((mappingObj) => {
+    const withOriginalIndex = mappings.map((mappingObj, originalIndex) => ({
+      originalIndex,
+      mappingObj,
+    }));
+
+    if (!term) return withOriginalIndex;
+
+    return withOriginalIndex
+      .map(({ originalIndex, mappingObj }) => {
         const nextObj = {};
 
         for (const [mappingKey, mapping] of Object.entries(mappingObj)) {
@@ -50,12 +56,17 @@ function MappingsResult({ mappings, columnsData, deletedItems, processingStatus,
           const groupsHit = (mapping?.groups ?? []).some((g) =>
             (g.values ?? []).some((v) => {
               const valueNameHit = String(v?.name ?? "").toLowerCase().includes(term);
+
               const mappingLineHit = (v?.mapping ?? []).some((m) => {
                 const colHit = String(m?.groupColumn ?? "").toLowerCase().includes(term);
-                const valHit = String(m?.value ?? "").toLowerCase().includes(term);
+                const valHit =
+                  typeof m?.value === "object" && m?.value !== null
+                    ? JSON.stringify(m.value).toLowerCase().includes(term)
+                    : String(m?.value ?? "").toLowerCase().includes(term);
                 const fileNameHit = String(m?.fileName ?? "").toLowerCase().includes(term);
                 return colHit || valHit || fileNameHit;
               });
+
               return valueNameHit || mappingLineHit;
             })
           );
@@ -63,9 +74,9 @@ function MappingsResult({ mappings, columnsData, deletedItems, processingStatus,
           if (keyHit || fileHit || groupsHit) nextObj[mappingKey] = mapping;
         }
 
-        return nextObj;
+        return { originalIndex, mappingObj: nextObj };
       })
-      .filter((obj) => Object.keys(obj).length > 0);
+      .filter(({ mappingObj }) => Object.keys(mappingObj).length > 0);
   }, [mappings, searchTerm]);
 
   return (
@@ -87,29 +98,34 @@ function MappingsResult({ mappings, columnsData, deletedItems, processingStatus,
           </div>
         )}
 
-        {filteredMappings.map((mappingObj, mappingIndex) =>
-          Object.keys(mappingObj).map((mappingKey, index) => {
-            const id = makeId(mappingKey, mappingObj[mappingKey]);
+        {filteredMappings.map(({ originalIndex, mappingObj }) =>
+          Object.entries(mappingObj).map(([mappingKey, mapping]) => {
+            const id = makeId(mappingKey, mapping);
+
             return (
               <MappingHierarchy
-                key={index}
-                mappingIndex={mappingIndex}
+                key={id}
+                mappingIndex={originalIndex}
                 mappingKey={mappingKey}
-                mapping={mappingObj[mappingKey]}
+                mapping={mapping}
                 columnsData={columnsData}
                 onDeleteMapping={onDeleteMapping}
                 formatValue={formatValue}
                 autoOpen={autoOpenId === id}
-                onSelect={() => onSelectMapping?.(mappingIndex, mappingKey)}
+                onSelect={() => onSelectMapping?.(originalIndex, mappingKey)}
                 onUpdateMapping={(mappingIndex, oldKey, updatedMapping, newKey) => {
                   setMappings((prev) =>
                     prev.map((m, i) => {
                       if (i !== mappingIndex) return m;
+
                       const newMappingObj = { ...m };
                       if (newKey && newKey !== oldKey) {
                         delete newMappingObj[oldKey];
                         newMappingObj[newKey] = updatedMapping;
-                      } else newMappingObj[oldKey] = updatedMapping;
+                      } else {
+                        newMappingObj[oldKey] = updatedMapping;
+                      }
+
                       return newMappingObj;
                     })
                   );
@@ -121,7 +137,12 @@ function MappingsResult({ mappings, columnsData, deletedItems, processingStatus,
       </div>
 
       <div className={MappingsResultStyles.bottomActions}>
-        <MappingsExporter mappings={mappings} />
+        <MappingsExporter
+          mappings={mappings}
+          schema={schema}
+          onUploadMappings={onUploadMappings}
+        />
+
         <button
           className={MappingsResultStyles.processMappingsButton}
           onClick={onOpenFileMapper}

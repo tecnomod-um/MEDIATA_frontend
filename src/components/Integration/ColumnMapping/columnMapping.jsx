@@ -42,6 +42,7 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
   const saveButtonRef = useRef(null);
   const [saveTooltipShown, setSaveTooltipShown] = useState(false);
   const [saveTooltipMessage, setSaveTooltipMessage] = useState("");
+  const valueListRef = useRef(null);
 
   const [snomedUnionTerminologySuggestions, setSnomedUnionTerminologySuggestions] = useState([]);
   const [snomedValueTerminologySuggestions, setSnomedValueTerminologySuggestions] = useState({});
@@ -57,6 +58,8 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
 
   const [unionDescription, setUnionDescription] = useState("");
   const [valueDescriptions, setValueDescriptions] = useState({});
+  const [disableValueExitAnimation, setDisableValueExitAnimation] = useState(false);
+  const pendingDraftRef = useRef(null);
 
   const [isSuggestOpen, setIsSuggestOpen] = useState(false);
   const [isSuggestLoading, setIsSuggestLoading] = useState(false);
@@ -89,21 +92,56 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
   };
   const closeDescriptionModal = () => setIsDescriptionOpen(false);
 
+  const applyLoadedDraft = useCallback((draft) => {
+    if (!draft) return;
+    setUnionName(draft.unionName || "");
+    setUnionTerminology(draft.unionTerminology || "");
+    setUnionDescription(draft.unionDescription || "");
+    setUseHotOneMapping(!!draft.useHotOneMapping);
+    setRemoveFromHierarchy(!!draft.removeFromHierarchy);
+    setValueDescriptions(draft.valueDescriptions || {});
+    onMappingChange?.(draft.groups || []);
+    setCustomValues(draft.customValues || []);
+    buttonRefs.current = (draft.customValues || []).map(() => React.createRef());
+    setIsPaneVisible(false);
+    setCurrentGroupIndex(null);
+  }, [onMappingChange]);
+
   useEffect(() => {
     if (!loadedDraft) return;
 
-    setUnionName(loadedDraft.unionName || "");
-    setUnionTerminology(loadedDraft.unionTerminology || "");
-    setUnionDescription(loadedDraft.unionDescription || "");
-    setUseHotOneMapping(!!loadedDraft.useHotOneMapping);
-    setRemoveFromHierarchy(!!loadedDraft.removeFromHierarchy);
-    setValueDescriptions(loadedDraft.valueDescriptions || {});
-    onMappingChange?.(loadedDraft.groups || []);
-    setCustomValues(loadedDraft.customValues || []);
-    buttonRefs.current = (loadedDraft.customValues || []).map(() => React.createRef());
-    setIsPaneVisible(false);
-    setCurrentGroupIndex(null);
-  }, [loadedDraft, onMappingChange]);
+    if (customValues.length > 0) {
+      pendingDraftRef.current = loadedDraft;
+      setDisableValueExitAnimation(true);
+      setCustomValues([]);
+      buttonRefs.current = [];
+      setIsPaneVisible(false);
+      setCurrentGroupIndex(null);
+      return;
+    }
+
+    applyLoadedDraft(loadedDraft);
+    setDisableValueExitAnimation(false);
+  }, [loadedDraft, customValues.length, applyLoadedDraft]);
+
+  useEffect(() => {
+    if (!pendingDraftRef.current || customValues.length !== 0) return;
+
+    const draft = pendingDraftRef.current;
+    pendingDraftRef.current = null;
+
+    const frame = requestAnimationFrame(() => {
+      applyLoadedDraft(draft);
+      setDisableValueExitAnimation(false);
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [customValues.length, applyLoadedDraft]);
+
+  useEffect(() => {
+    if (!valueListRef.current) return;
+    valueListRef.current.scrollTop = 0;
+  }, [loadedDraft]);
 
   const getActiveDescriptionValue = () => {
     const item = descriptionItems[activeDescriptionIndex];
@@ -581,15 +619,15 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
       ? customValues[currentGroupIndex].name || ""
       : "";
 
-  const valueContentSuggestions = useMemo(() => unionEnumSuggestions || [], [unionEnumSuggestions]);
+  const valueContentSuggestions = useMemo(() => (unionEnumSuggestions || []).map((x) => String(x)), [unionEnumSuggestions]);
 
   const valueTerminologySuggestionLabelsFor = useCallback(
     (customValueId) => {
-      const schemaList = unionEnumSuggestions || [];
+      const schemaList = (unionEnumSuggestions || []).map((x) => String(x));
       const snomedList = (snomedValueTerminologySuggestions[customValueId] || []).map((s) => s.label);
 
       const schemaSet = new Set(schemaList.map((x) => x.toLowerCase()));
-      const snomedAppended = snomedList.filter((x) => !schemaSet.has(x.toLowerCase()));
+      const snomedAppended = snomedList.filter((x) => !schemaSet.has(String(x).toLowerCase()));
       return [...schemaList, ...snomedAppended];
     },
     [unionEnumSuggestions, snomedValueTerminologySuggestions]
@@ -649,9 +687,7 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
               />
               {showHeaderTooltip && (
                 <TooltipPopup
-                  message={
-                    "Create a column in the datasets with a given name.\nIt's values will be set based on the defined mappings from the selected columns."
-                  }
+                  message={"Create a column in the datasets with a given name.\nIt's values will be set based on the defined mappings from the selected columns."}
                   buttonRef={headerTooltipButtonRef}
                   onClose={() => setShowHeaderTooltip(false)}
                   offsetY={-10}
@@ -821,6 +857,8 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
           }}
           isLockedNumericValue={isLockedNumericValue}
           buttonRefs={buttonRefs}
+          containerRef={valueListRef}
+          disableExitAnimation={disableValueExitAnimation}
         />
 
         <div className={ColumnMappingStyles.bottomControlsRow}>

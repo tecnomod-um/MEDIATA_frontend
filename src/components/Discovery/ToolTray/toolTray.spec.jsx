@@ -46,8 +46,12 @@ vi.mock('../ElementExporter/elementExporter', () => ({
 
 vi.mock('../CompareFilesModal/compareFilesModal', () => ({
   __esModule: true,
-  default: ({ isOpen }) =>
-    isOpen ? <div data-testid="compare-modal" /> : null,
+  default: ({ isOpen, closeModal }) =>
+    isOpen ? (
+      <div data-testid="compare-modal">
+        <button data-testid="close-modal-btn" onClick={closeModal}>Close</button>
+      </div>
+    ) : null,
 }));
 
 vi.mock('../../../util/petitionHandler', () => ({
@@ -76,8 +80,6 @@ vi.mock('./toolTray.module.css', () => ({
     }
   ),
 }));
-
-vi.useFakeTimers();
 
 const basicFeature = (name, type, file = 'fileA.csv') => ({
   featureName: name,
@@ -120,6 +122,11 @@ function getDefaultProps() {
 describe('<ToolTray/>', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('renders core sections & children when open', () => {
@@ -188,12 +195,7 @@ describe('<ToolTray/>', () => {
     expect(props.toggleToolTray).toHaveBeenCalled();
   });
 
-  describe('<ToolTray/> (extra coverage)', () => {
-    beforeEach(() => {
-      vi.clearAllMocks();
-    });
-
-    it('renders closed state with right-chevron when isToolTrayOpen=false', () => {
+  it('renders closed state with right-chevron when isToolTrayOpen=false', () => {
       const props = { ...getDefaultProps(), isToolTrayOpen: false };
       render(<ToolTray {...props} />);
 
@@ -292,10 +294,6 @@ describe('<ToolTray/>', () => {
     });
 
     describe('toggleFeatureType error handling', () => {
-      beforeEach(() => {
-        vi.clearAllMocks();
-      });
-
       it('toasts an error when recalc response has "cannot be converted"', async () => {
         recalculateFeature.mockResolvedValue({
           message: 'Cannot be converted to categorical',
@@ -456,6 +454,50 @@ describe('<ToolTray/>', () => {
       expect(props.setFilteredData).toHaveBeenCalled();
     });
 
+    it('switch updater removes feature from filteredData when it is already present', () => {
+      const props = getDefaultProps();
+      let capturedUpdater = null;
+      props.setFilteredData = vi.fn((updater) => {
+        if (typeof updater === 'function') capturedUpdater = updater;
+      });
+
+      render(<ToolTray {...props} />);
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Fruit' }));
+
+      expect(capturedUpdater).not.toBeNull();
+      const result = capturedUpdater(props.filteredData);
+      // Fruit was in categoricalFeatures → it should be removed
+      expect(result.categoricalFeatures.some((f) => f.featureName === 'Fruit')).toBe(false);
+    });
+
+    it('switch updater adds feature to filteredData when it is absent', () => {
+      const props = getDefaultProps();
+      // Remove Fruit from filteredData so clicking adds it back
+      props.filteredData = { ...props.data, categoricalFeatures: [] };
+      let capturedUpdater = null;
+      props.setFilteredData = vi.fn((updater) => {
+        if (typeof updater === 'function') capturedUpdater = updater;
+      });
+
+      render(<ToolTray {...props} />);
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Fruit' }));
+
+      expect(capturedUpdater).not.toBeNull();
+      const result = capturedUpdater(props.filteredData);
+      // Fruit was absent → it should now be added
+      expect(result.categoricalFeatures.some((f) => f.featureName === 'Fruit')).toBe(true);
+    });
+
+    it('closes the compare modal when its closeModal callback is invoked', () => {
+      render(<ToolTray {...getDefaultProps()} />);
+
+      fireEvent.click(screen.getByRole('button', { name: /integrity metrics/i }));
+      expect(screen.getByTestId('compare-modal')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('close-modal-btn'));
+      expect(screen.queryByTestId('compare-modal')).not.toBeInTheDocument();
+    });
+
     it('creates ripple effect on file toggle click', () => {
       const props = getDefaultProps();
       render(<ToolTray {...props} />);
@@ -520,5 +562,59 @@ describe('<ToolTray/>', () => {
         screen.getByRole('button', { name: /display aggregate metrics/i })
       ).toBeInTheDocument();
     });
-  });
+
+    it('toggleAllDisplayedFeatures updater removes features when all are currently checked', () => {
+      const props = getDefaultProps();
+      let capturedUpdater = null;
+      props.setFilteredData = vi.fn((updater) => {
+        if (typeof updater === 'function') capturedUpdater = updater;
+      });
+
+      render(<ToolTray {...props} />);
+      fireEvent.click(screen.getByRole('button', { name: /hide all/i }));
+
+      expect(capturedUpdater).not.toBeNull();
+      // All features are checked → updater should remove them
+      const result = capturedUpdater(props.filteredData);
+      expect(result.categoricalFeatures).toHaveLength(0);
+    });
+
+    it('toggleAllDisplayedFeatures updater adds features when not all are checked', () => {
+      const props = getDefaultProps();
+      // Remove Fruit from filteredData so not all features are checked
+      props.filteredData = { ...props.data, categoricalFeatures: [] };
+      let capturedUpdater = null;
+      props.setFilteredData = vi.fn((updater) => {
+        if (typeof updater === 'function') capturedUpdater = updater;
+      });
+
+      render(<ToolTray {...props} />);
+      // Button now shows "Show All" → clicking it adds features
+      fireEvent.click(screen.getByRole('button', { name: /show all/i }));
+
+      expect(capturedUpdater).not.toBeNull();
+      const result = capturedUpdater(props.filteredData);
+      // Fruit should be added back
+      expect(result.categoricalFeatures.some((f) => f.featureName === 'Fruit')).toBe(true);
+    });
+
+    it('toggleFeatureType sets finalType to "date" when recalc returns dateFeatures', async () => {
+      // The feature starts as categorical → newType = "continuous" → targetArray = "continuousFeatures"
+      // Must provide both continuousFeatures (to pass validation) and dateFeatures (to set finalType = "date")
+      recalculateFeature.mockResolvedValue({
+        continuousFeatures: [{ featureName: 'Fruit (fileA.csv)', fileName: 'fileA.csv' }],
+        dateFeatures: [{ featureName: 'Fruit (fileA.csv)', fileName: 'fileA.csv' }],
+      });
+
+      const props = getDefaultProps();
+      render(<ToolTray {...props} />);
+
+      const btn = screen.getByRole('button', {
+        name: /toggle the selected feature's type between categorical and continuous/i,
+      });
+      fireEvent.click(btn);
+
+      await waitFor(() => expect(recalculateFeature).toHaveBeenCalled());
+      await waitFor(() => expect(props.setData).toHaveBeenCalled());
+    });
 });

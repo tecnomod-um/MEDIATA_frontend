@@ -68,6 +68,7 @@ describe('<Main />', () => {
 
   it('renders intro, header, content and buttons, and scrolls to top on mount', () => {
     renderWithRouter();
+    expect(screen.getByRole('main')).toBeInTheDocument();
     expect(screen.getByTestId('landing-intro')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Access your data securely/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /User accessible/i })).toBeInTheDocument();

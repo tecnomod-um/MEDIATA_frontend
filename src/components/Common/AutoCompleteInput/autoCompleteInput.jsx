@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import AutoCompleteInputStyles from "./autoCompleteInput.module.css";
 
 // Input component with autocomplete functionality, keyboard navigation and suggestions
-function AutocompleteInput({  value,  onChange,  placeholder,  className,  suggestions = [],  limitInitial = true, id, name, ariaLabel}) {
+function AutocompleteInput({ value, onChange, placeholder, className, suggestions = [], limitInitial = true, id, name, ariaLabel }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [filtered, setFiltered] = useState([]);
   const [listStyles, setListStyles] = useState({});
@@ -14,11 +14,13 @@ function AutocompleteInput({  value,  onChange,  placeholder,  className,  sugge
   const listId = `${inputId}-listbox`;
 
   useEffect(() => {
-    if (suggestions.length > 0 && value && limitInitial) {
-      const lowerVal = value.toLowerCase();
-      setFiltered(suggestions.filter((sugg) => sugg.toLowerCase().includes(lowerVal)));
-    } else 
-      setFiltered(suggestions);
+    const normalized = (suggestions || []).map((s) => String(s));
+    if (normalized.length > 0 && value && limitInitial) {
+      const lowerVal = String(value).toLowerCase();
+      setFiltered(normalized.filter((sugg) => sugg.toLowerCase().includes(lowerVal)));
+    } else {
+      setFiltered(normalized);
+    }
   }, [value, suggestions, limitInitial]);
 
   useEffect(() => {
@@ -34,11 +36,11 @@ function AutocompleteInput({  value,  onChange,  placeholder,  className,  sugge
   useEffect(() => {
     if (showSuggestions && inputRef.current) {
       const rect = inputRef.current.getBoundingClientRect();
-  
+
       const spaceAbove = rect.top - 10;
       const spaceBelow = window.innerHeight - rect.bottom - 10;
       const preferredHeight = 250;
-  
+
       const fitsBelow = spaceBelow >= 100;
       const showAbove = !fitsBelow && spaceAbove > spaceBelow;
       const maxHeight = Math.min(showAbove ? spaceAbove : spaceBelow, preferredHeight);
@@ -53,12 +55,12 @@ function AutocompleteInput({  value,  onChange,  placeholder,  className,  sugge
       });
     }
   }, [showSuggestions]);
-  
+
   // Hide the list when scrolling
   useEffect(() => {
     const inputEl = inputRef.current;
     if (!inputEl) return;
-  
+
     const handleScroll = () => {
       const rect = inputEl.getBoundingClientRect();
       const isInViewport = rect.top >= 0 && rect.bottom <= window.innerHeight;
@@ -67,26 +69,26 @@ function AutocompleteInput({  value,  onChange,  placeholder,  className,  sugge
         inputEl.blur();
       }
     };
-  
+
     // Find scrollable parents
     const scrollContainers = [];
     let node = inputEl.parentElement;
     while (node && node !== document.body) {
       const overflowY = window.getComputedStyle(node).overflowY;
-      if (overflowY === 'auto' || overflowY === 'scroll') 
+      if (overflowY === 'auto' || overflowY === 'scroll')
         scrollContainers.push(node);
       node = node.parentElement;
     }
-  
+
     scrollContainers.forEach(container => container.addEventListener('scroll', handleScroll));
     window.addEventListener('scroll', handleScroll, true);
-  
+
     return () => {
       scrollContainers.forEach(container => container.removeEventListener('scroll', handleScroll));
       window.removeEventListener('scroll', handleScroll, true);
     };
   }, []);
-  
+
   const handleSuggestionClick = (item) => {
     onChange(item);
     setShowSuggestions(false);
@@ -121,8 +123,8 @@ function AutocompleteInput({  value,  onChange,  placeholder,  className,  sugge
   };
 
   const suggestionList = (
-    <ul 
-      style={listStyles} 
+    <ul
+      style={listStyles}
       className={AutoCompleteInputStyles.autocompleteList}
       id={listId}
       role="listbox"

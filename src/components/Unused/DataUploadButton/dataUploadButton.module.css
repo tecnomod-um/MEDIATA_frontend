@@ -27,7 +27,7 @@
     max-width: 200px;
     height: 55px;
     font-weight: 600;
-    margin: 20px;
+    margin: var(--space-5);
     background-size: 300% 100%;
     background-image: var(--button-gradient);
     box-shadow: var(--button-color-shadow);
@@ -35,12 +35,12 @@
 
 .button:hover {
     background-position: 100% 0;
-    background-color: var(----button-color-hover-light);
+    background-color: var(--button-color-hover);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .button:disabled {
-    background-color: #ccc;
+    background-color: var(--border-color);
     cursor: not-allowed;
 }
 

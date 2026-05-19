@@ -46,7 +46,7 @@
   padding: 10px;
   background-color: var(--background-color-3);
   border: 1px solid var(--border-color-secondary);
-  border-radius: 8px;
+  border-radius: var(--space-2);
   position: relative;
   width: 100%;
   box-shadow: var(--box-shadow-sm);
@@ -131,7 +131,7 @@
   color: var(--text-color-primary);
   border: 1px solid var(--border-color-secondary);
   padding: 5px 10px;
-  border-radius: 4px;
+  border-radius: var(--space-1);
   font-size: var(--font-size-sm);
 }
 

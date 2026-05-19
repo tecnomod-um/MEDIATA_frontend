@@ -38,7 +38,7 @@
   overflow-x: visible;
   position: relative;
   direction: rtl;
-  border-right: 1px solid #ccc;
+  border-right: 1px solid var(--border-color);
   box-sizing: border-box;
 
   scrollbar-width: thin;
@@ -107,7 +107,7 @@
 
 .categoryButton {
   text-align: left;
-  padding: 4px 8px;
+  padding: var(--space-1) var(--space-2);
   background-color: var(--background-color-tertiary);
   border: 1px solid var(--border-color);
   border-right: none;
@@ -136,7 +136,7 @@
   padding: 0.5rem 0.75rem;
   margin: 0 auto 0.5rem auto;
   border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: var(--space-1);
   text-align: center;
   transition: background-color 0.3s ease;
   font-size: var(--font-size-base);

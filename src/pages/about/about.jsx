@@ -4,7 +4,7 @@ import AboutStyles from "./about.module.css";
 // About page for the project
 function About() {
   return (
-    <div className={AboutStyles.pageContainer}>
+    <main className={AboutStyles.pageContainer}>
       <h1 className={AboutStyles.mainHeader}>Taniwha - About Us</h1>
       <div className={AboutStyles.container}>
         <section className={AboutStyles.section}>
@@ -53,7 +53,7 @@ function About() {
           </section>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 
