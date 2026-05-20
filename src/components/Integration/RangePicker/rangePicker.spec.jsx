@@ -52,13 +52,13 @@ describe("<RangePicker />", () => {
     );
 
     expect(
-      screen.getByText(/Selected range:\s*0\s*–\s*0/i)
+      screen.getByText(/Selected .*range:\s*0\s*–\s*0/i)
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Simulate Slide"));
 
     expect(
-      screen.getByText(/Selected range:\s*3\s*–\s*4/i)
+      screen.getByText(/Selected .*range:\s*3\s*–\s*4/i)
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Set"));
@@ -95,6 +95,25 @@ describe("<RangePicker />", () => {
     });
   });
 
+  it("calls onSelectAll when the inline all shortcut is clicked", () => {
+    const onSelectAll = vi.fn();
+
+    render(
+      <RangePicker
+        min={0}
+        max={10}
+        type="integer"
+        onRangeChange={vi.fn()}
+        onSelectAll={onSelectAll}
+        unavailableRanges={[]}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "[All]" }));
+
+    expect(onSelectAll).toHaveBeenCalledWith("integer");
+  });
+
   it("allows double-click to edit range values", () => {
     const onRangeChange = vi.fn();
     render(
@@ -107,7 +126,7 @@ describe("<RangePicker />", () => {
       />
     );
 
-    const rangeText = screen.getByText(/Selected range:/i);
+    const rangeText = screen.getByText(/Selected .*range:/i);
     fireEvent.doubleClick(rangeText);
 
     const inputs = screen.getAllByRole("spinbutton");
@@ -126,7 +145,7 @@ describe("<RangePicker />", () => {
       />
     );
 
-    const rangeText = screen.getByText(/Selected range:/i);
+    const rangeText = screen.getByText(/Selected .*range:/i);
     fireEvent.doubleClick(rangeText);
 
     const inputs = screen.getAllByRole("spinbutton");
@@ -147,7 +166,7 @@ describe("<RangePicker />", () => {
       />
     );
 
-    const rangeText = screen.getByText(/Selected range:/i);
+    const rangeText = screen.getByText(/Selected .*range:/i);
     fireEvent.doubleClick(rangeText);
 
     const inputs = screen.getAllByRole("spinbutton");
@@ -171,11 +190,11 @@ describe("<RangePicker />", () => {
       />
     );
 
-    const rangeText = screen.getByText(/Selected range:/i);
+    const rangeText = screen.getByText(/Selected .*range:/i);
     fireEvent.doubleClick(rangeText);
 
     // After double-click, the range display should still be visible
-    expect(screen.getByText(/Selected range:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Selected .*range:/i)).toBeInTheDocument();
   });
 
   it("ignores invalid date input", () => {
@@ -193,7 +212,7 @@ describe("<RangePicker />", () => {
       />
     );
 
-    const rangeText = screen.getByText(/Selected range:/i);
+    const rangeText = screen.getByText(/Selected .*range:/i);
     fireEvent.doubleClick(rangeText);
 
     // Just verify the component renders without crashing
@@ -212,7 +231,7 @@ describe("<RangePicker />", () => {
       />
     );
 
-    const rangeText = screen.getByText(/Selected range:/i);
+    const rangeText = screen.getByText(/Selected .*range:/i);
     fireEvent.doubleClick(rangeText);
 
     const inputs = screen.getAllByRole("spinbutton");
@@ -234,7 +253,7 @@ describe("<RangePicker />", () => {
       />
     );
 
-    const rangeText = screen.getByText(/Selected range:/i);
+    const rangeText = screen.getByText(/Selected .*range:/i);
     fireEvent.doubleClick(rangeText);
 
     const inputs = screen.getAllByRole("spinbutton");
@@ -242,7 +261,7 @@ describe("<RangePicker />", () => {
     fireEvent.change(inputs[1], { target: { value: "7" } });
 
     // Range should be adjusted to avoid overlap
-    expect(screen.getByText(/Selected range:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Selected .*range:/i)).toBeInTheDocument();
   });
 
   it("handles multiple unavailable ranges", () => {
@@ -257,7 +276,7 @@ describe("<RangePicker />", () => {
       />
     );
 
-    expect(screen.getByText(/Selected range:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Selected .*range:/i)).toBeInTheDocument();
   });
 
   it("handles range completely inside unavailable range", () => {
@@ -272,7 +291,7 @@ describe("<RangePicker />", () => {
       />
     );
 
-    const rangeText = screen.getByText(/Selected range:/i);
+    const rangeText = screen.getByText(/Selected .*range:/i);
     fireEvent.doubleClick(rangeText);
 
     const inputs = screen.getAllByRole("spinbutton");
@@ -280,7 +299,7 @@ describe("<RangePicker />", () => {
     fireEvent.change(inputs[1], { target: { value: "10" } });
 
     // Should move to next available range
-    expect(screen.getByText(/Selected range:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Selected .*range:/i)).toBeInTheDocument();
   });
 
   it("handles range that starts before and ends after unavailable range", () => {
@@ -295,7 +314,7 @@ describe("<RangePicker />", () => {
       />
     );
 
-    const rangeText = screen.getByText(/Selected range:/i);
+    const rangeText = screen.getByText(/Selected .*range:/i);
     fireEvent.doubleClick(rangeText);
 
     const inputs = screen.getAllByRole("spinbutton");
@@ -303,7 +322,7 @@ describe("<RangePicker />", () => {
     fireEvent.change(inputs[1], { target: { value: "15" } });
 
     // Should adjust to avoid overlap
-    expect(screen.getByText(/Selected range:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Selected .*range:/i)).toBeInTheDocument();
   });
 
   it("handles range that overlaps at start", () => {
@@ -318,14 +337,14 @@ describe("<RangePicker />", () => {
       />
     );
 
-    const rangeText = screen.getByText(/Selected range:/i);
+    const rangeText = screen.getByText(/Selected .*range:/i);
     fireEvent.doubleClick(rangeText);
 
     const inputs = screen.getAllByRole("spinbutton");
     fireEvent.change(inputs[0], { target: { value: "8" } });
     fireEvent.change(inputs[1], { target: { value: "12" } });
 
-    expect(screen.getByText(/Selected range:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Selected .*range:/i)).toBeInTheDocument();
   });
 
   it("handles range that overlaps at end", () => {
@@ -340,14 +359,14 @@ describe("<RangePicker />", () => {
       />
     );
 
-    const rangeText = screen.getByText(/Selected range:/i);
+    const rangeText = screen.getByText(/Selected .*range:/i);
     fireEvent.doubleClick(rangeText);
 
     const inputs = screen.getAllByRole("spinbutton");
     fireEvent.change(inputs[0], { target: { value: "7" } });
     fireEvent.change(inputs[1], { target: { value: "15" } });
 
-    expect(screen.getByText(/Selected range:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Selected .*range:/i)).toBeInTheDocument();
   });
 
   it("handles empty unavailableRanges array", () => {
@@ -376,7 +395,7 @@ describe("<RangePicker />", () => {
       />
     );
 
-    expect(screen.getByText(/Selected range:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Selected .*range:/i)).toBeInTheDocument();
   });
 
   it("formats date values correctly", () => {
@@ -452,7 +471,7 @@ describe("<RangePicker />", () => {
       />
     );
 
-    const rangeText = screen.getByText(/Selected range:/i);
+    const rangeText = screen.getByText(/Selected .*range:/i);
     fireEvent.doubleClick(rangeText);
 
     expect(screen.getAllByRole("spinbutton")).toHaveLength(2);
@@ -477,7 +496,7 @@ describe("<RangePicker />", () => {
     );
 
     // Verify the component renders
-    expect(screen.getByText(/Selected range:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Selected .*range:/i)).toBeInTheDocument();
   });
 
   it("handles edge case where min equals max", () => {
@@ -507,7 +526,7 @@ describe("<RangePicker />", () => {
       />
     );
 
-    expect(screen.getByText(/Selected range:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Selected .*range:/i)).toBeInTheDocument();
   });
 
   it("handles unavailable range at the very start", () => {
@@ -522,7 +541,7 @@ describe("<RangePicker />", () => {
       />
     );
 
-    expect(screen.getByText(/Selected range:\s*6\s*–\s*20/i)).toBeInTheDocument();
+    expect(screen.getByText(/Selected .*range:\s*6\s*–\s*20/i)).toBeInTheDocument();
   });
 
   it("handles unavailable range at the very end", () => {
@@ -537,7 +556,7 @@ describe("<RangePicker />", () => {
       />
     );
 
-    expect(screen.getByText(/Selected range:\s*0\s*–\s*14/i)).toBeInTheDocument();
+    expect(screen.getByText(/Selected .*range:\s*0\s*–\s*14/i)).toBeInTheDocument();
   });
 
   it("handles value swap when min input is greater than max", () => {
@@ -552,7 +571,7 @@ describe("<RangePicker />", () => {
       />
     );
 
-    const rangeText = screen.getByText(/Selected range:/i);
+    const rangeText = screen.getByText(/Selected .*range:/i);
     fireEvent.doubleClick(rangeText);
 
     const inputs = screen.getAllByRole("spinbutton");
@@ -560,7 +579,7 @@ describe("<RangePicker />", () => {
     fireEvent.change(inputs[1], { target: { value: "5" } });
 
     // Should swap and adjust
-    expect(screen.getByText(/Selected range:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Selected .*range:/i)).toBeInTheDocument();
   });
 
   it("clamps values to min/max bounds", () => {
@@ -575,7 +594,7 @@ describe("<RangePicker />", () => {
       />
     );
 
-    const rangeText = screen.getByText(/Selected range:/i);
+    const rangeText = screen.getByText(/Selected .*range:/i);
     fireEvent.doubleClick(rangeText);
 
     const inputs = screen.getAllByRole("spinbutton");
@@ -600,7 +619,7 @@ describe("<RangePicker />", () => {
       />
     );
 
-    const rangeText = screen.getByText(/Selected range:/i);
+    const rangeText = screen.getByText(/Selected .*range:/i);
     fireEvent.doubleClick(rangeText);
 
     const inputs = screen.getAllByRole("spinbutton");
@@ -609,7 +628,7 @@ describe("<RangePicker />", () => {
     fireEvent.change(inputs[1], { target: { value: "8" } });
 
     // Should fall back to [min, min]
-    expect(screen.getByText(/Selected range:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Selected .*range:/i)).toBeInTheDocument();
   });
 
   it("handles invalid date input in handleInputChange", () => {
@@ -627,7 +646,7 @@ describe("<RangePicker />", () => {
       />
     );
 
-    const rangeText = screen.getByText(/Selected range:/i);
+    const rangeText = screen.getByText(/Selected .*range:/i);
     fireEvent.doubleClick(rangeText);
 
     const inputs = screen.getAllByDisplayValue(/2020-01-01/);
@@ -654,7 +673,7 @@ describe("<RangePicker />", () => {
       />
     );
 
-    const rangeText = screen.getByText(/Selected range:/i);
+    const rangeText = screen.getByText(/Selected .*range:/i);
     fireEvent.doubleClick(rangeText);
 
     const inputs = screen.getAllByDisplayValue(/2020-01-01/);

@@ -26,18 +26,27 @@ vi.mock("@mui/icons-material/Close", () => ({
 vi.mock("../RangePicker/rangePicker", () => ({
   __esModule: true,
   default: (props) => (
-    <button
-      type="button"
-      data-testid="range-picker"
-      onClick={() =>
-        props.onRangeChange?.({
-          minValue: 1,
-          maxValue: 10,
-        })
-      }
-    >
-      Mock RangePicker
-    </button>
+    <div>
+      <button
+        type="button"
+        data-testid="range-picker"
+        onClick={() =>
+          props.onRangeChange?.({
+            minValue: 1,
+            maxValue: 10,
+          })
+        }
+      >
+        Mock RangePicker
+      </button>
+      <button
+        type="button"
+        data-testid="range-picker-all"
+        onClick={() => props.onSelectAll?.()}
+      >
+        Mock RangePicker All
+      </button>
+    </div>
   ),
 }));
 
@@ -72,7 +81,7 @@ describe("MappingSelectorPane", () => {
     return { min, max };
   };
 
-  const mockGetUnavailableRanges = () => [];
+  const mockGetExistingRangeMappings = () => [];
 
   const mockGetAvailableValues = (group) => {
     const firstValue = group.values[0];
@@ -100,7 +109,7 @@ describe("MappingSelectorPane", () => {
     groups: [],
     getGroupKey: mockGetGroupKey,
     extractMinMax: mockExtractMinMax,
-    getUnavailableRanges: mockGetUnavailableRanges,
+    getExistingRangeMappings: mockGetExistingRangeMappings,
     getAvailableValues: mockGetAvailableValues,
     onSelectMapping: vi.fn(),
     onClose: vi.fn(),
@@ -278,7 +287,33 @@ describe("MappingSelectorPane", () => {
       minValue: 1,
       maxValue: 10,
       type: "integer",
+      mode: "include",
     });
+  });
+
+  it("calls onSelectMapping with the full typed passthrough when all is selected", () => {
+    const onSelectMapping = vi.fn();
+    const groups = [
+      {
+        nodeId: "n1",
+        column: "age",
+        values: ["integer", "min:0", "max:100"],
+        fileName: "data.csv",
+        color: "#0000ff",
+      },
+    ];
+
+    render(
+      <MappingSelectorPane
+        {...baseProps}
+        groups={groups}
+        onSelectMapping={onSelectMapping}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("range-picker-all"));
+
+    expect(onSelectMapping).toHaveBeenCalledWith(groups[0], "integer");
   });
 
   it("shows all mapped message when no available values", () => {

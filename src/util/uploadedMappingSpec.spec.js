@@ -212,6 +212,34 @@ describe('collectSpecSources', () => {
     expect(collectSpecSources(spec)).toEqual([{ nodeId: 'nodeE', fileName: 'drange.csv' }]);
   });
 
+  it('collects sources from excluded range logic (or with numeric bounds)', () => {
+    const spec = makeSpec({
+      mappings: [
+        {
+          id: 'm1',
+          targetField: 'field1',
+          mappingType: 'standard',
+          sourceConfigFile: '',
+          inputs: [],
+          rules: [
+            {
+              id: 'r1',
+              logic: {
+                or: [
+                  { '<': [{ to_number: [{ var: 'nodeZ::range.csv::value' }] }, 5] },
+                  { '>': [{ to_number: [{ var: 'nodeZ::range.csv::value' }] }, 10] },
+                ],
+              },
+              then: { kind: 'constant', value: 'outside' },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(collectSpecSources(spec)).toEqual([{ nodeId: 'nodeZ', fileName: 'range.csv' }]);
+  });
+
   it('collects sources from one-hot outputs logic', () => {
     const spec = makeSpec({
       mappings: [
@@ -411,7 +439,7 @@ describe('rebuildMappingsFromSpec', () => {
 
     const result = rebuildMappingsFromSpec(spec);
     const val = result[0]['bmi'].groups[0].values[0].mapping[0].value;
-    expect(val).toEqual({ type: 'double', minValue: 18.5, maxValue: 25 });
+    expect(val).toEqual({ type: 'double', minValue: 18.5, maxValue: 25, mode: 'include' });
   });
 
   it('rebuilds standard mapping from date range (and with to_date) → value is {type:"date", minValue, maxValue}', () => {
@@ -441,7 +469,37 @@ describe('rebuildMappingsFromSpec', () => {
 
     const result = rebuildMappingsFromSpec(spec);
     const val = result[0]['eventDate'].groups[0].values[0].mapping[0].value;
-    expect(val).toEqual({ type: 'date', minValue: '2020-01-01', maxValue: '2022-12-31' });
+    expect(val).toEqual({ type: 'date', minValue: '2020-01-01', maxValue: '2022-12-31', mode: 'include' });
+  });
+
+  it('rebuilds standard mapping from excluded numeric range (or with to_number)', () => {
+    const spec = makeSpec({
+      mappings: [
+        {
+          id: 'm1',
+          targetField: 'bmi',
+          mappingType: 'standard',
+          sourceConfigFile: 'cfg',
+          inputs: [],
+          rules: [
+            {
+              id: 'r1',
+              logic: {
+                or: [
+                  { '<': [{ to_number: [{ var: 'node1::file.csv::bmi_col' }] }, 18.5] },
+                  { '>': [{ to_number: [{ var: 'node1::file.csv::bmi_col' }] }, 25] },
+                ],
+              },
+              then: { kind: 'constant', value: 'OutsideNormal' },
+            },
+          ],
+        },
+      ],
+    });
+
+    const result = rebuildMappingsFromSpec(spec);
+    const val = result[0]['bmi'].groups[0].values[0].mapping[0].value;
+    expect(val).toEqual({ type: 'double', minValue: 18.5, maxValue: 25, mode: 'exclude' });
   });
 
   it('rebuilds standard mapping from OR logic (multiple entries)', () => {

@@ -313,17 +313,29 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
 
   const getAvailableValues = (group) => {
     const groupKey = getGroupKey(group);
+    const currentValueMappings =
+      currentGroupIndex !== null ? customValues[currentGroupIndex]?.mapping || [] : [];
+
+    const hasCurrentValueAllMapping = currentValueMappings.some((map) => {
+      if (map.groupKey !== groupKey) return false;
+      return map.value === "integer" || map.value === "double" || map.value === "date";
+    });
 
     const columnMappings = customValues.flatMap((customValue) =>
       customValue.mapping.filter((map) => map.groupKey === groupKey).map((map) => map.value)
     );
 
+    const firstValue = group.values[0];
+    if (
+      firstValue === "integer" ||
+      firstValue === "double" ||
+      firstValue === "date"
+    ) {
+      return hasCurrentValueAllMapping ? [] : group.values;
+    }
+
     return group.values.filter(
-      (value) =>
-        !columnMappings.includes(value) ||
-        value === "integer" ||
-        value === "double" ||
-        value === "date"
+      (value) => !columnMappings.includes(value)
     );
   };
 
@@ -355,7 +367,7 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
                   nodeId: group.nodeId,
                   value:
                     typeof value === "object"
-                      ? { minValue: value.minValue, maxValue: value.maxValue, type: value.type }
+                      ? { minValue: value.minValue, maxValue: value.maxValue, type: value.type, ...(value.mode ? { mode: value.mode } : {}) }
                       : value,
                 },
               ],
@@ -363,6 +375,8 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
             : cv
         )
       );
+      setIsPaneVisible(false);
+      setCurrentGroupIndex(null);
     }
   };
 
@@ -389,7 +403,9 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
   const getSaveValidationError = () => {
     if (unionName.trim().length === 0) return "Please set a new column name.";
     if (customValues.length === 0) return "Please add at least one value.";
-    const unnamedIndex = customValues.findIndex((cv) => cv.name.trim().length === 0);
+    const unnamedIndex = customValues.findIndex(
+      (cv) => !isLockedNumericValue(cv) && cv.name.trim().length === 0
+    );
     if (unnamedIndex !== -1) return `Value #${unnamedIndex + 1} has no contents.`;
 
     const unmappedIndex = customValues.findIndex((cv) => !cv.mapping || cv.mapping.length === 0);
@@ -464,7 +480,9 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
   const isSaveDisabled = () => {
     const hasValidName = unionName.trim().length > 0;
     const hasAtLeastOneValue = customValues.length > 0;
-    const allValuesNamed = hasAtLeastOneValue && customValues.every((cv) => cv.name.trim().length > 0);
+    const allValuesNamed =
+      hasAtLeastOneValue &&
+      customValues.every((cv) => isLockedNumericValue(cv) || cv.name.trim().length > 0);
     const allValuesMapped = hasAtLeastOneValue && customValues.every((cv) => (cv.mapping?.length ?? 0) > 0);
     return !(hasValidName && hasAtLeastOneValue && allValuesNamed && allValuesMapped);
   };
@@ -484,7 +502,7 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
     return { min, max };
   };
 
-  const getUnavailableRanges = (group) => {
+  const getExistingRangeMappings = (group) => {
     const groupKey = getGroupKey(group);
     const ranges = [];
 
@@ -495,7 +513,12 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
           typeof map.value === "object" &&
           map.value.minValue !== undefined
         ) {
-          ranges.push([map.value.minValue, map.value.maxValue]);
+          ranges.push({
+            minValue: map.value.minValue,
+            maxValue: map.value.maxValue,
+            type: map.value.type,
+            mode: map.value.mode || "include",
+          });
         }
       });
     });
@@ -636,7 +659,9 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
   const isLockedNumericValue = useCallback((cv) => {
     const vals = (cv?.mapping || []).map((m) => m?.value);
     if (!vals.length) return false;
-    return vals.every((v) => typeof v === "string" && (v === "integer" || v === "double"));
+    return vals.every(
+      (v) => typeof v === "string" && (v === "integer" || v === "double" || v === "date")
+    );
   }, []);
 
   return (
@@ -819,7 +844,7 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
           groups={groups}
           getGroupKey={getGroupKey}
           extractMinMax={extractMinMax}
-          getUnavailableRanges={getUnavailableRanges}
+          getExistingRangeMappings={getExistingRangeMappings}
           getAvailableValues={getAvailableValues}
           onSelectMapping={handleSelectMapping}
           onClose={() => {

@@ -72,9 +72,29 @@ function buildTypeLogic(mappingEntry) {
 function buildRangeLogic(mappingEntry) {
   const sourceId = makeSourceId(mappingEntry.nodeId, mappingEntry.fileName);
   const valueType = normalizePrimitive(mappingEntry.value?.type).trim().toLowerCase();
+  const rangeMode = normalizePrimitive(mappingEntry.value?.mode).trim().toLowerCase() || "include";
   const variableRef = { var: makeVarName(sourceId, mappingEntry.groupColumn) };
 
   if (valueType === "date") {
+    const lowerBound = {
+      "<": [
+        { to_date: [variableRef] },
+        normalizePrimitive(mappingEntry.value?.minValue),
+      ],
+    };
+    const upperBound = {
+      ">": [
+        { to_date: [variableRef] },
+        normalizePrimitive(mappingEntry.value?.maxValue),
+      ],
+    };
+
+    if (rangeMode === "exclude") {
+      return {
+        or: [lowerBound, upperBound],
+      };
+    }
+
     return {
       and: [
         {
@@ -90,6 +110,25 @@ function buildRangeLogic(mappingEntry) {
           ],
         },
       ],
+    };
+  }
+
+  const lowerBound = {
+    "<": [
+      { to_number: [variableRef] },
+      normalizeNumber(mappingEntry.value?.minValue),
+    ],
+  };
+  const upperBound = {
+    ">": [
+      { to_number: [variableRef] },
+      normalizeNumber(mappingEntry.value?.maxValue),
+    ],
+  };
+
+  if (rangeMode === "exclude") {
+    return {
+      or: [lowerBound, upperBound],
     };
   }
 

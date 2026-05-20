@@ -242,6 +242,46 @@ describe('buildMappingSpec', () => {
     expect(rule.then).toEqual({ kind: 'constant', value: 'heavy' });
   });
 
+  it('builds a standard mapping with excluded numeric range logic', () => {
+    const mappings = [
+      {
+        Weight: {
+          mappingType: 'standard',
+          fileName: '',
+          groups: [
+            {
+              values: [
+                {
+                  name: 'not-mid-range',
+                  terminology: '',
+                  description: '',
+                  mapping: [
+                    {
+                      nodeId: 'n1',
+                      fileName: 'data.csv',
+                      groupColumn: 'w',
+                      value: { type: 'double', minValue: 50, maxValue: 200, mode: 'exclude' },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ];
+
+    const result = buildMappingSpec({ mappings });
+    const rule = result.mappings[0].rules[0];
+    expect(rule.logic).toEqual({
+      or: [
+        { '<': [{ to_number: [{ var: 'n1::data.csv::w' }] }, 50] },
+        { '>': [{ to_number: [{ var: 'n1::data.csv::w' }] }, 200] },
+      ],
+    });
+    expect(rule.then).toEqual({ kind: 'constant', value: 'not-mid-range' });
+  });
+
   it('builds a standard mapping with date range logic', () => {
     const mappings = [
       {
@@ -277,6 +317,50 @@ describe('buildMappingSpec', () => {
       and: [
         { '>=': [{ to_date: [{ var: 'n1::data.csv::edate' }] }, '2020-01-01'] },
         { '<=': [{ to_date: [{ var: 'n1::data.csv::edate' }] }, '2023-12-31'] },
+      ],
+    });
+  });
+
+  it('builds a standard mapping with excluded date range logic', () => {
+    const mappings = [
+      {
+        EventDate: {
+          mappingType: 'standard',
+          fileName: '',
+          groups: [
+            {
+              values: [
+                {
+                  name: 'outside-period',
+                  terminology: '',
+                  description: '',
+                  mapping: [
+                    {
+                      nodeId: 'n1',
+                      fileName: 'dates.csv',
+                      groupColumn: 'dt',
+                      value: {
+                        type: 'date',
+                        minValue: '2024-01-01',
+                        maxValue: '2024-12-31',
+                        mode: 'exclude',
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ];
+
+    const result = buildMappingSpec({ mappings });
+    const rule = result.mappings[0].rules[0];
+    expect(rule.logic).toEqual({
+      or: [
+        { '<': [{ to_date: [{ var: 'n1::dates.csv::dt' }] }, '2024-01-01'] },
+        { '>': [{ to_date: [{ var: 'n1::dates.csv::dt' }] }, '2024-12-31'] },
       ],
     });
   });

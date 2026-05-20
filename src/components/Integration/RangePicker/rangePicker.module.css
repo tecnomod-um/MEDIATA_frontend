@@ -7,6 +7,30 @@
   width: 100%;
 }
 
+.modeToggle {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 6px;
+}
+
+.modeButton {
+  background: #fff;
+  color: var(--text-color-primary);
+  border: 1px solid var(--border-color-secondary);
+  border-radius: 999px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.modeButtonActive {
+  background: var(--background-nav-tool-background-color-active);
+  border-color: var(--background-nav-tool-background-color-active);
+  color: var(--text-color-on-darkbg);
+}
+
 .rangeDisplayWrapper {
   position: absolute;
   top: -22px;
@@ -14,6 +38,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-1);
+  white-space: nowrap;
 }
 
 .rangeText {
@@ -25,6 +50,23 @@
 
 .rangeTextEditable {
   cursor: pointer;
+}
+
+.rangeShortcutButton {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #4f5560;
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  line-height: 1;
+  opacity: 0.9;
+}
+
+.rangeShortcutButton:hover {
+  text-decoration: underline;
+  color: #3c414a;
 }
 
 .rangeLabel {
@@ -90,8 +132,18 @@
   box-shadow: var(--box-shadow-sm);
 }
 
+.mappingButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 
 .mappingButton:hover {
   background-color: var(--button-save-hover-color);
   border-color: var(--border-color);
+}
+
+.validationMessage {
+  font-size: var(--font-size-xs);
+  color: var(--button-delete-color);
+  margin-top: -6px;
 }

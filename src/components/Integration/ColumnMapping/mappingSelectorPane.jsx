@@ -5,7 +5,7 @@ import { darkenColor } from "../../../util/colors";
 import ColumnMappingStyles from "./columnMapping.module.css";
 
 // Sliding pane that appears when adding mappings to a custom value
-function MappingSelectorPane({ isPaneVisible, currentValueName, groups, getGroupKey, extractMinMax, getUnavailableRanges, getAvailableValues, onSelectMapping, onClose, paneRef }) {
+function MappingSelectorPane({ isPaneVisible, currentValueName, groups, getGroupKey, extractMinMax, getExistingRangeMappings, getAvailableValues, onSelectMapping, onClose, paneRef }) {
   if (!isPaneVisible) return null;
 
   return (
@@ -30,7 +30,7 @@ function MappingSelectorPane({ isPaneVisible, currentValueName, groups, getGroup
           const darkenedColor = darkenColor(group.color, -30);
           const firstValueType = group.values[0];
           const { min, max } = extractMinMax(group.values, firstValueType);
-          const unavailableRanges = getUnavailableRanges(group);
+          const existingRanges = getExistingRangeMappings(group);
           const availableValues = getAvailableValues(group);
           const allMapped = availableValues.length === 0;
 
@@ -62,14 +62,18 @@ function MappingSelectorPane({ isPaneVisible, currentValueName, groups, getGroup
                   min={min}
                   max={max}
                   type={firstValueType}
+                  onSelectAll={() => {
+                    onSelectMapping(group, firstValueType);
+                  }}
                   onRangeChange={(newRange) => {
                     onSelectMapping(group, {
                       minValue: newRange.minValue,
                       maxValue: newRange.maxValue,
                       type: firstValueType,
+                      mode: newRange.mode || "include",
                     });
                   }}
-                  unavailableRanges={unavailableRanges}
+                  existingRanges={existingRanges}
                 />
               ) : (
                 <ul className={ColumnMappingStyles.mappingOptions}>

@@ -194,12 +194,64 @@ function unwrapJsonLogicArgs(value) {
   return [value];
 }
 
+function extractRangeBound(clause, operator) {
+  if (!clause || typeof clause !== "object" || Array.isArray(clause) || !clause[operator]) {
+    return null;
+  }
+
+  const args = unwrapJsonLogicArgs(clause[operator]);
+  if (args.length !== 2) return null;
+
+  const [left, right] = args;
+  const leftVar = left?.to_number?.[0]?.var || left?.to_date?.[0]?.var || left?.var;
+  const type = left?.to_date ? "date" : "double";
+
+  if (!leftVar) return null;
+
+  return {
+    operator,
+    varName: leftVar,
+    value: right ?? null,
+    type,
+  };
+}
+
 function extractLogicEntries(logic) {
   if (!logic || typeof logic !== "object" || Array.isArray(logic)) {
     return [];
   }
 
   if (logic.or) {
+    const clauses = unwrapJsonLogicArgs(logic.or);
+    const lower = clauses.find((clause) => clause?.["<"]);
+    const upper = clauses.find((clause) => clause?.[">"]);
+
+    const lowerBound = extractRangeBound(lower, "<");
+    const upperBound = extractRangeBound(upper, ">");
+
+    if (
+      lowerBound &&
+      upperBound &&
+      lowerBound.varName === upperBound.varName &&
+      lowerBound.type === upperBound.type
+    ) {
+      const ref = parseVarName(lowerBound.varName);
+
+      return [
+        {
+          nodeId: ref.nodeId,
+          fileName: ref.fileName,
+          groupColumn: ref.column,
+          value: {
+            type: lowerBound.type,
+            minValue: lowerBound.value,
+            maxValue: upperBound.value,
+            mode: "exclude",
+          },
+        },
+      ];
+    }
+
     return unwrapJsonLogicArgs(logic.or).flatMap(extractLogicEntries);
   }
 
@@ -287,40 +339,19 @@ function extractLogicEntries(logic) {
   if (logic.and) {
     const clauses = unwrapJsonLogicArgs(logic.and);
 
-    let lower = null;
-    let upper = null;
-
-    clauses.forEach((clause) => {
-      if (!clause || typeof clause !== "object" || Array.isArray(clause)) return;
-
-      if (clause[">="]) {
-        const args = unwrapJsonLogicArgs(clause[">="]);
-        if (args.length === 2) lower = args;
-      }
-
-      if (clause["<="]) {
-        const args = unwrapJsonLogicArgs(clause["<="]);
-        if (args.length === 2) upper = args;
-      }
-    });
+    const lower = extractRangeBound(
+      clauses.find((clause) => clause?.[">="]),
+      ">="
+    );
+    const upper = extractRangeBound(
+      clauses.find((clause) => clause?.["<="]),
+      "<="
+    );
 
     if (!lower || !upper) return [];
+    if (lower.varName !== upper.varName || lower.type !== upper.type) return [];
 
-    const lowerLeft = lower[0];
-    const upperLeft = upper[0];
-
-    const lowerVar = lowerLeft?.to_number?.[0]?.var
-      || lowerLeft?.to_date?.[0]?.var
-      || lowerLeft?.var;
-
-    const upperVar = upperLeft?.to_number?.[0]?.var
-      || upperLeft?.to_date?.[0]?.var
-      || upperLeft?.var;
-
-    if (!lowerVar || !upperVar || lowerVar !== upperVar) return [];
-
-    const ref = parseVarName(lowerVar);
-    const isDateRange = !!(lowerLeft?.to_date || upperLeft?.to_date);
+    const ref = parseVarName(lower.varName);
 
     return [
       {
@@ -328,9 +359,10 @@ function extractLogicEntries(logic) {
         fileName: ref.fileName,
         groupColumn: ref.column,
         value: {
-          type: isDateRange ? "date" : "double",
-          minValue: lower[1] ?? null,
-          maxValue: upper[1] ?? null,
+          type: lower.type,
+          minValue: lower.value,
+          maxValue: upper.value,
+          mode: "include",
         },
       },
     ];

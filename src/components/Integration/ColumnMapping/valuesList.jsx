@@ -190,7 +190,7 @@ function ValuesList({ customValues, groups, valueContentSuggestions, valueTermin
                   const displayVal =
                     typeof map.value === "object" &&
                       map.value.minValue !== undefined
-                      ? `${formatValue(
+                      ? `${map.value.mode === "exclude" ? "Outside " : ""}${formatValue(
                         map.value.minValue,
                         map.value.type
                       )} - ${formatValue(map.value.maxValue, map.value.type)}`

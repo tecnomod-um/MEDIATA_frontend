@@ -45,13 +45,22 @@ vi.mock("../../Common/TooltipPopup/tooltipPopup.js", () => ({
 vi.mock("../RangePicker/rangePicker", () => ({
   __esModule: true,
   default: (props) => (
-    <button
-      type="button"
-      aria-label="Mock RangePicker"
-      onClick={() => props.onRangeChange?.({ minValue: 1, maxValue: 10 })}
-    >
-      Mock RangePicker
-    </button>
+    <div>
+      <button
+        type="button"
+        aria-label="Mock RangePicker"
+        onClick={() => props.onRangeChange?.({ minValue: 1, maxValue: 10 })}
+      >
+        Mock RangePicker
+      </button>
+      <button
+        type="button"
+        aria-label="Mock RangePicker All"
+        onClick={() => props.onSelectAll?.()}
+      >
+        Mock RangePicker All
+      </button>
+    </div>
   ),
 }));
 
@@ -269,7 +278,43 @@ describe("ColumnMapping", () => {
     fireEvent.click(screen.getByRole("button", { name: /add mapping/i }));
     
     // Simulate range picker interaction
-    fireEvent.click(screen.getByRole("button", { name: /Mock RangePicker/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Mock RangePicker" }));
+  });
+
+  it("allows saving when a typed all-range passthrough mapping is present", () => {
+    const onSave = vi.fn(() => true);
+    const groups = [
+      {
+        nodeId: "n1",
+        column: "age",
+        values: ["integer", "min:0", "max:100"],
+        fileName: "data.csv",
+        color: "#0000ff",
+      },
+    ];
+
+    render(
+      <ColumnMapping
+        onMappingChange={vi.fn()}
+        onSave={onSave}
+        groups={groups}
+        schema={null}
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText(/new column's name/i), {
+      target: { value: "Age" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /add value/i }));
+    fireEvent.click(screen.getByRole("button", { name: /add mapping/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Mock RangePicker All" }));
+
+    const saveBtn = screen.getByRole("button", { name: /save/i });
+    expect(saveBtn).toHaveAttribute("aria-disabled", "false");
+
+    fireEvent.click(saveBtn);
+    expect(onSave).toHaveBeenCalledTimes(1);
   });
 
   it("handles date columns with range picker", () => {
@@ -634,6 +679,7 @@ describe("ColumnMapping", () => {
     
     fireEvent.click(screen.getByRole("button", { name: /add mapping/i }));
     fireEvent.click(screen.getByRole("button", { name: "val1" }));
+    fireEvent.click(screen.getByRole("button", { name: /add mapping/i }));
     fireEvent.click(screen.getByRole("button", { name: "val3" }));
   });
 
@@ -667,6 +713,6 @@ describe("ColumnMapping", () => {
     });
     
     fireEvent.click(screen.getByRole("button", { name: /add mapping/i }));
-    fireEvent.click(screen.getByRole("button", { name: /Mock RangePicker/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Mock RangePicker" }));
   });
 });
