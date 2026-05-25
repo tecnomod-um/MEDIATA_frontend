@@ -131,7 +131,6 @@
   align-items: stretch;
   justify-content: flex-end;
   width: auto;
-  background: var(--background-color-4);
 }
 
 .saveButton {
