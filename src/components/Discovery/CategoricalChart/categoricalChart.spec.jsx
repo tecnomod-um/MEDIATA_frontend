@@ -51,7 +51,7 @@ const BASE_FEATURE = {
 };
 
 describe("<CategoricalChart />", () => {
-  it("renders without crashing and outputs a <Bar>", () => {
+  it("renders the chart bar", () => {
     render(<CategoricalChart feature={BASE_FEATURE} />);
     expect(screen.getByTestId("mock-bar")).toBeInTheDocument();
   });

@@ -74,7 +74,7 @@ describe("RdfCard", () => {
 
 describe("RdfConnection", () => {
   beforeAll(() => {
-    // Ensure CSS vars resolve to empty so defaults (220x100) apply
+    // JSDOM returns empty CSS custom properties here, so card sizing falls back to defaults.
     window.getComputedStyle = () => ({ getPropertyValue: () => "" });
   });
 

@@ -500,14 +500,10 @@ describe("<FileTable />", () => {
 
     const input = screen.getByDisplayValue("newname.csv");
     
-    // Test click propagation
     fireEvent.click(input);
-    // Input should still be focused/active
     expect(input).toBeInTheDocument();
     
-    // Test double click propagation  
     fireEvent.doubleClick(input);
-    // Input should still be focused/active
     expect(input).toBeInTheDocument();
   });
 });

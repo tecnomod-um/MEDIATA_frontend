@@ -119,7 +119,6 @@ describe('useScrollFade', () => {
     render(<TestComponent />);
     const element = screen.getByTestId('fade-element');
     
-    // Test various positions
     element.getBoundingClientRect = vi.fn(() => ({
       top: 700, // offset = 100
       height: 50,

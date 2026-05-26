@@ -105,7 +105,6 @@ describe('AggregateDisplay', () => {
 
     render(<AggregateDisplay covariances={incompleteMatrix} />);
     
-    // Should show N/A for missing weight-weight value
     const naElements = screen.getAllByText('N/A');
     expect(naElements.length).toBeGreaterThan(0);
   });

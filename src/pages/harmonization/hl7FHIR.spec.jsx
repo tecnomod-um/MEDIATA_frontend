@@ -245,7 +245,6 @@ describe("<HL7FHIR />", () => {
     await act(async () => { pickerProps.onFileUpload(new File(["dummy"], "test.csv")); });
 
     await waitFor(() => {
-      // After shifting the header, only "age" row remains
       expect(listProps.elements).toHaveLength(1);
       expect(listProps.elements[0].type).toBe("integer");
     });
@@ -280,7 +279,6 @@ describe("<HL7FHIR />", () => {
     await act(async () => { pickerProps.onFileUpload(new File(["dummy"], "test.csv")); });
     await waitFor(() => expect(listProps.selectedElement).toBeDefined());
 
-    // Trigger handleSelectElement — no crash expected
     act(() => { listProps.onSelectElement(listProps.elements[0]); });
     expect(listProps.selectedElement).not.toBeNull();
   });
@@ -311,7 +309,6 @@ describe("<HL7FHIR />", () => {
     // Select a cluster via the list panel callback
     act(() => { clusterProps.onSelectCluster(clusterProps.clusters[0]); });
 
-    // After selecting, ClusterListPanel should no longer be shown
     await waitFor(() => {
       expect(screen.queryByTestId("cluster-list")).not.toBeInTheDocument();
     });
@@ -329,7 +326,6 @@ describe("<HL7FHIR />", () => {
     // onMoveElement is provided by the component
     expect(typeof clusterProps.onMoveElement).toBe('function');
 
-    // Move an existing element to cluster 0 → no crash
     const elementId = clusterProps.clusters[0].elements[0]?.id;
     if (elementId !== undefined) {
       act(() => { clusterProps.onMoveElement(elementId, clusterProps.clusters[0].id); });

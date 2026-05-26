@@ -5,9 +5,7 @@ import Papa from "papaparse";
  * None of these functions depend on React state or hooks.
  */
 
-// ---------------------------------------------------------------------------
 // CSV parsing
-// ---------------------------------------------------------------------------
 
 export const parseCSV = (text) => {
   const result = Papa.parse(String(text ?? ""), {
@@ -25,9 +23,7 @@ export const parseCSV = (text) => {
   });
 };
 
-// ---------------------------------------------------------------------------
 // Value formatting
-// ---------------------------------------------------------------------------
 
 export const formatValue = (value, type) => {
   if (type === "date") {
@@ -37,9 +33,7 @@ export const formatValue = (value, type) => {
   return value !== undefined && value !== null ? value.toString() : "";
 };
 
-// ---------------------------------------------------------------------------
 // Hierarchy extraction from backend response
-// ---------------------------------------------------------------------------
 
 export const extractHierarchy = (res) => {
   const r = res && typeof res === "object" ? res : null;
@@ -47,9 +41,7 @@ export const extractHierarchy = (res) => {
   return Array.isArray(hierarchy) ? hierarchy : [];
 };
 
-// ---------------------------------------------------------------------------
 // Enrich progress helpers
-// ---------------------------------------------------------------------------
 
 export const normalizeEnrichStep = (msg) => {
   const m = String(msg || "").trim();
@@ -57,9 +49,7 @@ export const normalizeEnrichStep = (msg) => {
   return m.replace(/\(batch\s+\d+\s*\/\s*\d+\)/i, "").trim();
 };
 
-// ---------------------------------------------------------------------------
 // Column data merging
-// ---------------------------------------------------------------------------
 
 export const mergeColumnsData = (existingData, newData) => {
   const mergedData = [...existingData];
@@ -77,9 +67,7 @@ export const mergeColumnsData = (existingData, newData) => {
   return mergedData;
 };
 
-// ---------------------------------------------------------------------------
 // Draft building helpers (used when opening a mapping for editing)
-// ---------------------------------------------------------------------------
 
 export const makeId = () => crypto?.randomUUID?.() ?? `${Date.now()}_${Math.random()}`;
 

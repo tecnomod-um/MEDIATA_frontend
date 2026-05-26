@@ -277,7 +277,6 @@ describe("ColumnMapping", () => {
     
     fireEvent.click(screen.getByRole("button", { name: /add mapping/i }));
     
-    // Simulate range picker interaction
     fireEvent.click(screen.getByRole("button", { name: "Mock RangePicker" }));
   });
 
@@ -384,13 +383,10 @@ describe("ColumnMapping", () => {
       />
     );
 
-    // Find the drop target area - it should be the parent of the status text
     const statusElement = screen.getByText(/status/i);
     
-    // Try to drop the same column again on the status element itself
     fireEvent.drop(statusElement, { dataTransfer: makeDataTransfer(groups[0]) });
     
-    // Should not call onMappingChange since it's a duplicate
     expect(onMappingChange).not.toHaveBeenCalled();
   });
 
@@ -486,7 +482,6 @@ describe("ColumnMapping", () => {
     fireEvent.click(screen.getByRole("button", { name: /add mapping/i }));
     fireEvent.click(screen.getByRole("button", { name: "red" }));
     
-    // Now remove the mapping
     const removeBtns = screen.getAllByTestId ? screen.getAllByTestId("CloseIcon") : [];
     if (removeBtns.length > 0) {
       const lastBtn = removeBtns[removeBtns.length - 1];
@@ -525,8 +520,8 @@ describe("ColumnMapping", () => {
     
     fireEvent.click(screen.getByRole("button", { name: /add mapping/i }));
     
-    // Click outside to close pane
     fireEvent.mouseDown(document.body);
+    expect(screen.getByPlaceholderText(/new column's name/i)).toBeInTheDocument();
   });
 
   it("handles drop area resizing", () => {
@@ -545,7 +540,7 @@ describe("ColumnMapping", () => {
       fireEvent(window, new MouseEvent('mousemove', { clientY: 300 }));
       fireEvent(window, new MouseEvent('mouseup'));
     }
-    // Test passes if component renders without errors
+    expect(screen.getByPlaceholderText(/new column's name/i)).toBeInTheDocument();
   });
 
   it("handles schema as JSON object", () => {
@@ -594,7 +589,6 @@ describe("ColumnMapping", () => {
       />
     );
 
-    // Should not crash
     expect(screen.getByPlaceholderText(/new column's name/i)).toBeInTheDocument();
   });
 

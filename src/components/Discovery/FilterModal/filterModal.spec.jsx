@@ -410,7 +410,6 @@ describe('<FilterModal />', () => {
   it('toggles global logical operator from AND to OR on click', () => {
     render(<FilterModal {...commonProps} />);
 
-    // Create two filters so the toggle button appears
     fireEvent.change(screen.getAllByTestId('mock-select')[0], { target: { value: 'Amount' } });
     const amountInput = document.getElementById('continuous-value');
     fireEvent.change(amountInput, { target: { value: '5' } });

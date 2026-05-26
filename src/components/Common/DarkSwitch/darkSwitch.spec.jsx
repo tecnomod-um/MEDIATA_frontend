@@ -9,7 +9,7 @@ describe('DarkSwitch', () => {
     localStorage.clear();
     document.body.classList.remove('dark-mode');
     
-    // Mock getComputedStyle for CSS variables
+    // The component reads theme colors from CSS custom properties.
     global.getComputedStyle = vi.fn(() => ({
       getPropertyValue: vi.fn((name) => {
         if (name === '--background-nav-and-headers-background-color') {
@@ -152,7 +152,6 @@ describe('DarkSwitch', () => {
     
     render(<DarkSwitch />);
     
-    // Component should still render even without CSS variable values
     expect(screen.getByRole('switch')).toBeInTheDocument();
   });
 });

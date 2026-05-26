@@ -265,7 +265,7 @@ describe('JsonMapEditor', () => {
       fireEvent.click(formatButton);
       expect(onChangeText).toHaveBeenCalled();
       const call = onChangeText.mock.calls[0][0];
-      expect(call).toContain('\n'); // Should be pretty-printed
+      expect(call).toContain('\n');
     });
 
     it('disables format button when JSON is invalid', () => {

@@ -4,7 +4,6 @@ import '@testing-library/jest-dom';
 import OverlayWrapper from './overlayWrapper';
 import { vi } from "vitest";
 
-// Create overlay div for portal
 beforeAll(() => {
   const overlayDiv = document.createElement('div');
   overlayDiv.setAttribute('id', 'overlay');
@@ -155,7 +154,6 @@ describe('OverlayWrapper', () => {
 
     const overlayDiv = document.getElementById('overlay');
     expect(overlayDiv).not.toBeNull();
-    // Verify content is rendered within the portal
     expect(screen.getByText('Portal Content')).toBeInTheDocument();
   });
 

@@ -127,7 +127,6 @@ describe('<Main />', () => {
     const originalHeight = window.innerHeight;
     Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
     fireEvent.resize(window);
-    // After resize, component should still be rendered - check for a heading
     expect(screen.getByRole('heading', { name: /Discovery and profiling/i })).toBeInTheDocument();
   });
 

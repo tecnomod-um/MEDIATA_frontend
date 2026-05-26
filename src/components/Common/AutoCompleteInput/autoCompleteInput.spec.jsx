@@ -142,10 +142,8 @@ describe('AutocompleteInput', () => {
     const input = screen.getByRole('combobox')
     fireEvent.focus(input)
     
-    // Press Enter
     fireEvent.keyDown(input, { key: 'Enter' })
     
-    // Verify handler behavior
     expect(input).toBeInTheDocument()
   })
 
@@ -163,14 +161,12 @@ describe('AutocompleteInput', () => {
     fireEvent.focus(input)
     expect(screen.getByRole('listbox')).toBeInTheDocument()
     
-    // Press Escape
     fireEvent.keyDown(input, { key: 'Escape' })
     
     act(() => {
       vi.advanceTimersByTime(150)
     })
     
-    // Dropdown should close
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
   })
 
@@ -187,7 +183,6 @@ describe('AutocompleteInput', () => {
     const input = screen.getByRole('combobox')
     fireEvent.focus(input)
     
-    // No matching suggestions
     expect(screen.queryByRole('option')).not.toBeInTheDocument()
   })
 
@@ -204,7 +199,6 @@ describe('AutocompleteInput', () => {
     const input = screen.getByRole('combobox')
     fireEvent.focus(input)
     
-    // No options should be shown
     expect(screen.queryByRole('option')).not.toBeInTheDocument()
   })
 
@@ -235,11 +229,9 @@ describe('AutocompleteInput', () => {
     const input = screen.getByRole('combobox')
     fireEvent.focus(input)
     
-    // Press down to select first item
     fireEvent.keyDown(input, { key: 'ArrowDown' })
     fireEvent.keyDown(input, { key: 'ArrowDown' })
     
-    // Press up to go back
     fireEvent.keyDown(input, { key: 'ArrowUp' })
     
     expect(input).toBeInTheDocument()
@@ -258,7 +250,6 @@ describe('AutocompleteInput', () => {
     const input = screen.getByRole('combobox')
     fireEvent.focus(input)
     
-    // Press up when at -1 (no selection)
     fireEvent.keyDown(input, { key: 'ArrowUp' })
     
     expect(input).toBeInTheDocument()
@@ -277,7 +268,6 @@ describe('AutocompleteInput', () => {
     const input = screen.getByRole('combobox')
     fireEvent.focus(input)
     
-    // Press down multiple times past the end
     fireEvent.keyDown(input, { key: 'ArrowDown' })
     fireEvent.keyDown(input, { key: 'ArrowDown' })
     fireEvent.keyDown(input, { key: 'ArrowDown' })
@@ -299,10 +289,8 @@ describe('AutocompleteInput', () => {
     const input = screen.getByRole('combobox')
     fireEvent.focus(input)
     
-    // Navigate to first item
     fireEvent.keyDown(input, { key: 'ArrowDown' })
     
-    // Press Enter to select
     fireEvent.keyDown(input, { key: 'Enter' })
     
     expect(handleChange).toHaveBeenCalledWith('Apple')
@@ -320,7 +308,7 @@ describe('AutocompleteInput', () => {
 
     const input = screen.getByRole('combobox')
     
-    // Mock getBoundingClientRect to simulate no space below
+    // Force the dropdown positioning branch for limited space below the input.
     const mockGetBoundingClientRect = vi.fn(() => ({
       top: 700,
       bottom: 750,
@@ -354,7 +342,6 @@ describe('AutocompleteInput', () => {
     const input = screen.getByRole('combobox')
     fireEvent.focus(input)
     
-    // Verify input is in document
     expect(input).toBeInTheDocument()
   })
 
@@ -371,7 +358,6 @@ describe('AutocompleteInput', () => {
 
     const input = screen.getByRole('combobox')
 
-    // Update value
     rerender(
       <AutocompleteInput
         value="ba"
@@ -383,7 +369,6 @@ describe('AutocompleteInput', () => {
 
     fireEvent.focus(input)
     
-    // Should filter to only 'Banana'
     expect(input).toBeInTheDocument()
   })
 
@@ -401,7 +386,6 @@ describe('AutocompleteInput', () => {
     const input = screen.getByRole('combobox')
     fireEvent.focus(input)
 
-    // Update with suggestions while focused
     rerender(
       <AutocompleteInput
         value=""
@@ -411,7 +395,6 @@ describe('AutocompleteInput', () => {
       />
     )
 
-    // Component should be in document
     expect(input).toBeInTheDocument()
   })
 
@@ -475,7 +458,7 @@ describe('AutocompleteInput', () => {
     expect(input).toHaveClass('custom-class')
   })
 
-  it('handles other key presses without errors', () => {
+  it('ignores unrelated key presses', () => {
     const handleChange = vi.fn()
     render(
       <AutocompleteInput

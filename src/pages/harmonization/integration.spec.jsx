@@ -309,8 +309,6 @@ describe('Integration Page', () => {
     });
     expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
     
-    // Simulate user selecting files through FileExplorer
-    // This would trigger handleProcessSelectedElements
   });
 
   test('shows success toast when processing succeeds', async () => {
@@ -324,10 +322,7 @@ describe('Integration Page', () => {
     });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalled());
     
-    // After successful processing, status should eventually become success
     await waitFor(() => {
-      // The component sets status to 'idle' after success, not 'success'
-      // But we can verify the components are rendered
       expect(screen.getByTestId('SchemaTray')).toBeInTheDocument();
     });
   });
@@ -357,7 +352,6 @@ describe('Integration Page', () => {
     });
     await waitFor(() => expect(fetchElementFile).toHaveBeenCalledTimes(1));
     
-    // Rerender should not trigger another fetch
     await act(async () => {
       rerenderFn(<Integration />);
     });
@@ -372,7 +366,6 @@ describe('Integration Page', () => {
     await act(async () => {
       render(<Integration />);
     });
-    // Should still render FileExplorer since no files were processed for the current node
     expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
   });
 
@@ -1715,7 +1708,6 @@ describe('Integration Page', () => {
 
     test('onSave advances to hierarchy panel on mobile', async () => {
       await renderMobile();
-      // Simulate a successful save via the ColumnMapping onSave callback
       act(() => { capturedColumnMappingProps.current.onSave?.(); });
       await waitFor(() => {
         const hierarchyTab = screen.getByRole('tab', { name: 'Hierarchy' });
@@ -1769,7 +1761,7 @@ describe('Integration Page', () => {
       expect(capturedColumnMappingProps.current.onClear).toBeUndefined();
     });
 
-    test('onMappingChange callback is wired and does not throw', async () => {
+    test('onMappingChange callback keeps the mapping panel rendered', async () => {
       await renderWithColumns();
       const col = { column: 'col1', fileName: 'data.csv', nodeId: 'node1' };
       act(() => { capturedColumnMappingProps.current.onMappingChange?.([col]); });
@@ -1829,7 +1821,6 @@ describe('Integration Page', () => {
     test('create standard mapping — duplicate key returns false and toasts error', async () => {
       await renderWithColumns();
 
-      // Create once
       act(() => {
         capturedColumnMappingProps.current.onSave?.(
           [],
@@ -2051,7 +2042,6 @@ describe('Integration Page', () => {
 
       await renderWithColumns();
 
-      // Create at least one mapping so handleGenerateMetadata doesn't bail early
       act(() => {
         capturedColumnMappingProps.current.onSave?.(
           [{ column: 'col1', fileName: 'data.csv', nodeId: 'node1' }],

@@ -4,7 +4,6 @@ import '@testing-library/jest-dom';
 import CleanPanel from './cleanPanel';
 import { toast } from 'react-toastify';
 
-// Mock react-switch
 jest.mock("react-switch", () => {
   const React = require("react");
   return {
@@ -21,7 +20,6 @@ jest.mock("react-switch", () => {
   };
 });
 
-// Mock JsonMapEditor
 vi.mock("./jsonMapEditor", () => {
   return {
     __esModule: true,
@@ -929,7 +927,6 @@ describe('CleanPanel - Advanced Options', () => {
         if (roundCheckbox) {
           fireEvent.click(roundCheckbox);
           
-          // Should show decimal places input
           const decimalInput = screen.queryByText(/Decimal places/i);
           expect(decimalInput).toBeInTheDocument();
         }
@@ -1233,7 +1230,6 @@ describe('CleanPanel - Remaining UI Sections', () => {
       
       if (padSwitch) {
         fireEvent.click(padSwitch);
-        // Should show padding options
         expect(padSwitch).toBeChecked();
       }
     });
@@ -1591,12 +1587,9 @@ describe('CleanPanel - Validation Logic', () => {
     it('validates at least one step is selected', () => {
       render(<CleanPanel {...defaultProps} />);
       
-      // By default, mergeCaseInsensitive and mergeTrimValues are enabled
-      // So apply should work without error
       const applyButton = screen.getByTitle(/apply cleaning/i);
       fireEvent.click(applyButton);
       
-      // Should call onApply since steps are selected by default
       expect(defaultProps.onApply).toHaveBeenCalled();
     });
 

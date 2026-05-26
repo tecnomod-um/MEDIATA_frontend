@@ -1396,7 +1396,7 @@ function Integration() {
     e.dataTransfer.setData("column", JSON.stringify(column));
   }, []);
 
-  // After a successful save, advance to the hierarchy panel on mobile.
+  // Mobile flow continues in hierarchy once mappings are saved.
   const handleSave = useCallback(
     (...args) => {
       const ok = handleSaveMappings(...args);
@@ -1406,7 +1406,7 @@ function Integration() {
     [handleSaveMappings]
   );
 
-  // After suggesting mappings, advance to the hierarchy panel on mobile.
+  // Suggested mappings land on the hierarchy panel in the mobile flow.
   const handleSuggestAndNavigate = useCallback(
     async (mode) => {
       await handleSuggestMappings(mode);
@@ -1415,7 +1415,7 @@ function Integration() {
     [handleSuggestMappings, isMobile]
   );
 
-  // After selecting a mapping, advance to the mapping editor panel on mobile.
+  // Selecting a mapping returns mobile users to the editor panel.
   const handleSelectMapping = useCallback(
     (mappingIndex, mappingKey) => {
       const nextId = `${mappingIndex}::${mappingKey}`;

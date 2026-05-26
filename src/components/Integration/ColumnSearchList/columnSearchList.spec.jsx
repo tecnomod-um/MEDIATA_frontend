@@ -294,7 +294,6 @@ describe('<ColumnSearchList />', () => {
       />
     );
 
-    // Verify the file header is rendered
     expect(screen.getByText('file1.csv')).toBeInTheDocument();
   });
 
@@ -316,7 +315,6 @@ describe('<ColumnSearchList />', () => {
       />
     );
 
-    // Verify groups are present and sorted correctly
     const appleGroup = screen.getByText('apple.csv');
     const bananaGroup = screen.getByText('banana.csv');
     const zebraGroup = screen.getByText('zebra.csv');

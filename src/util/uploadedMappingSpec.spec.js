@@ -642,9 +642,7 @@ describe('rebuildMappingsFromSpec', () => {
     expect(result[0]['field1'].fileName).toBe('custom_mapping');
   });
 
-  // -----------------------------------------------------------------------
   // right.var branch — logic["=="] with the var on the RIGHT side
-  // -----------------------------------------------------------------------
   it('rebuilds standard mapping when var is on the right side of == (constant == var)', () => {
     const spec = makeSpec({
       mappings: [
@@ -673,9 +671,7 @@ describe('rebuildMappingsFromSpec', () => {
     expect(val.mapping[0].groupColumn).toBe('code');
   });
 
-  // -----------------------------------------------------------------------
   // and clause with missing lower or upper → returns []
-  // -----------------------------------------------------------------------
   it('and clause with only >= (no <=) returns no entries', () => {
     const spec = makeSpec({
       mappings: [
@@ -738,9 +734,7 @@ describe('rebuildMappingsFromSpec', () => {
     expect(val.mapping).toEqual([]);
   });
 
-  // -----------------------------------------------------------------------
   // buildGroupsFromLoadedEntries deduplication
-  // -----------------------------------------------------------------------
   it('deduplicates identical string values within the same group', () => {
     // Two rules with the same (nodeId, fileName, column, value) → only one entry
     const spec = makeSpec({
@@ -1079,7 +1073,6 @@ describe('collectSpecSources – branch gaps', () => {
         },
       ],
     });
-    // Should not throw; it just collects an entry with empty nodeId/fileName
     const sources = collectSpecSources(spec);
     expect(sources).toEqual([]);
   });

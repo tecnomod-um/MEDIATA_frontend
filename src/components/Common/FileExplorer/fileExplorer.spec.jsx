@@ -15,10 +15,14 @@ vi.mock("../../../util/petitionHandler", () => ({
   listExplorerFiles: vi.fn(),
   renameExplorerFile: vi.fn(),
   deleteExplorerFile: vi.fn(),
+  startCleanExplorerFile: vi.fn(),
+  getCleanExplorerFileStatus: vi.fn(),
+  getCleanExplorerFileResult: vi.fn(),
   cleanExplorerFile: vi.fn(),
   processSelectedDatasets: vi.fn(),
   getProcessSelectedDatasetsStatus: vi.fn(),
   getProcessSelectedDatasetsResult: vi.fn(),
+  cancelProcessSelectedDatasetsJob: vi.fn(),
 }));
 
 vi.mock("../../../util/nodeAxiosSetup", () => ({
@@ -30,6 +34,7 @@ vi.mock("react-toastify", () => ({
   __esModule: true,
   toast: {
     error: vi.fn(),
+    info: vi.fn(),
     success: vi.fn(),
   },
 }));
@@ -108,6 +113,16 @@ vi.mock("react-transition-group", () => ({
   CSSTransition: ({ in: inProp, children }) => (inProp ? <>{children}</> : null),
 }));
 describe("FileExplorer Main Component", () => {
+  const node = { nodeId: "node1", serviceUrl: "http://test.com", name: "Test Node" };
+
+  const renderOpenExplorer = (props = {}) =>
+    render(<FileExplorer nodes={[node]} category="clinical" isOpen={true} {...props} />);
+
+  const selectFile = async (name = "file1.csv") => {
+    const fileName = await screen.findByText(name);
+    fireEvent.click(fileName.closest('[role="button"]'));
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     petitionHandler.listExplorerFiles.mockResolvedValue([
@@ -124,6 +139,30 @@ describe("FileExplorer Main Component", () => {
         lastModifiedAtMs: Date.now() - 50000,
       },
     ]);
+    petitionHandler.renameExplorerFile.mockResolvedValue({});
+    petitionHandler.deleteExplorerFile.mockResolvedValue({});
+    petitionHandler.startCleanExplorerFile.mockResolvedValue({
+      status: 202,
+      data: { jobId: "clean-job" },
+    });
+    petitionHandler.getCleanExplorerFileStatus.mockResolvedValue({
+      state: "DONE",
+      percent: 100,
+    });
+    petitionHandler.getCleanExplorerFileResult.mockResolvedValue({
+      status: 200,
+      data: { message: "Cleaned selected file" },
+    });
+    petitionHandler.processSelectedDatasets.mockResolvedValue({
+      mode: "sync",
+      results: [{ rows: 2 }],
+    });
+    petitionHandler.getProcessSelectedDatasetsStatus.mockResolvedValue({
+      state: "DONE",
+      percent: 100,
+    });
+    petitionHandler.getProcessSelectedDatasetsResult.mockResolvedValue([{ rows: 2 }]);
+    petitionHandler.cancelProcessSelectedDatasetsJob.mockResolvedValue({});
   });
 
   test("renders FileExplorer with nodes", async () => {
@@ -348,6 +387,87 @@ describe("FileExplorer Main Component", () => {
 
     await waitFor(() => {
       expect(petitionHandler.listExplorerFiles).toHaveBeenCalled();
+    });
+  });
+
+  test("passes a node-grouped selection to onFilesSelected", async () => {
+    const onFilesSelected = vi.fn().mockResolvedValue(undefined);
+
+    renderOpenExplorer({ onFilesSelected });
+    await selectFile();
+    fireEvent.click(screen.getByRole("button", { name: /^Open$/i }));
+
+    await waitFor(() => {
+      expect(onFilesSelected).toHaveBeenCalledWith({ node1: ["file1.csv"] });
+    });
+  });
+
+  test("opens selected files through the synchronous discovery path", async () => {
+    const onFilesOpened = vi.fn();
+
+    renderOpenExplorer({ onFilesOpened });
+    await selectFile();
+    fireEvent.click(screen.getByRole("button", { name: /^Open$/i }));
+
+    await waitFor(() => {
+      expect(petitionHandler.processSelectedDatasets).toHaveBeenCalledWith(["file1.csv"]);
+      expect(onFilesOpened).toHaveBeenCalledWith([
+        expect.objectContaining({
+          rows: 2,
+          fileName: "file1.csv",
+          nodeId: "node1",
+          nodeName: "Test Node",
+        }),
+      ]);
+    });
+  });
+
+  test("renames the selected file", async () => {
+    renderOpenExplorer();
+
+    await selectFile();
+    fireEvent.click(screen.getByRole("button", { name: /Rename file/i }));
+    fireEvent.change(screen.getByDisplayValue("file1.csv"), {
+      target: { value: "renamed.csv" },
+    });
+    fireEvent.keyDown(screen.getByDisplayValue("renamed.csv"), { key: "Enter" });
+
+    await waitFor(() => {
+      expect(petitionHandler.renameExplorerFile).toHaveBeenCalledWith(
+        "clinical",
+        "file1.csv",
+        "renamed.csv"
+      );
+    });
+  });
+
+  test("deletes the selected file after confirmation", async () => {
+    renderOpenExplorer();
+
+    await selectFile();
+    fireEvent.click(screen.getByRole("button", { name: /^Delete$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^Delete$/i }).at(-1));
+
+    await waitFor(() => {
+      expect(petitionHandler.deleteExplorerFile).toHaveBeenCalledWith("clinical", "file1.csv");
+    });
+  });
+
+  test("runs cleaning for the selected dataset file", async () => {
+    renderOpenExplorer({ category: "DATASETS" });
+
+    await selectFile();
+    fireEvent.click(screen.getByRole("button", { name: /Data cleaning/i }));
+    fireEvent.click(screen.getAllByRole("switch")[0]);
+    fireEvent.click(screen.getByTitle(/apply cleaning/i));
+
+    await waitFor(() => {
+      expect(petitionHandler.startCleanExplorerFile).toHaveBeenCalledWith(
+        "DATASETS",
+        "file1.csv",
+        expect.objectContaining({ removeDuplicates: true })
+      );
+      expect(petitionHandler.getCleanExplorerFileResult).toHaveBeenCalledWith("clean-job");
     });
   });
 });

@@ -193,7 +193,6 @@ describe("<RangePicker />", () => {
     const rangeText = screen.getByText(/Selected .*range:/i);
     fireEvent.doubleClick(rangeText);
 
-    // After double-click, the range display should still be visible
     expect(screen.getByText(/Selected .*range:/i)).toBeInTheDocument();
   });
 
@@ -215,7 +214,6 @@ describe("<RangePicker />", () => {
     const rangeText = screen.getByText(/Selected .*range:/i);
     fireEvent.doubleClick(rangeText);
 
-    // Just verify the component renders without crashing
     expect(rangeText).toBeInTheDocument();
   });
 
@@ -260,7 +258,6 @@ describe("<RangePicker />", () => {
     fireEvent.change(inputs[0], { target: { value: "2" } });
     fireEvent.change(inputs[1], { target: { value: "7" } });
 
-    // Range should be adjusted to avoid overlap
     expect(screen.getByText(/Selected .*range:/i)).toBeInTheDocument();
   });
 
@@ -298,7 +295,6 @@ describe("<RangePicker />", () => {
     fireEvent.change(inputs[0], { target: { value: "8" } });
     fireEvent.change(inputs[1], { target: { value: "10" } });
 
-    // Should move to next available range
     expect(screen.getByText(/Selected .*range:/i)).toBeInTheDocument();
   });
 
@@ -321,7 +317,6 @@ describe("<RangePicker />", () => {
     fireEvent.change(inputs[0], { target: { value: "5" } });
     fireEvent.change(inputs[1], { target: { value: "15" } });
 
-    // Should adjust to avoid overlap
     expect(screen.getByText(/Selected .*range:/i)).toBeInTheDocument();
   });
 
@@ -482,8 +477,6 @@ describe("<RangePicker />", () => {
   });
 
   it("handles slider onChange without onChangeComplete", () => {
-    // This test is just checking that the component doesn't crash
-    // when the slider doesn't have onChangeComplete
     const onRangeChange = vi.fn();
     render(
       <RangePicker
@@ -495,7 +488,6 @@ describe("<RangePicker />", () => {
       />
     );
 
-    // Verify the component renders
     expect(screen.getByText(/Selected .*range:/i)).toBeInTheDocument();
   });
 
@@ -578,7 +570,6 @@ describe("<RangePicker />", () => {
     fireEvent.change(inputs[0], { target: { value: "15" } });
     fireEvent.change(inputs[1], { target: { value: "5" } });
 
-    // Should swap and adjust
     expect(screen.getByText(/Selected .*range:/i)).toBeInTheDocument();
   });
 
@@ -603,7 +594,6 @@ describe("<RangePicker />", () => {
 
     fireEvent.click(screen.getByText("Set"));
 
-    // Should clamp to [0, 10]
     expect(onRangeChange).toHaveBeenCalled();
   });
 
@@ -623,11 +613,9 @@ describe("<RangePicker />", () => {
     fireEvent.doubleClick(rangeText);
 
     const inputs = screen.getAllByRole("spinbutton");
-    // Try to set range inside unavailable area when no available ranges exist
     fireEvent.change(inputs[0], { target: { value: "5" } });
     fireEvent.change(inputs[1], { target: { value: "8" } });
 
-    // Should fall back to [min, min]
     expect(screen.getByText(/Selected .*range:/i)).toBeInTheDocument();
   });
 

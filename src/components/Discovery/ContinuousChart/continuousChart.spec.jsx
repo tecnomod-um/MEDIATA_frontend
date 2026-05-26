@@ -30,7 +30,7 @@ const FEATURE = {
 };
 
 describe('<ContinuousChart />', () => {
-  it('renders without crashing and shows <Bar>', () => {
+  it('renders the chart bar', () => {
     render(<ContinuousChart feature={FEATURE} showOutliers={true} />);
     expect(screen.getByTestId('mock-bar')).toBeInTheDocument();
   });
@@ -78,7 +78,7 @@ describe('<ContinuousChart />', () => {
     expect(data.datasets[0].data).toEqual([2, 3, 4]);
   });
 
-  it('resize & update effects run without errors', () => {
+  it('updates chart data after resize and rerender', () => {
     const { rerender } = render(<ContinuousChart feature={FEATURE} showOutliers />);
     act(() => window.dispatchEvent(new Event('resize')));
     rerender(

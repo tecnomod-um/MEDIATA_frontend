@@ -275,10 +275,8 @@ describe('ScrollSidebar • props & lifecycle details', () => {
     const el = document.getElementById('existing-section')
     el.remove()
     
-    // Click should not throw error when element doesn't exist
     fireEvent.click(existingButton)
     
-    // Verify scrollTo was not called because element doesn't exist
     expect(window.scrollTo).not.toHaveBeenCalled()
   })
 })

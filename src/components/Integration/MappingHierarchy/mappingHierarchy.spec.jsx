@@ -119,7 +119,6 @@ describe('<MappingHierarchy />', () => {
     const props = makeProps();
     // autoOpen=false → closed by default
     render(<MappingHierarchy {...props} autoOpen={false} />);
-    // Verify it's closed (file-row text NOT shown)
     expect(screen.queryByText(/file\.csv/i)).not.toBeInTheDocument();
 
     // The header row has role="button" with name "TargetCol" (the h4 inside)

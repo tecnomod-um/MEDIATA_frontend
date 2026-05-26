@@ -627,9 +627,7 @@ describe('petitionHandler', () => {
     });
   });
 
-  // -------------------------------------------------------------------------
   // getSystemCapabilities
-  // -------------------------------------------------------------------------
   describe('getSystemCapabilities', () => {
     it('returns data on success', async () => {
       axiosInstance.get.mockResolvedValue({ data: { mode: 'full' } });
@@ -643,9 +641,7 @@ describe('petitionHandler', () => {
     });
   });
 
-  // -------------------------------------------------------------------------
   // cancelProcessSelectedDatasetsJob
-  // -------------------------------------------------------------------------
   describe('cancelProcessSelectedDatasetsJob', () => {
     it('posts to cancel endpoint and returns data', async () => {
       nodeAxiosInstance.post.mockResolvedValue({ data: { cancelled: true } });
@@ -657,9 +653,7 @@ describe('petitionHandler', () => {
     });
   });
 
-  // -------------------------------------------------------------------------
   // getParseConfigsStatus / getParseConfigsResult
-  // -------------------------------------------------------------------------
   describe('getParseConfigsStatus', () => {
     it('fetches parse job status', async () => {
       nodeAxiosInstance.get.mockResolvedValue({ data: { state: 'RUNNING', percent: 50 } });
@@ -683,9 +677,7 @@ describe('petitionHandler', () => {
     });
   });
 
-  // -------------------------------------------------------------------------
   // startCleanExplorerFile, getCleanExplorerFileStatus, getCleanExplorerFileResult
-  // -------------------------------------------------------------------------
   describe('startCleanExplorerFile', () => {
     it('returns status and data on success', async () => {
       nodeAxiosInstance.post.mockResolvedValue({ status: 202, data: { jobId: 'cj1' } });
@@ -733,9 +725,7 @@ describe('petitionHandler', () => {
     });
   });
 
-  // -------------------------------------------------------------------------
   // suggestMappings
-  // -------------------------------------------------------------------------
   describe('suggestMappings', () => {
     it('posts with string schema unchanged', async () => {
       axiosInstance.post.mockResolvedValue({ data: { hierarchy: [] } });
@@ -766,9 +756,7 @@ describe('petitionHandler', () => {
     });
   });
 
-  // -------------------------------------------------------------------------
   // enrichMappingsStart
-  // -------------------------------------------------------------------------
   describe('enrichMappingsStart', () => {
     it('posts hierarchy and string schema', async () => {
       axiosInstance.post.mockResolvedValue({ status: 202, data: { jobId: 'ej1' } });
@@ -799,9 +787,7 @@ describe('petitionHandler', () => {
     });
   });
 
-  // -------------------------------------------------------------------------
   // getEnrichMappingsStatus / getEnrichMappingsResult
-  // -------------------------------------------------------------------------
   describe('getEnrichMappingsStatus', () => {
     it('fetches enrich job status', async () => {
       axiosInstance.get.mockResolvedValue({ data: { state: 'RUNNING', percent: 30 } });
@@ -825,9 +811,7 @@ describe('petitionHandler', () => {
     });
   });
 
-  // -------------------------------------------------------------------------
   // Error branches for node-axios functions
-  // -------------------------------------------------------------------------
   describe('error branches for node-axios functions', () => {
     beforeEach(() => {
       console.error = vi.fn();

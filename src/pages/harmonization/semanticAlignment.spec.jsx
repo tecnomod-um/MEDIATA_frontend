@@ -469,7 +469,7 @@ describe('<SemanticAlignment />', () => {
       
       const removeBtn = await screen.findByRole('button', { name: /Remove Last/i });
       fireEvent.click(removeBtn);
-      // Should not crash even with no connections
+      expect(removeBtn).toBeInTheDocument();
     });
 
     it('parses CSV with type field (integer)', async () => {
@@ -535,7 +535,6 @@ describe('<SemanticAlignment />', () => {
       
       expect(await screen.findByTestId('rdf-sidebar')).toBeInTheDocument();
       
-      // Rerender shouldn't reprocess
       rerender(<SemanticAlignment />);
       expect(screen.getByTestId('rdf-sidebar')).toBeInTheDocument();
     });
@@ -546,10 +545,8 @@ describe('<SemanticAlignment />', () => {
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
       render(<SemanticAlignment />);
       
-      // Component should render the upload button
       await screen.findByRole('button', { name: /Upload CSV/i });
       
-      // Component should show the RDF sidebar after CSV data is loaded from location state
       await waitFor(() => {
         expect(screen.getByTestId('rdf-sidebar')).toBeInTheDocument();
       });
@@ -576,7 +573,7 @@ describe('<SemanticAlignment />', () => {
         rdfMessage: JSON.stringify({ message: 'rdf ok' }),
       });
 
-      // Mock document methods
+      // Keep generated download links inside JSDOM while still exercising the export path.
       const appendSpy = jest
         .spyOn(document.body, 'appendChild')
         .mockImplementation((node) => HTMLElement.prototype.appendChild.call(document.body, node));
@@ -628,7 +625,7 @@ describe('<SemanticAlignment />', () => {
       const card = screen.getByTestId(/^rdf-card-/);
       
       fireEvent.click(card);
-      // Should update active element selection
+      expect(card).toBeInTheDocument();
     });
 
     it('handles mobile view toggle button', async () => {

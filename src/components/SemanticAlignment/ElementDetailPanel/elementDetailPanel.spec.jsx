@@ -341,7 +341,6 @@ describe("<ElementDetailPanel />", () => {
       });
       
       await waitFor(() => {
-        // Should not be called to override
         const calls = setElementFormValues.mock.calls.filter(call => {
           const fn = call[0];
           if (typeof fn === 'function') {
