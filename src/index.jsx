@@ -9,8 +9,8 @@ import { AuthProvider, useAuth } from "./context/authContext";
 import { NodeProvider } from "./context/nodeContext";
 import { setupAxiosInterceptors } from "./util/axiosSetup";
 import Discovery from "./pages/harmonization/discovery";
-import Integration from "./pages/harmonization/integration";
-import SemanticAlignment from "./pages/harmonization/semanticAlignment";
+import Alignment from "./pages/harmonization/alignment";
+import SemanticIntegration from "./pages/harmonization/semanticIntegration";
 import HL7FHIR from "./pages/harmonization/hl7FHIR";
 
 const Main = lazy(() => import("./pages/main/main"));
@@ -46,10 +46,10 @@ const App = () => {
             <Route path="/discovery" element={<Discovery />} />
           </Route>
           <Route element={<ProtectedRoute nodeRequired={true} />}>
-            <Route path="/integration" element={<Integration />} />
+            <Route path="/alignment" element={<Alignment />} />
           </Route>
           <Route element={<ProtectedRoute nodeRequired={true} />}>
-            <Route path="/semanticalignment" element={<SemanticAlignment />} />
+            <Route path="/semanticintegration" element={<SemanticIntegration />} />
           </Route>
           <Route element={<ProtectedRoute nodeRequired={true} />}>
             <Route path="/hl7fhir" element={<HL7FHIR />} />

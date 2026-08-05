@@ -230,6 +230,60 @@ describe("<FileTable />", () => {
     expect(input).toBeInTheDocument();
   });
 
+  it("shows related dataset badges", () => {
+    const relatedInfoByKey = new Map([
+      ["default::test.csv", { groupId: "G1", groupOrder: 0, color: "#9B5DE5", title: "G1" }],
+    ]);
+
+    render(
+      <FileTable
+        sorted={[singleFile]}
+        selected={new Set()}
+        busy={false}
+        longPressFired={{ current: false }}
+        relatedMode={true}
+        relatedInfoByKey={relatedInfoByKey}
+        {...mockCallbacks}
+      />
+    );
+
+    expect(screen.getByText("G1")).toBeInTheDocument();
+  });
+
+  it("places related groups together before ungrouped files", () => {
+    const files = [
+      { ...singleFile, name: "unrelated.csv" },
+      { ...singleFile, name: "group-two.csv" },
+      { ...singleFile, name: "group-one-b.csv" },
+      { ...singleFile, name: "group-one-a.csv" },
+    ];
+    const relatedInfoByKey = new Map([
+      ["default::group-one-a.csv", { groupId: "G1", groupOrder: 0, color: "#9B5DE5" }],
+      ["default::group-one-b.csv", { groupId: "G1", groupOrder: 0, color: "#9B5DE5" }],
+      ["default::group-two.csv", { groupId: "G2", groupOrder: 1, color: "#FF8A1F" }],
+    ]);
+
+    render(
+      <FileTable
+        sorted={files}
+        selected={new Set()}
+        busy={false}
+        longPressFired={{ current: false }}
+        relatedMode={true}
+        relatedInfoByKey={relatedInfoByKey}
+        {...mockCallbacks}
+      />
+    );
+
+    const rowNames = screen.getAllByRole("button").map((row) => row.querySelector(".nameText")?.textContent);
+    expect(rowNames).toEqual([
+      "group-one-a.csv",
+      "group-one-b.csv",
+      "group-two.csv",
+      "unrelated.csv",
+    ]);
+  });
+
   it("commits rename on Enter key in rename input", () => {
     const key = "default::test.csv";
     const renameInputRef = { current: null };

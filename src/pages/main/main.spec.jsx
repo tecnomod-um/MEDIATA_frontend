@@ -142,7 +142,7 @@ describe('<Main />', () => {
   it('renders all feature cards with correct content', () => {
     renderWithRouter();
     expect(screen.getByText('Discovery and profiling')).toBeInTheDocument();
-    expect(screen.getByText('Integration made easy')).toBeInTheDocument();
+    expect(screen.getByText('Alignment made easy')).toBeInTheDocument();
     expect(screen.getByText('Health standards ready')).toBeInTheDocument();
   });
 

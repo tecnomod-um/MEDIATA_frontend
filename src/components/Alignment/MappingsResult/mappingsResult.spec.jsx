@@ -27,7 +27,7 @@ const {
     };
     return <div data-testid="hierarchy">{mappingKey}</div>;
   }),
-  mockUseAuth: vi.fn(() => ({ capabilities: { semanticAlignment: true } })),
+  mockUseAuth: vi.fn(() => ({ capabilities: { semanticIntegration: true } })),
 }));
 
 vi.mock('react-router-dom', async () => {
@@ -142,7 +142,7 @@ const defaultHandlers = {
 describe('<MappingsExporter />', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUseAuth.mockImplementation(() => ({ capabilities: { semanticAlignment: true } }));
+    mockUseAuth.mockImplementation(() => ({ capabilities: { semanticIntegration: true } }));
     global.URL.createObjectURL.mockReturnValue?.('blob:url');
   });
 
@@ -155,13 +155,13 @@ describe('<MappingsExporter />', () => {
     expect(toast.success).toHaveBeenCalledWith('Mapping spec downloaded successfully!');
   });
 
-  it('encodes CSV and navigates to /semanticalignment with base64 payload', async () => {
+  it('encodes CSV and navigates to /semanticintegration with base64 payload', async () => {
     render(<MappingsExporter mappings={sampleMappings} />);
 
     fireEvent.click(screen.getAllByRole('button')[2]);
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/semanticalignment', {
+      expect(mockNavigate).toHaveBeenCalledWith('/semanticintegration', {
         state: {
           csvData: expect.any(String),
           fileName: 'mappings_elements.csv',
@@ -200,8 +200,8 @@ describe('<MappingsExporter />', () => {
     global.FileReader = originalFileReader;
   });
 
-  it('renders arrow button as disabled when semanticAlignment is false', () => {
-    mockUseAuth.mockImplementation(() => ({ capabilities: { semanticAlignment: false } }));
+  it('renders arrow button as disabled when semanticIntegration is false', () => {
+    mockUseAuth.mockImplementation(() => ({ capabilities: { semanticIntegration: false } }));
     render(<MappingsExporter mappings={sampleMappings} />);
 
     const arrowBtn = screen.getAllByRole('button')[2];
@@ -209,16 +209,16 @@ describe('<MappingsExporter />', () => {
     expect(arrowBtn).toHaveAttribute('aria-disabled', 'true');
   });
 
-  it('does not navigate when arrow button is clicked with semanticAlignment disabled', () => {
-    mockUseAuth.mockImplementation(() => ({ capabilities: { semanticAlignment: false } }));
+  it('does not navigate when arrow button is clicked with semanticIntegration disabled', () => {
+    mockUseAuth.mockImplementation(() => ({ capabilities: { semanticIntegration: false } }));
     render(<MappingsExporter mappings={sampleMappings} />);
 
     fireEvent.click(screen.getAllByRole('button')[2]);
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
-  it('shows tooltip on hover when semanticAlignment is disabled and hides on mouseleave', () => {
-    mockUseAuth.mockImplementation(() => ({ capabilities: { semanticAlignment: false } }));
+  it('shows tooltip on hover when semanticIntegration is disabled and hides on mouseleave', () => {
+    mockUseAuth.mockImplementation(() => ({ capabilities: { semanticIntegration: false } }));
     render(<MappingsExporter mappings={sampleMappings} />);
 
     const arrowBtn = screen.getAllByRole('button')[2];
@@ -226,7 +226,7 @@ describe('<MappingsExporter />', () => {
 
     expect(screen.getByTestId('tooltip-popup')).toBeInTheDocument();
     expect(screen.getByTestId('tooltip-popup')).toHaveTextContent(
-      'This deployment does not include Semantic Alignment.'
+      'This deployment does not include Semantic Integration.'
     );
 
     fireEvent.mouseLeave(arrowBtn.parentElement);
@@ -234,7 +234,7 @@ describe('<MappingsExporter />', () => {
   });
 
   it('hides tooltip via its onClose callback', () => {
-    mockUseAuth.mockImplementation(() => ({ capabilities: { semanticAlignment: false } }));
+    mockUseAuth.mockImplementation(() => ({ capabilities: { semanticIntegration: false } }));
     render(<MappingsExporter mappings={sampleMappings} />);
 
     const arrowBtn = screen.getAllByRole('button')[2];
@@ -245,7 +245,7 @@ describe('<MappingsExporter />', () => {
     expect(screen.queryByTestId('tooltip-popup')).not.toBeInTheDocument();
   });
 
-  it('does not show tooltip on hover when semanticAlignment is enabled', () => {
+  it('does not show tooltip on hover when semanticIntegration is enabled', () => {
     render(<MappingsExporter mappings={sampleMappings} />);
 
     const arrowBtn = screen.getAllByRole('button')[2];

@@ -1,15 +1,22 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { CSSTransition } from "react-transition-group";
 import FileExplorerStyles from "./fileExplorer.module.css";
-import { listExplorerFiles, renameExplorerFile, deleteExplorerFile, startCleanExplorerFile, getCleanExplorerFileStatus, getCleanExplorerFileResult, processSelectedDatasets, getProcessSelectedDatasetsStatus, getProcessSelectedDatasetsResult, cancelProcessSelectedDatasetsJob } from "../../../util/petitionHandler";
+import { listExplorerFiles, renameExplorerFile, deleteExplorerFile, startCleanExplorerFile, validateCleanExplorerFile, getCleanExplorerFileStatus, getCleanExplorerFileResult, getNormalizationStats, processSelectedDatasets, getProcessSelectedDatasetsStatus, getProcessSelectedDatasetsResult, cancelProcessSelectedDatasetsJob, extractDatasetElements, fetchElementFile, suggestMappings } from "../../../util/petitionHandler";
 import { updateNodeAxiosBaseURL } from "../../../util/nodeAxiosSetup";
 import FileToolbar from "./fileToolbar";
 import FileTable from "./fileTable";
+import RelatedDatasetLegend from "./relatedDatasetLegend";
 import { toast } from "react-toastify";
 import CleanPanel from "./cleanPanel";
 import DeleteConfirmation from "./deleteConfirmation";
 import { useNavigate } from "react-router-dom";
 import { formatBytes, formatDateTime, isFileNew } from "./fileUtils";
+import {
+  buildRelatedDatasetAnalysisFromSuggestions,
+  buildRelatedDatasetPayload,
+  buildRelatedDatasetPayloadFromExtractedElements,
+  resolveRelatedElementFileName,
+} from "./relatedDatasetGroups";
 
 const notifyError = (e, fallback) => {
   const msg = e?.response?.data?.message || e?.message || fallback;
@@ -25,6 +32,10 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
   const [error, setError] = useState(null);
   const [processingFiles, setProcessingFiles] = useState(() => new Set());
   const [fileProgress, setFileProgress] = useState(() => new Map());
+  const [relatedMode, setRelatedMode] = useState(false);
+  const [relatedBusy, setRelatedBusy] = useState(false);
+  const [relatedGroups, setRelatedGroups] = useState([]);
+  const [relatedInfoByKey, setRelatedInfoByKey] = useState(() => new Map());
 
   const [selected, setSelected] = useState(() => new Set());
   const [lastIndex, setLastIndex] = useState(null);
@@ -128,8 +139,12 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
     if (!modal) return 0;
 
     const toolbarH = toolbarRef.current?.getBoundingClientRect().height ?? 0;
-    const modalH = modal.getBoundingClientRect().height;
-    return Math.max(0, modalH - toolbarH);
+    const styles = window.getComputedStyle(modal);
+    const configuredMaxHeight = parseFloat(styles.maxHeight);
+    const availableHeight = Number.isFinite(configuredMaxHeight) && configuredMaxHeight > 0
+      ? configuredMaxHeight
+      : modal.getBoundingClientRect().height;
+    return Math.max(0, availableHeight - toolbarH);
   }, []);
 
   const navigate = useNavigate();
@@ -219,6 +234,8 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
       String(a.name).localeCompare(String(b.name), undefined, { sensitivity: "base" })
     );
   }, [files]);
+
+  const canShowRelated = category === "DATASETS" || category === "DATASET_ELEMENTS";
 
   const hasSelection = selected.size > 0;
 
@@ -314,6 +331,9 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
     setShowCleanPanel(false);
     setRenamingKey(null);
     setShowDeleteConfirm(false);
+    setRelatedMode(false);
+    setRelatedGroups([]);
+    setRelatedInfoByKey(new Map());
 
     try {
       let allFiles = [];
@@ -355,6 +375,173 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
       setFilesLoaded(true);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleRelatedDatasets = async () => {
+    if (!canShowRelated || loading || busy || relatedBusy) return;
+
+    if (relatedMode) {
+      setRelatedMode(false);
+      return;
+    }
+
+    setRelatedBusy(true);
+    try {
+      let elementFiles = [];
+      let elementCountsByKey = {};
+
+      if (category === "DATASETS") {
+        const extractedElementsByKey = {};
+        const filesByNodeId = new Map();
+
+        sorted.forEach((file) => {
+          const nodeId = String(file?.nodeId || "default");
+          const bucket = filesByNodeId.get(nodeId) || [];
+          bucket.push(file);
+          filesByNodeId.set(nodeId, bucket);
+        });
+
+        for (const [nodeId, filesForNode] of filesByNodeId.entries()) {
+          const node = nodes && nodes.length > 0
+            ? nodes.find((candidate) => String(candidate.nodeId) === nodeId)
+            : null;
+          if (node?.serviceUrl) updateNodeAxiosBaseURL(node.serviceUrl);
+
+          try {
+            // eslint-disable-next-line no-await-in-loop
+            const extracted = await extractDatasetElements(filesForNode.map((file) => file.name));
+            (Array.isArray(extracted) ? extracted : []).forEach((entry) => {
+              const fileName = String(entry?.fileName || "");
+              if (!fileName) return;
+              extractedElementsByKey[`${nodeId}::${fileName}`] = entry;
+            });
+          } catch (error) {
+            // Fall back to saved element files when lightweight extraction is unavailable.
+            const availableElementFiles = [];
+
+            try {
+              // eslint-disable-next-line no-await-in-loop
+              const listed = await listExplorerFiles("DATASET_ELEMENTS");
+              availableElementFiles.push(...(Array.isArray(listed)
+                ? listed.map((entry) => String(entry?.name || entry)).filter(Boolean)
+                : []));
+            } catch (listingError) {
+              // ignore listing failures and just skip this node if no extraction path works
+            }
+
+            for (const file of filesForNode) {
+              const elementFileName = resolveRelatedElementFileName(category, file.name, availableElementFiles);
+              if (!elementFileName) continue;
+              try {
+                // eslint-disable-next-line no-await-in-loop
+                const csvText = await fetchElementFile(elementFileName);
+                if (!csvText) continue;
+                extractedElementsByKey[fileKey(file)] = {
+                  fileName: file.name,
+                  elements: buildRelatedDatasetPayload([file], { [fileKey(file)]: csvText }).elementFiles
+                    .filter((element) => element.fileName === file.name)
+                    .map((element) => ({ column: element.column, values: element.values })),
+                };
+              } catch (fetchError) {
+                if (fetchError?.response?.status !== 404) {
+                  // ignore per-file fallback failures
+                }
+              }
+            }
+          }
+        }
+
+        ({ elementFiles, elementCountsByKey } =
+          buildRelatedDatasetPayloadFromExtractedElements(sorted, extractedElementsByKey));
+      } else {
+        const elementCsvByKey = {};
+        const elementFileNamesByNodeId = new Map();
+
+        if (nodes && nodes.length > 0) {
+          for (const node of nodes) {
+            if (!node?.serviceUrl) continue;
+            updateNodeAxiosBaseURL(node.serviceUrl);
+            try {
+              // eslint-disable-next-line no-await-in-loop
+              const files = await listExplorerFiles("DATASET_ELEMENTS");
+              elementFileNamesByNodeId.set(
+                String(node.nodeId),
+                Array.isArray(files) ? files.map((entry) => String(entry?.name || entry)).filter(Boolean) : []
+              );
+            } catch (error) {
+              elementFileNamesByNodeId.set(String(node.nodeId), []);
+            }
+          }
+        } else {
+          try {
+            const files = await listExplorerFiles("DATASET_ELEMENTS");
+            elementFileNamesByNodeId.set(
+              "default",
+              Array.isArray(files) ? files.map((entry) => String(entry?.name || entry)).filter(Boolean) : []
+            );
+          } catch (error) {
+            elementFileNamesByNodeId.set("default", []);
+          }
+        }
+
+        for (const file of sorted) {
+          const nodeId = String(file?.nodeId || "default");
+          const availableElementFiles = elementFileNamesByNodeId.get(nodeId) || [];
+          const elementFileName = resolveRelatedElementFileName(category, file.name, availableElementFiles);
+          if (!elementFileName) continue;
+
+          if (nodes && nodes.length > 0) {
+            const node = nodes.find((candidate) => candidate.nodeId === file.nodeId);
+            if (node?.serviceUrl) updateNodeAxiosBaseURL(node.serviceUrl);
+          }
+
+          try {
+            // eslint-disable-next-line no-await-in-loop
+            const csvText = await fetchElementFile(elementFileName);
+            if (csvText) {
+              elementCsvByKey[fileKey(file)] = csvText;
+            }
+          } catch (error) {
+            if (error?.response?.status !== 404) {
+              // ignore per-file fetch failures unless all files fail
+            }
+          }
+        }
+
+        ({ elementFiles, elementCountsByKey } = buildRelatedDatasetPayload(sorted, elementCsvByKey));
+      }
+
+      if (elementFiles.length < 2) {
+        toast.info("Not enough dataset element information was available to compare these files.");
+        setRelatedMode(false);
+        setRelatedGroups([]);
+        setRelatedInfoByKey(new Map());
+        return;
+      }
+
+      const response = await suggestMappings({ elementFiles });
+      const analysis = buildRelatedDatasetAnalysisFromSuggestions(
+        sorted,
+        response,
+        elementCountsByKey,
+        elementFiles
+      );
+      if (!analysis.groups.length) {
+        toast.info("No likely related datasets were found in this view.");
+        setRelatedMode(false);
+        setRelatedGroups([]);
+        setRelatedInfoByKey(new Map());
+        return;
+      }
+
+      setRelatedGroups(analysis.groups);
+      setRelatedInfoByKey(analysis.groupInfoByKey);
+      setRelatedMode(true);
+    } catch (error) {
+      notifyError(error, "Failed to analyze related datasets");
+    } finally {
+      setRelatedBusy(false);
     }
   };
 
@@ -759,6 +946,115 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
     setSpinnerFor(keys);
   
     try {
+      let effectiveCleaningOptions = { ...cleaningOptions };
+      if (cleaningOptions.normalizeData) {
+        let columns = cleaningOptions.normalizeColumns || [];
+        const useAllNumeric = cleaningOptions.normalizationColumnMode === "all_numeric";
+        const selectionScope = cleaningOptions.normalizationScope === "selection";
+        const statsByFile = [];
+
+        for (const key of keys) {
+          const file = findFileByKey(key);
+          if (!file) continue;
+
+          const node = nodes?.find((candidate) => candidate.nodeId === file.nodeId);
+          if (node?.serviceUrl) updateNodeAxiosBaseURL(node.serviceUrl);
+
+          const response = await getNormalizationStats(
+            category,
+            file.name,
+            useAllNumeric ? [] : columns,
+            cleaningOptions
+          );
+          statsByFile.push({ file, response });
+        }
+
+        if (useAllNumeric && selectionScope) {
+          const firstColumns = Object.entries(statsByFile[0]?.response?.columns || {});
+          columns = firstColumns
+            .filter(([, stats]) => stats?.present && stats.validCount > 0 && !stats.invalidCount)
+            .map(([column]) => column)
+            .filter((column) => statsByFile.every(({ response }) => {
+              const stats = response?.columns?.[column];
+              return stats?.present && stats.validCount > 0 && !stats.invalidCount;
+            }));
+          if (columns.length === 0) {
+            throw new Error("No fully numeric columns are shared by every selected file.");
+          }
+        } else if (useAllNumeric) {
+          const fileWithoutNumericColumns = statsByFile.find(({ response }) =>
+            !Object.values(response?.columns || {}).some(
+              (stats) => stats?.present && stats.validCount > 0 && !stats.invalidCount
+            )
+          );
+          if (fileWithoutNumericColumns) {
+            throw new Error(
+              `No fully numeric columns were found in ${fileWithoutNumericColumns.file.name}. ` +
+              "The entire cleaning run was stopped before any file was changed."
+            );
+          }
+        }
+
+        const columnsToValidate = useAllNumeric && !selectionScope ? [] : columns;
+        const aggregate = Object.fromEntries(columnsToValidate.map((column) => [column, {
+          min: null,
+          max: null,
+          validCount: 0,
+          invalidCount: 0,
+        }]));
+
+        for (const { file, response } of statsByFile) {
+          for (const column of columnsToValidate) {
+            const stats = response?.columns?.[column];
+            if (!stats?.present) {
+              throw new Error(`Column '${column}' is missing from ${file.name}.`);
+            }
+            if (!stats.validCount) {
+              throw new Error(`Column '${column}' has no numeric values in ${file.name}.`);
+            }
+
+            const target = aggregate[column];
+            target.min = target.min == null ? stats.min : Math.min(target.min, stats.min);
+            target.max = target.max == null ? stats.max : Math.max(target.max, stats.max);
+            target.validCount += stats.validCount;
+            target.invalidCount += stats.invalidCount || 0;
+          }
+        }
+
+        if (cleaningOptions.normalizationInvalidValuePolicy === "fail") {
+          const invalid = columnsToValidate.find((column) => aggregate[column].invalidCount > 0);
+          if (invalid) {
+            throw new Error(
+              `Column '${invalid}' contains ${aggregate[invalid].invalidCount} non-numeric value(s) across the selection. ` +
+              "The entire cleaning run was stopped before any file was changed."
+            );
+          }
+        }
+
+        if (selectionScope) {
+          effectiveCleaningOptions = {
+            ...cleaningOptions,
+            normalizeColumns: columns,
+            normalizationColumnMode: "specified",
+            normalizationBounds: Object.fromEntries(columns.map((column) => [column, {
+              min: aggregate[column].min,
+              max: aggregate[column].max,
+            }])),
+          };
+        } else {
+          effectiveCleaningOptions.normalizationBounds = {};
+        }
+      }
+
+      // Validate the complete pipeline on every file before starting any write job.
+      for (const key of keys) {
+        const file = findFileByKey(key);
+        if (!file) continue;
+        const node = nodes?.find((candidate) => candidate.nodeId === file.nodeId);
+        if (node?.serviceUrl) updateNodeAxiosBaseURL(node.serviceUrl);
+        await validateCleanExplorerFile(category, file.name, effectiveCleaningOptions);
+      }
+
       for (const key of keys) {
         const file = findFileByKey(key);
         if (!file) continue;
@@ -769,7 +1065,7 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
           if (node?.serviceUrl) updateNodeAxiosBaseURL(node.serviceUrl);
         }
   
-        const start = await startCleanExplorerFile(category, file.name, cleaningOptions);
+        const start = await startCleanExplorerFile(category, file.name, effectiveCleaningOptions);
   
         if (start?.status !== 202 || !start?.data?.jobId) {
           throw new Error(
@@ -996,6 +1292,10 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
               onClose={onClose}
               onBack={() => navigate("/nodes")}
               category={category}
+              canShowRelated={canShowRelated}
+              relatedMode={relatedMode}
+              relatedBusy={relatedBusy}
+              onToggleRelated={toggleRelatedDatasets}
             />
           </div>
           <div className={FileExplorerStyles.contentShell}>
@@ -1048,10 +1348,15 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
                     formatBytes={formatBytes}
                     formatDateTime={formatDateTime}
                     isNew={isNew}
+                    relatedMode={relatedMode}
+                    relatedInfoByKey={relatedInfoByKey}
                   />
                 )}
               </div>
             </CSSTransition>
+            {relatedMode && relatedGroups.length > 0 ? (
+              <RelatedDatasetLegend groups={relatedGroups} />
+            ) : null}
             <CSSTransition
               in={showCleanPanel}
               timeout={260}

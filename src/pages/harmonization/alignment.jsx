@@ -5,16 +5,16 @@ import { ToastContainer, toast } from "react-toastify";
 import { getNodeElements, fetchElementFile, setParseConfigs, getParseConfigsStatus, getParseConfigsResult, fetchSchemaFromBackend, suggestMappings, enrichMappingsStart, getEnrichMappingsStatus, getEnrichMappingsResult } from "../../util/petitionHandler";
 import { updateNodeAxiosBaseURL } from "../../util/nodeAxiosSetup";
 import { useNode } from "../../context/nodeContext";
-import IntegrationStyles from "./integration.module.css";
-import ColumnMapping from "../../components/Integration/ColumnMapping/columnMapping";
-import ColumnSearchList from "../../components/Integration/ColumnSearchList/columnSearchList";
-import FileMapperModal from "../../components/Integration/FileMapperModal/fileMapperModal";
+import AlignmentStyles from "./alignment.module.css";
+import ColumnMapping from "../../components/Alignment/ColumnMapping/columnMapping";
+import ColumnSearchList from "../../components/Alignment/ColumnSearchList/columnSearchList";
+import FileMapperModal from "../../components/Alignment/FileMapperModal/fileMapperModal";
 import FileExplorer from "../../components/Common/FileExplorer/fileExplorer";
 import SchemaTray from "../../components/Common/SchemaTray/schemaTray";
-import MappingsResult from "../../components/Integration/MappingsResult/mappingsResult";
+import MappingsResult from "../../components/Alignment/MappingsResult/mappingsResult";
 import { generateDistinctColors } from "../../util/colors";
 import { buildMappingSpec } from "../../util/mappingSpec";
-import UploadedMappingsResolutionModal from "../../components/Integration/UploadedMappingsResolutionModal/uploadedMappingsResolutionModal";
+import UploadedMappingsResolutionModal from "../../components/Alignment/UploadedMappingsResolutionModal/uploadedMappingsResolutionModal";
 import {
   normalizeUploadedSpec,
   collectSpecSources,
@@ -36,7 +36,7 @@ import {
   buildStandardDraft as buildStandardDraftUtil,
   collectOneHotFamily as collectOneHotFamilyUtil,
   buildOneHotDraft as buildOneHotDraftUtil,
-} from "./integrationUtils";
+} from "./alignmentUtils";
 
 function PanelWrapper({ isMobile, panel, activeMobilePanel, styles, children }) {
   if (!isMobile) return children;
@@ -89,7 +89,7 @@ function reconcileLoadedMappingsWithColumnsData(mappings, columnsData) {
   });
 }
 
-function Integration() {
+function Alignment() {
   const location = useLocation();
   const { selectedNodes } = useNode();
 
@@ -1448,7 +1448,7 @@ function Integration() {
   );
 
   return (
-    <div className={IntegrationStyles.pageContainer}>
+    <div className={AlignmentStyles.pageContainer}>
       <FileMapperModal
         isOpen={isFileMapperOpen}
         closeModal={() => {
@@ -1481,18 +1481,18 @@ function Integration() {
         />
       )}
 
-      <div className={IntegrationStyles.mappingContainer}>
+      <div className={AlignmentStyles.mappingContainer}>
         {/* Mobile tab navigation — only rendered when on a mobile viewport */}
         {isMobile && columnsData.length > 0 && (
-          <div className={IntegrationStyles.mobileNav} role="tablist" aria-label="Integration panels">
+          <div className={AlignmentStyles.mobileNav} role="tablist" aria-label="Alignment panels">
             {["columns", "mapping", "hierarchy"].map((panel) => (
               <button
                 key={panel}
                 type="button"
                 role="tab"
                 aria-selected={activeMobilePanel === panel}
-                className={`${IntegrationStyles.mobileNavBtn}${
-                  activeMobilePanel === panel ? ` ${IntegrationStyles.mobileNavBtnActive}` : ""
+                className={`${AlignmentStyles.mobileNavBtn}${
+                  activeMobilePanel === panel ? ` ${AlignmentStyles.mobileNavBtnActive}` : ""
                 }`}
                 onClick={() => setActiveMobilePanel(panel)}
               >
@@ -1506,19 +1506,19 @@ function Integration() {
         <CSSTransition
           in={!!columnsData.length}
           classNames={{
-            enter: IntegrationStyles.columnsSectionEnter,
-            enterActive: IntegrationStyles.columnsSectionEnterActive,
-            exit: IntegrationStyles.columnsSectionExit,
-            exitActive: IntegrationStyles.columnsSectionExitActive,
+            enter: AlignmentStyles.columnsSectionEnter,
+            enterActive: AlignmentStyles.columnsSectionEnterActive,
+            exit: AlignmentStyles.columnsSectionExit,
+            exitActive: AlignmentStyles.columnsSectionExitActive,
           }}
           timeout={500}
           unmountOnExit
         >
           <div
-            className={`${IntegrationStyles.columnsSection}${
+            className={`${AlignmentStyles.columnsSection}${
               isMobile
-                ? ` ${IntegrationStyles.mobilePanel}${
-                    activeMobilePanel === "columns" ? ` ${IntegrationStyles.mobilePanelActive}` : ""
+                ? ` ${AlignmentStyles.mobilePanel}${
+                    activeMobilePanel === "columns" ? ` ${AlignmentStyles.mobilePanelActive}` : ""
                   }`
                 : ""
             }`}
@@ -1535,10 +1535,10 @@ function Integration() {
         <CSSTransition
           in={!!columnsData.length}
           classNames={{
-            enter: IntegrationStyles.columnMappingEnter,
-            enterActive: IntegrationStyles.columnMappingEnterActive,
-            exit: IntegrationStyles.columnMappingExit,
-            exitActive: IntegrationStyles.columnMappingExitActive,
+            enter: AlignmentStyles.columnMappingEnter,
+            enterActive: AlignmentStyles.columnMappingEnterActive,
+            exit: AlignmentStyles.columnMappingExit,
+            exitActive: AlignmentStyles.columnMappingExitActive,
           }}
           timeout={500}
           unmountOnExit
@@ -1547,7 +1547,7 @@ function Integration() {
             isMobile={isMobile}
             panel="mapping"
             activeMobilePanel={activeMobilePanel}
-            styles={IntegrationStyles}
+            styles={AlignmentStyles}
           >
             <ColumnMapping
               columnsData={columnsData}
@@ -1570,10 +1570,10 @@ function Integration() {
         <CSSTransition
           in={!!columnsData.length}
           classNames={{
-            enter: IntegrationStyles.resultingSectionEnter,
-            enterActive: IntegrationStyles.resultingSectionEnterActive,
-            exit: IntegrationStyles.resultingSectionExit,
-            exitActive: IntegrationStyles.resultingSectionExitActive,
+            enter: AlignmentStyles.resultingSectionEnter,
+            enterActive: AlignmentStyles.resultingSectionEnterActive,
+            exit: AlignmentStyles.resultingSectionExit,
+            exitActive: AlignmentStyles.resultingSectionExitActive,
           }}
           timeout={500}
           unmountOnExit
@@ -1582,7 +1582,7 @@ function Integration() {
             isMobile={isMobile}
             panel="hierarchy"
             activeMobilePanel={activeMobilePanel}
-            styles={IntegrationStyles}
+            styles={AlignmentStyles}
           >
             <MappingsResult
               mappings={mappings}
@@ -1615,11 +1615,11 @@ function Integration() {
       <ToastContainer
         autoClose={2000}
         hideProgressBar={true}
-        className={IntegrationStyles.toastContainer}
-        toastClassName={IntegrationStyles.toast}
+        className={AlignmentStyles.toastContainer}
+        toastClassName={AlignmentStyles.toast}
       />
     </div>
   );
 }
 
-export default Integration;
+export default Alignment;

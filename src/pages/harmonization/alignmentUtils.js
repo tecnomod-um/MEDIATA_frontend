@@ -1,7 +1,7 @@
 import Papa from "papaparse";
 
 /**
- * Pure utility functions extracted from integration.jsx.
+ * Pure utility functions extracted from alignment.jsx.
  * None of these functions depend on React state or hooks.
  */
 

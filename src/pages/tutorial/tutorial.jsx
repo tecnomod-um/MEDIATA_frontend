@@ -7,14 +7,14 @@ import projectPng from "../../resources/images/tutorial/5_project.png";
 import nodesGif from "../../resources/images/tutorial/1_nodes.gif";
 import navbarGif from "../../resources/images/tutorial/2_navbar.gif";
 import fileExplorerPng from "../../resources/images/tutorial/6_fileexplorer.png";
-import integrationUsageGif from "../../resources/images/tutorial/3_integration_usage.gif";
+import alignmentUsageGif from "../../resources/images/tutorial/3_alignment_usage.gif";
 import suggestionUsageGif from "../../resources/images/tutorial/8_suggestions.gif";
 import changeFilesModalPng from "../../resources/images/tutorial/4_change_files_modal.png";
 import metadataGif from "../../resources/images/tutorial/9_metadata.gif";
 import fhirViewPng from "../../resources/images/tutorial/7_fhir.png";
 import fairDataPointIcon from "../../resources/images/FDPicon.svg";
 
-import { DiscoverySlides, AggregateSlides, IntegrationSlides, SemanticAlignmentSlides } from "./images";
+import { DiscoverySlides, AggregateSlides, AlignmentSlides, SemanticIntegrationSlides } from "./images";
 
 const sections = [
   "Introduction",
@@ -25,12 +25,12 @@ const sections = [
   "Discovery",
   "Discovery:-individual-metrics",
   "Discovery:-aggregate-metrics",
-  "Integration",
-  "Integration:-creating-mappings",
-  "Integration:-semantic-enrichment",
-  "Integration:-updating-files",
-  "Semantic-alignment",
-  "Semantic-alignment:-generating-rdf",
+  "Alignment",
+  "Alignment:-creating-mappings",
+  "Alignment:-semantic-enrichment",
+  "Alignment:-updating-files",
+  "Semantic-integration",
+  "Semantic-integration:-generating-rdf",
   "HL7-FHIR",
 ];
 
@@ -83,10 +83,10 @@ const AggregateSteps = [
   },
 ];
 
-const IntegrationSteps = [
+const AlignmentSteps = [
   {
     title: "Overview",
-    description: "Integration display.",
+    description: "Alignment display.",
   },
   {
     title: "Feature column",
@@ -110,10 +110,10 @@ const IntegrationSteps = [
   },
 ];
 
-const SemanticAlignmentSteps = [
+const SemanticIntegrationSteps = [
   {
     title: "Overview",
-    description: "Overall Semantic Alignment view.",
+    description: "Overall Semantic Integration view.",
   },
   {
     title: "Mapped elements",
@@ -202,7 +202,7 @@ function Tutorial() {
     {
       title: "Upload elements",
       description:
-        "Generates and uploads element metadata files from the loaded datasets so that those metadata files can be selected later in the Integration tab.",
+        "Generates and uploads element metadata files from the loaded datasets so that those metadata files can be selected later in the Alignment tab.",
       accent: "emerald",
       icon: "upload",
     },
@@ -225,7 +225,7 @@ function Tutorial() {
                 <em>MEDIATA</em> is a platform developed to address all interoperability-related aspects
                 of sensitive clinical patient datasets, regardless of their encoding or server restrictions.
                 It can be used to analyze and prepare distributed clinical tabular data for federated machine
-                learning through discovery, preprocessing and integration, semantic alignment with ontologies,
+                learning through discovery, preprocessing and alignment, semantic integration with ontologies,
                 and HL7 FHIR standardization. The goal is to facilitate harmonized and standardized datasets,
                 as well as mappings that support researchers in their work.
               </p>
@@ -403,7 +403,7 @@ function Tutorial() {
               <p>
                 The files needed to use the different sections of the platform are selected through the File Explorer.
                 The files displayed depend on the current view and the selected Node or Nodes. For example,
-                the Discovery view FIle Explorer displays the raw datasets, while in the Integration view it only shows produced metadata
+                the Discovery view FIle Explorer displays the raw datasets, while in the Alignment view it only shows produced metadata
                 or other generated files required for that stage of the harmonization workflow. Only files with appropriate extensions
                 are shown for selection (datasets need to be either .csv, .tsv or .xlsx).
               </p>
@@ -428,7 +428,7 @@ function Tutorial() {
                 <code> Ctrl</code>-click to toggle individual files, <code>Shift</code>-click to select a range,
                 or by long-pressing a file row to enter multiple-selection mode. When this mode is active, the toolbar
                 will indicate that multiple files are selected in the top-right corner. This same selection pattern is
-                used when loading several datasets in Discovery, several element files in Integration, or several source
+                used when loading several datasets in Discovery, several element files in Alignment, or several source
                 files in the processing modal.
               </p>
               <p>
@@ -806,15 +806,15 @@ function Tutorial() {
         </div>
 
         <div
-          id="Integration"
+          id="Alignment"
           className={`${TutorialStyles.contentContainer} ${TutorialStyles.featureSection}`}
         >
           <div className={TutorialStyles.textImageContainer}>
             <div className={TutorialStyles.textContainer}>
-              <h2 className={TutorialStyles.centeredHeading}>Integration</h2>
+              <h2 className={TutorialStyles.centeredHeading}>Alignment</h2>
               <div className={TutorialStyles.introText}>
                 <p>
-                  The <em>Integration</em> view allows you to structurally or semantically align the features present
+                  The <em>Alignment</em> view allows you to structurally or semantically align the features present
                   in the datasets of the selected institution(s). To begin, you must first select one or more metadata
                   files, which will determine the set of features available to work with. In a local evaluation workflow,
                   these metadata files are usually the element files generated from Discovery using the
@@ -822,10 +822,10 @@ function Tutorial() {
                 </p>
 
                 <ImageHighlights
-                  imageSrc={IntegrationSlides[0]}
-                  imageAlt="Integration interface"
-                  steps={IntegrationSteps}
-                  label="Integration highlight walkthrough"
+                  imageSrc={AlignmentSlides[0]}
+                  imageAlt="Alignment interface"
+                  steps={AlignmentSteps}
+                  label="Alignment highlight walkthrough"
                 />
 
                 <p>
@@ -834,7 +834,7 @@ function Tutorial() {
                   next to the search input allow you to expand or collapse all dataset feature lists.
                 </p>
                 <p>
-                  If you are evaluating multiple files, select all of their generated element files when the Integration
+                  If you are evaluating multiple files, select all of their generated element files when the Alignment
                   File Explorer opens. Use <code>Ctrl</code>-click, <code>Shift</code>-click, or a long press to select
                   more than one row. If the expected files are not available there, return to Discovery, open the source
                   datasets, and generate the element metadata first.
@@ -871,10 +871,10 @@ function Tutorial() {
           </div>
         </div>
 
-        <div id="Integration:-creating-mappings" className={TutorialStyles.contentContainer}>
+        <div id="Alignment:-creating-mappings" className={TutorialStyles.contentContainer}>
           <div className={TutorialStyles.textImageContainer}>
             <div className={TutorialStyles.textContainer}>
-              <h2 className={TutorialStyles.centeredHeading}>Integration: Creating mappings</h2>
+              <h2 className={TutorialStyles.centeredHeading}>Alignment: Creating mappings</h2>
               <div className={TutorialStyles.introText}>
                 <p>
                   To start defining a mapping for the datasets, enter a name for the resulting column in the top input,
@@ -904,7 +904,7 @@ function Tutorial() {
                 </p>
 
                 <PageImage
-                  imageSrc={integrationUsageGif}
+                  imageSrc={alignmentUsageGif}
                   maintainAspectRatio={true}
                   alt="Defining the 'Toilet' mapping between datasets"
                 />
@@ -934,10 +934,10 @@ function Tutorial() {
           </div>
         </div>
 
-        <div id="Integration:-semantic-enrichment" className={TutorialStyles.contentContainer}>
+        <div id="Alignment:-semantic-enrichment" className={TutorialStyles.contentContainer}>
           <div className={TutorialStyles.textImageContainer}>
             <div className={TutorialStyles.textContainer}>
-              <h2 className={TutorialStyles.centeredHeading}>Integration: Semantic enrichment</h2>
+              <h2 className={TutorialStyles.centeredHeading}>Alignment: Semantic enrichment</h2>
               <div className={TutorialStyles.introText}>
                 <p>
                   If you are only performing structural harmonization, no further steps are required beyond defining the mappings.
@@ -967,15 +967,15 @@ function Tutorial() {
           </div>
         </div>
 
-        <div id="Integration:-updating-files" className={TutorialStyles.contentContainer}>
+        <div id="Alignment:-updating-files" className={TutorialStyles.contentContainer}>
           <div className={TutorialStyles.textImageContainer}>
             <div className={TutorialStyles.textContainer}>
-              <h2 className={TutorialStyles.centeredHeading}>Integration: Updating files</h2>
+              <h2 className={TutorialStyles.centeredHeading}>Alignment: Updating files</h2>
               <div className={TutorialStyles.introText}>
                 <p>
                   After defining the desired mappings for your datasets, you can either download them locally by clicking
                   the &apos;Download Mappings&apos; button or apply them directly to datasets located in the node. The files produced
-                  serve as the starting input for the Semantic Alignment tab of the application. Clicking the green arrow button next
+                  serve as the starting input for the Semantic Integration tab of the application. Clicking the green arrow button next
                   to &apos;Download Mappings&apos; will redirect you to this tab with the generated file already loaded.
                 </p>
 
@@ -1006,15 +1006,15 @@ function Tutorial() {
           </div>
         </div>
 
-        <div id="Semantic-alignment" className={`${TutorialStyles.contentContainer} ${TutorialStyles.featureSection}`}  >
+        <div id="Semantic-integration" className={`${TutorialStyles.contentContainer} ${TutorialStyles.featureSection}`}  >
           <div className={TutorialStyles.textImageContainer}>
             <div className={TutorialStyles.textContainer}>
-              <h2 className={TutorialStyles.centeredHeading}>Semantic Alignment</h2>
+              <h2 className={TutorialStyles.centeredHeading}>Semantic Integration</h2>
               <div className={TutorialStyles.introText}>
                 <p>
-                  The <em>Semantic Alignment</em> view allows you to enrich the mapped elements produced in the
-                  <em> Integration</em> tab with ontology-based semantics and prepare them for semantic export.
-                  In this view, you work with the mapped elements generated during integration and describe their
+                  The <em>Semantic Integration</em> view allows you to enrich the mapped elements produced in the
+                  <em> Alignment</em> tab with ontology-based semantics and prepare them for semantic export.
+                  In this view, you work with the mapped elements generated during alignment and describe their
                   meaning using the available semantic patterns and terminology fields.
                 </p>
 
@@ -1024,17 +1024,17 @@ function Tutorial() {
 
                 <p>
                   When first opening this view, you will be prompted to upload a CSV file containing the mapped elements.
-                  Generating this file from the Integration tab is recommended. Once loaded, all the elements will
+                  Generating this file from the Alignment tab is recommended. Once loaded, all the elements will
                   appear in the sidebar on the left. Selecting an element opens its configuration panel, where you
                   can choose the semantic pattern that best represents it and fill in the corresponding ontology
                   fields required by that pattern.
                 </p>
 
                 <ImageHighlights
-                  imageSrc={SemanticAlignmentSlides[0]}
-                  imageAlt="Semantic alignment interface"
-                  steps={SemanticAlignmentSteps}
-                  label="Semantic alignment highlight walkthrough"
+                  imageSrc={SemanticIntegrationSlides[0]}
+                  imageAlt="Semantic integration interface"
+                  steps={SemanticIntegrationSteps}
+                  label="Semantic integration highlight walkthrough"
                 />
 
                 <p>
@@ -1069,10 +1069,10 @@ function Tutorial() {
           </div>
         </div>
 
-        <div id="Semantic-alignment:-generating-rdf" className={TutorialStyles.contentContainer}>
+        <div id="Semantic-integration:-generating-rdf" className={TutorialStyles.contentContainer}>
           <div className={TutorialStyles.textImageContainer}>
             <div className={TutorialStyles.textContainer}>
-              <h2 className={TutorialStyles.centeredHeading}>Semantic Alignment: Generating RDF</h2>
+              <h2 className={TutorialStyles.centeredHeading}>Semantic Integration: Generating RDF</h2>
               <div className={TutorialStyles.introText}>
                 <p>
                   Once all relevant elements have been semantically described, click the <em>Process</em> button to
@@ -1083,7 +1083,7 @@ function Tutorial() {
                   During this step, the configured semantic mappings are applied to the selected mapped elements so that
                   they can be transformed into a semantically enriched representation. Depending on the type of element,
                   the resulting output may include categorical values, numeric values, dates, contextual properties, and
-                  the terminology assignments defined in the Semantic Alignment view.
+                  the terminology assignments defined in the Semantic Integration view.
                 </p>
 
                 <p>
@@ -1119,7 +1119,7 @@ function Tutorial() {
 
                 <p>
                   When first opening this view, you will be prompted to upload a CSV file containing the mapped elements.
-                  Generating this file from the Integration tab is recommended. The first column is treated as the
+                  Generating this file from the Alignment tab is recommended. The first column is treated as the
                   element name, while the following columns are used to infer its type and associated
                   values. Numeric and date elements are detected through reserved types such as <code>integer</code>,
                   <code>double</code>, and <code>date</code>; all other inputs are treated as categorical values.

@@ -143,7 +143,7 @@ describe('<ElementExporter />', () => {
     fireEvent.click(screen.getAllByRole('button')[1]);
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/integration', {
+      expect(mockNavigate).toHaveBeenCalledWith('/alignment', {
         state: {
           elementFiles: [{ nodeId: 'n1', fileName: 'file_elements.csv' }],
         },

@@ -113,6 +113,9 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
       removeLeadingZeros: false,
       roundDecimals: false,
       decimalPlaces: 2,
+      standardizeCsvFormat: false,
+      csvDelimiter: ";",
+      decimalSeparator: ".",
 
       fillMissingValues: false,
       fillStrategy: "mean",
@@ -159,6 +162,10 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
 
       normalizeData: false,
       normalizeColumns: [],
+      normalizationColumnMode: "specified",
+      normalizationScope: "selection",
+      normalizationInvalidValuePolicy: "fail",
+      normalizationBounds: {},
       standardizeData: false,
       standardizeColumns: [],
       binData: false,
@@ -203,7 +210,10 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
   }, []);
 
   const enabledCount = useMemo(() => {
-    return Object.values(opts).filter((v) => typeof v === "boolean" && v).length;
+    const preferenceFlags = new Set(["mergeCaseInsensitive", "mergeTrimValues"]);
+    return Object.entries(opts).filter(
+      ([key, value]) => typeof value === "boolean" && value && !preferenceFlags.has(key)
+    ).length;
   }, [opts]);
 
   const enabledLabel = enabledCount === 1 ? "1 step selected" : `${enabledCount} steps selected`;
@@ -326,7 +336,8 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
       return;
     }
 
-    if (opts.normalizeData && (!opts.normalizeColumns || opts.normalizeColumns.length === 0)) {
+    if (opts.normalizeData && opts.normalizationColumnMode !== "all_numeric"
+        && (!opts.normalizeColumns || opts.normalizeColumns.length === 0)) {
       toast.error("Please specify columns to normalize.");
       return;
     }
@@ -355,6 +366,21 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
       const t = Number(opts.mergeSimilarityThreshold);
       if (Number.isNaN(t) || t <= 0 || t > 1) {
         toast.error("Similarity threshold must be between 0 and 1.");
+        return;
+      }
+    }
+
+    if (opts.standardizeCsvFormat) {
+      const delimiter = String(opts.csvDelimiter || "").trim();
+      const decimalSeparator = String(opts.decimalSeparator || "").trim();
+
+      if (!(delimiter.length === 1 || delimiter.toUpperCase() === "TAB" || delimiter === "\\t")) {
+        toast.error("CSV separator must be a single character or TAB.");
+        return;
+      }
+
+      if (decimalSeparator !== "." && decimalSeparator !== ",") {
+        toast.error("Decimal separator must be '.' or ','.");
         return;
       }
     }
@@ -829,7 +855,7 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                         </select>
                       </div>
 
-                      <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
+                      <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
                         <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Columns</div>
                         <input
                           className={FileExplorerStyles.cleanControl} data-no-row-toggle
@@ -880,6 +906,74 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                           />
                         </div>
                       )}
+                    </ToggleRow>
+                  </div>
+                </FilterableOption>
+
+                <FilterableOption label="Standardize CSV formatting" desc="Choose the cleaned file separator and decimal symbol." cleanSearchNorm={cleanSearchNorm} visibleCountRef={visibleOptionsCount}>
+                  <div className={FileExplorerStyles.cleanRow}>
+                    <div className={FileExplorerStyles.cleanSwitchCol}>
+                      <Switch
+                        checked={opts.standardizeCsvFormat}
+                        onChange={(v) => update("standardizeCsvFormat", v)}
+                        height={20}
+                        width={40}
+                        handleDiameter={16}
+                        offColor="#888"
+                        onColor="#9ABDDC"
+                        disabled={busy}
+                      />
+                    </div>
+                    <ToggleRow busy={busy} checked={opts.standardizeCsvFormat} onToggle={(v) => update("standardizeCsvFormat", v)}>
+                      <div className={FileExplorerStyles.cleanLabelRow}>
+                        <div className={FileExplorerStyles.cleanLabel}>Standardize CSV formatting</div>
+                        <span
+                          className={`${FileExplorerStyles.cleanInlineHint} ${busy || !opts.standardizeCsvFormat
+                            ? FileExplorerStyles.cleanInlineHintShow
+                            : FileExplorerStyles.cleanInlineHintHide
+                            }`}
+                          aria-hidden={!(busy || !opts.standardizeCsvFormat)}
+                        >
+                          (Turn on to choose separators)
+                        </span>
+                      </div>
+
+                      <div className={FileExplorerStyles.cleanDesc}>
+                        Choose how cleaned CSV files separate columns and decimal digits.
+                      </div>
+
+                      <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                        <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>CSV separator</div>
+                        <select
+                          className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                          value={opts.csvDelimiter}
+                          onChange={(e) => update("csvDelimiter", e.target.value)}
+                          disabled={busy || !opts.standardizeCsvFormat}
+                        >
+                          <option value=",">Comma (,)</option>
+                          <option value=";">Semicolon (;)</option>
+                          <option value="|">Pipe (|)</option>
+                          <option value="TAB">Tab</option>
+                        </select>
+                      </div>
+                      <div className={FileExplorerStyles.cleanDesc} data-no-row-toggle>
+                        {opts.normalizationScope === "selection"
+                          ? "Uses shared min/max values for every selected file; nodes exchange aggregates only."
+                          : "Computes different min/max values per file. Use only when files will not be compared."}
+                      </div>
+
+                      <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                        <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Decimal separator</div>
+                        <select
+                          className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                          value={opts.decimalSeparator}
+                          onChange={(e) => update("decimalSeparator", e.target.value)}
+                          disabled={busy || !opts.standardizeCsvFormat}
+                        >
+                          <option value=".">Dot (.)</option>
+                          <option value=",">Comma (,)</option>
+                        </select>
+                      </div>
                     </ToggleRow>
                   </div>
                 </FilterableOption>
@@ -1561,7 +1655,20 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                     <ToggleRow busy={busy} checked={opts.normalizeData} onToggle={(v) => update("normalizeData", v)}>
                       <div className={FileExplorerStyles.cleanLabel}>Normalize data (min-max)</div>
                       <div className={FileExplorerStyles.cleanDesc}>
-                        Scale values to [0,1] per selected column.
+                        Scale values to [0,1]. Constant columns become 0.
+                      </div>
+
+                      <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                        <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Column selection</div>
+                        <select
+                          className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                          value={opts.normalizationColumnMode}
+                          onChange={(e) => update("normalizationColumnMode", e.target.value)}
+                          disabled={busy || !opts.normalizeData}
+                        >
+                          <option value="specified">Specified columns</option>
+                          <option value="all_numeric">All fully numeric columns</option>
+                        </select>
                       </div>
 
                       <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle  >
@@ -1570,9 +1677,48 @@ function CleanPanel({ show, onClose, busy, selectedCount, onApply }) {
                           className={FileExplorerStyles.cleanControl} data-no-row-toggle
                           value={(opts.normalizeColumns || []).join(",")}
                           onChange={(e) => update("normalizeColumns", toList(e.target.value))}
-                          disabled={busy || !opts.normalizeData}
+                          disabled={busy || !opts.normalizeData || opts.normalizationColumnMode === "all_numeric"}
                           placeholder="colA,colB"
                         />
+                      </div>
+
+                      {opts.normalizationColumnMode === "all_numeric" && (
+                        <div className={FileExplorerStyles.cleanDesc} data-no-row-toggle>
+                          {opts.normalizationScope === "selection"
+                            ? "Uses columns that are fully numeric and present in every selected file."
+                            : "Uses every fully numeric column found in each file."}
+                        </div>
+                      )}
+
+                      <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                        <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Scale across</div>
+                        <select
+                          className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                          value={opts.normalizationScope}
+                          onChange={(e) => update("normalizationScope", e.target.value)}
+                          disabled={busy || !opts.normalizeData}
+                        >
+                          <option value="selection">All selected files together (recommended)</option>
+                          <option value="per_file">Each file independently</option>
+                        </select>
+                      </div>
+
+                      <div className={FileExplorerStyles.cleanFieldRow} data-no-row-toggle>
+                        <div className={FileExplorerStyles.cleanFieldLabel} data-no-row-toggle>Non-numeric cells</div>
+                        <select
+                          className={FileExplorerStyles.cleanControl} data-no-row-toggle
+                          value={opts.normalizationInvalidValuePolicy}
+                          onChange={(e) => update("normalizationInvalidValuePolicy", e.target.value)}
+                          disabled={busy || !opts.normalizeData}
+                        >
+                          <option value="fail">Stop and show an error notification (recommended)</option>
+                          <option value="keep">Keep them unchanged</option>
+                        </select>
+                      </div>
+                      <div className={FileExplorerStyles.cleanDesc} data-no-row-toggle>
+                        {opts.normalizationInvalidValuePolicy === "fail"
+                          ? "Checks every selected file first. If found, the entire cleaning run is stopped before any file is changed."
+                          : "Invalid cells stay unchanged; all other selected cleaning steps still run."}
                       </div>
                     </ToggleRow>
                   </div>

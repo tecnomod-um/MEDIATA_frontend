@@ -20,9 +20,11 @@ export const getProjectList = async () => {
 };
 
 // Fetch the list of nodes
-export const getNodeList = async () => {
+export const getNodeList = async (projectId) => {
   try {
-    const response = await axiosInstance.get(`/nodes/connect/list`);
+    const response = projectId
+      ? await axiosInstance.get(`/nodes/connect/list`, { params: { projectId } })
+      : await axiosInstance.get(`/nodes/connect/list`);
     return response.data;
   } catch (error) {
     throw error;
@@ -207,7 +209,7 @@ export const fetchSuggestions = async (query, type) => {
 export const uploadSemanticMappingCsv = async (csvText) => {
   try {
     const response = await axiosInstance.post(
-      "/rdf/semanticalignment",
+      "/rdf/semanticintegration",
       csvText,
       {
         headers: {
@@ -440,6 +442,14 @@ export const processSelectedDatasets = async (fileNames) => {
   return { mode: "sync", results: response.data };
 };
 
+export const extractDatasetElements = async (fileNames) => {
+  const response = await nodeAxiosInstance.post(
+    `/taniwha/api/data/extractElements`,
+    { fileNames }
+  );
+  return response.data;
+};
+
 export const getProcessSelectedDatasetsStatus = async (jobId) => {
   const response = await nodeAxiosInstance.get(
     `/taniwha/api/data/processList/status/${encodeURIComponent(jobId)}`
@@ -469,6 +479,44 @@ export const getNodeMappedDatasets = async () => {
     console.error("Error occurred while fetching datasets:", error);
     throw error;
   }
+};
+
+export const processSemanticCdeDataset = async ({
+  datasetFileName,
+  semanticCdePath,
+  mappingIds,
+  outputFileName,
+}) => {
+  const response = await nodeAxiosInstance.post(
+    `/taniwha/api/semantic-cde/process`,
+    {
+      datasetFileName,
+      semanticCdePath,
+      mappingIds,
+      outputFileName,
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  return response.data;
+};
+
+export const getSemanticCdeDatasetMatches = async (datasetFileName) => {
+  const response = await nodeAxiosInstance.get(
+    `/taniwha/api/semantic-cde/datasets/${encodeURIComponent(datasetFileName)}/registry-matches`
+  );
+  return response.data;
+};
+
+export const scoreSemanticCdeCandidates = async ({ datasetFields, candidates }) => {
+  const response = await axiosInstance.post(
+    `/api/semantic-cde/score-candidates`,
+    { datasetFields, candidates }
+  );
+  return response.data;
 };
 
 export const getNodeFHIR = async () => {
@@ -578,6 +626,24 @@ export const startCleanExplorerFile = async (category, name, cleaningOptions) =>
   );
 
   return { status: response.status, data: response.data };
+};
+
+export const validateCleanExplorerFile = async (category, name, cleaningOptions) => {
+  const response = await nodeAxiosInstance.post(
+    `/taniwha/api/files/clean/validate`,
+    cleaningOptions ?? null,
+    { params: { category, name } }
+  );
+  return response.data;
+};
+
+export const getNormalizationStats = async (category, name, columns, cleaningOptions) => {
+  const response = await nodeAxiosInstance.post(
+    `/taniwha/api/files/clean/normalization-stats`,
+    { columns, cleaningOptions },
+    { params: { category, name } }
+  );
+  return response.data;
 };
 
 export const getCleanExplorerFileStatus = async (jobId) => {

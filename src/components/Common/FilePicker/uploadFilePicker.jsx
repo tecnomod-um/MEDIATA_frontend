@@ -3,7 +3,16 @@ import { CSSTransition } from 'react-transition-group';
 import FilePickerStyles from './filePicker.module.css';
 
 // File uploader modal for views that need a local file to work
-function UploadFilePicker({ onFileUpload, isProcessing = false, modalTitle }) {
+function UploadFilePicker({
+  onFileUpload,
+  isProcessing = false,
+  modalTitle,
+  children,
+  modalClassName = '',
+  uploadTitle,
+  uploadDescription,
+  confirmLabel = 'Upload File',
+}) {
   const [file, setFile] = useState(null);
   const [showModal, setShowModal] = useState(true);
   const hiddenFileInput = useRef(null);
@@ -49,8 +58,20 @@ function UploadFilePicker({ onFileUpload, isProcessing = false, modalTitle }) {
       unmountOnExit
     >
       <div ref={uploadModalRef} className={FilePickerStyles.modalBackground}>
-        <div className={FilePickerStyles.uploadModalContainer}>
+        <div className={`${FilePickerStyles.uploadModalContainer} ${modalClassName}`}>
           <h2>{modalTitle}</h2>
+          {children}
+          {children && (
+            <div className={FilePickerStyles.modalDivider} aria-hidden="true">
+              <span>or</span>
+            </div>
+          )}
+          {(uploadTitle || uploadDescription) && (
+            <div className={FilePickerStyles.uploadSectionHeader}>
+              {uploadTitle && <h3>{uploadTitle}</h3>}
+              {uploadDescription && <p>{uploadDescription}</p>}
+            </div>
+          )}
           <div
             className={`
               ${FilePickerStyles.uploadItem}
@@ -84,7 +105,7 @@ function UploadFilePicker({ onFileUpload, isProcessing = false, modalTitle }) {
                 <span className={FilePickerStyles.spinnerIcon} />
                 <span>Processing...</span>
               </div>
-            ) : ('Upload File')}
+            ) : (confirmLabel)}
           </button>
         </div>
       </div>

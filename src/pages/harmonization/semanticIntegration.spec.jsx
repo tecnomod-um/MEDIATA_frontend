@@ -3,15 +3,16 @@ import { render, fireEvent, screen, waitFor, act } from '@testing-library/react'
 import '@testing-library/jest-dom';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import SemanticAlignment from './semanticAlignment';
+import SemanticIntegration from './semanticIntegration';
 import * as colorsUtil from '../../util/colors';
 import * as petitionHandler from '../../util/petitionHandler';
+import { useNode } from '../../context/nodeContext';
 import { vi } from "vitest";
 
 vi.mock('react-router-dom', () => ({ useLocation: vi.fn() }));
 vi.mock('react-transition-group', () => ({ CSSTransition: ({ children, in: inProp }) => (inProp ? children : null) }));
 vi.mock(
-  '../../components/SemanticAlignment/ElementDetailPanel/elementDetailPanel',
+  '../../components/SemanticIntegration/ElementDetailPanel/elementDetailPanel',
   () => ({
     __esModule: true,
     default: ({ onBuildClass, onDeleteClass, activeElementIndex, activeCategoryIndex }) => (
@@ -36,12 +37,12 @@ vi.mock(
   })
 );
 
-vi.mock('../../components/SemanticAlignment/RdfSidebar/rdfSidebar', () => ({
+vi.mock('../../components/SemanticIntegration/RdfSidebar/rdfSidebar', () => ({
   __esModule: true,
   default: () => <div data-testid="rdf-sidebar" />,
 }));
 
-vi.mock('../../components/SemanticAlignment/RdfCard/rdfCard', () => ({
+vi.mock('../../components/SemanticIntegration/RdfCard/rdfCard', () => ({
   __esModule: true,
   default: ({ onCardClick, card }) => (
     <div data-testid={`rdf-card-${card.id}`} onClick={() => onCardClick()}>
@@ -50,7 +51,7 @@ vi.mock('../../components/SemanticAlignment/RdfCard/rdfCard', () => ({
   ),
 }));
 
-vi.mock('../../components/SemanticAlignment/RdfCard/rdfConnection', () => ({
+vi.mock('../../components/SemanticIntegration/RdfCard/rdfConnection', () => ({
   __esModule: true,
   default: () => <div data-testid="rdf-connection" />,
 }));
@@ -67,15 +68,18 @@ vi.mock('../../components/Common/FilePicker/uploadFilePicker', () => {
 
   return {
     __esModule: true,
-    default: ({ onFileUpload }) => (
-      <button
-        data-testid="file-picker"
-        onClick={() =>
-          onFileUpload(new MockFile(['x,y'], 'test.csv', { type: 'text/csv' }))
-        }
-      >
-        PICK FILE
-      </button>
+    default: ({ onFileUpload, children }) => (
+      <div>
+        {children}
+        <button
+          data-testid="file-picker"
+          onClick={() =>
+            onFileUpload(new MockFile(['x,y'], 'test.csv', { type: 'text/csv' }))
+          }
+        >
+          PICK FILE
+        </button>
+      </div>
     ),
   };
 });
@@ -86,6 +90,18 @@ vi.mock('../../util/colors', () => ({
 
 vi.mock('../../util/petitionHandler', () => ({
   uploadSemanticMappingCsv: vi.fn(),
+  getNodeDatasets: vi.fn(),
+  getSemanticCdeDatasetMatches: vi.fn(),
+  processSemanticCdeDataset: vi.fn(),
+  scoreSemanticCdeCandidates: vi.fn(),
+}));
+
+vi.mock('../../util/nodeAxiosSetup', () => ({
+  updateNodeAxiosBaseURL: vi.fn(),
+}));
+
+vi.mock('../../context/nodeContext', () => ({
+  useNode: vi.fn(() => ({ selectedNodes: [] })),
 }));
 
 vi.mock('react-toastify', () => ({
@@ -108,18 +124,20 @@ beforeEach(() => {
   vi.clearAllMocks();
   colorsUtil.generateDistinctColors.mockReturnValue(['#aaa']);
   useLocation.mockReturnValue({ state: {} });
+  useNode.mockReturnValue({ selectedNodes: [] });
+  global.fetch = vi.fn();
 });
 
-describe('<SemanticAlignment />', () => {
+describe('<SemanticIntegration />', () => {
   it('shows file picker initially on desktop', () => {
-    render(<SemanticAlignment />);
+    render(<SemanticIntegration />);
     expect(screen.getByTestId('file-picker')).toBeInTheDocument();
   });
 
   it('logs and swallows invalid base64 in location.state', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => { });
     useLocation.mockReturnValue({ state: { csvData: '!!!invalid!!!' } });
-    render(<SemanticAlignment />);
+    render(<SemanticIntegration />);
     expect(spy).toHaveBeenCalledWith(
       expect.stringContaining('Error loading CSV from navigation:'),
       expect.any(Error)
@@ -130,21 +148,112 @@ describe('<SemanticAlignment />', () => {
   it('parses valid base64 CSV from location.state and shows panels', async () => {
     const csv = 'A,integer\nB,foo,bar';
     useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-    render(<SemanticAlignment />);
+    render(<SemanticIntegration />);
     expect(await screen.findByTestId('rdf-sidebar')).toBeInTheDocument();
     expect(screen.getByTestId('element-detail')).toBeInTheDocument();
   });
 
   it('handles file upload via FilePicker', async () => {
-    render(<SemanticAlignment />);
+    render(<SemanticIntegration />);
     fireEvent.click(screen.getByTestId('file-picker'));
     expect(await screen.findByTestId('rdf-sidebar')).toBeInTheDocument();
+  });
+
+  it('shows Semantic-CDE conversions returned by the selected node', async () => {
+    useNode.mockReturnValue({
+      selectedNodes: [{ nodeId: 'n1', serviceUrl: 'http://node', name: 'Node One' }],
+    });
+    petitionHandler.getNodeDatasets.mockResolvedValue(['table_01.csv']);
+    petitionHandler.getSemanticCdeDatasetMatches.mockResolvedValue([
+      {
+        datasetFileName: 'table_01.csv',
+        title: 'Respiratory rate',
+        semanticCdePath: 'scde-index/respiratory_rate.scde.ttl',
+        datasetFields: ['respiratory rate'],
+        semanticDescriptions: ['Clinical data element: respiratory rate'],
+        lexicalScore: 0.8,
+        lexicalMatch: true,
+        conversions: [
+          {
+            id: 'DERIVE-RESPIRATORY-RATE-CSV-SULO-001',
+            label: 'CSV to SULO respiratory rate derivation',
+            description: 'Instance-level derivation.',
+            source: 'CSV',
+            target: 'SULO',
+            outputSuffix: 'sulo',
+          },
+        ],
+      },
+    ]);
+    petitionHandler.scoreSemanticCdeCandidates.mockResolvedValue([
+      {
+        semanticCdePath: 'scde-index/respiratory_rate.scde.ttl',
+        accepted: true,
+        semanticSimilarity: 0.91,
+        score: 0.844,
+      },
+    ]);
+    petitionHandler.processSemanticCdeDataset.mockResolvedValue({
+      success: true,
+      outputFiles: ['table_01-sulo.ttl'],
+    });
+
+    render(<SemanticIntegration />);
+
+    expect(await screen.findByText('table_01.csv')).toBeInTheDocument();
+    expect(petitionHandler.scoreSemanticCdeCandidates).toHaveBeenCalledWith({
+      datasetFields: ['respiratory rate'],
+      candidates: [{
+        semanticCdePath: 'scde-index/respiratory_rate.scde.ttl',
+        descriptions: ['Clinical data element: respiratory rate'],
+        lexicalScore: 0.8,
+        lexicalMatch: true,
+      }],
+    });
+    fireEvent.click(screen.getByRole('button', { name: /align to sulo/i }));
+
+    await waitFor(() => {
+      expect(petitionHandler.processSemanticCdeDataset).toHaveBeenCalledWith({
+        datasetFileName: 'table_01.csv',
+        semanticCdePath: 'scde-index/respiratory_rate.scde.ttl',
+        mappingIds: ['DERIVE-RESPIRATORY-RATE-CSV-SULO-001'],
+        outputFileName: 'table_01-sulo.ttl',
+      });
+    });
+  });
+
+  it('does not show node candidates rejected by central semantic scoring', async () => {
+    useNode.mockReturnValue({
+      selectedNodes: [{ nodeId: 'n1', serviceUrl: 'http://node', name: 'Node One' }],
+    });
+    petitionHandler.getNodeDatasets.mockResolvedValue(['diagnosis.csv']);
+    petitionHandler.getSemanticCdeDatasetMatches.mockResolvedValue([{
+      datasetFileName: 'diagnosis.csv',
+      title: 'Blood pressure',
+      semanticCdePath: 'scde-index/blood_pressure.scde.ttl',
+      datasetFields: ['diagnosis'],
+      semanticDescriptions: ['Clinical data element: blood pressure'],
+      lexicalScore: 0.5,
+      lexicalMatch: true,
+      conversions: [{ id: 'MAP-1', source: 'CSV', target: 'SULO', outputSuffix: 'sulo' }],
+    }]);
+    petitionHandler.scoreSemanticCdeCandidates.mockResolvedValue([{
+      semanticCdePath: 'scde-index/blood_pressure.scde.ttl',
+      accepted: false,
+      semanticSimilarity: 0.1,
+      score: 0.34,
+    }]);
+
+    render(<SemanticIntegration />);
+
+    expect(await screen.findByText(/No selected-node dataset currently matches/i)).toBeInTheDocument();
+    expect(screen.queryByText('diagnosis.csv')).not.toBeInTheDocument();
   });
 
   describe('desktop controls and stateful flows', () => {
     const renderWithCsv = async (csv) => {
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       await screen.findByTestId('rdf-sidebar');
     };
 
@@ -309,11 +418,11 @@ describe('<SemanticAlignment />', () => {
     it('switches to mobile layout and back', async () => {
       window.innerWidth = 320;
       window.dispatchEvent(new Event('resize'));
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       expect(screen.getByTestId('file-picker')).toBeInTheDocument();
       const csv = 'X';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       expect(await screen.findByTestId('element-detail')).toBeInTheDocument();
 
       fireEvent.click(screen.getByText(/Workspace/i));
@@ -327,7 +436,7 @@ describe('<SemanticAlignment />', () => {
       const clickSpy = vi.spyOn(HTMLInputElement.prototype, 'click');
       const csv = 'Y';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       fireEvent.click(screen.getByRole('button', { name: /Upload CSV/i }));
       expect(clickSpy).toHaveBeenCalled();
       clickSpy.mockRestore();
@@ -338,7 +447,7 @@ describe('<SemanticAlignment />', () => {
       window.dispatchEvent(new Event('resize'));
       const csv = 'Z';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
 
       const workspace = await screen.findByTestId('rdf-connection');
       fireEvent.wheel(workspace, { deltaY: -50 });
@@ -350,7 +459,7 @@ describe('<SemanticAlignment />', () => {
       const csv = 'W';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
       act(() => {
-        render(<SemanticAlignment />);
+        render(<SemanticIntegration />);
       });
 
       const resizer =
@@ -377,7 +486,7 @@ describe('<SemanticAlignment />', () => {
       const csv = 'T';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
       act(() => {
-        render(<SemanticAlignment />);
+        render(<SemanticIntegration />);
       });
 
       const resizer = screen.getByTestId('resizer');
@@ -395,7 +504,7 @@ describe('<SemanticAlignment />', () => {
       window.innerWidth = 1024;
       const csv = 'X,cat1';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       
       fireEvent.click(screen.getByTestId('build'));
       const card = await screen.findByTestId(/^rdf-card-/);
@@ -409,7 +518,7 @@ describe('<SemanticAlignment />', () => {
       window.innerWidth = 1024;
       const csv = 'Y,cat1';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       
       fireEvent.click(screen.getByTestId('build'));
       const card = await screen.findByTestId(/^rdf-card-/);
@@ -428,7 +537,7 @@ describe('<SemanticAlignment />', () => {
       window.innerWidth = 1024;
       const csv = 'Z,cat1';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       
       fireEvent.click(screen.getByTestId('build'));
       const card = await screen.findByTestId(/^rdf-card-/);
@@ -444,7 +553,7 @@ describe('<SemanticAlignment />', () => {
       window.innerWidth = 1024;
       const csv = 'A,cat1,cat2\nB,cat3,cat4';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       
       // Build two cards
       fireEvent.click(screen.getByTestId('build'));
@@ -465,7 +574,7 @@ describe('<SemanticAlignment />', () => {
       window.innerWidth = 1024;
       const csv = 'C';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       
       const removeBtn = await screen.findByRole('button', { name: /Remove Last/i });
       fireEvent.click(removeBtn);
@@ -475,7 +584,7 @@ describe('<SemanticAlignment />', () => {
     it('parses CSV with type field (integer)', async () => {
       const csv = 'numField,integer';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       
       expect(await screen.findByTestId('rdf-sidebar')).toBeInTheDocument();
     });
@@ -483,7 +592,7 @@ describe('<SemanticAlignment />', () => {
     it('parses CSV with type field (double)', async () => {
       const csv = 'dblField,double';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       
       expect(await screen.findByTestId('rdf-sidebar')).toBeInTheDocument();
     });
@@ -491,7 +600,7 @@ describe('<SemanticAlignment />', () => {
     it('parses CSV with type field (date)', async () => {
       const csv = 'dateField,date';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       
       expect(await screen.findByTestId('rdf-sidebar')).toBeInTheDocument();
     });
@@ -499,7 +608,7 @@ describe('<SemanticAlignment />', () => {
     it('parses CSV with categorical values', async () => {
       const csv = 'catField,optionA,optionB,optionC';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       
       expect(await screen.findByTestId('rdf-sidebar')).toBeInTheDocument();
     });
@@ -507,7 +616,7 @@ describe('<SemanticAlignment />', () => {
     it('parses CSV with element name only', async () => {
       const csv = 'simpleField';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       
       expect(await screen.findByTestId('rdf-sidebar')).toBeInTheDocument();
     });
@@ -515,7 +624,7 @@ describe('<SemanticAlignment />', () => {
     it('ignores empty CSV lines', async () => {
       const csv = 'field1\n\n\nfield2\n\n';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       
       expect(await screen.findByTestId('rdf-sidebar')).toBeInTheDocument();
     });
@@ -523,7 +632,7 @@ describe('<SemanticAlignment />', () => {
     it('ignores CSV lines with no name', async () => {
       const csv = ',val1,val2\nvalidField,cat1';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       
       expect(await screen.findByTestId('rdf-sidebar')).toBeInTheDocument();
     });
@@ -531,11 +640,11 @@ describe('<SemanticAlignment />', () => {
     it('processes CSV data only once even with multiple renders', async () => {
       const csv = 'onceField';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      const { rerender } = render(<SemanticAlignment />);
+      const { rerender } = render(<SemanticIntegration />);
       
       expect(await screen.findByTestId('rdf-sidebar')).toBeInTheDocument();
       
-      rerender(<SemanticAlignment />);
+      rerender(<SemanticIntegration />);
       expect(screen.getByTestId('rdf-sidebar')).toBeInTheDocument();
     });
 
@@ -543,7 +652,7 @@ describe('<SemanticAlignment />', () => {
       window.innerWidth = 1024;
       const csv = 'uploadedField';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       
       await screen.findByRole('button', { name: /Upload CSV/i });
       
@@ -557,7 +666,7 @@ describe('<SemanticAlignment />', () => {
       colorsUtil.generateDistinctColors.mockReturnValue(['#FF0000', '#00FF00']);
       const csv = 'catField,cat1,cat2,cat3';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       
       fireEvent.click(await screen.findByTestId('build'));
       expect(screen.getByTestId(/^rdf-card-/)).toBeInTheDocument();
@@ -584,7 +693,7 @@ describe('<SemanticAlignment />', () => {
       try {
         const csv = 'catField,cat1,cat2';
         useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-        render(<SemanticAlignment />);
+        render(<SemanticIntegration />);
         
         fireEvent.click(await screen.findByTestId('build'));
         
@@ -604,7 +713,7 @@ describe('<SemanticAlignment />', () => {
       
       const csv = 'fieldA\nfieldB';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       
       // Build only one of two required classes
       fireEvent.click(await screen.findByTestId('build'));
@@ -619,7 +728,7 @@ describe('<SemanticAlignment />', () => {
       window.innerWidth = 1024;
       const csv = 'clickField';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       
       fireEvent.click(await screen.findByTestId('build'));
       const card = screen.getByTestId(/^rdf-card-/);
@@ -634,7 +743,7 @@ describe('<SemanticAlignment />', () => {
       
       const csv = 'mobileField';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       
       expect(await screen.findByTestId('element-detail')).toBeInTheDocument();
       
@@ -655,7 +764,7 @@ describe('<SemanticAlignment />', () => {
       
       const csv = 'tabletField';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       
       expect(await screen.findByTestId('element-detail')).toBeInTheDocument();
     });
@@ -666,7 +775,7 @@ describe('<SemanticAlignment />', () => {
       
       const csv = 'narrowField';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       
       expect(await screen.findByTestId('element-detail')).toBeInTheDocument();
     });
@@ -677,7 +786,7 @@ describe('<SemanticAlignment />', () => {
       
       const csv = 'wideField';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       
       expect(await screen.findByTestId('element-detail')).toBeInTheDocument();
     });
@@ -688,7 +797,7 @@ describe('<SemanticAlignment />', () => {
       
       const csv = 'toggleField';
       useLocation.mockReturnValue({ state: { csvData: btoa(csv) } });
-      render(<SemanticAlignment />);
+      render(<SemanticIntegration />);
       
       expect(await screen.findByTestId('element-detail')).toBeInTheDocument();
       

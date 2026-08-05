@@ -53,7 +53,7 @@ vi.mock("../../components/Common/FileExplorer/fileExplorer", () => ({
   },
 }));
 
-vi.mock("../../components/Integration/MappingsResult/mappingsResult", () => ({
+vi.mock("../../components/Alignment/MappingsResult/mappingsResult", () => ({
   __esModule: true,
   default: () => <div data-testid="MappingsResult" />,
 }));

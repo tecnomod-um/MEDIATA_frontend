@@ -5,7 +5,7 @@ import NodesStyles from "./nodes.module.css";
 import { useNode } from "../../context/nodeContext";
 import config from "../../config";
 import { toast, ToastContainer } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import MetadataDisplay from "../../components/Nodes/MetadataDisplay/metadataDisplay";
 import JoinedNodesDisplay from "../../components/Nodes/JoinedNodesDisplay/joinedNodesDisplay";
 import SchemaTray from "../../components/Common/SchemaTray/schemaTray";
@@ -42,11 +42,13 @@ const Nodes = () => {
   const { selectNode, selectNodes } = useNode();
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const projectId = location.state?.projectId;
 
   useEffect(() => {
     const fetchNodes = async () => {
       try {
-        const data = await getNodeList();
+        const data = await getNodeList(projectId);
         const newNodes = data.map((node) => {
           rememberNodeRouting(node, {
             proxyRequired: node.proxyRequired,
@@ -92,7 +94,7 @@ const Nodes = () => {
     fetchNodes();
     const intervalId = setInterval(fetchNodes, config.pollingInterval);
     return () => clearInterval(intervalId);
-  }, [nodes, initialFetchDone]);
+  }, [nodes, initialFetchDone, projectId]);
 
   useEffect(() => {
     if (initialFetchDone) {

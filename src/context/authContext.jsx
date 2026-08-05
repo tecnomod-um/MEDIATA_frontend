@@ -7,14 +7,17 @@ import { getSystemCapabilities } from "../util/petitionHandler";
 
 const AuthContext = createContext();
 
-const DEFAULT_CAPS = { semanticAlignment: false, hl7fhir: false };
+const DEFAULT_CAPS = { semanticIntegration: false, hl7fhir: false };
 const CAPS_STORAGE_KEY = "systemCapabilities";
 
 function safeParseCaps(raw) {
   try {
     const parsed = JSON.parse(raw);
+    if (!parsed || !Object.prototype.hasOwnProperty.call(parsed, "semanticIntegration")) {
+      return null;
+    }
     return {
-      semanticAlignment: !!parsed?.semanticAlignment,
+      semanticIntegration: !!parsed?.semanticIntegration,
       hl7fhir: !!parsed?.hl7fhir,
     };
   } catch {
@@ -64,7 +67,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const caps = await getSystemCapabilities();
       const normalized = {
-        semanticAlignment: !!caps?.semanticAlignment,
+        semanticIntegration: !!caps?.semanticIntegration,
         hl7fhir: !!caps?.hl7fhir,
       };
       setCapabilities(normalized);

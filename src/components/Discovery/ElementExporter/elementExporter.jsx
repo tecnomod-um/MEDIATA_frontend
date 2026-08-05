@@ -20,7 +20,7 @@ const stripFileSuffix = (featureName) => {
   return featureName;
 };
 
-// Component for exporting dataset metadata and save in the backend. Feeds integration.
+// Component for exporting dataset metadata and save in the backend. Feeds alignment.
 function ElementExporter({ dataResults = [], activeFileIndices = [], combinedData, filteredData }) {
   const navigate = useNavigate();
   const { selectedNodes } = useNode();
@@ -144,7 +144,7 @@ function ElementExporter({ dataResults = [], activeFileIndices = [], combinedDat
     const uploadedElementFiles = await saveAndStoreFile();
     // console.log(uploadedElementFiles);
     if (uploadedElementFiles.length > 0) {
-      navigate("/integration", {
+      navigate("/alignment", {
         state: { elementFiles: uploadedElementFiles },
       });
     } else {

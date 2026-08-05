@@ -22,5 +22,5 @@ import c4 from "../../resources/images/tutorial/slide4/4.jpg";
 
 export const DiscoverySlides = [d1, d2, d3, d4];
 export const AggregateSlides = [a1, a2, a3, a4];
-export const IntegrationSlides = [b1, b2, b3, b4, b5];
-export const SemanticAlignmentSlides = [c1, c2, c3, c4];
+export const AlignmentSlides = [b1, b2, b3, b4, b5];
+export const SemanticIntegrationSlides = [c1, c2, c3, c4];

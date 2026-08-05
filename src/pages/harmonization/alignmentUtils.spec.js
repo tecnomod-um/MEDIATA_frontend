@@ -11,7 +11,7 @@ import {
   collectOneHotFamily,
   buildOneHotDraft,
   makeId,
-} from "./integrationUtils";
+} from "./alignmentUtils";
 
 describe("parseCSV", () => {
   it("parses a single row with values", () => {

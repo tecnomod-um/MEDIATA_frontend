@@ -6,7 +6,32 @@ import CircularProgress from "@mui/material/CircularProgress";
 import FileExplorerStyles from "./fileExplorer.module.css";
 
 // Files detected will be displayed as rows here. Allows selection and renaming
-function FileTable({ sorted, selected, busy, processingFiles = new Set(), fileProgress, nodes = [], onRowMouseDown, onRowMouseUp, onRowMouseLeave, longPressFired, onRowClick, onRowDoubleClick, renamingKey, renameInputRef, renameDraft, setRenameDraft, commitRename, cancelRename, formatBytes, formatDateTime, isNew, onLayoutChange }) {
+function FileTable({
+  sorted,
+  selected,
+  busy,
+  processingFiles = new Set(),
+  fileProgress,
+  nodes = [],
+  onRowMouseDown,
+  onRowMouseUp,
+  onRowMouseLeave,
+  longPressFired,
+  onRowClick,
+  onRowDoubleClick,
+  renamingKey,
+  renameInputRef,
+  renameDraft,
+  setRenameDraft,
+  commitRename,
+  cancelRename,
+  formatBytes,
+  formatDateTime,
+  isNew,
+  onLayoutChange,
+  relatedMode = false,
+  relatedInfoByKey = new Map(),
+}) {
   const [collapsedNodes, setCollapsedNodes] = React.useState(() => new Set());
   const [nodeHeights, setNodeHeights] = React.useState({});
   const nodeContentRefs = React.useRef(new Map());
@@ -45,30 +70,55 @@ function FileTable({ sorted, selected, busy, processingFiles = new Set(), filePr
     });
   };
 
-  useEffect(() => {
-    const next = {};
-    for (const [nodeId, el] of nodeContentRefs.current.entries())
-      next[nodeId] = el.scrollHeight;
-    setNodeHeights((prev) => ({ ...prev, ...next }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sorted.length]);
-
   const fileKey = React.useCallback(
     (f) => `${f?.nodeId || "default"}::${f?.name || ""}`,
     []
   );
 
+  const displaySorted = React.useMemo(() => {
+    if (!relatedMode || !relatedInfoByKey?.size) return sorted;
+
+    return [...sorted].sort((left, right) => {
+      const leftInfo = relatedInfoByKey.get(fileKey(left));
+      const rightInfo = relatedInfoByKey.get(fileKey(right));
+
+      if (leftInfo && rightInfo) {
+        if (leftInfo.groupOrder !== rightInfo.groupOrder) {
+          return leftInfo.groupOrder - rightInfo.groupOrder;
+        }
+      } else if (leftInfo || rightInfo) {
+        return leftInfo ? -1 : 1;
+      }
+
+      const leftNode = String(left.nodeName || left.nodeId || "");
+      const rightNode = String(right.nodeName || right.nodeId || "");
+      const nodeCompare = leftNode.localeCompare(rightNode, undefined, { sensitivity: "base" });
+      if (nodeCompare !== 0) return nodeCompare;
+
+      return String(left.name).localeCompare(String(right.name), undefined, { sensitivity: "base" });
+    });
+  }, [sorted, relatedMode, relatedInfoByKey, fileKey]);
+
+  useEffect(() => {
+    const next = {};
+    for (const [nodeId, el] of nodeContentRefs.current.entries()) {
+      next[nodeId] = el.scrollHeight;
+    }
+    setNodeHeights((prev) => ({ ...prev, ...next }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displaySorted.length, relatedMode]);
+
   const indexByKey = React.useMemo(() => {
     const m = new Map();
-    sorted.forEach((f, i) => m.set(fileKey(f), i));
+    displaySorted.forEach((f, i) => m.set(fileKey(f), i));
     return m;
-  }, [sorted, fileKey]);
+  }, [displaySorted, fileKey]);
 
   const filesByNode = React.useMemo(() => {
     if (!nodes || nodes.length <= 1) return null;
 
     const groups = {};
-    sorted.forEach((f) => {
+    displaySorted.forEach((f) => {
       const nid = f.nodeId || "default";
       if (!groups[nid]) {
         groups[nid] = {
@@ -80,7 +130,7 @@ function FileTable({ sorted, selected, busy, processingFiles = new Set(), filePr
     });
 
     return groups;
-  }, [sorted, nodes]);
+  }, [displaySorted, nodes]);
 
   const renderFileRow = (f) => {
     const k = fileKey(f);
@@ -91,6 +141,7 @@ function FileTable({ sorted, selected, busy, processingFiles = new Set(), filePr
     const showSpinner = isProcessing && (!prog || prog.mode === "spinner");
     const showBar = isProcessing && prog?.mode === "bar";
     const barValue = prog?.value ?? 0;
+    const relatedInfo = relatedInfoByKey.get(k);
 
     return (
       <div
@@ -110,8 +161,16 @@ function FileTable({ sorted, selected, busy, processingFiles = new Set(), filePr
         onKeyDown={(e) => {
           if (e.key === "Enter" && !renamingKey) onRowDoubleClick(k);
         }}
-        title="Click to select • Long-click for multi • Ctrl/⌘ toggles • Shift range • Double-click opens"
+        title={relatedInfo?.title || "Click to select • Long-click for multi • Ctrl/⌘ toggles • Shift range • Double-click opens"}
       >
+        {relatedInfo ? (
+          <span
+            className={FileExplorerStyles.relatedStripe}
+            style={{ backgroundColor: relatedInfo.color }}
+            aria-hidden="true"
+          />
+        ) : null}
+
         <div className={FileExplorerStyles.colName}>
           <div className={FileExplorerStyles.fileIconWrap}>
             <FileTypeIcon name={f.name} />
@@ -151,10 +210,20 @@ function FileTable({ sorted, selected, busy, processingFiles = new Set(), filePr
               <span className={FileExplorerStyles.progressText}>{Math.round(barValue)}%</span>
             </div>
           ) : (
-            <span className={FileExplorerStyles.nameText}>
-              {f.name}
-              {isNew(f) ? <span className={FileExplorerStyles.newMark}> *</span> : null}
-            </span>
+            <div className={FileExplorerStyles.nameCell}>
+              {relatedInfo ? (
+                <span
+                  className={FileExplorerStyles.relatedBadge}
+                  style={{ "--related-badge-color": relatedInfo.color }}
+                >
+                  {relatedInfo.groupId}
+                </span>
+              ) : null}
+              <span className={FileExplorerStyles.nameText}>
+                {f.name}
+                {isNew(f) ? <span className={FileExplorerStyles.newMark}> *</span> : null}
+              </span>
+            </div>
           )}
         </div>
 
@@ -210,8 +279,9 @@ function FileTable({ sorted, selected, busy, processingFiles = new Set(), filePr
           ];
         })
       ) : (
-        sorted.map((f) => renderFileRow(f))
+        displaySorted.map((f) => renderFileRow(f))
       )}
+
     </div>
   );
 }

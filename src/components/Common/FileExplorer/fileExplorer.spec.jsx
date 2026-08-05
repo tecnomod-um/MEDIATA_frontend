@@ -2,6 +2,7 @@ import React from "react";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { vi } from "vitest";
+import { toast } from "react-toastify";
 import FileExplorer from "./fileExplorer";
 import FileTypeIcon from "./fileTypeIcon";
 import FileToolbar from "./fileToolbar";
@@ -16,13 +17,18 @@ vi.mock("../../../util/petitionHandler", () => ({
   renameExplorerFile: vi.fn(),
   deleteExplorerFile: vi.fn(),
   startCleanExplorerFile: vi.fn(),
+  validateCleanExplorerFile: vi.fn(),
   getCleanExplorerFileStatus: vi.fn(),
   getCleanExplorerFileResult: vi.fn(),
+  getNormalizationStats: vi.fn(),
   cleanExplorerFile: vi.fn(),
   processSelectedDatasets: vi.fn(),
   getProcessSelectedDatasetsStatus: vi.fn(),
   getProcessSelectedDatasetsResult: vi.fn(),
   cancelProcessSelectedDatasetsJob: vi.fn(),
+  extractDatasetElements: vi.fn(),
+  fetchElementFile: vi.fn(),
+  suggestMappings: vi.fn(),
 }));
 
 vi.mock("../../../util/nodeAxiosSetup", () => ({
@@ -145,6 +151,12 @@ describe("FileExplorer Main Component", () => {
       status: 202,
       data: { jobId: "clean-job" },
     });
+    petitionHandler.validateCleanExplorerFile.mockResolvedValue({
+      valid: true,
+      inputRows: 2,
+      outputRows: 2,
+      outputColumns: 1,
+    });
     petitionHandler.getCleanExplorerFileStatus.mockResolvedValue({
       state: "DONE",
       percent: 100,
@@ -152,6 +164,9 @@ describe("FileExplorer Main Component", () => {
     petitionHandler.getCleanExplorerFileResult.mockResolvedValue({
       status: 200,
       data: { message: "Cleaned selected file" },
+    });
+    petitionHandler.getNormalizationStats.mockResolvedValue({
+      columns: { score: { present: true, min: 10, max: 90, validCount: 2, invalidCount: 0 } },
     });
     petitionHandler.processSelectedDatasets.mockResolvedValue({
       mode: "sync",
@@ -163,6 +178,12 @@ describe("FileExplorer Main Component", () => {
     });
     petitionHandler.getProcessSelectedDatasetsResult.mockResolvedValue([{ rows: 2 }]);
     petitionHandler.cancelProcessSelectedDatasetsJob.mockResolvedValue({});
+    petitionHandler.extractDatasetElements.mockResolvedValue([]);
+    petitionHandler.fetchElementFile.mockResolvedValue("patient_id,integer\nsex,F\n");
+    petitionHandler.suggestMappings.mockResolvedValue({
+      success: true,
+      hierarchy: [],
+    });
   });
 
   test("renders FileExplorer with nodes", async () => {
@@ -257,12 +278,297 @@ describe("FileExplorer Main Component", () => {
     });
   });
 
+  test("asks backend for related dataset suggestions from dataset elements", async () => {
+    petitionHandler.listExplorerFiles.mockResolvedValue([
+      {
+        name: "first.csv",
+        sizeBytes: 1024,
+        createdAtMs: Date.now() - 50000,
+        lastModifiedAtMs: Date.now() - 30000,
+      },
+      {
+        name: "second.csv",
+        sizeBytes: 2048,
+        createdAtMs: Date.now() - 100000,
+        lastModifiedAtMs: Date.now() - 50000,
+      },
+    ]);
+    petitionHandler.extractDatasetElements.mockResolvedValue([
+      {
+        fileName: "first.csv",
+        elements: [
+          { column: "patient_id", values: ["integer", "min:1", "max:90"] },
+          { column: "sex", values: ["F", "M"] },
+        ],
+      },
+      {
+        fileName: "second.csv",
+        elements: [
+          { column: "subject_id", values: ["integer", "min:1", "max:95"] },
+          { column: "sex", values: ["F", "M"] },
+        ],
+      },
+    ]);
+    petitionHandler.suggestMappings.mockResolvedValue({
+      success: true,
+      hierarchy: [
+        {
+          demographics: {
+            groups: [
+              {
+                values: [
+                  {
+                    mapping: [
+                      { nodeId: "node1", fileName: "first.csv" },
+                      { nodeId: "node1", fileName: "second.csv" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    render(<FileExplorer nodes={[node]} category="DATASETS" isOpen={true} />);
+
+    const relatedButton = await screen.findByRole("button", { name: "Related datasets" });
+    fireEvent.click(relatedButton);
+
+    await waitFor(() => {
+      expect(petitionHandler.extractDatasetElements).toHaveBeenCalledWith(["first.csv", "second.csv"]);
+      expect(petitionHandler.suggestMappings).toHaveBeenCalledWith({
+        elementFiles: expect.arrayContaining([
+          expect.objectContaining({
+            nodeId: "node1",
+            fileName: "first.csv",
+            column: "patient_id",
+            values: ["integer", "min:1", "max:90"],
+          }),
+          expect.objectContaining({
+            nodeId: "node1",
+            fileName: "second.csv",
+            column: "subject_id",
+            values: ["integer", "min:1", "max:95"],
+          }),
+        ]),
+      });
+    });
+  });
+
   test("renders without onClose prop", async () => {
     const nodes = [{ nodeId: "node1", serviceUrl: "http://test.com", name: "Test Node" }];
     render(<FileExplorer nodes={nodes} category="clinical" isOpen={true} />);
 
     await waitFor(() => {
       expect(petitionHandler.listExplorerFiles).toHaveBeenCalled();
+    });
+  });
+
+  test("analyzes likely related datasets from dataset elements", async () => {
+    petitionHandler.listExplorerFiles.mockResolvedValueOnce([
+      {
+        name: "alpha.csv",
+        sizeBytes: 1024,
+        createdAtMs: Date.now() - 50000,
+        lastModifiedAtMs: Date.now() - 30000,
+      },
+      {
+        name: "beta.csv",
+        sizeBytes: 2048,
+        createdAtMs: Date.now() - 100000,
+        lastModifiedAtMs: Date.now() - 50000,
+      },
+    ]);
+    petitionHandler.extractDatasetElements.mockResolvedValue([
+      {
+        fileName: "alpha.csv",
+        elements: [
+          { column: "patient_id", values: ["integer", "min:1", "max:90"] },
+          { column: "sex", values: ["F"] },
+        ],
+      },
+      {
+        fileName: "beta.csv",
+        elements: [
+          { column: "patient_id", values: ["integer", "min:1", "max:91"] },
+          { column: "sex", values: ["F"] },
+        ],
+      },
+    ]);
+    petitionHandler.suggestMappings.mockResolvedValue({
+      success: true,
+      hierarchy: [
+        {
+          demographics: {
+            groups: [
+              {
+                values: [
+                  {
+                    mapping: [
+                      {
+                        nodeId: "node1",
+                        fileName: "alpha.csv",
+                        groupColumn: "patient_id",
+                        groupKey: "node1::alpha.csv::patient_id",
+                      },
+                      {
+                        nodeId: "node1",
+                        fileName: "beta.csv",
+                        groupColumn: "patient_id",
+                        groupKey: "node1::beta.csv::patient_id",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        {
+          sex: {
+            groups: [
+              {
+                values: [
+                  {
+                    mapping: [
+                      {
+                        nodeId: "node1",
+                        fileName: "alpha.csv",
+                        groupColumn: "sex",
+                        groupKey: "node1::alpha.csv::sex",
+                      },
+                      {
+                        nodeId: "node1",
+                        fileName: "beta.csv",
+                        groupColumn: "sex",
+                        groupKey: "node1::beta.csv::sex",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    render(<FileExplorer nodes={[node]} category="DATASETS" isOpen={true} />);
+
+    expect(await screen.findByText("alpha.csv")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Related datasets" }));
+
+    await waitFor(() => {
+      expect(petitionHandler.extractDatasetElements).toHaveBeenCalledWith(["alpha.csv", "beta.csv"]);
+      expect(petitionHandler.suggestMappings).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      expect(screen.getAllByText("G1").length).toBeGreaterThan(0);
+    });
+    expect(screen.getByText("2 datasets")).toBeInTheDocument();
+
+    const legend = screen.getByRole("note", { name: "Related dataset groups" });
+    expect(legend.parentElement).toHaveClass("contentShell");
+    expect(legend.closest(".tableWrap")).toBeNull();
+  });
+
+  test("resolves dataset elements using the node element listing", async () => {
+    petitionHandler.listExplorerFiles
+      .mockResolvedValueOnce([
+        {
+          name: "My File!.csv",
+          sizeBytes: 1024,
+          createdAtMs: Date.now() - 50000,
+          lastModifiedAtMs: Date.now() - 30000,
+          nodeId: "node1",
+        },
+        {
+          name: "peer.csv",
+          sizeBytes: 2048,
+          createdAtMs: Date.now() - 100000,
+          lastModifiedAtMs: Date.now() - 50000,
+          nodeId: "node1",
+        },
+      ])
+      .mockResolvedValueOnce([
+        "My_File__elements.csv",
+        "peer_elements.csv",
+      ]);
+
+    petitionHandler.extractDatasetElements.mockRejectedValueOnce(new Error("extract unavailable"));
+    petitionHandler.fetchElementFile
+      .mockResolvedValueOnce("patient_id,integer\nsex,F\n")
+      .mockResolvedValueOnce("patient_id,integer\nsex,F\n");
+    petitionHandler.suggestMappings.mockResolvedValue({
+      success: true,
+      hierarchy: [
+        {
+          demographics: {
+            groups: [
+              {
+                values: [
+                  {
+                    mapping: [
+                      {
+                        nodeId: "node1",
+                        fileName: "My File!.csv",
+                        groupColumn: "patient_id",
+                        groupKey: "node1::My File!.csv::patient_id",
+                      },
+                      {
+                        nodeId: "node1",
+                        fileName: "peer.csv",
+                        groupColumn: "patient_id",
+                        groupKey: "node1::peer.csv::patient_id",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        {
+          sex: {
+            groups: [
+              {
+                values: [
+                  {
+                    mapping: [
+                      {
+                        nodeId: "node1",
+                        fileName: "My File!.csv",
+                        groupColumn: "sex",
+                        groupKey: "node1::My File!.csv::sex",
+                      },
+                      {
+                        nodeId: "node1",
+                        fileName: "peer.csv",
+                        groupColumn: "sex",
+                        groupKey: "node1::peer.csv::sex",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    render(<FileExplorer nodes={[node]} category="DATASETS" isOpen={true} />);
+
+    expect(await screen.findByText("My File!.csv")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Related datasets" }));
+
+    await waitFor(() => {
+      expect(petitionHandler.fetchElementFile).toHaveBeenCalledWith("My_File__elements.csv");
+      expect(petitionHandler.fetchElementFile).toHaveBeenCalledWith("peer_elements.csv");
     });
   });
 
@@ -462,6 +768,11 @@ describe("FileExplorer Main Component", () => {
     fireEvent.click(screen.getByTitle(/apply cleaning/i));
 
     await waitFor(() => {
+      expect(petitionHandler.validateCleanExplorerFile).toHaveBeenCalledWith(
+        "DATASETS",
+        "file1.csv",
+        expect.objectContaining({ removeDuplicates: true })
+      );
       expect(petitionHandler.startCleanExplorerFile).toHaveBeenCalledWith(
         "DATASETS",
         "file1.csv",
@@ -469,6 +780,137 @@ describe("FileExplorer Main Component", () => {
       );
       expect(petitionHandler.getCleanExplorerFileResult).toHaveBeenCalledWith("clean-job");
     });
+    expect(
+      petitionHandler.validateCleanExplorerFile.mock.invocationCallOrder[0]
+    ).toBeLessThan(petitionHandler.startCleanExplorerFile.mock.invocationCallOrder[0]);
+  });
+
+  test("aborts all selected files when the general cleaning preflight fails", async () => {
+    petitionHandler.validateCleanExplorerFile
+      .mockResolvedValueOnce({ valid: true, inputRows: 2, outputRows: 2, outputColumns: 1 })
+      .mockRejectedValueOnce(new Error("Invalid CSV delimiter in file2.xlsx"));
+    renderOpenExplorer({ category: "DATASETS" });
+
+    await selectFile("file1.csv");
+    fireEvent.click((await screen.findByText("file2.xlsx")).closest('[role="button"]'), { ctrlKey: true });
+    fireEvent.click(screen.getByRole("button", { name: /Data cleaning/i }));
+    fireEvent.click(screen.getAllByRole("switch")[0]);
+    fireEvent.click(screen.getByTitle(/apply cleaning/i));
+
+    await waitFor(() => expect(petitionHandler.validateCleanExplorerFile).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Invalid CSV delimiter in file2.xlsx"));
+    expect(petitionHandler.startCleanExplorerFile).not.toHaveBeenCalled();
+  });
+
+  test("uses shared normalization bounds across all selected dataset files", async () => {
+    renderOpenExplorer({ category: "DATASETS" });
+
+    await selectFile("file1.csv");
+    const secondFile = await screen.findByText("file2.xlsx");
+    fireEvent.click(secondFile.closest('[role="button"]'), { ctrlKey: true });
+    fireEvent.click(screen.getByRole("button", { name: /Data cleaning/i }));
+
+    const normalizeRow = screen.getByText(/Normalize data.*min-max/i).closest('[role="switch"]');
+    fireEvent.click(normalizeRow);
+    const columnsInput = screen.getAllByPlaceholderText("colA,colB").find((input) => !input.disabled);
+    fireEvent.change(columnsInput, { target: { value: "score" } });
+    fireEvent.click(screen.getByTitle(/apply cleaning/i));
+
+    await waitFor(() => expect(petitionHandler.getNormalizationStats).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(petitionHandler.startCleanExplorerFile).toHaveBeenCalledTimes(2));
+    expect(petitionHandler.startCleanExplorerFile).toHaveBeenCalledWith(
+      "DATASETS",
+      expect.any(String),
+      expect.objectContaining({
+        normalizationScope: "selection",
+        normalizationBounds: { score: { min: 10, max: 90 } },
+      })
+    );
+  });
+
+  test("discovers all shared fully numeric columns before normalization", async () => {
+    petitionHandler.getNormalizationStats
+      .mockResolvedValueOnce({ columns: {
+        score: { present: true, min: 10, max: 50, validCount: 2, invalidCount: 0 },
+        label: { present: true, min: null, max: null, validCount: 0, invalidCount: 2 },
+      } })
+      .mockResolvedValueOnce({ columns: {
+        score: { present: true, min: 30, max: 90, validCount: 2, invalidCount: 0 },
+        label: { present: true, min: null, max: null, validCount: 0, invalidCount: 2 },
+      } });
+    renderOpenExplorer({ category: "DATASETS" });
+
+    await selectFile("file1.csv");
+    fireEvent.click((await screen.findByText("file2.xlsx")).closest('[role="button"]'), { ctrlKey: true });
+    fireEvent.click(screen.getByRole("button", { name: /Data cleaning/i }));
+    fireEvent.click(screen.getByText(/Normalize data.*min-max/i).closest('[role="switch"]'));
+    fireEvent.change(screen.getByText("Specified columns").closest("select"), {
+      target: { value: "all_numeric" },
+    });
+    fireEvent.click(screen.getByTitle(/apply cleaning/i));
+
+    await waitFor(() => expect(petitionHandler.startCleanExplorerFile).toHaveBeenCalledTimes(2));
+    expect(petitionHandler.getNormalizationStats).toHaveBeenCalledWith(
+      "DATASETS", expect.any(String), [], expect.objectContaining({ normalizationColumnMode: "all_numeric" })
+    );
+    expect(petitionHandler.startCleanExplorerFile).toHaveBeenCalledWith(
+      "DATASETS",
+      expect.any(String),
+      expect.objectContaining({
+        normalizeColumns: ["score"],
+        normalizationColumnMode: "specified",
+        normalizationBounds: { score: { min: 10, max: 90 } },
+      })
+    );
+  });
+
+  test("reports non-numeric normalization values to the frontend before cleaning", async () => {
+    petitionHandler.getNormalizationStats.mockResolvedValue({ columns: {
+      score: { present: true, min: 10, max: 50, validCount: 2, invalidCount: 1 },
+    } });
+    renderOpenExplorer({ category: "DATASETS" });
+
+    await selectFile("file1.csv");
+    fireEvent.click(screen.getByRole("button", { name: /Data cleaning/i }));
+    fireEvent.click(screen.getByText(/Normalize data.*min-max/i).closest('[role="switch"]'));
+    fireEvent.change(screen.getAllByPlaceholderText("colA,colB").find((input) => !input.disabled), {
+      target: { value: "score" },
+    });
+    fireEvent.click(screen.getByTitle(/apply cleaning/i));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(
+      expect.stringMatching(/score.*1 non-numeric value/i)
+    ));
+    expect(petitionHandler.startCleanExplorerFile).not.toHaveBeenCalled();
+  });
+
+  test("aborts the entire per-file normalization run during preflight", async () => {
+    petitionHandler.getNormalizationStats
+      .mockResolvedValueOnce({ columns: {
+        score: { present: true, min: 10, max: 50, validCount: 2, invalidCount: 0 },
+      } })
+      .mockResolvedValueOnce({ columns: {
+        score: { present: true, min: 30, max: 90, validCount: 2, invalidCount: 1 },
+      } });
+    renderOpenExplorer({ category: "DATASETS" });
+
+    await selectFile("file1.csv");
+    fireEvent.click((await screen.findByText("file2.xlsx")).closest('[role="button"]'), { ctrlKey: true });
+    fireEvent.click(screen.getByRole("button", { name: /Data cleaning/i }));
+    fireEvent.click(screen.getByText(/Normalize data.*min-max/i).closest('[role="switch"]'));
+    fireEvent.change(screen.getAllByPlaceholderText("colA,colB").find((input) => !input.disabled), {
+      target: { value: "score" },
+    });
+    fireEvent.change(screen.getByText(/Each file independently/i).closest("select"), {
+      target: { value: "per_file" },
+    });
+    fireEvent.click(screen.getByTitle(/apply cleaning/i));
+
+    await waitFor(() => expect(petitionHandler.getNormalizationStats).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(
+      expect.stringMatching(/entire cleaning run was stopped before any file was changed/i)
+    ));
+    expect(petitionHandler.startCleanExplorerFile).not.toHaveBeenCalled();
   });
 });
 

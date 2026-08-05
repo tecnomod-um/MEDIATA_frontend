@@ -32,8 +32,8 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   const discoveryMatch = useMatch({ path: "/discovery", end: true });
-  const integrationMatch = useMatch({ path: "/integration", end: true });
-  const semanticAlignmentMatch = useMatch({ path: "/semanticalignment", end: true });
+  const alignmentMatch = useMatch({ path: "/alignment", end: true });
+  const semanticIntegrationMatch = useMatch({ path: "/semanticintegration", end: true });
   const fhirMatch = useMatch({ path: "/hl7fhir", end: true });
 
   const extraOptionsRef = useRef(null);
@@ -132,15 +132,15 @@ export default function Navbar() {
 
                 <li
                   className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem} ${
-                    integrationMatch ? NavbarStyles.activeDarker : ""
+                    alignmentMatch ? NavbarStyles.activeDarker : ""
                   }`}
                 >
-                  <CustomLink to="/integration" reloadOnActive>
+                  <CustomLink to="/alignment" reloadOnActive>
                     <span
                       className={NavbarStyles.desktopLabel}
                       title="Harmonization and standardizing from different sources"
                     >
-                      Integration
+                      Alignment
                     </span>
                     <span className={NavbarStyles.mobileIcon}>
                       <FaCodeBranch aria-hidden="true" className={NavbarStyles.mobileNavIcon} />
@@ -148,15 +148,15 @@ export default function Navbar() {
                   </CustomLink>
                 </li>
 
-                {capabilities?.semanticAlignment && (
+                {capabilities?.semanticIntegration && (
                   <li
                     className={`${NavbarStyles.listItem} ${NavbarStyles.darkerItem} ${
-                      semanticAlignmentMatch ? NavbarStyles.activeDarker : ""
+                      semanticIntegrationMatch ? NavbarStyles.activeDarker : ""
                     }`}
                   >
-                    <CustomLink to="/semanticalignment" reloadOnActive>
+                    <CustomLink to="/semanticintegration" reloadOnActive>
                       <span className={NavbarStyles.desktopLabel} title="Map and align the data to an ontology">
-                        Semantic-Alignment
+                        Semantic Integration
                       </span>
                       <span className={NavbarStyles.mobileIcon}>
                         <FaSitemap aria-hidden="true" className={NavbarStyles.mobileNavIcon} />

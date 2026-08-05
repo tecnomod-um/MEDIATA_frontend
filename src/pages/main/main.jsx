@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import MainStyles from "./main.module.css";
 import LandingIntroduction from "../../components/Landing/LandingIntroduction/landingIntroduction";
 import LandingDiscovery from "../../components/Landing/LandingIcons/landingDiscovery";
-import LandingIntegration from "../../components/Landing/LandingIcons/landingIntegrations";
+import LandingAlignment from "../../components/Landing/LandingIcons/landingAlignments";
 import LandingStandards from "../../components/Landing/LandingIcons/landingStandards";
 import LandingSecurity from "../../components/Landing/LandingIcons/landingSecurity";
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -61,9 +61,9 @@ function Main() {
 
             <article className={MainStyles.featureCard}>
               <div className={MainStyles.featureIconWrap}>
-                <LandingIntegration size={150} />
+                <LandingAlignment size={150} />
               </div>
-              <h3 className={MainStyles.featureTitle}>Integration made easy</h3>
+              <h3 className={MainStyles.featureTitle}>Alignment made easy</h3>
               <p className={MainStyles.featureText}>
                 Bring in heterogeneous spreadsheets and CSV exports, then
                 combine, clean and transform them with a lightweight, iterative workflow.

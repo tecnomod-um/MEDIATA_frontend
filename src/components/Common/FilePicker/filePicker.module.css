@@ -36,6 +36,46 @@
   overflow-y: auto;
 }
 
+.modalDivider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-5) 0 var(--space-4);
+  color: var(--text-color-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.modalDivider::before,
+.modalDivider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border-color-secondary);
+}
+
+.modalDivider span {
+  flex: 0 0 auto;
+}
+
+.uploadSectionHeader {
+  text-align: left;
+}
+
+.uploadSectionHeader h3 {
+  margin: 0 0 var(--space-1);
+  color: var(--text-color-primary);
+  font-size: var(--font-size-base);
+}
+
+.uploadSectionHeader p {
+  margin: 0;
+  color: var(--text-color-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
+}
+
 .modalTitle {
   color: var(--text-color-primary);
   margin-bottom: 0.5em;

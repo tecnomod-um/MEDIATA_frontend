@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, within } from '@testing-library/react';
 import Tutorial from './tutorial';
-import { DiscoverySlides, AggregateSlides, IntegrationSlides, SemanticAlignmentSlides } from './images';
+import { DiscoverySlides, AggregateSlides, AlignmentSlides, SemanticIntegrationSlides } from './images';
 import { vi } from "vitest";
 
 vi.mock('./tutorial.module.css', () => ({
@@ -34,14 +34,14 @@ vi.mock('./images', () => ({
     'RESOLVED:./a3.jpg',
     'RESOLVED:./a4.jpg',
   ],
-  IntegrationSlides: [
+  AlignmentSlides: [
     'RESOLVED:./b1.jpg',
     'RESOLVED:./b2.jpg',
     'RESOLVED:./b3.jpg',
     'RESOLVED:./b4.jpg',
     'RESOLVED:./b5.jpg',
   ],
-  SemanticAlignmentSlides: [
+  SemanticIntegrationSlides: [
     'RESOLVED:./c1.jpg',
     'RESOLVED:./c2.jpg',
     'RESOLVED:./c3.jpg',
@@ -59,9 +59,9 @@ vi.mock('../../resources/images/tutorial/2_navbar.gif', () => ({
   default: 'navbar_gif',
 }));
 
-vi.mock('../../resources/images/tutorial/3_integration_usage.gif', () => ({
+vi.mock('../../resources/images/tutorial/3_alignment_usage.gif', () => ({
   __esModule: true,
-  default: 'integration_usage_gif',
+  default: 'alignment_usage_gif',
 }));
 
 vi.mock('../../resources/images/tutorial/4_change_files_modal.png', () => ({
@@ -121,12 +121,12 @@ describe('<Tutorial /> + images.js', () => {
     expect(screen.getByRole('heading', { name: /^Discovery$/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Discovery: Individual metrics/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Discovery: Aggregate metrics/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /^Integration$/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Integration: Creating mappings/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Integration: Semantic enrichment/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Integration: Updating files/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /^Semantic Alignment$/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Semantic Alignment: Generating RDF/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /^Alignment$/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Alignment: Creating mappings/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Alignment: Semantic enrichment/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Alignment: Updating files/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /^Semantic Integration$/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Semantic Integration: Generating RDF/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /HL7 FHIR/i })).toBeInTheDocument();
     const nav = screen.getByTestId('scroll-sidebar');
     expect(nav).toBeInTheDocument();
@@ -162,11 +162,11 @@ describe('<Tutorial /> + images.js', () => {
     expect(screen.getAllByRole('cell', { name: /^mode %$/i }).length).toBeGreaterThan(0);
   });
 
-  it('exposes DiscoverySlides, AggregateSlides, IntegrationSlides, SemanticAlignmentSlides arrays from images.js', () => {
+  it('exposes DiscoverySlides, AggregateSlides, AlignmentSlides, SemanticIntegrationSlides arrays from images.js', () => {
     expect(Array.isArray(DiscoverySlides)).toBe(true);
     expect(Array.isArray(AggregateSlides)).toBe(true);
-    expect(Array.isArray(IntegrationSlides)).toBe(true);
-    expect(Array.isArray(SemanticAlignmentSlides)).toBe(true);
+    expect(Array.isArray(AlignmentSlides)).toBe(true);
+    expect(Array.isArray(SemanticIntegrationSlides)).toBe(true);
     expect(DiscoverySlides).toEqual([
       'RESOLVED:./1.jpg',
       'RESOLVED:./2.jpg',
@@ -179,14 +179,14 @@ describe('<Tutorial /> + images.js', () => {
       'RESOLVED:./a3.jpg',
       'RESOLVED:./a4.jpg',
     ]);
-    expect(IntegrationSlides).toEqual([
+    expect(AlignmentSlides).toEqual([
       'RESOLVED:./b1.jpg',
       'RESOLVED:./b2.jpg',
       'RESOLVED:./b3.jpg',
       'RESOLVED:./b4.jpg',
       'RESOLVED:./b5.jpg',
     ]);
-    expect(SemanticAlignmentSlides).toEqual([
+    expect(SemanticIntegrationSlides).toEqual([
       'RESOLVED:./c1.jpg',
       'RESOLVED:./c2.jpg',
       'RESOLVED:./c3.jpg',

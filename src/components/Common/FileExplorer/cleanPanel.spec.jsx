@@ -141,26 +141,26 @@ describe('CleanPanel', () => {
   it('shows step count in footer', () => {
     render(<CleanPanel {...defaultProps} />);
     // Step count is embedded in longer message: "Applying to the selected X files, Y steps selected"
-    // Note: Initial state has 2 steps enabled by default (mergeCaseInsensitive, mergeTrimValues)
+    // Merge preferences do not perform work unless category merging is enabled.
     const footerElement = screen.getByText(/Applying to the selected/i);
-    expect(footerElement).toHaveTextContent(/2 steps selected/i);
+    expect(footerElement).toHaveTextContent(/0 steps selected/i);
   });
 
   it('updates step count when options are toggled', () => {
     render(<CleanPanel {...defaultProps} />);
     const switches = screen.getAllByRole('switch');
     
-    // Enable first option (initial count is 2)
+    // Enable first option (initial count is 0)
     fireEvent.click(switches[0]);
-    // Step count appears in: "Applying to the selected 5 files, 3 steps selected"
+    // Step count appears in: "Applying to the selected 5 files, 1 step selected"
     let footerElement = screen.getByText(/Applying to the selected/i);
-    expect(footerElement).toHaveTextContent(/3 steps selected/i);
+    expect(footerElement).toHaveTextContent(/1 step selected/i);
     
     // Disable first option  
     fireEvent.click(switches[0]);
-    // Step count should go back to 2
+    // Step count should go back to 0
     footerElement = screen.getByText(/Applying to the selected/i);
-    expect(footerElement).toHaveTextContent(/2 steps selected/i);
+    expect(footerElement).toHaveTextContent(/0 steps selected/i);
   });
 
   it('calls onClose when close button is clicked', () => {
@@ -187,8 +187,8 @@ describe('CleanPanel', () => {
     const switches = screen.getAllByRole('switch');
     const applyButton = screen.getByTitle(/apply cleaning/i);
     
-    // Initially enabled (files selected but no steps)
-    expect(applyButton).toBeEnabled();
+    // Initially disabled because no actual cleaning step is selected.
+    expect(applyButton).toBeDisabled();
     
     // Enable a step
     fireEvent.click(switches[0]);
@@ -258,6 +258,36 @@ describe('CleanPanel', () => {
     );
   });
 
+  it('renders CSV formatting controls within the existing cleaning panel style', () => {
+    render(<CleanPanel {...defaultProps} />);
+    expect(screen.getByText('Standardize CSV formatting')).toBeInTheDocument();
+    expect(screen.getByText(/Choose how cleaned CSV files separate columns and decimal digits/i)).toBeInTheDocument();
+  });
+
+  it('submits CSV delimiter and decimal separator when CSV formatting is enabled', () => {
+    const onApply = vi.fn();
+    render(<CleanPanel {...defaultProps} onApply={onApply} />);
+
+    fireEvent.click(screen.getByText('Standardize CSV formatting'));
+
+    const csvSeparatorSelect = screen.getByText('CSV separator').parentElement.querySelector('select');
+    const decimalSeparatorSelect = screen.getByText('Decimal separator').parentElement.querySelector('select');
+    fireEvent.change(csvSeparatorSelect, { target: { value: ',' } });
+    fireEvent.change(decimalSeparatorSelect, { target: { value: ',' } });
+
+    expect(screen.getByText(/1 step selected/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTitle(/apply cleaning/i));
+
+    expect(onApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        standardizeCsvFormat: true,
+        csvDelimiter: ',',
+        decimalSeparator: ',',
+      })
+    );
+  });
+
   it('search works with trimmed whitespace', () => {
     render(<CleanPanel {...defaultProps} />);
     const searchInput = screen.getByPlaceholderText(/search steps/i);
@@ -305,10 +335,7 @@ describe('CleanPanel', () => {
       const applyButton = screen.getByTitle(/apply cleaning/i);
       expect(applyButton).toBeInTheDocument();
       
-      // At least one step must be selected to apply - but default has 2 steps enabled
-      // (mergeCaseInsensitive and mergeTrimValues)
-      // So we can just verify the button is enabled
-      expect(applyButton).not.toBeDisabled();
+      expect(applyButton).toBeDisabled();
     });
   });
 
@@ -509,8 +536,52 @@ describe('CleanPanel', () => {
       if (colInput) fireEvent.change(colInput, { target: { value: 'col1,col2' } });
       fireEvent.click(screen.getByTitle(/apply cleaning/i));
       expect(defaultProps.onApply).toHaveBeenCalledWith(
-        expect.objectContaining({ normalizeData: true, normalizeColumns: ['col1', 'col2'] })
+        expect.objectContaining({
+          normalizeData: true,
+          normalizeColumns: ['col1', 'col2'],
+          normalizationScope: 'selection',
+          normalizationInvalidValuePolicy: 'fail',
+        })
       );
+    });
+
+    it('normalization can automatically include all fully numeric columns', () => {
+      render(<CleanPanel {...defaultProps} />);
+      enableOption('Normalize data');
+
+      fireEvent.change(screen.getByText('Specified columns').closest('select'), {
+        target: { value: 'all_numeric' },
+      });
+
+      expect(screen.getAllByPlaceholderText('colA,colB').find(el => el.disabled)).toBeDefined();
+      expect(screen.getByText(/fully numeric and present in every selected file/i)).toBeInTheDocument();
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+      expect(defaultProps.onApply).toHaveBeenCalledWith(expect.objectContaining({
+        normalizeData: true,
+        normalizeColumns: [],
+        normalizationColumnMode: 'all_numeric',
+      }));
+    });
+
+    it('normalization controls allow explicit per-file and invalid-value behavior', () => {
+      render(<CleanPanel {...defaultProps} />);
+      enableOption('Normalize data');
+
+      fireEvent.change(screen.getByText(/All selected files together/i).closest('select'), {
+        target: { value: 'per_file' },
+      });
+      fireEvent.change(screen.getByText(/Stop and show an error notification/i).closest('select'), {
+        target: { value: 'keep' },
+      });
+      const colInput = screen.getAllByPlaceholderText('colA,colB').find(el => !el.disabled);
+      fireEvent.change(colInput, { target: { value: 'score' } });
+      fireEvent.click(screen.getByTitle(/apply cleaning/i));
+
+      expect(defaultProps.onApply).toHaveBeenCalledWith(expect.objectContaining({
+        normalizationScope: 'per_file',
+        normalizationInvalidValuePolicy: 'keep',
+      }));
+      expect(screen.getByText(/invalid cells stay unchanged/i)).toBeInTheDocument();
     });
 
     it('mergeSimilarValues: entering columns + clicking Apply calls onApply', () => {
@@ -1113,9 +1184,9 @@ describe('CleanPanel - Advanced Options', () => {
     it('step count increases with each enabled option', () => {
       render(<CleanPanel {...defaultProps} />);
       
-      // Initial state has 2 steps (mergeCaseInsensitive, mergeTrimValues)
+      // Merge preferences are not counted as standalone cleaning steps.
       let footerElement = screen.getByText(/Applying to the selected/i);
-      expect(footerElement).toHaveTextContent(/2 steps selected/i);
+      expect(footerElement).toHaveTextContent(/0 steps selected/i);
       
       // Enable options one by one and check the count
       const switches = screen.getAllByRole('switch');
@@ -1125,7 +1196,7 @@ describe('CleanPanel - Advanced Options', () => {
         'Remove extra spaces',
       ];
       
-      let expectedCount = 2;
+      let expectedCount = 0;
       
       options.forEach((optionText, index) => {
         const optionSwitch = switches.find((sw) => {
@@ -1138,7 +1209,10 @@ describe('CleanPanel - Advanced Options', () => {
           expectedCount++;
           
           footerElement = screen.getByText(/Applying to the selected/i);
-          expect(footerElement).toHaveTextContent(new RegExp(`${expectedCount} steps selected`));
+          const expectedLabel = expectedCount === 1
+            ? "1 step selected"
+            : `${expectedCount} steps selected`;
+          expect(footerElement).toHaveTextContent(expectedLabel);
         }
       });
     });
@@ -1590,7 +1664,7 @@ describe('CleanPanel - Validation Logic', () => {
       const applyButton = screen.getByTitle(/apply cleaning/i);
       fireEvent.click(applyButton);
       
-      expect(defaultProps.onApply).toHaveBeenCalled();
+      expect(defaultProps.onApply).not.toHaveBeenCalled();
     });
 
     it('renders standardize case with mode selector', () => {
@@ -1823,9 +1897,9 @@ describe('CleanPanel - Validation Logic', () => {
     it('step count updates when toggling multiple options', () => {
       render(<CleanPanel {...defaultProps} />);
       
-      // Initial count is 2 (mergeCaseInsensitive, mergeTrimValues)
+      // Initial count is 0; merge preferences are not standalone steps.
       let footerElement = screen.getByText(/Applying to the selected/i);
-      expect(footerElement).toHaveTextContent(/2 steps selected/i);
+      expect(footerElement).toHaveTextContent(/0 steps selected/i);
       
       // Enable remove duplicates
       const duplicatesSwitch = screen.getAllByRole('switch').find((sw) => {
@@ -1836,7 +1910,7 @@ describe('CleanPanel - Validation Logic', () => {
       if (duplicatesSwitch) {
         fireEvent.click(duplicatesSwitch);
         footerElement = screen.getByText(/Applying to the selected/i);
-        expect(footerElement).toHaveTextContent(/3 steps selected/i);
+        expect(footerElement).toHaveTextContent(/1 step selected/i);
         
         // Enable another option
         const emptyRowsSwitch = screen.getAllByRole('switch').find((sw) => {
@@ -1847,7 +1921,7 @@ describe('CleanPanel - Validation Logic', () => {
         if (emptyRowsSwitch) {
           fireEvent.click(emptyRowsSwitch);
           footerElement = screen.getByText(/Applying to the selected/i);
-          expect(footerElement).toHaveTextContent(/4 steps selected/i);
+          expect(footerElement).toHaveTextContent(/2 steps selected/i);
         }
       }
     });

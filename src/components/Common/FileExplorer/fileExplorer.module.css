@@ -15,6 +15,8 @@
   border-radius: 10px;
   overflow: hidden;
   box-shadow: var(--box-shadow-xl);
+  container-type: inline-size;
+  container-name: file-explorer;
 
   display: flex;
   flex-direction: column;
@@ -60,15 +62,32 @@
   align-items: center;
   gap: var(--space-2);
   flex-wrap: wrap;
+  min-width: 0;
+}
+
+.toolbarGroupPrimary {
+  flex: 1 1 auto;
+}
+
+.toolbarGroupSecondary {
+  flex: 0 0 auto;
+  justify-content: flex-end;
 }
 
 .tbBtn {
   height: 34px;
   padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 7px;
   border: 1px solid rgba(255, 255, 255, 0.22);
   background: rgba(255, 255, 255, 0.08);
   color: var(--text-color-on-darkbg);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: inherit;
+  line-height: 1;
   cursor: pointer;
 
   transition: background-color 0.14s ease, transform 0.06s ease;
@@ -78,6 +97,11 @@
   background: rgba(255, 255, 255, 0.16);
 }
 
+.tbBtnActive {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.36);
+}
+
 .tbBtn:active:not(:disabled) {
   transform: translateY(1px);
 }
@@ -85,6 +109,24 @@
 .tbBtn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+.tbBtnContent {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  line-height: 1;
+}
+
+.tbBtnIcon {
+  flex: 0 0 auto;
+}
+
+.tbBtnText {
+  display: block;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .refreshIconBtn {
@@ -151,6 +193,9 @@
 }
 
 .headerRow {
+  position: sticky;
+  top: 0;
+  z-index: 3;
   display: grid;
   grid-template-columns: 1.7fr 0.55fr 0.9fr 0.9fr;
   gap: 10px;
@@ -175,6 +220,7 @@
 }
 
 .row {
+  position: relative;
   display: grid;
   grid-template-columns: 1.7fr 0.55fr 0.9fr 0.9fr;
   gap: 10px;
@@ -208,6 +254,13 @@
   min-width: 0;
 }
 
+.nameCell {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .colSize,
 .colCreated,
 .colModified {
@@ -219,11 +272,34 @@
 }
 
 .nameText {
+  display: inline-block;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--text-color-primary);
+}
+
+.relatedStripe {
+  position: absolute;
+  inset: 6px auto 6px 2px;
+  width: 6px;
+  border-radius: 999px;
+}
+
+.relatedBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--related-badge-color) 50%, var(--border-color));
+  background: color-mix(in srgb, var(--related-badge-color) 16%, var(--background-color-card));
+  color: color-mix(in srgb, var(--related-badge-color) 55%, var(--text-color-primary));
+  font-weight: 800;
+  flex: 0 0 auto;
 }
 
 .newMark {
@@ -487,6 +563,17 @@
   .colCreated, .colModified {
     display: none;
   }
+
+  .relatedLegend {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-height: 0;
+  }
+
+  .relatedLegendHint {
+    white-space: normal;
+  }
 }
 
 .tableWrap {
@@ -510,6 +597,68 @@
 
 .tableWrap::-webkit-scrollbar-track {
   background-color: var(--scrollbar-track);
+}
+
+.relatedLegend {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 58px;
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border-color-secondary);
+  background: var(--background-color-card);
+  box-shadow: 0 -4px 12px color-mix(in srgb, var(--text-color-primary) 7%, transparent);
+  color: var(--text-color-primary);
+  z-index: 2;
+}
+
+.relatedLegendGroups {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.relatedLegendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.relatedLegendDot {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.relatedLegendLabel {
+  font-weight: 800;
+  color: var(--text-color-primary);
+}
+
+.relatedLegendMeta,
+.relatedLegendHint {
+  color: var(--text-color-secondary);
+}
+
+.relatedLegendHint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+  flex: 0 1 auto;
+}
+
+.relatedLegendHint svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
 }
 
 .nodeHeaderBtn {
@@ -905,8 +1054,32 @@
 }
 
 @media (max-width: 720px) {
+  .cleanHeader {
+    padding-right: 52px;
+  }
+
+  .cleanHeaderRow {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .cleanHeaderSearch {
+    width: 100%;
+  }
+
   .cleanFieldRow {
     grid-template-columns: 1fr;
+  }
+
+  .cleanFooter {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .cleanFooterRight {
+    justify-content: flex-end;
   }
 }
 
@@ -1139,4 +1312,123 @@
 
 .backIconBtn:disabled {
   opacity: 0.55;
+}
+
+@container file-explorer (max-width: 1080px) {
+  .toolbar {
+    align-items: stretch;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "primary secondary";
+  }
+
+  .toolbarGroupPrimary,
+  .toolbarGroupSecondary {
+    width: auto;
+  }
+
+  .toolbarGroupPrimary {
+    grid-area: primary;
+  }
+
+  .toolbarGroupSecondary {
+    grid-area: secondary;
+    align-self: start;
+    margin-left: auto;
+  }
+}
+
+@container file-explorer (max-width: 920px) {
+  .toolbar {
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .toolbarGroupPrimary,
+  .toolbarGroupSecondary {
+    width: 100%;
+  }
+
+  .toolbarGroupSecondary {
+    justify-content: flex-end;
+    margin-left: 0;
+  }
+}
+
+@container file-explorer (max-width: 720px) {
+  .toolbar {
+    gap: 8px;
+  }
+
+  .toolbarGroup {
+    justify-content: flex-start;
+  }
+
+  .tbBtn {
+    min-width: 0;
+    padding: 0 10px;
+  }
+
+  .tbBtnContent {
+    gap: 6px;
+  }
+
+  .tbBtnIcon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@container file-explorer (max-width: 640px) {
+  .toolbar {
+    padding: 10px;
+  }
+
+  .toolbarGroup {
+    gap: 6px;
+  }
+
+  .tbBtn {
+    height: 36px;
+    padding: 0 8px;
+  }
+
+  .tbBtnText {
+    display: none;
+  }
+
+  .tbBtnContent {
+    justify-content: center;
+  }
+
+  .relatedLegend {
+    padding: var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .relatedLegendGroups {
+    gap: var(--space-3);
+  }
+
+  .relatedLegendItem {
+    gap: 6px;
+  }
+
+  .relatedLegendMeta,
+  .relatedLegendHint {
+    font-size: var(--font-size-sm);
+  }
+
+  .nameCell {
+    gap: 8px;
+  }
+
+  .relatedBadge {
+    min-width: 40px;
+    height: 30px;
+    padding: 0 8px;
+  }
 }

@@ -1,19 +1,55 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";
-import SemanticAlignmentStyles from "./semanticAlignment.module.css";
-import RdfSidebar from "../../components/SemanticAlignment/RdfSidebar/rdfSidebar";
-import ElementDetailPanel from "../../components/SemanticAlignment/ElementDetailPanel/elementDetailPanel";
-import RdfConnection from "../../components/SemanticAlignment/RdfCard/rdfConnection";
-import RdfCard from "../../components/SemanticAlignment/RdfCard/rdfCard";
+import SemanticIntegrationStyles from "./semanticIntegration.module.css";
+import RdfSidebar from "../../components/SemanticIntegration/RdfSidebar/rdfSidebar";
+import ElementDetailPanel from "../../components/SemanticIntegration/ElementDetailPanel/elementDetailPanel";
+import RdfConnection from "../../components/SemanticIntegration/RdfCard/rdfConnection";
+import RdfCard from "../../components/SemanticIntegration/RdfCard/rdfCard";
 import UploadFilePicker from "../../components/Common/FilePicker/uploadFilePicker";
 import { generateDistinctColors } from "../../util/colors";
-import { uploadSemanticMappingCsv } from "../../util/petitionHandler";
+import {
+  getSemanticCdeDatasetMatches,
+  getNodeDatasets,
+  processSemanticCdeDataset,
+  scoreSemanticCdeCandidates,
+  uploadSemanticMappingCsv,
+} from "../../util/petitionHandler";
+import { updateNodeAxiosBaseURL } from "../../util/nodeAxiosSetup";
+import { useNode } from "../../context/nodeContext";
 import { toast, ToastContainer } from "react-toastify";
 
-// Semantic alignment page for RDF mapping and ontology connections
-function SemanticAlignment() {
+const normalizeDatasetName = (value) =>
+  String(value || "")
+    .toLowerCase()
+    .replace(/\.[^.]+$/, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+
+const getNodeDisplayName = (node) => node?.name || node?.nodeName || node?.serviceUrl || "Node";
+
+const getNodeServiceUrl = (node) => node?.serviceUrl || node?.ip || node?.url;
+
+const getDatasetFileName = (dataset) => {
+  if (typeof dataset === "string") return dataset;
+  return dataset?.fileName || dataset?.name || dataset?.title || "";
+};
+
+const buildSemanticCdeOutputName = (datasetFileName, conversion) => {
+  const stem = String(datasetFileName || "dataset")
+    .replace(/\.[^.]+$/, "")
+    .replace(/[^A-Za-z0-9._-]+/g, "_");
+  if (Array.isArray(conversion.mappingIds) && conversion.mappingIds.length > 1) {
+    return `${stem}-${conversion.outputSuffix}`;
+  }
+  const extension = normalizeDatasetName(conversion.target).includes("sulo") ? "ttl" : "json";
+  return `${stem}-${conversion.outputSuffix}.${extension}`;
+};
+
+// Semantic integration page for RDF mapping and ontology connections
+function SemanticIntegration() {
   const location = useLocation();
+  const { selectedNodes = [] } = useNode() || {};
   const workspaceRef = useRef(null);
   const hiddenFileInput = useRef(null);
   const [cards, setCards] = useState([]);
@@ -33,6 +69,17 @@ function SemanticAlignment() {
   const [isResizing, setIsResizing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileView, setMobileView] = useState("detail");
+  const [registryCheck, setRegistryCheck] = useState({
+    status: "idle",
+    matches: [],
+    error: null,
+  });
+  const [semanticCdeProcessingKey, setSemanticCdeProcessingKey] = useState(null);
+
+  const selectedNodesKey = useMemo(
+    () => selectedNodes.map((node) => `${node.nodeId || node.id || ""}:${getNodeServiceUrl(node) || ""}`).join("|"),
+    [selectedNodes]
+  );
 
   useEffect(() => {
     function handleResize() {
@@ -96,6 +143,92 @@ function SemanticAlignment() {
     }
   }, [location.state, processCsvData]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkRegistryCompatibility = async () => {
+      if (!Array.isArray(selectedNodes) || selectedNodes.length === 0) {
+        setRegistryCheck({ status: "idle", matches: [], error: null });
+        return;
+      }
+
+      setRegistryCheck({ status: "checking", matches: [], error: null });
+
+      try {
+        const matches = [];
+        for (const node of selectedNodes) {
+          const serviceUrl = getNodeServiceUrl(node);
+          if (!serviceUrl) continue;
+
+          updateNodeAxiosBaseURL(serviceUrl);
+          const datasets = await getNodeDatasets();
+          const datasetNames = (Array.isArray(datasets) ? datasets : [])
+            .map(getDatasetFileName)
+            .filter(Boolean);
+
+          for (const datasetFileName of datasetNames) {
+            const nodeMatches = await getSemanticCdeDatasetMatches(datasetFileName);
+            const candidates = Array.isArray(nodeMatches) ? nodeMatches : [];
+            if (candidates.length === 0) continue;
+
+            const scoreResults = await scoreSemanticCdeCandidates({
+              datasetFields: candidates[0]?.datasetFields || [],
+              candidates: candidates.map((match) => ({
+                semanticCdePath: match.semanticCdePath,
+                descriptions: match.semanticDescriptions || [],
+                lexicalScore: match.lexicalScore,
+                lexicalMatch: Boolean(match.lexicalMatch),
+              })),
+            });
+            const scoresByPath = new Map(
+              (Array.isArray(scoreResults) ? scoreResults : [])
+                .map((score) => [score.semanticCdePath, score])
+            );
+
+            candidates
+              .filter((match) => scoresByPath.get(match.semanticCdePath)?.accepted)
+              .sort((left, right) => (
+                (scoresByPath.get(right.semanticCdePath)?.score || 0)
+                - (scoresByPath.get(left.semanticCdePath)?.score || 0)
+              ))
+              .forEach((match) => {
+                if (!Array.isArray(match.conversions) || match.conversions.length === 0) return;
+                matches.push({
+                  node,
+                  serviceUrl,
+                  datasetFileName: match.datasetFileName || datasetFileName,
+                  entry: {
+                    title: match.title,
+                    semanticCdePath: match.semanticCdePath,
+                  },
+                  conversions: match.conversions,
+                  candidateScore: scoresByPath.get(match.semanticCdePath),
+                });
+              });
+          }
+        }
+
+        if (!cancelled) {
+          setRegistryCheck({ status: "ready", matches, error: null });
+        }
+      } catch (error) {
+        console.error("Error checking Semantic-CDE registry compatibility:", error);
+        if (!cancelled) {
+          setRegistryCheck({
+            status: "error",
+            matches: [],
+            error: error.message || "Unable to check Semantic-CDE registry compatibility.",
+          });
+        }
+      }
+    };
+
+    checkRegistryCompatibility();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedNodes, selectedNodesKey]);
+
 
 
   const handleFileUpload = (file) => {
@@ -121,6 +254,107 @@ function SemanticAlignment() {
 
   const handleProcess = () => {
     console.log("Processing...", { cards, connections });
+  };
+
+  const handleSemanticCdeConversion = async (match, conversion) => {
+    const processingKey = `${match.serviceUrl}:${match.datasetFileName}:${conversion.id}`;
+    setSemanticCdeProcessingKey(processingKey);
+
+    try {
+      updateNodeAxiosBaseURL(match.serviceUrl);
+      const result = await processSemanticCdeDataset({
+        datasetFileName: match.datasetFileName,
+        semanticCdePath: match.entry.semanticCdePath,
+        mappingIds: Array.isArray(conversion.mappingIds) && conversion.mappingIds.length > 0
+          ? conversion.mappingIds
+          : [conversion.id],
+        outputFileName: buildSemanticCdeOutputName(match.datasetFileName, conversion),
+      });
+
+      if (result?.success) {
+        toast.success(
+          `Converted ${match.datasetFileName} to ${conversion.target}: ${(result.outputFiles || []).join(", ")}`
+        );
+      } else {
+        toast.error(result?.message || `Semantic-CDE conversion failed for ${match.datasetFileName}.`);
+      }
+    } catch (error) {
+      console.error("Error processing Semantic-CDE conversion:", error);
+      toast.error(error?.response?.data?.error || error.message || "Semantic-CDE conversion failed.");
+    } finally {
+      setSemanticCdeProcessingKey(null);
+    }
+  };
+
+  const renderRegistryConversionPanel = () => {
+    if (!Array.isArray(selectedNodes) || selectedNodes.length === 0) return null;
+
+    return (
+      <section className={SemanticIntegrationStyles.registryPanel} aria-label="Semantic-CDE registry conversions">
+        <div className={SemanticIntegrationStyles.registryPanelHeader}>
+          <div>
+            <p className={SemanticIntegrationStyles.registryEyebrow}>Semantic-CDE registry</p>
+            <p className={SemanticIntegrationStyles.registryIntro}>
+              These datasets match published Semantic-CDE entries and can be aligned directly.
+            </p>
+          </div>
+          <span className={SemanticIntegrationStyles.registryStatus}>
+            {registryCheck.status === "checking"
+              ? "Checking registry"
+              : `${registryCheck.matches.length} compatible dataset${registryCheck.matches.length === 1 ? "" : "s"}`}
+          </span>
+        </div>
+
+        {registryCheck.status === "error" && (
+          <p className={SemanticIntegrationStyles.registryMessage}>{registryCheck.error}</p>
+        )}
+
+        {registryCheck.status === "ready" && registryCheck.matches.length === 0 && (
+          <p className={SemanticIntegrationStyles.registryMessage}>
+            No selected-node dataset currently matches a runnable Semantic-CDE registry conversion.
+          </p>
+        )}
+
+        {registryCheck.status === "checking" && (
+          <p className={SemanticIntegrationStyles.registryMessage}>
+            Checking selected node datasets against the published Semantic-CDE registry.
+          </p>
+        )}
+
+        <div className={SemanticIntegrationStyles.registryMatchList}>
+          {registryCheck.matches.map((match) => (
+            <article
+              key={`${match.serviceUrl}:${match.datasetFileName}:${match.entry.semanticCdePath}`}
+              className={SemanticIntegrationStyles.registryMatchCard}
+            >
+              <div className={SemanticIntegrationStyles.registryMatchMeta}>
+                <span className={SemanticIntegrationStyles.registryNodeName}>{getNodeDisplayName(match.node)}</span>
+                <strong>{match.datasetFileName}</strong>
+                <small>{match.entry.title}</small>
+              </div>
+              <div className={SemanticIntegrationStyles.registryActions}>
+                {match.conversions.map((conversion) => {
+                  const processingKey = `${match.serviceUrl}:${match.datasetFileName}:${conversion.id}`;
+                  const isProcessing = semanticCdeProcessingKey === processingKey;
+                  return (
+                    <button
+                      key={conversion.id}
+                      type="button"
+                      className={SemanticIntegrationStyles.registryConvertButton}
+                      onClick={() => handleSemanticCdeConversion(match, conversion)}
+                      disabled={Boolean(semanticCdeProcessingKey)}
+                      title={conversion.description}
+                    >
+                      {isProcessing ? "Aligning..." : `Align to ${conversion.target}`}
+                    </button>
+                  );
+                })}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    );
   };
 
   const { allBuilt, missingKeys } = useMemo(() => {
@@ -491,15 +725,15 @@ function SemanticAlignment() {
         in={!!elements}
         timeout={300}
         classNames={{
-          enter: SemanticAlignmentStyles.fadeEnter,
-          enterActive: SemanticAlignmentStyles.fadeEnterActive,
-          exit: SemanticAlignmentStyles.fadeExit,
-          exitActive: SemanticAlignmentStyles.fadeExitActive,
+          enter: SemanticIntegrationStyles.fadeEnter,
+          enterActive: SemanticIntegrationStyles.fadeEnterActive,
+          exit: SemanticIntegrationStyles.fadeExit,
+          exitActive: SemanticIntegrationStyles.fadeExitActive,
         }}
         unmountOnExit
       >
-        <div className={SemanticAlignmentStyles.mainContent} ref={workspaceRef} data-testid="main-content">
-          <div className={SemanticAlignmentStyles.leftPanel}>
+        <div className={SemanticIntegrationStyles.mainContent} ref={workspaceRef} data-testid="main-content">
+          <div className={SemanticIntegrationStyles.leftPanel}>
             {elements && (
               <RdfSidebar
                 elements={elements}
@@ -511,7 +745,7 @@ function SemanticAlignment() {
             )}
           </div>
           <div
-            className={SemanticAlignmentStyles.middlePanel}
+            className={SemanticIntegrationStyles.middlePanel}
             style={{ width: `${middlePanelWidth}vw` }}
             data-testid="middle-panel"
           >
@@ -547,7 +781,7 @@ function SemanticAlignment() {
             />
           </div>
           <div
-            className={SemanticAlignmentStyles.resizer}
+            className={SemanticIntegrationStyles.resizer}
             role="separator"
             aria-label="Resize middle panel"
             data-testid="resizer"
@@ -558,18 +792,18 @@ function SemanticAlignment() {
             }}
           />
           <div
-            className={SemanticAlignmentStyles.rightPanel}
+            className={SemanticIntegrationStyles.rightPanel}
             style={{
               width: `${100 - 20 - middlePanelWidth}vw`,
             }}
             onWheel={handleWheel}
           >
             <div
-              className={SemanticAlignmentStyles.workspaceContent}
+              className={SemanticIntegrationStyles.workspaceContent}
               style={{ transform: `scale(${zoom})`, transformOrigin: "0 0" }}
             >
               {isConnecting && (
-                <div className={SemanticAlignmentStyles.connectionMessage}>
+                <div className={SemanticIntegrationStyles.connectionMessage}>
                   {tempFromCard
                     ? "Select target card to complete connection"
                     : "Select source card to start connection"}
@@ -594,8 +828,8 @@ function SemanticAlignment() {
               onChange={(e) => handleFileUpload(e.target.files[0])}
               style={{ display: "none" }}
             />
-            <div className={SemanticAlignmentStyles.controls}>
-              <div className={SemanticAlignmentStyles.controlsBottom}
+            <div className={SemanticIntegrationStyles.controls}>
+              <div className={SemanticIntegrationStyles.controlsBottom}
                 data-testid="controls"
                 role="group"
                 aria-label="Workspace controls"
@@ -605,31 +839,31 @@ function SemanticAlignment() {
                     setIsConnecting(true);
                     setTempFromCard(null);
                   }}
-                  className={SemanticAlignmentStyles.controlBtn}
+                  className={SemanticIntegrationStyles.controlBtn}
                 >
                   Create Connection
                 </button>
                 <button
                   onClick={handleRemoveConnection}
-                  className={SemanticAlignmentStyles.controlBtn}
+                  className={SemanticIntegrationStyles.controlBtn}
                 >
                   Remove Last
                 </button>
                 <button
                   onClick={handleResetZoom}
-                  className={SemanticAlignmentStyles.controlBtn}
+                  className={SemanticIntegrationStyles.controlBtn}
                 >
                   Reset Zoom
                 </button>
                 <button
                   onClick={handleFileClick}
-                  className={SemanticAlignmentStyles.controlBtn}
+                  className={SemanticIntegrationStyles.controlBtn}
                 >
                   Upload CSV
                 </button>
                 <button
                   onClick={handleDownloadCsv}
-                  className={SemanticAlignmentStyles.controlBtn}
+                  className={SemanticIntegrationStyles.controlBtn}
                 >
                   Process
                 </button>
@@ -647,14 +881,20 @@ function SemanticAlignment() {
         <UploadFilePicker
           onFileUpload={handleFileUpload}
           isProcessing={false}
-          modalTitle="Upload mapped elements"
-        />
+          modalTitle="Align datasets"
+          modalClassName={SemanticIntegrationStyles.alignModal}
+          uploadTitle="Manual alignment"
+          uploadDescription="Upload the CSV of mapped dataset elements to build the RDF alignment manually."
+          confirmLabel="Open manual alignment"
+        >
+          {renderRegistryConversionPanel()}
+        </UploadFilePicker>
       );
     }
 
     return (
-      <div className={SemanticAlignmentStyles.mobileLayout}>
-        <div className={SemanticAlignmentStyles.mobileSidebar}>
+      <div className={SemanticIntegrationStyles.mobileLayout}>
+        <div className={SemanticIntegrationStyles.mobileSidebar}>
           <RdfSidebar
             elements={elements}
             activeElementIndex={activeElementIndex}
@@ -663,15 +903,15 @@ function SemanticAlignment() {
             builtClasses={builtClasses}
           />
           <button
-            className={SemanticAlignmentStyles.mobileToggleBtn}
+            className={SemanticIntegrationStyles.mobileToggleBtn}
             onClick={toggleMobileView}
           >
             {mobileView === "detail" ? "Workspace" : "Details"}
           </button>
         </div>
-        <div className={SemanticAlignmentStyles.mobileContent}>
+        <div className={SemanticIntegrationStyles.mobileContent}>
           {mobileView === "detail" && (
-            <div className={SemanticAlignmentStyles.mobileDetailWrapper}>
+            <div className={SemanticIntegrationStyles.mobileDetailWrapper}>
               <ElementDetailPanel
                 activeElement={activeItem}
                 currentSelection={
@@ -705,16 +945,16 @@ function SemanticAlignment() {
             </div>
           )}
           {mobileView === "workspace" && (
-            <div className={SemanticAlignmentStyles.mobileWorkspace}>
+            <div className={SemanticIntegrationStyles.mobileWorkspace}>
               {isConnecting && (
-                <div className={SemanticAlignmentStyles.connectionMessage}>
+                <div className={SemanticIntegrationStyles.connectionMessage}>
                   {tempFromCard
                     ? "Select target card to complete connection"
                     : "Select source card to start connection"}
                 </div>
               )}
               <div
-                className={SemanticAlignmentStyles.workspaceContent}
+                className={SemanticIntegrationStyles.workspaceContent}
                 style={{ transform: `scale(${zoom})`, transformOrigin: "0 0" }}
                 onWheel={handleWheel}
               >
@@ -731,8 +971,8 @@ function SemanticAlignment() {
                 ))}
               </div>
 
-              <div className={SemanticAlignmentStyles.controls}>
-                <div className={SemanticAlignmentStyles.controlsBottom}
+              <div className={SemanticIntegrationStyles.controls}>
+                <div className={SemanticIntegrationStyles.controlsBottom}
                   data-testid="controls"
                   role="group"
                   aria-label="Workspace controls"
@@ -742,31 +982,31 @@ function SemanticAlignment() {
                       setIsConnecting(true);
                       setTempFromCard(null);
                     }}
-                    className={SemanticAlignmentStyles.controlBtn}
+                    className={SemanticIntegrationStyles.controlBtn}
                   >
                     Create Connection
                   </button>
                   <button
                     onClick={handleRemoveConnection}
-                    className={SemanticAlignmentStyles.controlBtn}
+                    className={SemanticIntegrationStyles.controlBtn}
                   >
                     Remove Last
                   </button>
                   <button
                     onClick={handleResetZoom}
-                    className={SemanticAlignmentStyles.controlBtn}
+                    className={SemanticIntegrationStyles.controlBtn}
                   >
                     Reset Zoom
                   </button>
                   <button
                     onClick={handleFileClick}
-                    className={SemanticAlignmentStyles.controlBtn}
+                    className={SemanticIntegrationStyles.controlBtn}
                   >
                     Upload CSV
                   </button>
                   <button
                     onClick={handleProcess}
-                    className={SemanticAlignmentStyles.controlBtn}
+                    className={SemanticIntegrationStyles.controlBtn}
                   >
                     Process
                   </button>
@@ -787,23 +1027,29 @@ function SemanticAlignment() {
   };
 
   return (
-    <div className={SemanticAlignmentStyles.container}>
+    <div className={SemanticIntegrationStyles.container}>
       <ToastContainer
         autoClose={2000}
         hideProgressBar={true}
-        className={SemanticAlignmentStyles.toastContainer}
-        toastClassName={SemanticAlignmentStyles.toast}
+        className={SemanticIntegrationStyles.toastContainer}
+        toastClassName={SemanticIntegrationStyles.toast}
       />
       {!elements && (
         <UploadFilePicker
           onFileUpload={handleFileUpload}
           isProcessing={false}
-          modalTitle={"Upload mapped elements"}
-        />
+          modalTitle="Align datasets"
+          modalClassName={SemanticIntegrationStyles.alignModal}
+          uploadTitle="Manual alignment"
+          uploadDescription="Upload the CSV of mapped dataset elements to build the RDF alignment manually."
+          confirmLabel="Open manual alignment"
+        >
+          {renderRegistryConversionPanel()}
+        </UploadFilePicker>
       )}
       {elements && (isMobile ? renderMobileLayout() : renderDesktopLayout())}
     </div>
   );
 }
 
-export default SemanticAlignment;
+export default SemanticIntegration;

@@ -1,8 +1,8 @@
 import React from "react";
 import styles from "./landingIcons.module.css";
 
-// 'Integration' SVG icon for the landing page
-export default function LandingIntegration({ size, title = "Integrate documents" }) {
+// 'Alignment' SVG icon for the landing page
+export default function LandingAlignment({ size, title = "Integrate documents" }) {
   const svgStyle = size ? { width: size, height: size } : {};
 
   return (

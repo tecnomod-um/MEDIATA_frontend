@@ -96,7 +96,7 @@ describe("Navbar", () => {
     useAuth.mockReturnValue({
       isAuthenticated: false,
       logout: vi.fn(),
-      capabilities: { semanticAlignment: false, hl7fhir: false },
+      capabilities: { semanticIntegration: false, hl7fhir: false },
       capsLoaded: false,
     });
 
@@ -128,7 +128,7 @@ describe("Navbar", () => {
     useAuth.mockReturnValue({
       isAuthenticated: true,
       logout: vi.fn(),
-      capabilities: { semanticAlignment: true, hl7fhir: true },
+      capabilities: { semanticIntegration: true, hl7fhir: true },
       capsLoaded: true,
     });
     useNode.mockReturnValue({ selectedNodes: ["abc"] });
@@ -136,8 +136,8 @@ describe("Navbar", () => {
     render(<Navbar />);
 
     expect(screen.getByRole("link", { name: "Discovery" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Integration" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Semantic-Alignment" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Alignment" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Semantic Integration" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "HL7 FHIR" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("checkbox", { name: "Toggle menu" }));
@@ -155,7 +155,7 @@ describe("Navbar", () => {
     useAuth.mockReturnValue({
       isAuthenticated: true,
       logout: logoutMock,
-      capabilities: { semanticAlignment: true, hl7fhir: true },
+      capabilities: { semanticIntegration: true, hl7fhir: true },
       capsLoaded: true,
     });
     useNode.mockReturnValue({ selectedNodes: ["n1"] });
@@ -181,7 +181,7 @@ describe("Navbar", () => {
     useAuth.mockReturnValue({
       isAuthenticated: true,
       logout: vi.fn(),
-      capabilities: { semanticAlignment: true, hl7fhir: true },
+      capabilities: { semanticIntegration: true, hl7fhir: true },
       capsLoaded: true,
     });
     useNode.mockReturnValue({ selectedNodes: ["n1"] });
@@ -194,7 +194,7 @@ describe("Navbar", () => {
     useAuth.mockReturnValue({
       isAuthenticated: true,
       logout: vi.fn(),
-      capabilities: { semanticAlignment: true, hl7fhir: true },
+      capabilities: { semanticIntegration: true, hl7fhir: true },
       capsLoaded: true,
     });
     useNode.mockReturnValue({ selectedNodes: null });
@@ -202,8 +202,8 @@ describe("Navbar", () => {
     render(<Navbar />);
 
     expect(screen.queryByRole("link", { name: "Discovery" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Integration" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Semantic-Alignment" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Alignment" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Semantic Integration" })).toBeNull();
     expect(screen.queryByRole("link", { name: "HL7 FHIR" })).toBeNull();
 
     fireEvent.click(screen.getByRole("checkbox", { name: "Toggle menu" }));
@@ -227,11 +227,11 @@ describe("Navbar", () => {
     expect(checkbox).toHaveAttribute("aria-expanded", "false");
   });
 
-  it("only shows Discovery and Integration when capabilities are disabled", () => {
+  it("only shows Discovery and Alignment when capabilities are disabled", () => {
     useAuth.mockReturnValue({
       isAuthenticated: true,
       logout: vi.fn(),
-      capabilities: { semanticAlignment: false, hl7fhir: false },
+      capabilities: { semanticIntegration: false, hl7fhir: false },
       capsLoaded: true,
     });
     useNode.mockReturnValue({ selectedNodes: ["abc"] });
@@ -239,22 +239,22 @@ describe("Navbar", () => {
     render(<Navbar />);
 
     expect(screen.getByRole("link", { name: "Discovery" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Integration" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Semantic-Alignment" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Alignment" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Semantic Integration" })).toBeNull();
     expect(screen.queryByRole("link", { name: "HL7 FHIR" })).toBeNull();
   });
 
-  it("shows Semantic-Alignment when capability is enabled", () => {
+  it("shows Semantic Integration when capability is enabled", () => {
     useAuth.mockReturnValue({
       isAuthenticated: true,
       logout: vi.fn(),
-      capabilities: { semanticAlignment: true, hl7fhir: false },
+      capabilities: { semanticIntegration: true, hl7fhir: false },
       capsLoaded: true,
     });
     useNode.mockReturnValue({ selectedNodes: ["abc"] });
 
     render(<Navbar />);
-    expect(screen.getByRole("link", { name: "Semantic-Alignment" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Semantic Integration" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "HL7 FHIR" })).toBeNull();
   });
 
@@ -262,13 +262,13 @@ describe("Navbar", () => {
     useAuth.mockReturnValue({
       isAuthenticated: true,
       logout: vi.fn(),
-      capabilities: { semanticAlignment: false, hl7fhir: true },
+      capabilities: { semanticIntegration: false, hl7fhir: true },
       capsLoaded: true,
     });
     useNode.mockReturnValue({ selectedNodes: ["abc"] });
 
     render(<Navbar />);
-    expect(screen.queryByRole("link", { name: "Semantic-Alignment" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Semantic Integration" })).toBeNull();
     expect(screen.getByRole("link", { name: "HL7 FHIR" })).toBeInTheDocument();
   });
 });

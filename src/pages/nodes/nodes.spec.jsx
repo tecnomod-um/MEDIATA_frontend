@@ -12,6 +12,7 @@ const mockGetNodeMetadata = vi.fn();
 const mockGetNodeInfo = vi.fn();
 const mockNodeAuth = vi.fn();
 const mockNavigate = vi.fn();
+let mockLocationState = {};
 const mockSelectNode = vi.fn();
 const mockSelectNodes = vi.fn();
 const mockStoreNodeRoutingEntry = vi.fn();
@@ -63,6 +64,7 @@ vi.mock('react-toastify', () => {
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
+  useLocation: () => ({ state: mockLocationState }),
 }));
 
 vi.mock('../../context/nodeContext', () => ({
@@ -144,6 +146,7 @@ describe('<Nodes />', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockLocationState = {};
     user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
   });
 
@@ -182,6 +185,17 @@ describe('<Nodes />', () => {
       proxyRequired: true,
       proxyBasePath: '/nodes/proxy/b',
     });
+  });
+
+  it('fetches nodes for the selected project', async () => {
+    mockLocationState = { projectId: 'project-1' };
+    mockGetNodeList.mockResolvedValueOnce([{ nodeId: 'a', name: 'A' }]);
+
+    render(<Nodes />);
+
+    await screen.findByTestId('node-scene');
+
+    expect(mockGetNodeList).toHaveBeenCalledWith('project-1');
   });
 
   it('shows "No nodes connected to the system" on empty list', async () => {

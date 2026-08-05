@@ -214,7 +214,7 @@ describe('petitionHandler', () => {
       axiosInstance.post.mockResolvedValue({ data: 123 });
       const res = await petitionHandler.uploadSemanticMappingCsv('csv text');
       expect(axiosInstance.post).toHaveBeenCalledWith(
-        '/rdf/semanticalignment',
+        '/rdf/semanticintegration',
         'csv text',
         { headers: { 'Content-Type': 'text/plain;charset=utf-8' } }
       );
@@ -421,6 +421,38 @@ describe('petitionHandler', () => {
       await expect(petitionHandler.getNodeDatasets()).resolves.toEqual([9]);
       expect(nodeAxiosInstance.get).toHaveBeenCalledWith(
         '/taniwha/api/files/datasets'
+      );
+    });
+
+    it('getSemanticCdeDatasetMatches returns node-side registry matches', async () => {
+      nodeAxiosInstance.get.mockResolvedValue({
+        data: [{ datasetFileName: 'clinical table.csv', title: 'Clinical table', conversions: [] }],
+      });
+      await expect(petitionHandler.getSemanticCdeDatasetMatches('clinical table.csv'))
+        .resolves.toEqual([{ datasetFileName: 'clinical table.csv', title: 'Clinical table', conversions: [] }]);
+      expect(nodeAxiosInstance.get).toHaveBeenCalledWith(
+        '/taniwha/api/semantic-cde/datasets/clinical%20table.csv/registry-matches'
+      );
+    });
+
+    it('scoreSemanticCdeCandidates sends metadata only to the central backend', async () => {
+      const request = {
+        datasetFields: ['systolic pressure', 'diastolic pressure'],
+        candidates: [{
+          semanticCdePath: 'scde-index/blood_pressure.scde.ttl',
+          descriptions: ['Clinical data element: blood pressure'],
+          lexicalScore: 0.75,
+          lexicalMatch: true,
+        }],
+      };
+      axiosInstance.post.mockResolvedValue({
+        data: [{ semanticCdePath: request.candidates[0].semanticCdePath, accepted: true, score: 0.8 }],
+      });
+
+      await expect(petitionHandler.scoreSemanticCdeCandidates(request)).resolves.toHaveLength(1);
+      expect(axiosInstance.post).toHaveBeenCalledWith(
+        '/api/semantic-cde/score-candidates',
+        request
       );
     });
 
@@ -698,6 +730,40 @@ describe('petitionHandler', () => {
         '/taniwha/api/files/clean/start',
         opts,
         expect.objectContaining({ params: { category: 'raw', name: 'file.csv' } })
+      );
+    });
+  });
+
+  describe('getNormalizationStats', () => {
+    it('requests aggregate statistics with the pending cleaning options', async () => {
+      const response = { columns: { age: { min: 18, max: 90, validCount: 10 } } };
+      nodeAxiosInstance.post.mockResolvedValue({ data: response });
+      const options = { normalizeData: true, normalizeColumns: ['age'] };
+
+      await expect(
+        petitionHandler.getNormalizationStats('DATASETS', 'patients.csv', ['age'], options)
+      ).resolves.toEqual(response);
+      expect(nodeAxiosInstance.post).toHaveBeenCalledWith(
+        '/taniwha/api/files/clean/normalization-stats',
+        { columns: ['age'], cleaningOptions: options },
+        { params: { category: 'DATASETS', name: 'patients.csv' } }
+      );
+    });
+  });
+
+  describe('validateCleanExplorerFile', () => {
+    it('dry-runs the complete cleaning pipeline', async () => {
+      const response = { valid: true, inputRows: 4, outputRows: 3, outputColumns: 2 };
+      nodeAxiosInstance.post.mockResolvedValue({ data: response });
+      const options = { removeDuplicates: true };
+
+      await expect(
+        petitionHandler.validateCleanExplorerFile('DATASETS', 'patients.csv', options)
+      ).resolves.toEqual(response);
+      expect(nodeAxiosInstance.post).toHaveBeenCalledWith(
+        '/taniwha/api/files/clean/validate',
+        options,
+        { params: { category: 'DATASETS', name: 'patients.csv' } }
       );
     });
   });

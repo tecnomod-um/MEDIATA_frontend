@@ -16,7 +16,7 @@ The MEDIATA front end is the single-page web client of the MEDIATA platform. It 
 
 - Kerberos-based login and session management (via TGTs and STs)
 - Remote multi-node discovery and metadata exploration
-- Statistical profiling, integration, and semantic mapping workflows
+- Statistical profiling, alignment, and semantic mapping workflows
 - Ontology term suggestions (SNOMED CT, FHIR)
 - Semi-automated FHIR mapping and export
 - Fully responsive UI with keyboard shortcuts and accessibility support

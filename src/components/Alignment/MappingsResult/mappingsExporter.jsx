@@ -7,7 +7,7 @@ import TooltipPopup from "../../Common/TooltipPopup/tooltipPopup";
 import { useAuth } from "../../../context/authContext";
 import { buildMappingSpec } from "../../../util/mappingSpec";
 
-// Exports the integration mappings object to CSV
+// Exports the alignment mappings object to CSV
 function generateMappingsCSV(mappings) {
   const lines = [];
 
@@ -63,7 +63,7 @@ function MappingsExporter({ mappings, schema, onUploadMappings }) {
   const navigate = useNavigate();
   const { capabilities } = useAuth();
 
-  const hasSemanticAlignment = !!capabilities?.semanticAlignment;
+  const hasSemanticIntegration = !!capabilities?.semanticIntegration;
 
   const arrowWrapperRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -120,8 +120,8 @@ function MappingsExporter({ mappings, schema, onUploadMappings }) {
     }
   };
 
-  const handleNavigateToSemanticAlignment = () => {
-    if (!hasSemanticAlignment) return;
+  const handleNavigateToSemanticIntegration = () => {
+    if (!hasSemanticIntegration) return;
 
     try {
       const csvString = generateMappingsCSV(mappings);
@@ -130,7 +130,7 @@ function MappingsExporter({ mappings, schema, onUploadMappings }) {
       const reader = new FileReader();
       reader.onload = () => {
         const csvBase64 = reader.result.split(",")[1];
-        navigate("/semanticalignment", {
+        navigate("/semanticintegration", {
           state: { csvData: csvBase64, fileName: "mappings_elements.csv" },
         });
       };
@@ -173,17 +173,17 @@ function MappingsExporter({ mappings, schema, onUploadMappings }) {
             ref={arrowWrapperRef}
             className={MappingsResultStyles.uploadArrowButtonWrapper}
             onMouseEnter={() => {
-              if (!hasSemanticAlignment) setShowTooltip(true);
+              if (!hasSemanticIntegration) setShowTooltip(true);
             }}
             onMouseLeave={() => setShowTooltip(false)}
           >
             <button
               className={`${MappingsResultStyles.uploadArrowButton} ${
-                !hasSemanticAlignment ? MappingsResultStyles.uploadArrowButtonDisabled : ""
+                !hasSemanticIntegration ? MappingsResultStyles.uploadArrowButtonDisabled : ""
               }`}
-              onClick={handleNavigateToSemanticAlignment}
-              disabled={!hasSemanticAlignment}
-              aria-disabled={!hasSemanticAlignment}
+              onClick={handleNavigateToSemanticIntegration}
+              disabled={!hasSemanticIntegration}
+              aria-disabled={!hasSemanticIntegration}
               type="button"
             >
               <ArrowForwardIcon sx={{ fontSize: 16 }} />
@@ -191,7 +191,7 @@ function MappingsExporter({ mappings, schema, onUploadMappings }) {
 
             {showTooltip && arrowWrapperRef.current && (
               <TooltipPopup
-                message="This deployment does not include Semantic Alignment."
+                message="This deployment does not include Semantic Integration."
                 buttonRef={arrowWrapperRef}
                 onClose={() => setShowTooltip(false)}
               />

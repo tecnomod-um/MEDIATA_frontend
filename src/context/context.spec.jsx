@@ -226,7 +226,7 @@ describe('NodeProvider & useNode', () => {
 describe('AuthProvider & useAuth', () => {
   beforeEach(() => {
     mockGetSystemCapabilities.mockResolvedValue({
-      semanticAlignment: true,
+      semanticIntegration: true,
       hl7fhir: true,
     });
   });
@@ -449,7 +449,7 @@ describe('AuthProvider & useAuth', () => {
     await waitFor(() => {
       expect(screen.getByTestId('capsLoaded')).toHaveTextContent('true');
       expect(screen.getByTestId('capabilities')).toHaveTextContent(
-        JSON.stringify({ semanticAlignment: true, hl7fhir: true })
+        JSON.stringify({ semanticIntegration: true, hl7fhir: true })
       );
     });
   });
@@ -472,7 +472,7 @@ describe('AuthProvider & useAuth', () => {
     await waitFor(() => {
       expect(screen.getByTestId('capsLoaded')).toHaveTextContent('true');
       expect(screen.getByTestId('capabilities')).toHaveTextContent(
-        JSON.stringify({ semanticAlignment: false, hl7fhir: false })
+        JSON.stringify({ semanticIntegration: false, hl7fhir: false })
       );
     });
   });
@@ -480,7 +480,7 @@ describe('AuthProvider & useAuth', () => {
   it('loads capabilities from localStorage cache on mount', () => {
     localStorage.setItem(
       'systemCapabilities',
-      JSON.stringify({ semanticAlignment: true, hl7fhir: false })
+      JSON.stringify({ semanticIntegration: true, hl7fhir: false })
     );
 
     render(
@@ -493,8 +493,32 @@ describe('AuthProvider & useAuth', () => {
 
     expect(screen.getByTestId('capsLoaded')).toHaveTextContent('true');
     expect(screen.getByTestId('capabilities')).toHaveTextContent(
-      JSON.stringify({ semanticAlignment: true, hl7fhir: false })
+      JSON.stringify({ semanticIntegration: true, hl7fhir: false })
     );
+  });
+
+  it('refreshes a cached capability object without the renamed feature', async () => {
+    localStorage.setItem('jwtToken', 'token');
+    localStorage.setItem('kerberosTGT', 'tgt');
+    localStorage.setItem(
+      'systemCapabilities',
+      JSON.stringify({ hl7fhir: false })
+    );
+
+    render(
+      <NodeProvider>
+        <AuthProvider>
+          <AuthTester />
+        </AuthProvider>
+      </NodeProvider>
+    );
+
+    await waitFor(() => {
+      expect(mockGetSystemCapabilities).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('capabilities')).toHaveTextContent(
+        JSON.stringify({ semanticIntegration: true, hl7fhir: true })
+      );
+    });
   });
 
   it('logout clears systemCapabilities from localStorage', () => {
@@ -502,7 +526,7 @@ describe('AuthProvider & useAuth', () => {
     localStorage.setItem('kerberosTGT', 'y');
     localStorage.setItem(
       'systemCapabilities',
-      JSON.stringify({ semanticAlignment: true, hl7fhir: true })
+      JSON.stringify({ semanticIntegration: true, hl7fhir: true })
     );
 
     render(

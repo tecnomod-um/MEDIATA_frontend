@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import LandingDiscovery from './landingDiscovery';
-import LandingIntegration from './landingIntegrations';
+import LandingAlignment from './landingAlignments';
 import LandingSecurity from './landingSecurity';
 import LandingStandards from './landingStandards';
 import { vi } from "vitest";
@@ -38,22 +38,22 @@ describe('Landing icons', () => {
     });
   });
 
-  describe('<LandingIntegration />', () => {
+  describe('<LandingAlignment />', () => {
     it('is accessible via role=img and default aria-label', () => {
-      render(<LandingIntegration />);
+      render(<LandingAlignment />);
       const svg = screen.getByRole('img', { name: /integrate documents/i });
       expect(svg).toBeInTheDocument();
       expect(svg).toHaveClass('iconSvg');
     });
 
     it('applies size prop', () => {
-      render(<LandingIntegration size={150} />);
+      render(<LandingAlignment size={150} />);
       const svg = screen.getByRole('img', { name: /integrate documents/i });
       expect(svg).toHaveStyle({ width: '150px', height: '150px' });
     });
 
     it('renders background and three document groups with animated bars', () => {
-      render(<LandingIntegration />);
+      render(<LandingAlignment />);
 
       expect(screen.getByTestId('li-iconSquare')).toBeInTheDocument();
 
