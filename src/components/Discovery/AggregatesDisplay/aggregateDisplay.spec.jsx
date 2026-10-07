@@ -64,6 +64,23 @@ describe('AggregateDisplay', () => {
     expect(screen.getByText(/0\.0090/)).toBeInTheDocument();
   });
 
+  test('does not display missingness for privacy-suppressed features', () => {
+    render(
+      <AggregateDisplay
+        covariances={COV}
+        omittedFeatures={[{
+          featureName: 'small cohort',
+          reason: 'Suppressed for privacy: 5 or fewer observations',
+          percentMissing: 0,
+        }]}
+      />,
+    );
+
+    const omission = screen.getByText(/Suppressed for privacy/);
+    expect(omission).toHaveTextContent('small cohort: Suppressed for privacy: 5 or fewer observations');
+    expect(omission).not.toHaveTextContent('Missing:');
+  });
+
   test('splitter drag updates (reduces) top-panel height', () => {
     render(<AggregateDisplay covariances={COV} />);
 

@@ -145,7 +145,9 @@ const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearman
         {omittedFeatures.map((feature, i) => (
           <div key={i}>
             <strong>{feature.featureName}: </strong>
-            {feature.reason} (Missing: {feature.percentMissing.toFixed(2)}%)
+            {feature.reason}
+            {!feature.reason?.startsWith("Suppressed for privacy:") &&
+              ` (Missing: ${feature.percentMissing.toFixed(2)}%)`}
           </div>
         ))}
       </div>

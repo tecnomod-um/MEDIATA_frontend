@@ -795,10 +795,10 @@ function Tutorial() {
                 </p>
 
                 <p>
-                  The lower-right panel lists omitted features. These are categorical features that were excluded from
-                  aggregate categorical analysis because they are not suitable for it, for example because they have too
-                  many unique values, exceed the maximum number of categories, or appear to contain UUID-like identifiers.
-                  The list also includes the reason for omission and the percentage of missing values for each omitted feature.
+                  The lower-right panel lists omitted features. Features are excluded when displaying their statistics could
+                  disclose a group of five or fewer records. Categorical features can also be omitted when they have too many
+                  unique values, exceed the maximum number of categories, or appear to contain UUID-like identifiers. The list
+                  includes the reason for omission and, where applicable, the percentage of missing values.
                 </p>
               </div>
             </div>
