@@ -51,6 +51,20 @@ describe('DatasetCard', () => {
     expect(screen.getByText('theme2')).toBeInTheDocument();
   });
 
+  it('renders source dataset provenance in access and governance', () => {
+    const dataset = {
+      title: 'Harmonized Dataset',
+      wasDerivedFrom: ['https://node.example/fdp/dataset/source-data'],
+    };
+
+    render(<DatasetCard dataset={dataset} />);
+
+    expect(screen.getByText('Access and Governance')).toBeInTheDocument();
+    expect(screen.getByText('Derived From')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'node.example / source-data' }))
+      .toBeInTheDocument();
+  });
+
   it('renders object values recursively', () => {
     const dataset = {
       title: 'Dataset with object publisher',
