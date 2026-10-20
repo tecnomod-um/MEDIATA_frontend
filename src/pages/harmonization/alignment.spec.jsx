@@ -1421,6 +1421,32 @@ describe('Alignment Page', () => {
       );
     });
 
+    test('includes existing source terminology in the suggestion request', async () => {
+      suggestMappings.mockResolvedValue({ hierarchy: [{ col1: {} }] });
+      await renderWithColumns();
+
+      act(() => {
+        capturedColumnSearchListProps.current.onTerminologyChange(
+          0,
+          'col1',
+          'Clinical finding | 404684003'
+        );
+      });
+
+      await act(async () => {
+        await capturedColumnMappingProps.current.onSuggestMappings?.('replace');
+      });
+
+      expect(suggestMappings).toHaveBeenCalledWith(expect.objectContaining({
+        elementFiles: [expect.objectContaining({
+          nodeId: 'node1',
+          fileName: 'data.csv',
+          column: 'col1',
+          terminology: 'Clinical finding | 404684003',
+        })],
+      }));
+    });
+
     test('shows error toast when suggestMappings returns success=false', async () => {
       suggestMappings.mockResolvedValue({ success: false, message: 'Backend error' });
       await renderWithColumns();

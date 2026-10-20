@@ -37,6 +37,7 @@ import {
   collectOneHotFamily as collectOneHotFamilyUtil,
   buildOneHotDraft as buildOneHotDraftUtil,
 } from "./alignmentUtils";
+import { attachTerminologyToSuggestionSources } from "./suggestionTerminology";
 
 function PanelWrapper({ isMobile, panel, activeMobilePanel, styles, children }) {
   if (!isMobile) return children;
@@ -222,7 +223,8 @@ function Alignment() {
 
   const handleSuggestMappings = async (mode = "append") => {
     try {
-      const payload = { elementFiles: columnsData, ...(schema ? { schema } : {}) };
+      const elementFiles = attachTerminologyToSuggestionSources(columnsData, mappings);
+      const payload = { elementFiles, ...(schema ? { schema } : {}) };
       const res = await suggestMappings(payload);
 
       if (res?.success === false) {
