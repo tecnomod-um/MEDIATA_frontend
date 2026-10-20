@@ -46,6 +46,8 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
 
   const [snomedUnionTerminologySuggestions, setSnomedUnionTerminologySuggestions] = useState([]);
   const [snomedValueTerminologySuggestions, setSnomedValueTerminologySuggestions] = useState({});
+  const snomedDebouncersRef = useRef(new Map());
+  const snomedRequestVersionsRef = useRef(new Map());
 
   const [showHeaderTooltip, setShowHeaderTooltip] = useState(false);
   const headerTooltipButtonRef = useRef(null);
@@ -204,31 +206,53 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
     return [];
   }, [parsedSchema, unionName]);
 
-  const debouncedFetchSnomedTerminology = useMemo(
-    () =>
-      debounce(async (q, key) => {
-        try {
-          const res = await fetchSuggestions(q, "snomed");
-          const enriched = (res || []).map((s) => {
-            const code = s.iri?.split("/").pop();
-            return { label: s.label, value: `${s.label} | ${code}` };
-          });
+  const fetchSnomedTerminology = useCallback(async (q, key) => {
+    const version = (snomedRequestVersionsRef.current.get(key) || 0) + 1;
+    snomedRequestVersionsRef.current.set(key, version);
+    try {
+      const res = await fetchSuggestions(q, "snomed");
+      if (snomedRequestVersionsRef.current.get(key) !== version) return;
+      const enriched = (res || []).map((s) => {
+        const code = s.iri?.split("/").pop();
+        return { label: s.label, value: `${s.label} | ${code}` };
+      });
 
-          if (key === "unionTerminology") {
-            setSnomedUnionTerminologySuggestions(enriched);
-          } else {
-            setSnomedValueTerminologySuggestions((prev) => ({ ...prev, [key]: enriched }));
-          }
-        } catch {
-          if (key === "unionTerminology") {
-            setSnomedUnionTerminologySuggestions([]);
-          } else {
-            setSnomedValueTerminologySuggestions((prev) => ({ ...prev, [key]: [] }));
-          }
-        }
-      }, 300),
-    []
-  );
+      if (key === "unionTerminology") {
+        setSnomedUnionTerminologySuggestions(enriched);
+      } else {
+        setSnomedValueTerminologySuggestions((prev) => ({ ...prev, [key]: enriched }));
+      }
+    } catch {
+      if (snomedRequestVersionsRef.current.get(key) !== version) return;
+      if (key === "unionTerminology") {
+        setSnomedUnionTerminologySuggestions([]);
+      } else {
+        setSnomedValueTerminologySuggestions((prev) => ({ ...prev, [key]: [] }));
+      }
+    }
+  }, []);
+
+  const scheduleSnomedFetch = useCallback((query, key) => {
+    let debounced = snomedDebouncersRef.current.get(key);
+    if (!debounced) {
+      debounced = debounce((nextQuery) => fetchSnomedTerminology(nextQuery, key), 150);
+      snomedDebouncersRef.current.set(key, debounced);
+    }
+    debounced(query);
+  }, [fetchSnomedTerminology]);
+
+  const cancelSnomedFetch = useCallback((key) => {
+    snomedDebouncersRef.current.get(key)?.cancel();
+    snomedRequestVersionsRef.current.set(
+      key,
+      (snomedRequestVersionsRef.current.get(key) || 0) + 1
+    );
+  }, []);
+
+  useEffect(() => () => {
+    snomedDebouncersRef.current.forEach((debounced) => debounced.cancel());
+    snomedDebouncersRef.current.clear();
+  }, []);
 
   const handleDrop = (e) => {
     e.preventDefault();
@@ -272,8 +296,11 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
     setUnionTerminology(next);
 
     const query = raw?.trim();
-    if (query && query.length > 2) debouncedFetchSnomedTerminology(query, "unionTerminology");
-    else setSnomedUnionTerminologySuggestions([]);
+    if (query && query.length > 2) scheduleSnomedFetch(query, "unionTerminology");
+    else {
+      cancelSnomedFetch("unionTerminology");
+      setSnomedUnionTerminologySuggestions([]);
+    }
   };
 
   const addNewValue = () => {
@@ -288,8 +315,11 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
     );
 
     const query = newTerm?.trim();
-    if (query && query.length > 2) debouncedFetchSnomedTerminology(query, customValueId);
-    else setSnomedValueTerminologySuggestions((prev) => ({ ...prev, [customValueId]: [] }));
+    if (query && query.length > 2) scheduleSnomedFetch(query, customValueId);
+    else {
+      cancelSnomedFetch(customValueId);
+      setSnomedValueTerminologySuggestions((prev) => ({ ...prev, [customValueId]: [] }));
+    }
   };
 
   const handleValueNameChange = (customValueId, newName) => {

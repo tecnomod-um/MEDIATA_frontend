@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { vi } from "vitest";
 import { fetchSuggestions } from '../../../util/petitionHandler';
@@ -400,6 +400,49 @@ describe('<ColumnSearchList />', () => {
       'Toilet_BART1',
       'Ability to use toilet | 284899001'
     );
+  });
+
+  it('starts the initial column-name lookup without the typing debounce', async () => {
+    vi.useFakeTimers();
+    fetchSuggestions.mockClear();
+    fetchSuggestions.mockResolvedValue([]);
+    const sourceColumn = {
+      column: 'Mobility',
+      nodeId: 'node-1',
+      fileName: 'elements.csv',
+      values: ['integer'],
+    };
+    const mappings = [{
+      Mobility: {
+        groups: [{ values: [{ mapping: [{
+          nodeId: 'node-1',
+          fileName: 'elements.csv',
+          groupColumn: 'Mobility',
+          value: 'integer',
+        }] }] }],
+      },
+    }];
+
+    try {
+      render(
+        <ColumnSearchList
+          columnsData={[sourceColumn]}
+          mappings={mappings}
+          handleColumnClick={vi.fn()}
+          handleDragStart={vi.fn()}
+        />
+      );
+      fireEvent.click(screen.getByRole('button', { name: /annotate mobility/i }));
+
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+        await Promise.resolve();
+      });
+
+      expect(fetchSuggestions).toHaveBeenCalledWith('Mobility', 'snomed');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('applies an annotation to the mapping target selected in the popover', async () => {

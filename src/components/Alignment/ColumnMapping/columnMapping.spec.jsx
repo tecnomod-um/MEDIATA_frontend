@@ -1,8 +1,9 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { act, render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import ColumnMapping from "./columnMapping";
 import { vi } from "vitest";
+import { fetchSuggestions } from "../../../util/petitionHandler";
 
 vi.mock("../../../util/petitionHandler", () => ({
   __esModule: true,
@@ -112,6 +113,41 @@ const makeDataTransfer = (payloadObj) => ({
 });
 
 describe("ColumnMapping", () => {
+  it("debounces terminology searches independently for the column and values", async () => {
+    vi.useFakeTimers();
+    fetchSuggestions.mockClear();
+    fetchSuggestions.mockResolvedValue([]);
+
+    try {
+      render(
+        <ColumnMapping
+          onMappingChange={vi.fn()}
+          onSave={vi.fn()}
+          groups={[]}
+          schema={null}
+        />
+      );
+
+      fireEvent.change(screen.getByPlaceholderText(/column's terminology/i), {
+        target: { value: "stroke finding" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: /add value/i }));
+      fireEvent.change(screen.getByPlaceholderText(/value terminology/i), {
+        target: { value: "ischemic stroke" },
+      });
+
+      await act(async () => {
+        vi.advanceTimersByTime(150);
+        await Promise.resolve();
+      });
+
+      expect(fetchSuggestions).toHaveBeenCalledWith("stroke finding", "snomed");
+      expect(fetchSuggestions).toHaveBeenCalledWith("ischemic stroke", "snomed");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("renders drop area and shows tooltip feedback when save validation fails", () => {
     const onMappingChange = vi.fn();
     const onSave = vi.fn();

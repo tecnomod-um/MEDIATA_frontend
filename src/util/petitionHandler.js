@@ -2,6 +2,68 @@ import axiosInstance from "./axiosSetup";
 import nodeAxiosInstance, { getResolvedNodeBaseURL, updateNodeAxiosBaseURL } from "./nodeAxiosSetup";
 // API request handlers for all backend and node petitions
 
+const SNOMED_CACHE_TTL_MS = 5 * 60 * 1000;
+const SNOMED_EMPTY_CACHE_TTL_MS = 15 * 1000;
+const SNOMED_CACHE_MAX_ENTRIES = 200;
+const snomedSuggestionCache = new Map();
+const snomedSuggestionRequests = new Map();
+
+const normalizeSnomedQuery = (query) => String(query ?? "")
+  .normalize("NFKC")
+  .replace(/([a-z])([A-Z])/g, "$1 $2")
+  .replace(/([A-Za-z])(\d)/g, "$1 $2")
+  .replace(/(\d)([A-Za-z])/g, "$1 $2")
+  .replace(/[_\-/]+/g, " ")
+  .replace(/[^\p{L}\p{N}\s]/gu, " ")
+  .toLowerCase()
+  .replace(/\s+/g, " ")
+  .trim();
+
+const cachedSnomedSuggestions = (key) => {
+  const entry = snomedSuggestionCache.get(key);
+  if (!entry) return null;
+  if (entry.expiresAt <= Date.now()) {
+    snomedSuggestionCache.delete(key);
+    return null;
+  }
+  snomedSuggestionCache.delete(key);
+  snomedSuggestionCache.set(key, entry);
+  return entry.suggestions;
+};
+
+const cacheSnomedSuggestions = (key, suggestions) => {
+  while (snomedSuggestionCache.size >= SNOMED_CACHE_MAX_ENTRIES) {
+    const oldestKey = snomedSuggestionCache.keys().next().value;
+    if (oldestKey === undefined) break;
+    snomedSuggestionCache.delete(oldestKey);
+  }
+  snomedSuggestionCache.set(key, {
+    suggestions,
+    expiresAt: Date.now() + (suggestions.length ? SNOMED_CACHE_TTL_MS : SNOMED_EMPTY_CACHE_TTL_MS),
+  });
+};
+
+const fetchSnomedSuggestions = (query) => {
+  const key = normalizeSnomedQuery(query);
+  if (!key) return Promise.resolve([]);
+
+  const cached = cachedSnomedSuggestions(key);
+  if (cached) return Promise.resolve(cached);
+
+  const pending = snomedSuggestionRequests.get(key);
+  if (pending) return pending;
+
+  const request = axiosInstance.get("/rdf/snomed", { params: { query } })
+    .then((response) => {
+      const suggestions = Array.isArray(response.data) ? response.data : [];
+      cacheSnomedSuggestions(key, suggestions);
+      return suggestions;
+    })
+    .finally(() => snomedSuggestionRequests.delete(key));
+  snomedSuggestionRequests.set(key, request);
+  return request;
+};
+
 /* System petitions */
 // Get backend deployment mode
 export const getSystemCapabilities = async () => {
@@ -188,14 +250,13 @@ export const fetchClassFields = async (type) => {
 // Fetch autocomplete suggestions for RDF building of a specific type
 export const fetchSuggestions = async (query, type) => {
   try {
+    if (type === "snomed") return await fetchSnomedSuggestions(query);
+
     const endpoint =
-      type === "snomed"
-        ? `/rdf/snomed`
-        : `/rdf/class/suggestions/${type}`;
+      `/rdf/class/suggestions/${type}`;
     const response = await axiosInstance.get(endpoint, {
       params: { query },
     });
-    console.log(response.data)
     return response.data;
   } catch (error) {
     console.error(

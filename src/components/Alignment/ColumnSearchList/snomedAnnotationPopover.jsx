@@ -7,6 +7,8 @@ import { fetchSuggestions } from "../../../util/petitionHandler";
 import { parseTerminology } from "./columnMappingStatus";
 import styles from "./snomedAnnotationPopover.module.css";
 
+const SEARCH_DEBOUNCE_MS = 150;
+
 const resultCode = (result) => {
   const iri = String(result?.iri || "");
   return iri.split(/[\/#]/).filter(Boolean).pop() || "";
@@ -22,6 +24,7 @@ function SnomedAnnotationPopover({
 }) {
   const panelRef = useRef(null);
   const requestRef = useRef(0);
+  const hasSearchedRef = useRef(false);
   const [selectedTargetId, setSelectedTargetId] = useState(targets[0]?.id || "");
   const [query, setQuery] = useState(
     String(column?.column || "").replace(/[_-]+/g, " ").trim()
@@ -108,6 +111,8 @@ function SnomedAnnotationPopover({
     setStatus("loading");
     let active = true;
 
+    const delay = hasSearchedRef.current ? SEARCH_DEBOUNCE_MS : 0;
+    hasSearchedRef.current = true;
     const timer = window.setTimeout(async () => {
       try {
         const suggestions = await searchSnomed(normalizedQuery, "snomed");
@@ -119,7 +124,7 @@ function SnomedAnnotationPopover({
         setResults([]);
         setStatus("error");
       }
-    }, 300);
+    }, delay);
 
     return () => {
       active = false;

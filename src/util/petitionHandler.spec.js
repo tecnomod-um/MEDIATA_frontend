@@ -207,6 +207,27 @@ describe('petitionHandler', () => {
         { params: { query: 'q' } }
       );
     });
+
+    it('fetchSuggestions caches and coalesces normalized SNOMED queries', async () => {
+      let resolveRequest;
+      axiosInstance.get.mockReturnValue(new Promise((resolve) => {
+        resolveRequest = resolve;
+      }));
+
+      const first = petitionHandler.fetchSuggestions('Cache_Test_987', 'snomed');
+      const second = petitionHandler.fetchSuggestions('cache test 987', 'snomed');
+
+      expect(axiosInstance.get).toHaveBeenCalledTimes(1);
+      resolveRequest({ data: [{ label: 'Cached concept' }] });
+      await expect(Promise.all([first, second])).resolves.toEqual([
+        [{ label: 'Cached concept' }],
+        [{ label: 'Cached concept' }],
+      ]);
+
+      await expect(petitionHandler.fetchSuggestions('CACHE-TEST-987', 'snomed'))
+        .resolves.toEqual([{ label: 'Cached concept' }]);
+      expect(axiosInstance.get).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('uploadSemanticMappingCsv & createInitialClusters', () => {
