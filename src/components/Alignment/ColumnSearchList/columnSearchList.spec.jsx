@@ -1,8 +1,13 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import ColumnSearchList from './columnSearchList';
 import { vi } from "vitest";
+import { fetchSuggestions } from '../../../util/petitionHandler';
+import ColumnSearchList from './columnSearchList';
+
+vi.mock('../../../util/petitionHandler', () => ({
+  fetchSuggestions: vi.fn(),
+}));
 
 describe('<ColumnSearchList />', () => {
   const columnsData = [
@@ -40,7 +45,7 @@ describe('<ColumnSearchList />', () => {
       />
     );
 
-    const input = screen.getByPlaceholderText(/search columns/i);
+    const input = screen.getByPlaceholderText(/search source variables/i);
     fireEvent.change(input, { target: { value: 'a' } });
 
     expect(screen.getByText('Alpha')).toBeInTheDocument();
@@ -99,7 +104,7 @@ describe('<ColumnSearchList />', () => {
       />
     );
 
-    const input = screen.getByPlaceholderText(/search columns/i);
+    const input = screen.getByPlaceholderText(/search source variables/i);
     fireEvent.change(input, { target: { value: 'xyz' } });
 
     expect(screen.getByText('No columns found.')).toBeInTheDocument();
@@ -221,7 +226,7 @@ describe('<ColumnSearchList />', () => {
     expect(screen.queryByText('Beta')).not.toBeInTheDocument();
   });
 
-  it('handles keyboard navigation with Enter key on column', () => {
+  it('uses a native button for keyboard-accessible column selection', () => {
     const handleColumnClick = vi.fn();
     const handleDragStart = vi.fn();
 
@@ -233,28 +238,7 @@ describe('<ColumnSearchList />', () => {
       />
     );
 
-    const item = screen.getByText('Beta');
-    fireEvent.keyDown(item, { key: 'Enter' });
-
-    expect(handleColumnClick).toHaveBeenCalledWith(columnsData[1]);
-  });
-
-  it('handles keyboard navigation with Space key on column', () => {
-    const handleColumnClick = vi.fn();
-    const handleDragStart = vi.fn();
-
-    render(
-      <ColumnSearchList
-        columnsData={columnsData}
-        handleColumnClick={handleColumnClick}
-        handleDragStart={handleDragStart}
-      />
-    );
-
-    const item = screen.getByText('Gamma');
-    fireEvent.keyDown(item, { key: ' ' });
-
-    expect(handleColumnClick).toHaveBeenCalledWith(columnsData[2]);
+    expect(screen.getByText('Beta').closest('button')).toHaveAttribute('type', 'button');
   });
 
   it('handles columns without nodeId or fileName', () => {
@@ -322,5 +306,199 @@ describe('<ColumnSearchList />', () => {
     expect(appleGroup).toBeInTheDocument();
     expect(bananaGroup).toBeInTheDocument();
     expect(zebraGroup).toBeInTheDocument();
+  });
+
+  it('shows annotation and custom-mapping state from the mapping hierarchy', () => {
+    const mappedColumn = {
+      column: 'ToiletBART1',
+      color: '#0aa',
+      nodeId: 'node-1',
+      fileName: 'SCUBA_elements.csv',
+      values: ['integer'],
+    };
+    const mappings = [{
+      ToiletUse: {
+        fileName: 'custom_mapping',
+        terminology: 'Ability to use toilet | 284899001',
+        groups: [{
+          values: [{
+            name: 'integer',
+            mapping: [{
+              nodeId: 'node-1',
+              fileName: 'SCUBA_elements.csv',
+              groupColumn: 'ToiletBART1',
+              value: 'integer',
+            }],
+          }],
+        }],
+      },
+    }];
+
+    render(
+      <ColumnSearchList
+        columnsData={[mappedColumn]}
+        mappings={mappings}
+        handleColumnClick={vi.fn()}
+        handleDragStart={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('SNOMED CT annotated · 1')).toBeInTheDocument();
+    expect(screen.getByText('Ability to use toilet')).toBeInTheDocument();
+    expect(screen.getByText('Custom')).toBeInTheDocument();
+    expect(screen.getByText('Integer')).toBeInTheDocument();
+  });
+
+  it('searches Snowstorm and applies a selected annotation to its mapping target', async () => {
+    fetchSuggestions.mockResolvedValueOnce([{
+      label: 'Ability to use toilet',
+      iri: 'http://snomed.info/id/284899001',
+    }]);
+    const onTerminologyChange = vi.fn();
+    const mappedColumn = {
+      column: 'Toilet_BART1',
+      nodeId: 'node-1',
+      fileName: 'SCUBA_elements.csv',
+      values: ['integer'],
+    };
+    const mappings = [{
+      Toilet_BART1: {
+        fileName: 'SCUBA_elements.csv',
+        groups: [{
+          values: [{
+            name: 'integer',
+            mapping: [{
+              nodeId: 'node-1',
+              fileName: 'SCUBA_elements.csv',
+              groupColumn: 'Toilet_BART1',
+              value: 'integer',
+            }],
+          }],
+        }],
+      },
+    }];
+
+    render(
+      <ColumnSearchList
+        columnsData={[mappedColumn]}
+        mappings={mappings}
+        onTerminologyChange={onTerminologyChange}
+        handleColumnClick={vi.fn()}
+        handleDragStart={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /annotate toilet_bart1/i }));
+
+    await waitFor(() => {
+      expect(fetchSuggestions).toHaveBeenCalledWith('Toilet BART1', 'snomed');
+    });
+    fireEvent.click(await screen.findByRole('option', { name: /ability to use toilet/i }));
+
+    expect(onTerminologyChange).toHaveBeenCalledWith(
+      0,
+      'Toilet_BART1',
+      'Ability to use toilet | 284899001'
+    );
+  });
+
+  it('applies an annotation to the mapping target selected in the popover', async () => {
+    fetchSuggestions.mockResolvedValueOnce([{
+      label: 'Age at admission',
+      iri: 'http://snomed.info/id/424144002',
+    }]);
+    const onTerminologyChange = vi.fn();
+    const sourceColumn = {
+      column: 'Age',
+      nodeId: 'node-1',
+      fileName: 'elements.csv',
+      values: ['integer'],
+    };
+    const sourceReference = {
+      nodeId: 'node-1',
+      fileName: 'elements.csv',
+      groupColumn: 'Age',
+      value: 'integer',
+    };
+    const mappings = [
+      {
+        Age: {
+          fileName: 'elements.csv',
+          groups: [{ values: [{ mapping: [sourceReference] }] }],
+        },
+      },
+      {
+        AgeAtAdmission: {
+          fileName: 'custom_mapping',
+          groups: [{ values: [{ mapping: [sourceReference] }] }],
+        },
+      },
+    ];
+
+    render(
+      <ColumnSearchList
+        columnsData={[sourceColumn]}
+        mappings={mappings}
+        onTerminologyChange={onTerminologyChange}
+        handleColumnClick={vi.fn()}
+        handleDragStart={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /annotate age/i }));
+    fireEvent.change(screen.getByLabelText('Mapping target'), {
+      target: { value: '0::Age' },
+    });
+    fireEvent.change(screen.getByRole('searchbox', { name: /search snomed ct concepts/i }), {
+      target: { value: 'age admission' },
+    });
+    fireEvent.click(await screen.findByRole('option', { name: /age at admission/i }));
+
+    expect(onTerminologyChange).toHaveBeenCalledWith(
+      0,
+      'Age',
+      'Age at admission | 424144002'
+    );
+  });
+
+  it('removes the current annotation from the selected mapping target', () => {
+    const onTerminologyChange = vi.fn();
+    const sourceColumn = {
+      column: 'Age',
+      nodeId: 'node-1',
+      fileName: 'elements.csv',
+      values: ['integer'],
+    };
+    const mappings = [{
+      Age: {
+        fileName: 'elements.csv',
+        terminology: 'Age at admission | 424144002',
+        groups: [{
+          values: [{
+            mapping: [{
+              nodeId: 'node-1',
+              fileName: 'elements.csv',
+              groupColumn: 'Age',
+              value: 'integer',
+            }],
+          }],
+        }],
+      },
+    }];
+
+    render(
+      <ColumnSearchList
+        columnsData={[sourceColumn]}
+        mappings={mappings}
+        onTerminologyChange={onTerminologyChange}
+        handleColumnClick={vi.fn()}
+        handleDragStart={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /annotate age/i }));
+    fireEvent.click(screen.getByRole('button', { name: /remove snomed ct annotation from age/i }));
+
+    expect(onTerminologyChange).toHaveBeenCalledWith(0, 'Age', '');
   });
 });

@@ -116,6 +116,13 @@
   --project-status-default-bg: #eeeeee;
   --project-status-default-text: #444444;
 
+  /* Alignment Mapping Status Colors */
+  --annotation-accent-light: #147a80;
+  --annotation-text-light: #0c6268;
+  --mapping-custom-accent-light: #b07b24;
+  --mapping-custom-text-light: #79500d;
+  --mapping-default-accent-light: #aebbc1;
+
   /* Icons */
   --icon-background: #53a9ca;
   --icon-stroke: #0f2433;
@@ -299,6 +306,13 @@
   --project-status-default-bg-dark: #2a2a2a;
   --project-status-default-text-dark: #b0b0b0;
 
+  /* Alignment Mapping Status Colors (adjusted for dark mode) */
+  --annotation-accent-dark: #48bcc1;
+  --annotation-text-dark: #8ed9dc;
+  --mapping-custom-accent-dark: #d0a650;
+  --mapping-custom-text-dark: #e7c781;
+  --mapping-default-accent-dark: #78868c;
+
   /* Icons (adjusted for dark mode) */
   --icon-background-dark: #4a9aba;
   --icon-stroke-dark: #1f3a4a;
@@ -421,6 +435,13 @@
   --error-color: var(--error-color-light);
   --error-bg: var(--error-bg-light);
   --error-border: var(--error-border-light);
+
+  /* Alignment Mapping Status Colors */
+  --annotation-accent: var(--annotation-accent-light);
+  --annotation-text: var(--annotation-text-light);
+  --mapping-custom-accent: var(--mapping-custom-accent-light);
+  --mapping-custom-text: var(--mapping-custom-text-light);
+  --mapping-default-accent: var(--mapping-default-accent-light);
 
   /* Shadows */
   --box-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -547,6 +568,13 @@ body.dark-mode {
   
   --project-status-default-bg: var(--project-status-default-bg-dark);
   --project-status-default-text: var(--project-status-default-text-dark);
+
+  /* Alignment Mapping Status Colors */
+  --annotation-accent: var(--annotation-accent-dark);
+  --annotation-text: var(--annotation-text-dark);
+  --mapping-custom-accent: var(--mapping-custom-accent-dark);
+  --mapping-custom-text: var(--mapping-custom-text-dark);
+  --mapping-default-accent: var(--mapping-default-accent-dark);
 
   /* Icons */
   --icon-background: var(--icon-background-dark);

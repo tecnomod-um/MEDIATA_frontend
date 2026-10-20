@@ -21,6 +21,7 @@ import { vi } from "vitest";
 
 const capturedMappingsResultProps = vi.hoisted(() => ({ current: {} }));
 const capturedColumnMappingProps = vi.hoisted(() => ({ current: {} }));
+const capturedColumnSearchListProps = vi.hoisted(() => ({ current: {} }));
 const capturedUploadResolutionProps = vi.hoisted(() => ({ current: {} }));
 
 vi.mock('react-router-dom', () => ({
@@ -87,7 +88,10 @@ vi.mock('../../components/Alignment/ColumnMapping/columnMapping', () => ({
 
 vi.mock('../../components/Alignment/ColumnSearchList/columnSearchList', () => ({
   __esModule: true,
-  default: () => <div data-testid="ColumnSearchList" />,
+  default: (props) => {
+    capturedColumnSearchListProps.current = props;
+    return <div data-testid="ColumnSearchList" />;
+  },
 }));
 
 vi.mock('../../components/Alignment/FileMapperModal/fileMapperModal', () => ({
@@ -1788,6 +1792,23 @@ describe('Alignment Page', () => {
         capturedColumnMappingProps.current.onMappingChange?.(groups);
       });
       expect(screen.getByTestId('ColumnMapping')).toBeInTheDocument();
+    });
+  });
+
+  test('source-list terminology updates are retained in the mapping hierarchy', async () => {
+    await renderWithColumns();
+
+    act(() => {
+      capturedColumnSearchListProps.current.onTerminologyChange?.(
+        0,
+        'col1',
+        'Clinical finding | 404684003'
+      );
+    });
+
+    await waitFor(() => {
+      expect(capturedMappingsResultProps.current.mappings?.[0]?.col1?.terminology)
+        .toBe('Clinical finding | 404684003');
     });
   });
 
