@@ -24,14 +24,14 @@ function SourceColumnItem({
   handleDragStart,
 }) {
   const annotationButtonRef = useRef(null);
-  const annotatedTargets = targets.filter((target) => target.terminology);
-  const primaryAnnotation = parseTerminology(annotatedTargets[0]?.terminology);
+  const primaryAnnotation = parseTerminology(column.terminology);
+  const isAnnotated = Boolean(primaryAnnotation.label);
   const hasCustomMapping = targets.some((target) => target.kind === "custom");
   const hasDefaultMapping = targets.some((target) => target.kind === "default");
   const mappingStatus = hasCustomMapping ? "Custom" : hasDefaultMapping ? "Default" : "Unmapped";
   const itemClassName = [
     ColumnSearchListStyles.columnItem,
-    annotatedTargets.length ? ColumnSearchListStyles.columnItemAnnotated : "",
+    isAnnotated ? ColumnSearchListStyles.columnItemAnnotated : "",
     hasCustomMapping ? ColumnSearchListStyles.columnItemCustom : "",
   ].filter(Boolean).join(" ");
 
@@ -50,17 +50,16 @@ function SourceColumnItem({
         onClick={() => handleColumnClick(column)}
         title={`${column.fileName || "Source"} - ${column.column}`}
       >
-        <strong className={ColumnSearchListStyles.columnName}>{column.column}</strong>
+        <span className={ColumnSearchListStyles.columnName}>{column.column}</span>
         <span className={ColumnSearchListStyles.columnMetaRow}>
           {primaryAnnotation.label ? (
             <span
               className={ColumnSearchListStyles.snomedBadge}
-              title={annotatedTargets[0].terminology}
+              title={column.terminology}
               aria-label={`SNOMED CT annotated: ${primaryAnnotation.label}`}
             >
               <b className={ColumnSearchListStyles.snomedPrefix}>SCT</b>
               <span className={ColumnSearchListStyles.snomedText}>{primaryAnnotation.label}</span>
-              {annotatedTargets.length > 1 && <em>+{annotatedTargets.length - 1}</em>}
               <CheckIcon className={ColumnSearchListStyles.compactSnomedStatus} aria-hidden="true" />
             </span>
           ) : (
@@ -88,7 +87,6 @@ function SourceColumnItem({
           }}
           aria-label={`Annotate ${column.column} with SNOMED CT`}
           title="Add or edit SNOMED CT annotation"
-          disabled={!targets.length}
         >
           <LocalOfferOutlinedIcon />
         </button>
@@ -98,8 +96,7 @@ function SourceColumnItem({
         <SnomedAnnotationPopover
           anchorElement={annotationButtonRef.current}
           column={column}
-          targets={targets}
-          onChange={onTerminologyChange}
+          onChange={(terminology) => onTerminologyChange(column, terminology)}
           onClose={onAnnotationClose}
         />
       )}
@@ -127,12 +124,11 @@ function ColumnSearchList({
   }, [columnsData, mappings]);
 
   const counts = useMemo(() => {
-    let annotated = 0;
-    columnStates.forEach((targets) => {
-      if (targets.some((target) => target.terminology)) annotated += 1;
-    });
+    const annotated = columnsData.filter((column) =>
+      Boolean(String(column?.terminology || "").trim())
+    ).length;
     return { annotated, pending: Math.max(0, columnsData.length - annotated) };
-  }, [columnStates, columnsData.length]);
+  }, [columnsData]);
 
   const handleChange = (event) => setSearchTerm(event.target.value.toLowerCase());
 
@@ -194,7 +190,12 @@ function ColumnSearchList({
         </div>
       </div>
 
-      <div className={ColumnSearchListStyles.scrollableContainer} role="list" aria-label="Column groups">
+      <div
+        className={ColumnSearchListStyles.scrollableContainer}
+        data-snomed-scroll-root
+        role="list"
+        aria-label="Column groups"
+      >
         {grouped.map((group) => {
           const isCollapsed = !!collapsed[group.groupKey];
           return (
@@ -241,8 +242,12 @@ function ColumnSearchList({
       </div>
 
       <div className={ColumnSearchListStyles.summary} aria-label="Annotation progress">
-        <span className={ColumnSearchListStyles.annotatedSummary}>SNOMED CT annotated · {counts.annotated}</span>
-        <span className={ColumnSearchListStyles.pendingSummary}>Pending · {counts.pending}</span>
+        <span title={`${counts.annotated} source variables annotated with SNOMED CT`}>
+          Annotated <strong>{counts.annotated}</strong>
+        </span>
+        <span title={`${counts.pending} source variables pending annotation`}>
+          Pending <strong>{counts.pending}</strong>
+        </span>
       </div>
     </section>
   );

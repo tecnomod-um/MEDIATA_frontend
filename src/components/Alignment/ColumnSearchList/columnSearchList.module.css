@@ -5,6 +5,8 @@
   flex-direction: column;
   padding: var(--space-1);
   box-sizing: border-box;
+  container-name: source-list;
+  container-type: inline-size;
 }
 
 .searchToolbar {
@@ -52,28 +54,32 @@
 }
 
 .summary {
-  display: flex;
+  width: 100%;
+  min-height: 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   flex: 0 0 auto;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-  padding: var(--space-2) 0 0;
+  margin-top: var(--space-1);
+  border-top: 1px solid var(--border-color-secondary);
+  border-bottom: 1px solid var(--border-color-secondary);
+  background: var(--background-color-3);
+  color: var(--text-color-tertiary);
+  font-size: var(--font-size-xs);
 }
 
-.annotatedSummary,
-.pendingSummary {
-  padding: 3px 7px;
-  border-radius: 999px;
-  font-size: var(--font-size-xs);
-  font-weight: 700;
+.summary > span {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.annotatedSummary {
-  background: color-mix(in srgb, var(--annotation-accent) 12%, var(--background-color-card));
-  color: var(--annotation-text);
-}
-
-.pendingSummary { background: var(--background-color-3); color: var(--text-color-tertiary); }
+.summary > span + span { border-left: 1px solid var(--border-color-secondary); }
+.summary strong { color: var(--text-color-primary); font-variant-numeric: tabular-nums; }
 
 .scrollableContainer {
   min-height: 0;
@@ -143,9 +149,9 @@
 .columnItem:hover { box-shadow: var(--box-shadow-md); filter: brightness(0.985); }
 .columnItemCustom { background: var(--background-color-tertiary); }
 .columnItemAnnotated {
-  border-top-color: var(--border-color);
-  border-right-color: var(--border-color);
-  border-bottom-color: var(--border-color);
+  border-top-color: color-mix(in srgb, var(--annotation-accent) 38%, var(--border-color));
+  border-right-color: color-mix(in srgb, var(--annotation-accent) 38%, var(--border-color));
+  border-bottom-color: color-mix(in srgb, var(--annotation-accent) 38%, var(--border-color));
 }
 
 .columnMain {
@@ -164,7 +170,14 @@
   text-align: left;
 }
 
-.columnMetaRow { min-width: 0; display: flex; align-items: center; gap: 7px; }
+.columnMetaRow {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+}
 
 .columnName {
   min-width: 0;
@@ -190,8 +203,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.columnMetaRow { flex-wrap: wrap; }
-
 .snomedBadge,
 .pendingBadge,
 .mappingBadge {
@@ -206,6 +217,7 @@
 }
 
 .snomedBadge {
+  overflow: hidden;
   min-width: 0;
   background: color-mix(in srgb, var(--annotation-accent) 12%, var(--background-color-card));
   color: var(--annotation-text);
@@ -213,7 +225,12 @@
 
 .snomedText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .snomedBadge em { font-style: normal; font-weight: 700; }
-.pendingBadge { border: 1px dashed var(--border-color); color: var(--text-color-tertiary); }
+.pendingBadge {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px dashed var(--border-color);
+  color: var(--text-color-tertiary);
+}
 .mappingBadge { flex: 0 0 auto; background: var(--background-color-3); color: var(--text-color-tertiary); }
 .customBadge {
   background: var(--background-color-secondary);
@@ -239,11 +256,7 @@ svg.compactSnomedStatus { display: none; }
   text-align: center;
 }
 
-@media screen and (max-width: 1100px) and (min-width: 769px) {
-  .mappingBadge { display: none; }
-}
-
-@container column-main (max-width: 190px) {
+@container column-main (max-width: 225px) {
   .snomedBadge,
   .pendingBadge {
     width: 18px;

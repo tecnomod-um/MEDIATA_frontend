@@ -1,4 +1,17 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+
+import {
+  autoUpdate,
+  computePosition,
+  flip,
+  offset,
+  shift,
+} from "@floating-ui/dom";
 import { createPortal } from "react-dom";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -8,6 +21,8 @@ import { parseTerminology } from "./columnMappingStatus";
 import styles from "./snomedAnnotationPopover.module.css";
 
 const SEARCH_DEBOUNCE_MS = 150;
+const isMobileViewport = () =>
+  window.matchMedia?.("(max-width: 768px)").matches ?? window.innerWidth <= 768;
 
 const resultCode = (result) => {
   const iri = String(result?.iri || "");
@@ -17,7 +32,6 @@ const resultCode = (result) => {
 function SnomedAnnotationPopover({
   anchorElement,
   column,
-  targets,
   onChange,
   onClose,
   searchSnomed = fetchSuggestions,
@@ -25,61 +39,125 @@ function SnomedAnnotationPopover({
   const panelRef = useRef(null);
   const requestRef = useRef(0);
   const hasSearchedRef = useRef(false);
-  const [selectedTargetId, setSelectedTargetId] = useState(targets[0]?.id || "");
+  const searchInputRef = useRef(null);
   const [query, setQuery] = useState(
     String(column?.column || "").replace(/[_-]+/g, " ").trim()
   );
   const [results, setResults] = useState([]);
   const [status, setStatus] = useState("idle");
-  const [position, setPosition] = useState({ left: 12, top: 72, width: 380 });
 
-  const selectedTarget = useMemo(
-    () => targets.find((target) => target.id === selectedTargetId) || targets[0],
-    [selectedTargetId, targets]
-  );
-  const currentTerm = parseTerminology(selectedTarget?.terminology);
-
+  const currentTerm = parseTerminology(column?.terminology);
   useEffect(() => {
-    if (!targets.some((target) => target.id === selectedTargetId)) {
-      setSelectedTargetId(targets[0]?.id || "");
+    if (!isMobileViewport()) {
+      searchInputRef.current?.focus({ preventScroll: true });
     }
-  }, [selectedTargetId, targets]);
+  }, []);
+  useLayoutEffect(() => {
+    const panel = panelRef.current;
 
-  useEffect(() => {
+    if (!anchorElement || !panel) return;
+
+    let disposed = false;
+    let closing = false;
+    let positionRequest = 0;
+
+    const scrollRoot = anchorElement.closest(
+      "[data-snomed-scroll-root]"
+    );
+
     const updatePosition = () => {
-      const rect = anchorElement?.getBoundingClientRect?.();
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      const width = Math.min(380, viewportWidth - 24);
-      const estimatedHeight = 430;
-
-      if (viewportWidth <= 768 || !rect) {
-        setPosition({ left: 12, top: Math.max(12, viewportHeight - estimatedHeight - 66), width });
+      if (disposed || closing) return;
+      if (!anchorElement.isConnected) {
+        closing = true;
+        onClose();
         return;
       }
 
-      const spaceToRight = viewportWidth - rect.right - 12;
-      const spaceToLeft = rect.left - 12;
-      const left = spaceToRight >= width + 8
-        ? rect.right + 8
-        : spaceToLeft >= width + 8
-          ? rect.left - width - 8
-          : Math.min(Math.max(12, rect.right - width), viewportWidth - width - 12);
-      const below = rect.bottom + 8;
-      const top = below + estimatedHeight <= viewportHeight
-        ? below
-        : Math.max(12, rect.top - estimatedHeight - 8);
-      setPosition({ left, top, width });
+      const anchorRect = anchorElement.getBoundingClientRect();
+      const scrollRect = scrollRoot?.getBoundingClientRect();
+
+      const visibleTop = Math.max(0, scrollRect?.top ?? 0);
+      const visibleBottom = Math.min(
+        window.innerHeight,
+        scrollRect?.bottom ?? window.innerHeight
+      );
+      const visibleLeft = Math.max(0, scrollRect?.left ?? 0);
+      const visibleRight = Math.min(
+        window.innerWidth,
+        scrollRect?.right ?? window.innerWidth
+      );
+
+      const anchorIsVisible =
+        anchorRect.bottom > visibleTop &&
+        anchorRect.top < visibleBottom &&
+        anchorRect.right > visibleLeft &&
+        anchorRect.left < visibleRight;
+      const scrollRootHasLayout = Boolean(scrollRect?.width || scrollRect?.height);
+
+      if (scrollRootHasLayout && !anchorIsVisible) {
+        closing = true;
+        panel.style.visibility = "hidden";
+        onClose();
+        return;
+      }
+
+      const request = ++positionRequest;
+
+      // Mobile uses a viewport-fixed bottom sheet.
+      if (isMobileViewport()) {
+        panel.style.left = "";
+        panel.style.top = "";
+        panel.style.visibility = "visible";
+        return;
+      }
+
+      const panelHeight = panel.getBoundingClientRect().height || 430;
+      const alignToEnd = anchorRect.top + panelHeight > window.innerHeight - 12;
+      const placement = alignToEnd ? "right-end" : "right-start";
+
+      computePosition(anchorElement, panel, {
+        strategy: "fixed",
+        placement,
+        middleware: [
+          offset(8),
+          flip({
+            fallbackPlacements: [alignToEnd ? "left-end" : "left-start"],
+            padding: { top: 63, right: 12, bottom: 12, left: 12 },
+          }),
+          shift({
+            padding: { top: 63, right: 12, bottom: 12, left: 12 },
+            crossAxis: false,
+          }),
+        ],
+      }).then(({ x, y }) => {
+        // Ignore outdated asynchronous calculations.
+        if (disposed || closing || request !== positionRequest) {
+          return;
+        }
+
+        panel.style.left = `${x}px`;
+        panel.style.top = `${y}px`;
+        panel.style.visibility = "visible";
+      });
     };
 
-    updatePosition();
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition, true);
+    const cleanup = autoUpdate(
+      anchorElement,
+      panel,
+      updatePosition,
+      {
+        ancestorScroll: true,
+        ancestorResize: true,
+        elementResize: typeof ResizeObserver !== "undefined",
+        layoutShift: typeof IntersectionObserver !== "undefined",
+      }
+    );
+
     return () => {
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition, true);
+      disposed = true;
+      cleanup();
     };
-  }, [anchorElement]);
+  }, [anchorElement, onClose]);
 
   useEffect(() => {
     const handlePointerDown = (event) => {
@@ -133,15 +211,13 @@ function SnomedAnnotationPopover({
   }, [query, searchSnomed]);
 
   const applyTerminology = (terminology) => {
-    if (!selectedTarget) return;
-    onChange(selectedTarget.mappingIndex, selectedTarget.mappingKey, terminology);
+    onChange(terminology);
   };
 
   return createPortal(
     <section
       ref={panelRef}
       className={styles.popover}
-      style={position}
       role="dialog"
       aria-label={`SNOMED CT annotation for ${column?.column}`}
     >
@@ -155,19 +231,6 @@ function SnomedAnnotationPopover({
         </button>
       </header>
 
-      {targets.length > 1 && (
-        <label className={styles.targetField}>
-          <span>Mapping target</span>
-          <select value={selectedTarget?.id || ""} onChange={(event) => setSelectedTargetId(event.target.value)}>
-            {targets.map((target) => (
-              <option key={target.id} value={target.id}>
-                {target.label} ({target.kind})
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
-
       {currentTerm.label && (
         <div className={styles.currentAnnotation}>
           <div className={styles.currentText}>
@@ -179,7 +242,7 @@ function SnomedAnnotationPopover({
             type="button"
             className={styles.removeButton}
             onClick={() => applyTerminology("")}
-            aria-label={`Remove SNOMED CT annotation from ${selectedTarget?.label}`}
+            aria-label={`Remove SNOMED CT annotation from ${column?.column}`}
             title="Remove annotation"
           >
             <DeleteOutlineIcon fontSize="small" />
@@ -190,12 +253,12 @@ function SnomedAnnotationPopover({
       <label className={styles.searchField}>
         <SearchIcon className={styles.searchIcon} fontSize="small" aria-hidden="true" />
         <input
+          ref={searchInputRef}
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search SNOMED CT"
           aria-label="Search SNOMED CT concepts"
-          autoFocus
         />
       </label>
 
@@ -207,7 +270,7 @@ function SnomedAnnotationPopover({
         {results.map((result) => {
           const code = resultCode(result);
           const terminology = code ? `${result.label} | ${code}` : result.label;
-          const selected = selectedTarget?.terminology === terminology;
+          const selected = column?.terminology === terminology;
           return (
             <button
               type="button"

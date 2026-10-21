@@ -1398,26 +1398,19 @@ function Alignment() {
     e.dataTransfer.setData("column", JSON.stringify(column));
   }, []);
 
-  const handleTerminologyChange = useCallback((mappingIndex, mappingKey, terminology) => {
-    setMappings((previous) =>
-      previous.map((mappingObject, index) => {
-        if (index !== mappingIndex || !mappingObject?.[mappingKey]) return mappingObject;
-        return {
-          ...mappingObject,
-          [mappingKey]: {
-            ...mappingObject[mappingKey],
-            terminology,
-          },
-        };
+  const handleSourceTerminologyChange = useCallback((column, terminology) => {
+    const sourceKey = `${column?.nodeId ?? ""}::${column?.fileName ?? ""}::${column?.column ?? ""}`;
+    setColumnsData((previous) =>
+      previous.map((item) => {
+        const itemKey = `${item?.nodeId ?? ""}::${item?.fileName ?? ""}::${item?.column ?? ""}`;
+        if (itemKey !== sourceKey) return item;
+        const updated = { ...item };
+        if (terminology) updated.terminology = terminology;
+        else delete updated.terminology;
+        return updated;
       })
     );
-
-    if (editTarget?.index === mappingIndex && editTarget?.key === mappingKey) {
-      setLoadedDraft((previous) =>
-        previous ? { ...previous, unionTerminology: terminology } : previous
-      );
-    }
-  }, [editTarget]);
+  }, []);
 
   // Mobile flow continues in hierarchy once mappings are saved.
   const handleSave = useCallback(
@@ -1549,7 +1542,7 @@ function Alignment() {
             <ColumnSearchList
               columnsData={columnsData}
               mappings={mappings}
-              onTerminologyChange={handleTerminologyChange}
+              onTerminologyChange={handleSourceTerminologyChange}
               handleColumnClick={handleColumnClick}
               handleDragStart={handleDragStart}
             />

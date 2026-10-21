@@ -1427,8 +1427,7 @@ describe('Alignment Page', () => {
 
       act(() => {
         capturedColumnSearchListProps.current.onTerminologyChange(
-          0,
-          'col1',
+          { nodeId: 'node1', fileName: 'data.csv', column: 'col1' },
           'Clinical finding | 404684003'
         );
       });
@@ -1821,21 +1820,22 @@ describe('Alignment Page', () => {
     });
   });
 
-  test('source-list terminology updates are retained in the mapping hierarchy', async () => {
+  test('source-list terminology updates do not alter target-schema metadata', async () => {
     await renderWithColumns();
 
     act(() => {
       capturedColumnSearchListProps.current.onTerminologyChange?.(
-        0,
-        'col1',
+        { nodeId: 'node1', fileName: 'data.csv', column: 'col1' },
         'Clinical finding | 404684003'
       );
     });
 
     await waitFor(() => {
-      expect(capturedMappingsResultProps.current.mappings?.[0]?.col1?.terminology)
+      expect(capturedColumnSearchListProps.current.columnsData?.[0]?.terminology)
         .toBe('Clinical finding | 404684003');
     });
+    expect(capturedMappingsResultProps.current.mappings?.[0]?.col1?.terminology || '')
+      .toBe('');
   });
 
   describe('handleSaveMappings', () => {

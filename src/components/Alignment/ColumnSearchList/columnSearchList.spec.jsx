@@ -314,18 +314,19 @@ describe('<ColumnSearchList />', () => {
     expect(zebraGroup).toBeInTheDocument();
   });
 
-  it('shows annotation and custom-mapping state from the mapping hierarchy', () => {
+  it('shows source annotation and custom-mapping state independently', () => {
     const mappedColumn = {
       column: 'ToiletBART1',
       color: '#0aa',
       nodeId: 'node-1',
       fileName: 'SCUBA_elements.csv',
       values: ['integer'],
+      terminology: 'Ability to use toilet | 284899001',
     };
     const mappings = [{
       ToiletUse: {
         fileName: 'custom_mapping',
-        terminology: 'Ability to use toilet | 284899001',
+        terminology: 'Activities of daily living | 129018000',
         groups: [{
           values: [{
             name: 'integer',
@@ -349,7 +350,7 @@ describe('<ColumnSearchList />', () => {
       />
     );
 
-    expect(screen.getByText('SNOMED CT annotated · 1')).toBeInTheDocument();
+    expect(screen.getByLabelText(/annotation progress/i)).toHaveTextContent('Annotated 1');
     expect(screen.getByText('Ability to use toilet')).toBeInTheDocument();
     expect(screen.getByLabelText('SNOMED CT annotated: Ability to use toilet')).toBeInTheDocument();
     expect(screen.getByText('Custom')).toBeInTheDocument();
@@ -358,7 +359,7 @@ describe('<ColumnSearchList />', () => {
     expect(container.querySelector('[data-column-key]').className).toMatch(/columnItemCustom/);
   });
 
-  it('searches Snowstorm and applies a selected annotation to its mapping target', async () => {
+  it('searches Snowstorm and applies a selected annotation to the source variable', async () => {
     fetchSuggestions.mockResolvedValueOnce([{
       label: 'Ability to use toilet',
       iri: 'http://snomed.info/id/284899001',
@@ -405,8 +406,7 @@ describe('<ColumnSearchList />', () => {
     fireEvent.click(await screen.findByRole('option', { name: /ability to use toilet/i }));
 
     expect(onTerminologyChange).toHaveBeenCalledWith(
-      0,
-      'Toilet_BART1',
+      mappedColumn,
       'Ability to use toilet | 284899001'
     );
   });
@@ -454,7 +454,7 @@ describe('<ColumnSearchList />', () => {
     }
   });
 
-  it('applies an annotation to the mapping target selected in the popover', async () => {
+  it('does not expose target-mapping controls while annotating a source variable', async () => {
     fetchSuggestions.mockResolvedValueOnce([{
       label: 'Age at admission',
       iri: 'http://snomed.info/id/424144002',
@@ -498,28 +498,26 @@ describe('<ColumnSearchList />', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /annotate age/i }));
-    fireEvent.change(screen.getByLabelText('Mapping target'), {
-      target: { value: '0::Age' },
-    });
+    expect(screen.queryByText('Mapping target')).not.toBeInTheDocument();
     fireEvent.change(screen.getByRole('searchbox', { name: /search snomed ct concepts/i }), {
       target: { value: 'age admission' },
     });
     fireEvent.click(await screen.findByRole('option', { name: /age at admission/i }));
 
     expect(onTerminologyChange).toHaveBeenCalledWith(
-      0,
-      'Age',
+      sourceColumn,
       'Age at admission | 424144002'
     );
   });
 
-  it('removes the current annotation from the selected mapping target', () => {
+  it('removes the current annotation from the source variable', () => {
     const onTerminologyChange = vi.fn();
     const sourceColumn = {
       column: 'Age',
       nodeId: 'node-1',
       fileName: 'elements.csv',
       values: ['integer'],
+      terminology: 'Age at admission | 424144002',
     };
     const mappings = [{
       Age: {
@@ -551,6 +549,6 @@ describe('<ColumnSearchList />', () => {
     fireEvent.click(screen.getByRole('button', { name: /annotate age/i }));
     fireEvent.click(screen.getByRole('button', { name: /remove snomed ct annotation from age/i }));
 
-    expect(onTerminologyChange).toHaveBeenCalledWith(0, 'Age', '');
+    expect(onTerminologyChange).toHaveBeenCalledWith(sourceColumn, '');
   });
 });
