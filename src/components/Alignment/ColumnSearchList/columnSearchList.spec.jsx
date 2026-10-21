@@ -31,6 +31,8 @@ describe('<ColumnSearchList />', () => {
     columnsData.forEach(col => {
       expect(screen.getByText(col.column)).toBeInTheDocument();
     });
+    expect(screen.queryByRole('heading', { name: /source variables/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: /search source variables by name/i })).toBeInTheDocument();
   });
 
   it('filters columns based on search input (case-insensitive)', () => {
@@ -270,7 +272,7 @@ describe('<ColumnSearchList />', () => {
     const handleColumnClick = vi.fn();
     const handleDragStart = vi.fn();
 
-    render(
+    const { container } = render(
       <ColumnSearchList
         columnsData={groupedColumnsData}
         handleColumnClick={handleColumnClick}
@@ -279,6 +281,7 @@ describe('<ColumnSearchList />', () => {
     );
 
     expect(screen.getByText('file1.csv')).toBeInTheDocument();
+    expect(container.querySelector('[data-column-key]')).toHaveStyle({ '--file-accent': '#ff0000' });
   });
 
   it('sorts groups by fileName when nodeId is the same', () => {

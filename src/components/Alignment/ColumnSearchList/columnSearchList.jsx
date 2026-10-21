@@ -29,6 +29,7 @@ function SourceColumnItem({
   const mappingStatus = hasCustomMapping ? "Custom" : hasDefaultMapping ? "Default" : "Unmapped";
   const itemClassName = [
     ColumnSearchListStyles.columnItem,
+    hasDefaultMapping ? ColumnSearchListStyles.columnItemDefault : "",
     annotatedTargets.length ? ColumnSearchListStyles.columnItemAnnotated : "",
     hasCustomMapping ? ColumnSearchListStyles.columnItemCustom : "",
   ].filter(Boolean).join(" ");
@@ -40,6 +41,7 @@ function SourceColumnItem({
       onDragStart={(event) => handleDragStart(event, column)}
       role="listitem"
       data-column-key={columnReferenceKey(column)}
+      style={{ "--file-accent": column.color || "transparent" }}
     >
       <button
         type="button"
@@ -47,10 +49,7 @@ function SourceColumnItem({
         onClick={() => handleColumnClick(column)}
         title={`${column.fileName || "Source"} - ${column.column}`}
       >
-        <span className={ColumnSearchListStyles.columnTopRow}>
-          <strong className={ColumnSearchListStyles.columnName}>{column.column}</strong>
-          <span className={ColumnSearchListStyles.columnType}>{inferColumnType(column)}</span>
-        </span>
+        <strong className={ColumnSearchListStyles.columnName}>{column.column}</strong>
         <span className={ColumnSearchListStyles.columnMetaRow}>
           {primaryAnnotation.label ? (
             <span className={ColumnSearchListStyles.snomedBadge} title={annotatedTargets[0].terminology}>
@@ -70,20 +69,23 @@ function SourceColumnItem({
         </span>
       </button>
 
-      <button
-        ref={annotationButtonRef}
-        type="button"
-        className={ColumnSearchListStyles.annotationButton}
-        onClick={(event) => {
-          event.stopPropagation();
-          onAnnotationOpen();
-        }}
-        aria-label={`Annotate ${column.column} with SNOMED CT`}
-        title="Add or edit SNOMED CT annotation"
-        disabled={!targets.length}
-      >
-        <LocalOfferOutlinedIcon />
-      </button>
+      <div className={ColumnSearchListStyles.columnActions}>
+        <span className={ColumnSearchListStyles.columnType}>{inferColumnType(column)}</span>
+        <button
+          ref={annotationButtonRef}
+          type="button"
+          className={ColumnSearchListStyles.annotationButton}
+          onClick={(event) => {
+            event.stopPropagation();
+            onAnnotationOpen();
+          }}
+          aria-label={`Annotate ${column.column} with SNOMED CT`}
+          title="Add or edit SNOMED CT annotation"
+          disabled={!targets.length}
+        >
+          <LocalOfferOutlinedIcon />
+        </button>
+      </div>
 
       {isAnnotationOpen && (
         <SnomedAnnotationPopover
@@ -164,9 +166,17 @@ function ColumnSearchList({
   }, [grouped]);
 
   return (
-    <section className={ColumnSearchListStyles.search} aria-labelledby="source-variables-title">
-      <div className={ColumnSearchListStyles.panelHeader}>
-        <h2 id="source-variables-title">Source variables</h2>
+    <section className={ColumnSearchListStyles.search} aria-label="Source variables">
+      <div className={ColumnSearchListStyles.searchToolbar}>
+        <input
+          className={ColumnSearchListStyles.input}
+          type="search"
+          placeholder="Search source variables"
+          value={searchTerm}
+          onChange={handleChange}
+          aria-label="Search source variables by name"
+          role="searchbox"
+        />
         <div className={ColumnSearchListStyles.groupActionsInline}>
           <button type="button" onClick={openAll} className={ColumnSearchListStyles.expandCollapseBtn} aria-label="Expand all column groups" title="Expand all">
             <UnfoldMoreIcon />
@@ -176,16 +186,6 @@ function ColumnSearchList({
           </button>
         </div>
       </div>
-
-      <input
-        className={ColumnSearchListStyles.input}
-        type="search"
-        placeholder="Search source variables"
-        value={searchTerm}
-        onChange={handleChange}
-        aria-label="Search columns by name"
-        role="searchbox"
-      />
 
       <div className={ColumnSearchListStyles.summary} aria-label="Annotation progress">
         <span className={ColumnSearchListStyles.annotatedSummary}>SNOMED CT annotated · {counts.annotated}</span>
