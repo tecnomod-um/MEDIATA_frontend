@@ -2,6 +2,8 @@ import React, { useMemo, useState, useCallback, useRef } from "react";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
 import SnomedAnnotationPopover from "./snomedAnnotationPopover";
 import {
   columnReferenceKey,
@@ -29,7 +31,6 @@ function SourceColumnItem({
   const mappingStatus = hasCustomMapping ? "Custom" : hasDefaultMapping ? "Default" : "Unmapped";
   const itemClassName = [
     ColumnSearchListStyles.columnItem,
-    hasDefaultMapping ? ColumnSearchListStyles.columnItemDefault : "",
     annotatedTargets.length ? ColumnSearchListStyles.columnItemAnnotated : "",
     hasCustomMapping ? ColumnSearchListStyles.columnItemCustom : "",
   ].filter(Boolean).join(" ");
@@ -52,15 +53,21 @@ function SourceColumnItem({
         <strong className={ColumnSearchListStyles.columnName}>{column.column}</strong>
         <span className={ColumnSearchListStyles.columnMetaRow}>
           {primaryAnnotation.label ? (
-            <span className={ColumnSearchListStyles.snomedBadge} title={annotatedTargets[0].terminology}>
-              <b>SCT</b>
-              <span>{primaryAnnotation.label}</span>
+            <span
+              className={ColumnSearchListStyles.snomedBadge}
+              title={annotatedTargets[0].terminology}
+              aria-label={`SNOMED CT annotated: ${primaryAnnotation.label}`}
+            >
+              <b className={ColumnSearchListStyles.snomedPrefix}>SCT</b>
+              <span className={ColumnSearchListStyles.snomedText}>{primaryAnnotation.label}</span>
               {annotatedTargets.length > 1 && <em>+{annotatedTargets.length - 1}</em>}
+              <CheckIcon className={ColumnSearchListStyles.compactSnomedStatus} aria-hidden="true" />
             </span>
           ) : (
-            <span className={ColumnSearchListStyles.pendingBadge}>
-              <b>SCT</b>
-              <span>Not annotated</span>
+            <span className={ColumnSearchListStyles.pendingBadge} aria-label="SNOMED CT not annotated">
+              <b className={ColumnSearchListStyles.snomedPrefix}>SCT</b>
+              <span className={ColumnSearchListStyles.snomedText}>Not annotated</span>
+              <CloseIcon className={ColumnSearchListStyles.compactSnomedStatus} aria-hidden="true" />
             </span>
           )}
           <span className={`${ColumnSearchListStyles.mappingBadge} ${hasCustomMapping ? ColumnSearchListStyles.customBadge : ""}`}>

@@ -135,11 +135,11 @@
 }
 
 .columnItem:hover { box-shadow: var(--box-shadow-md); filter: brightness(0.985); }
-.columnItemDefault { background: var(--mapping-default-background); }
-.columnItemCustom { background: var(--mapping-custom-background); }
-.columnItemAnnotated { background: var(--annotation-background); }
-.columnItemAnnotated.columnItemCustom {
-  background: linear-gradient(110deg, var(--annotation-background) 0 62%, var(--mapping-custom-background) 62% 100%);
+.columnItemCustom { background: var(--background-color-tertiary); }
+.columnItemAnnotated {
+  border-top-color: var(--border-color);
+  border-right-color: var(--border-color);
+  border-bottom-color: var(--border-color);
 }
 
 .columnMain {
@@ -169,16 +169,16 @@
 .columnActions {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   gap: var(--space-1);
-  padding: 5px 5px 5px 0;
+  padding: 5px var(--space-1) 5px 0;
 }
 
 .columnType {
   width: 100%;
   overflow: hidden;
-  text-align: center;
+  text-align: right;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -203,14 +203,17 @@
   color: var(--annotation-text);
 }
 
-.snomedBadge span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.snomedText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .snomedBadge em { font-style: normal; font-weight: 700; }
 .pendingBadge { border: 1px dashed var(--border-color); color: var(--text-color-tertiary); }
 .mappingBadge { flex: 0 0 auto; background: var(--background-color-3); color: var(--text-color-tertiary); }
 .customBadge {
-  background: color-mix(in srgb, var(--mapping-custom-accent) 13%, var(--background-color-card));
-  color: var(--mapping-custom-text);
+  background: var(--background-color-secondary);
+  color: var(--text-color-secondary);
+  font-weight: 700;
 }
+
+.compactSnomedStatus { display: none; }
 
 .annotationButton {
   width: 30px;
@@ -234,4 +237,23 @@
 
 @media screen and (max-width: 768px) {
   .search { padding-bottom: 60px; }
+
+  .snomedBadge,
+  .pendingBadge {
+    width: 22px;
+    height: 22px;
+    justify-content: center;
+    padding: 0;
+    border-radius: var(--space-1);
+  }
+
+  .snomedPrefix,
+  .snomedText,
+  .snomedBadge em { display: none; }
+
+  .compactSnomedStatus {
+    width: 15px;
+    height: 15px;
+    display: block;
+  }
 }

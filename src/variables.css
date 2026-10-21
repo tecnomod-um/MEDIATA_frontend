@@ -119,12 +119,9 @@
   /* Alignment Mapping Status Colors */
   --annotation-accent-light: #147a80;
   --annotation-text-light: #0c6268;
-  --annotation-background-light: #e2f0f1;
   --mapping-custom-accent-light: #b07b24;
   --mapping-custom-text-light: #79500d;
-  --mapping-custom-background-light: #f6ead5;
   --mapping-default-accent-light: #aebbc1;
-  --mapping-default-background-light: #f1f4f5;
 
   /* Icons */
   --icon-background: #53a9ca;
@@ -312,12 +309,9 @@
   /* Alignment Mapping Status Colors (adjusted for dark mode) */
   --annotation-accent-dark: #48bcc1;
   --annotation-text-dark: #8ed9dc;
-  --annotation-background-dark: #18393b;
   --mapping-custom-accent-dark: #d0a650;
   --mapping-custom-text-dark: #e7c781;
-  --mapping-custom-background-dark: #3d3320;
   --mapping-default-accent-dark: #78868c;
-  --mapping-default-background-dark: #343a3d;
 
   /* Icons (adjusted for dark mode) */
   --icon-background-dark: #4a9aba;
@@ -445,12 +439,9 @@
   /* Alignment Mapping Status Colors */
   --annotation-accent: var(--annotation-accent-light);
   --annotation-text: var(--annotation-text-light);
-  --annotation-background: var(--annotation-background-light);
   --mapping-custom-accent: var(--mapping-custom-accent-light);
   --mapping-custom-text: var(--mapping-custom-text-light);
-  --mapping-custom-background: var(--mapping-custom-background-light);
   --mapping-default-accent: var(--mapping-default-accent-light);
-  --mapping-default-background: var(--mapping-default-background-light);
 
   /* Shadows */
   --box-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -581,12 +572,9 @@ body.dark-mode {
   /* Alignment Mapping Status Colors */
   --annotation-accent: var(--annotation-accent-dark);
   --annotation-text: var(--annotation-text-dark);
-  --annotation-background: var(--annotation-background-dark);
   --mapping-custom-accent: var(--mapping-custom-accent-dark);
   --mapping-custom-text: var(--mapping-custom-text-dark);
-  --mapping-custom-background: var(--mapping-custom-background-dark);
   --mapping-default-accent: var(--mapping-default-accent-dark);
-  --mapping-default-background: var(--mapping-default-background-dark);
 
   /* Icons */
   --icon-background: var(--icon-background-dark);

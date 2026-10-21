@@ -337,7 +337,7 @@ describe('<ColumnSearchList />', () => {
       },
     }];
 
-    render(
+    const { container } = render(
       <ColumnSearchList
         columnsData={[mappedColumn]}
         mappings={mappings}
@@ -348,8 +348,11 @@ describe('<ColumnSearchList />', () => {
 
     expect(screen.getByText('SNOMED CT annotated · 1')).toBeInTheDocument();
     expect(screen.getByText('Ability to use toilet')).toBeInTheDocument();
+    expect(screen.getByLabelText('SNOMED CT annotated: Ability to use toilet')).toBeInTheDocument();
     expect(screen.getByText('Custom')).toBeInTheDocument();
     expect(screen.getByText('Integer')).toBeInTheDocument();
+    expect(container.querySelector('[data-column-key]').className).toMatch(/columnItemAnnotated/);
+    expect(container.querySelector('[data-column-key]').className).toMatch(/columnItemCustom/);
   });
 
   it('searches Snowstorm and applies a selected annotation to its mapping target', async () => {
