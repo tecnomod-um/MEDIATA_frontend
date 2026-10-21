@@ -51,7 +51,13 @@
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--annotation-accent) 16%, transparent);
 }
 
-.summary { display: flex; flex-wrap: wrap; gap: var(--space-1); padding: var(--space-2) 0; }
+.summary {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding: var(--space-2) 0 0;
+}
 
 .annotatedSummary,
 .pendingSummary {
@@ -143,6 +149,8 @@
 }
 
 .columnMain {
+  container-name: column-main;
+  container-type: inline-size;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -213,7 +221,7 @@
   font-weight: 700;
 }
 
-.compactSnomedStatus { display: none; }
+svg.compactSnomedStatus { display: none; }
 
 .annotationButton {
   width: 30px;
@@ -235,13 +243,11 @@
   .mappingBadge { display: none; }
 }
 
-@media screen and (max-width: 768px) {
-  .search { padding-bottom: 60px; }
-
+@container column-main (max-width: 190px) {
   .snomedBadge,
   .pendingBadge {
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
     justify-content: center;
     padding: 0;
     border-radius: var(--space-1);
@@ -251,9 +257,13 @@
   .snomedText,
   .snomedBadge em { display: none; }
 
-  .compactSnomedStatus {
-    width: 15px;
-    height: 15px;
+  svg.compactSnomedStatus {
+    width: 11px;
+    height: 11px;
     display: block;
   }
+}
+
+@media screen and (max-width: 768px) {
+  .search { padding-bottom: 60px; }
 }

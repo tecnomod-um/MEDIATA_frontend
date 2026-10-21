@@ -86,7 +86,7 @@ function MappingsResult({ mappings, columnsData, deletedItems, processingStatus,
           <input
             className={MappingsResultStyles.searchInput}
             type="search"
-            placeholder="Search mapped columns"
+            placeholder="Search target schema"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />

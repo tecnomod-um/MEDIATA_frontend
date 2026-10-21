@@ -457,7 +457,7 @@ describe('<MappingsResult />', () => {
       />
     );
 
-    const searchInput = screen.getByPlaceholderText(/search mapped columns/i);
+    const searchInput = screen.getByPlaceholderText(/search target schema/i);
     expect(searchInput).toBeInTheDocument();
 
     fireEvent.change(searchInput, { target: { value: 'SearchMe' } });
@@ -485,7 +485,7 @@ describe('<MappingsResult />', () => {
       />
     );
 
-    const searchInput = screen.getByPlaceholderText(/search mapped columns/i);
+    const searchInput = screen.getByPlaceholderText(/search target schema/i);
     fireEvent.change(searchInput, { target: { value: 'findme' } });
 
     expect(searchInput).toHaveValue('findme');
@@ -515,7 +515,7 @@ describe('<MappingsResult />', () => {
       />
     );
 
-    const searchInput = screen.getByPlaceholderText(/search mapped columns/i);
+    const searchInput = screen.getByPlaceholderText(/search target schema/i);
     fireEvent.change(searchInput, { target: { value: 'KeyToFind' } });
 
     expect(searchInput).toHaveValue('KeyToFind');
@@ -556,7 +556,7 @@ describe('<MappingsResult />', () => {
       />
     );
 
-    const searchInput = screen.getByPlaceholderText(/search mapped columns/i);
+    const searchInput = screen.getByPlaceholderText(/search target schema/i);
     fireEvent.change(searchInput, { target: { value: 'UniqueValue' } });
 
     expect(searchInput).toHaveValue('UniqueValue');
@@ -573,7 +573,7 @@ describe('<MappingsResult />', () => {
       />
     );
 
-    const searchInput = screen.getByPlaceholderText(/search mapped columns/i);
+    const searchInput = screen.getByPlaceholderText(/search target schema/i);
     fireEvent.change(searchInput, {
       target: { value: 'NonexistentSearchTerm' },
     });
@@ -592,7 +592,7 @@ describe('<MappingsResult />', () => {
       />
     );
 
-    const searchInput = screen.getByPlaceholderText(/search mapped columns/i);
+    const searchInput = screen.getByPlaceholderText(/search target schema/i);
 
     fireEvent.change(searchInput, { target: { value: 'test' } });
     expect(searchInput).toHaveValue('test');

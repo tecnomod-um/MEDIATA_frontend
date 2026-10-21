@@ -33,6 +33,9 @@ describe('<ColumnSearchList />', () => {
     });
     expect(screen.queryByRole('heading', { name: /source variables/i })).not.toBeInTheDocument();
     expect(screen.getByRole('searchbox', { name: /search source variables by name/i })).toBeInTheDocument();
+    const columnGroups = screen.getByRole('list', { name: /column groups/i });
+    const progress = screen.getByLabelText(/annotation progress/i);
+    expect(columnGroups.compareDocumentPosition(progress) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('filters columns based on search input (case-insensitive)', () => {

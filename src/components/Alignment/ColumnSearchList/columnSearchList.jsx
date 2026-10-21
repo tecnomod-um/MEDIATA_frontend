@@ -194,11 +194,6 @@ function ColumnSearchList({
         </div>
       </div>
 
-      <div className={ColumnSearchListStyles.summary} aria-label="Annotation progress">
-        <span className={ColumnSearchListStyles.annotatedSummary}>SNOMED CT annotated · {counts.annotated}</span>
-        <span className={ColumnSearchListStyles.pendingSummary}>Pending · {counts.pending}</span>
-      </div>
-
       <div className={ColumnSearchListStyles.scrollableContainer} role="list" aria-label="Column groups">
         {grouped.map((group) => {
           const isCollapsed = !!collapsed[group.groupKey];
@@ -243,6 +238,11 @@ function ColumnSearchList({
         })}
 
         {grouped.length === 0 && <div className={ColumnSearchListStyles.emptyState} role="status">No columns found.</div>}
+      </div>
+
+      <div className={ColumnSearchListStyles.summary} aria-label="Annotation progress">
+        <span className={ColumnSearchListStyles.annotatedSummary}>SNOMED CT annotated · {counts.annotated}</span>
+        <span className={ColumnSearchListStyles.pendingSummary}>Pending · {counts.pending}</span>
       </div>
     </section>
   );
