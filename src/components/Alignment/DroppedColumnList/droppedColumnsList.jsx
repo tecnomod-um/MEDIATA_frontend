@@ -83,4 +83,4 @@ function DroppedColumnsList({ groups, onDeleteGroup, onDrop, height }) {
   );
 }
 
-export default DroppedColumnsList;
+export default React.memo(DroppedColumnsList);

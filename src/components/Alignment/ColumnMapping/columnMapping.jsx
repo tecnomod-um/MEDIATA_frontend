@@ -254,7 +254,7 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
     snomedDebouncersRef.current.clear();
   }, []);
 
-  const handleDrop = (e) => {
+  const handleDrop = useCallback((e) => {
     e.preventDefault();
 
     const droppedData = e.dataTransfer.getData("column");
@@ -275,7 +275,7 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
     );
 
     if (!alreadyExists) onMappingChange([...groups, droppedColumn]);
-  };
+  }, [groups, onMappingChange]);
 
   const handleUnionNameChange = (val) => setUnionName(val);
 
@@ -418,7 +418,7 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
     );
   };
 
-  const handleDeleteGroup = (groupToDelete) => {
+  const handleDeleteGroup = useCallback((groupToDelete) => {
     const newGroups = groups.filter(
       (group) =>
         !(
@@ -428,7 +428,7 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
         )
     );
     onMappingChange(newGroups);
-  };
+  }, [groups, onMappingChange]);
 
   const getSaveValidationError = () => {
     if (unionName.trim().length === 0) return "Please set a new column name.";
@@ -696,24 +696,28 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
 
   return (
     <div className={ColumnMappingStyles.mappingSection} ref={containerRef}>
-      <DescriptionModal
-        isOpen={isDescriptionOpen}
-        closeModal={closeDescriptionModal}
-        items={descriptionItems}
-        activeIndex={activeDescriptionIndex}
-        value={getActiveDescriptionValue()}
-        onChange={setActiveDescriptionValue}
-        onPrev={goPrevDescription}
-        onNext={goNextDescription}
-      />
+      {isDescriptionOpen && (
+        <DescriptionModal
+          isOpen
+          closeModal={closeDescriptionModal}
+          items={descriptionItems}
+          activeIndex={activeDescriptionIndex}
+          value={getActiveDescriptionValue()}
+          onChange={setActiveDescriptionValue}
+          onPrev={goPrevDescription}
+          onNext={goNextDescription}
+        />
+      )}
 
-      <SuggestMappingsModal
-        isOpen={isSuggestOpen}
-        onClose={closeSuggest}
-        onReplace={() => runSuggest("replace")}
-        onAppend={() => runSuggest("append")}
-        hasExistingMappings={!!hasExistingMappings}
-      />
+      {isSuggestOpen && (
+        <SuggestMappingsModal
+          isOpen
+          onClose={closeSuggest}
+          onReplace={() => runSuggest("replace")}
+          onAppend={() => runSuggest("append")}
+          hasExistingMappings={!!hasExistingMappings}
+        />
+      )}
 
       <DroppedColumnsList
         groups={groups}
