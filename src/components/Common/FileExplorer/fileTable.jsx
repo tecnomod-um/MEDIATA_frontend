@@ -5,6 +5,117 @@ import LinearProgress from "@mui/material/LinearProgress";
 import CircularProgress from "@mui/material/CircularProgress";
 import FileExplorerStyles from "./fileExplorer.module.css";
 
+const FileRow = React.memo(function FileRow({
+  file,
+  fileKey,
+  index,
+  isSelected,
+  busy,
+  isProcessing,
+  progress,
+  relatedInfo,
+  isRenaming,
+  renameInputRef,
+  renameDraft,
+  handlers,
+  formatBytes,
+  formatDateTime,
+  isNew,
+}) {
+  const showSpinner = isProcessing && (!progress || progress.mode === "spinner");
+  const showBar = isProcessing && progress?.mode === "bar";
+  const barValue = progress?.value ?? 0;
+
+  return (
+    <div
+      className={`${FileExplorerStyles.row} ${isSelected ? FileExplorerStyles.rowSelected : ""} ${busy ? FileExplorerStyles.rowDisabled : ""
+        } ${isProcessing ? FileExplorerStyles.rowProcessing : ""}`}
+      onMouseDown={() => handlers.mouseDown(fileKey, index)}
+      onMouseUp={handlers.mouseUp}
+      onMouseLeave={handlers.mouseLeave}
+      onClick={(event) => {
+        if (handlers.longPressFired.current) return;
+        handlers.click(event, fileKey, index);
+      }}
+      onDoubleClick={() => handlers.doubleClick(fileKey)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" && !isRenaming) handlers.doubleClick(fileKey);
+      }}
+      title={relatedInfo?.title || "Click to select • Long-click for multi • Ctrl/⌘ toggles • Shift range • Double-click opens"}
+    >
+      {relatedInfo ? (
+        <span
+          className={FileExplorerStyles.relatedStripe}
+          style={{ backgroundColor: relatedInfo.color }}
+          aria-hidden="true"
+        />
+      ) : null}
+
+      <div className={FileExplorerStyles.colName}>
+        <div className={FileExplorerStyles.fileIconWrap}>
+          <FileTypeIcon name={file.name} />
+          {showSpinner ? (
+            <span className={FileExplorerStyles.iconSpinnerOverlay} title="Processing...">
+              <CircularProgress size={18} thickness={4} />
+            </span>
+          ) : null}
+        </div>
+
+        {isRenaming ? (
+          <input
+            ref={renameInputRef}
+            className={FileExplorerStyles.renameInline}
+            value={renameDraft}
+            onChange={(event) => handlers.renameDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                event.stopPropagation();
+                handlers.commitRename();
+              }
+              if (event.key === "Escape") {
+                event.preventDefault();
+                event.stopPropagation();
+                handlers.cancelRename();
+              }
+            }}
+            onClick={(event) => event.stopPropagation()}
+            onDoubleClick={(event) => event.stopPropagation()}
+            onBlur={handlers.commitRename}
+            disabled={busy}
+          />
+        ) : showBar ? (
+          <div className={FileExplorerStyles.processingProgress}>
+            <LinearProgress variant="determinate" value={barValue} />
+            <span className={FileExplorerStyles.progressText}>{Math.round(barValue)}%</span>
+          </div>
+        ) : (
+          <div className={FileExplorerStyles.nameCell}>
+            {relatedInfo ? (
+              <span
+                className={FileExplorerStyles.relatedBadge}
+                style={{ "--related-badge-color": relatedInfo.color }}
+              >
+                {relatedInfo.groupId}
+              </span>
+            ) : null}
+            <span className={FileExplorerStyles.nameText}>
+              {file.name}
+              {isNew(file) ? <span className={FileExplorerStyles.newMark}> *</span> : null}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className={FileExplorerStyles.colSize}>{formatBytes(file.sizeBytes)}</div>
+      <div className={FileExplorerStyles.colCreated}>{formatDateTime(file.createdAtMs)}</div>
+      <div className={FileExplorerStyles.colModified}>{formatDateTime(file.lastModifiedAtMs)}</div>
+    </div>
+  );
+});
+
 // Files detected will be displayed as rows here. Allows selection and renaming
 function FileTable({
   sorted,
@@ -35,6 +146,30 @@ function FileTable({
   const [collapsedNodes, setCollapsedNodes] = React.useState(() => new Set());
   const [nodeHeights, setNodeHeights] = React.useState({});
   const nodeContentRefs = React.useRef(new Map());
+  const latestHandlers = React.useRef({});
+
+  latestHandlers.current = {
+    onRowMouseDown,
+    onRowMouseUp,
+    onRowMouseLeave,
+    onRowClick,
+    onRowDoubleClick,
+    setRenameDraft,
+    commitRename,
+    cancelRename,
+  };
+
+  const rowHandlers = React.useMemo(() => ({
+    mouseDown: (...args) => latestHandlers.current.onRowMouseDown(...args),
+    mouseUp: (...args) => latestHandlers.current.onRowMouseUp(...args),
+    mouseLeave: (...args) => latestHandlers.current.onRowMouseLeave(...args),
+    click: (...args) => latestHandlers.current.onRowClick(...args),
+    doubleClick: (...args) => latestHandlers.current.onRowDoubleClick(...args),
+    renameDraft: (...args) => latestHandlers.current.setRenameDraft(...args),
+    commitRename: (...args) => latestHandlers.current.commitRename(...args),
+    cancelRename: (...args) => latestHandlers.current.cancelRename(...args),
+    longPressFired,
+  }), [longPressFired]);
 
   const setNodeRef = (nodeId) => (el) => {
     if (el) nodeContentRefs.current.set(nodeId, el);
@@ -137,100 +272,27 @@ function FileTable({
     const idx = indexByKey.get(k) ?? 0;
     const isSelected = selected.has(k);
     const isProcessing = processingFiles.has(k);
-    const prog = fileProgress?.get(k);
-    const showSpinner = isProcessing && (!prog || prog.mode === "spinner");
-    const showBar = isProcessing && prog?.mode === "bar";
-    const barValue = prog?.value ?? 0;
     const relatedInfo = relatedInfoByKey.get(k);
 
     return (
-      <div
+      <FileRow
         key={k}
-        className={`${FileExplorerStyles.row} ${isSelected ? FileExplorerStyles.rowSelected : ""} ${busy ? FileExplorerStyles.rowDisabled : ""
-          } ${isProcessing ? FileExplorerStyles.rowProcessing : ""}`}
-        onMouseDown={() => onRowMouseDown(k, idx)}
-        onMouseUp={onRowMouseUp}
-        onMouseLeave={onRowMouseLeave}
-        onClick={(e) => {
-          if (longPressFired.current) return;
-          onRowClick(e, k, idx);
-        }}
-        onDoubleClick={() => onRowDoubleClick(k)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !renamingKey) onRowDoubleClick(k);
-        }}
-        title={relatedInfo?.title || "Click to select • Long-click for multi • Ctrl/⌘ toggles • Shift range • Double-click opens"}
-      >
-        {relatedInfo ? (
-          <span
-            className={FileExplorerStyles.relatedStripe}
-            style={{ backgroundColor: relatedInfo.color }}
-            aria-hidden="true"
-          />
-        ) : null}
-
-        <div className={FileExplorerStyles.colName}>
-          <div className={FileExplorerStyles.fileIconWrap}>
-            <FileTypeIcon name={f.name} />
-            {showSpinner ? (
-              <span className={FileExplorerStyles.iconSpinnerOverlay} title="Processing...">
-                <CircularProgress size={18} thickness={4} />
-              </span>
-            ) : null}
-          </div>
-
-          {renamingKey === k ? (
-            <input
-              ref={renameInputRef}
-              className={FileExplorerStyles.renameInline}
-              value={renameDraft}
-              onChange={(e) => setRenameDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  commitRename();
-                }
-                if (e.key === "Escape") {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  cancelRename();
-                }
-              }}
-              onClick={(e) => e.stopPropagation()}
-              onDoubleClick={(e) => e.stopPropagation()}
-              onBlur={() => commitRename()}
-              disabled={busy}
-            />
-          ) : showBar ? (
-            <div className={FileExplorerStyles.processingProgress}>
-              <LinearProgress variant="determinate" value={barValue} />
-              <span className={FileExplorerStyles.progressText}>{Math.round(barValue)}%</span>
-            </div>
-          ) : (
-            <div className={FileExplorerStyles.nameCell}>
-              {relatedInfo ? (
-                <span
-                  className={FileExplorerStyles.relatedBadge}
-                  style={{ "--related-badge-color": relatedInfo.color }}
-                >
-                  {relatedInfo.groupId}
-                </span>
-              ) : null}
-              <span className={FileExplorerStyles.nameText}>
-                {f.name}
-                {isNew(f) ? <span className={FileExplorerStyles.newMark}> *</span> : null}
-              </span>
-            </div>
-          )}
-        </div>
-
-        <div className={FileExplorerStyles.colSize}>{formatBytes(f.sizeBytes)}</div>
-        <div className={FileExplorerStyles.colCreated}>{formatDateTime(f.createdAtMs)}</div>
-        <div className={FileExplorerStyles.colModified}>{formatDateTime(f.lastModifiedAtMs)}</div>
-      </div>
+        file={f}
+        fileKey={k}
+        index={idx}
+        isSelected={isSelected}
+        busy={busy}
+        isProcessing={isProcessing}
+        progress={fileProgress?.get(k)}
+        relatedInfo={relatedInfo}
+        isRenaming={renamingKey === k}
+        renameInputRef={renameInputRef}
+        renameDraft={renamingKey === k ? renameDraft : ""}
+        handlers={rowHandlers}
+        formatBytes={formatBytes}
+        formatDateTime={formatDateTime}
+        isNew={isNew}
+      />
     );
   };
 

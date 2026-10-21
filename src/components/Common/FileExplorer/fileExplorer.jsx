@@ -303,7 +303,7 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
     return mapping;
   };
 
-  const isNew = (f) => isFileNew(f, NEW_WINDOW_MS);
+  const isNew = useCallback((f) => isFileNew(f, NEW_WINDOW_MS), []);
 
   const clampSelectionToExisting = (nextFiles) => {
     const keys = new Set(nextFiles.map((f) => fileKey(f)));
