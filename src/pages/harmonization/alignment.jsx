@@ -221,7 +221,7 @@ function Alignment() {
     }
   }, []);
 
-  const handleSuggestMappings = async (mode = "append") => {
+  const handleSuggestMappings = useCallback(async (mode = "append") => {
     try {
       const elementFiles = attachTerminologyToSuggestionSources(columnsData, mappings);
       const payload = { elementFiles, ...(schema ? { schema } : {}) };
@@ -253,7 +253,7 @@ function Alignment() {
       console.error(err);
       toast.error("Failed to generate suggestions.");
     }
-  };
+  }, [columnsData, mappings, schema]);
 
   const handleClearMappingEditor = useCallback(() => {
     setTemporaryGroups([]);
@@ -675,10 +675,10 @@ function Alignment() {
     }
   };
 
-  const handleMappingChange = (newGroups) => {
+  const handleMappingChange = useCallback((newGroups) => {
     setLoadedDraft(null);
     setTemporaryGroups(newGroups);
-  };
+  }, []);
 
   const mappingKeyExists = useCallback(
     (key) => mappings.some((obj) => Object.prototype.hasOwnProperty.call(obj, key)),
@@ -690,7 +690,7 @@ function Alignment() {
     [mappingKeyExists]
   );
 
-  const handleSaveMappings = (groups, unionName, customValues, removeFromHierarchy, isOneHotMapping, unionMeta) => {
+  const handleSaveMappings = useCallback((groups, unionName, customValues, removeFromHierarchy, isOneHotMapping, unionMeta) => {
     const norm = (s) => String(s ?? "").trim();
     const normalizedUnion = norm(unionName);
     const normalizedCustomValues = (customValues || []).map((cv) => ({
@@ -1073,10 +1073,10 @@ function Alignment() {
     setTemporaryGroups([]);
     setLoadedDraft(null);
     return true;
-  };
+  }, [editTarget, mappings]);
 
 
-  const handleDeleteMapping = (mappingIndex, mappingKey) => {
+  const handleDeleteMapping = useCallback((mappingIndex, mappingKey) => {
     const mappingToDelete = {
       index: mappingIndex,
       key: mappingKey,
@@ -1094,9 +1094,9 @@ function Alignment() {
     });
 
     setMappings(updatedMappings);
-  };
+  }, [mappings]);
 
-  const handleUndoDelete = () => {
+  const handleUndoDelete = useCallback(() => {
     if (deletedItems.length > 0) {
       const lastDeletedItem = deletedItems[deletedItems.length - 1];
       const { index, key, mapping } = lastDeletedItem;
@@ -1109,7 +1109,7 @@ function Alignment() {
       setMappings(updatedMappings);
       setDeletedItems(deletedItems.slice(0, -1));
     }
-  };
+  }, [deletedItems, mappings]);
 
   useEffect(() => {
     (async function loadSchema() {
@@ -1385,14 +1385,19 @@ function Alignment() {
 
   const handleColumnClick = useCallback(
     (col) => {
-      const alreadyExists = temporaryGroups.some(
-        (g) => g.column === col.column && g.fileName === col.fileName && g.nodeId === col.nodeId
-      );
-      if (!alreadyExists) setTemporaryGroups((prev) => [...prev, col]);
+      setTemporaryGroups((previous) => {
+        const alreadyExists = previous.some(
+          (group) => group.column === col.column && group.fileName === col.fileName && group.nodeId === col.nodeId
+        );
+        return alreadyExists ? previous : [...previous, col];
+      });
       setEditTarget(null);
     },
-    [temporaryGroups]
+    []
   );
+
+  const handleOpenFileMapper = useCallback(() => setIsFileMapperOpen(true), []);
+  const handleSchemaChange = useCallback((newSchema) => setSchema(newSchema), []);
 
   const handleDragStart = useCallback((e, column) => {
     e.dataTransfer.setData("column", JSON.stringify(column));
@@ -1610,7 +1615,7 @@ function Alignment() {
               processingStatus={processingStatus}
               onUndoDelete={handleUndoDelete}
               onDeleteMapping={handleDeleteMapping}
-              onOpenFileMapper={() => setIsFileMapperOpen(true)}
+              onOpenFileMapper={handleOpenFileMapper}
               formatValue={formatValue}
               setMappings={setMappings}
               onUploadMappings={handleUploadMappingsSpec}
@@ -1625,7 +1630,7 @@ function Alignment() {
           error={schemaError}
           setError={setSchemaError}
           externalSchema={schema}
-          onSchemaChange={(newSchema) => setSchema(newSchema)}
+          onSchemaChange={handleSchemaChange}
           onRemoveExternalSchema={handleRemoveExternalSchema}
           nodesFetched
         />

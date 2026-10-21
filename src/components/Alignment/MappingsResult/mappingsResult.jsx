@@ -1,7 +1,37 @@
-import React, { useMemo, useRef, useState, useEffect } from "react";
+import React, { useCallback, useMemo, useRef, useState, useEffect } from "react";
 import MappingsResultStyles from "./mappingsResult.module.css";
 import MappingHierarchy from "../MappingHierarchy/mappingHierarchy";
 import MappingsExporter from "./mappingsExporter";
+
+const MappingHierarchyEntry = React.memo(function MappingHierarchyEntry({
+  mappingIndex,
+  mappingKey,
+  mapping,
+  columnsData,
+  onDeleteMapping,
+  formatValue,
+  autoOpen,
+  onSelectMapping,
+  onUpdateMapping,
+}) {
+  const handleSelect = useCallback(() => {
+    onSelectMapping?.(mappingIndex, mappingKey);
+  }, [mappingIndex, mappingKey, onSelectMapping]);
+
+  return (
+    <MappingHierarchy
+      mappingIndex={mappingIndex}
+      mappingKey={mappingKey}
+      mapping={mapping}
+      columnsData={columnsData}
+      onDeleteMapping={onDeleteMapping}
+      formatValue={formatValue}
+      autoOpen={autoOpen}
+      onSelect={handleSelect}
+      onUpdateMapping={onUpdateMapping}
+    />
+  );
+});
 
 function MappingsResult({ mappings, columnsData, deletedItems, processingStatus, onUndoDelete, onDeleteMapping, onOpenFileMapper, formatValue, setMappings, onSelectMapping, schema, onUploadMappings }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -79,6 +109,24 @@ function MappingsResult({ mappings, columnsData, deletedItems, processingStatus,
       .filter(({ mappingObj }) => Object.keys(mappingObj).length > 0);
   }, [mappings, searchTerm]);
 
+  const handleUpdateMapping = useCallback((mappingIndex, oldKey, updatedMapping, newKey) => {
+    setMappings((previous) =>
+      previous.map((mappingObject, index) => {
+        if (index !== mappingIndex) return mappingObject;
+
+        const nextMappingObject = { ...mappingObject };
+        if (newKey && newKey !== oldKey) {
+          delete nextMappingObject[oldKey];
+          nextMappingObject[newKey] = updatedMapping;
+        } else {
+          nextMappingObject[oldKey] = updatedMapping;
+        }
+
+        return nextMappingObject;
+      })
+    );
+  }, [setMappings]);
+
   return (
     <div className={MappingsResultStyles.resultingSection}>
       <div className={MappingsResultStyles.scrollableContainer}>
@@ -103,7 +151,7 @@ function MappingsResult({ mappings, columnsData, deletedItems, processingStatus,
             const id = makeId(mappingKey, mapping);
 
             return (
-              <MappingHierarchy
+              <MappingHierarchyEntry
                 key={id}
                 mappingIndex={originalIndex}
                 mappingKey={mappingKey}
@@ -112,24 +160,8 @@ function MappingsResult({ mappings, columnsData, deletedItems, processingStatus,
                 onDeleteMapping={onDeleteMapping}
                 formatValue={formatValue}
                 autoOpen={autoOpenId === id}
-                onSelect={() => onSelectMapping?.(originalIndex, mappingKey)}
-                onUpdateMapping={(mappingIndex, oldKey, updatedMapping, newKey) => {
-                  setMappings((prev) =>
-                    prev.map((m, i) => {
-                      if (i !== mappingIndex) return m;
-
-                      const newMappingObj = { ...m };
-                      if (newKey && newKey !== oldKey) {
-                        delete newMappingObj[oldKey];
-                        newMappingObj[newKey] = updatedMapping;
-                      } else {
-                        newMappingObj[oldKey] = updatedMapping;
-                      }
-
-                      return newMappingObj;
-                    })
-                  );
-                }}
+                onSelectMapping={onSelectMapping}
+                onUpdateMapping={handleUpdateMapping}
               />
             );
           })
@@ -165,4 +197,4 @@ function MappingsResult({ mappings, columnsData, deletedItems, processingStatus,
   );
 }
 
-export default MappingsResult;
+export default React.memo(MappingsResult);

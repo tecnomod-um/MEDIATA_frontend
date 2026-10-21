@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 import DiscoveryStyles from "./discovery.module.css";
@@ -23,7 +23,6 @@ function Discovery() {
   const [showOutliers, setShowOutliers] = useState(false);
   const [isToolTrayOpen, setIsToolTrayOpen] = useState(true);
   const [selectedEntry, setSelectedEntry] = useState(null);
-  const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
   const [isFiltersOpen, setIsFiltersopen] = useState(false);
   const [filters, setFilters] = useState([]);
 
@@ -32,7 +31,7 @@ function Discovery() {
   // eslint-disable-next-line no-unused-vars
   const [datasets, setDatasets] = useState([]);
   const location = useLocation();
-  const toggleToolTray = () => setIsToolTrayOpen(!isToolTrayOpen);
+  const toggleToolTray = useCallback(() => setIsToolTrayOpen((open) => !open), []);
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -190,7 +189,7 @@ function Discovery() {
     }
   }, [location.state, selectedNodes, dataResults.length, hasProcessedMappingState, pollDiscoveryJob]);
 
-  const combineSelectedData = (dataResultsArray, activeIndices) => {
+  const combineSelectedData = useCallback((dataResultsArray, activeIndices) => {
     const combined = {
       continuousFeatures: [],
       categoricalFeatures: [],
@@ -262,7 +261,7 @@ function Discovery() {
     });
 
     return combined;
-  };
+  }, []);
 
   useEffect(() => {
     if (dataResults.length) {
@@ -270,9 +269,9 @@ function Discovery() {
       setDataStatistics(combined);
       setFilteredDataStatistics(combined);
     }
-  }, [dataResults, activeFileIndices]);
+  }, [dataResults, activeFileIndices, combineSelectedData]);
 
-  const toggleFileActive = (index) => {
+  const toggleFileActive = useCallback((index) => {
     setActiveFileIndices((prev) => {
       const newState = [...prev];
       if (newState[index] === true) {
@@ -284,7 +283,7 @@ function Discovery() {
       newState[index] = !newState[index];
       return newState;
     });
-  };
+  }, []);
 
   useEffect(() => {
     if (selectedNodes && selectedNodes.length > 0) {
@@ -308,31 +307,35 @@ function Discovery() {
 
   useEffect(() => {
     const handleResize = () => {
-      setViewportWidth(window.innerWidth);
+      const shouldOpen = window.innerWidth > 768;
+      setIsToolTrayOpen((open) => open === shouldOpen ? open : shouldOpen);
     };
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
 
-  useEffect(() => {
-    if (viewportWidth > 768) setIsToolTrayOpen(true);
-    else setIsToolTrayOpen(false);
-  }, [viewportWidth]);
+  const preSelected = useMemo(() => {
+    const selected = {};
+    if (location.state?.elementFiles?.length) {
+      location.state.elementFiles.forEach(({ nodeId, fileName }) => {
+        if (!selected[nodeId]) selected[nodeId] = [];
+        selected[nodeId].push(fileName);
+      });
+    }
+    return selected;
+  }, [location.state]);
 
-  let preSelected = {};
-  if (location.state?.elementFiles?.length) {
-    location.state.elementFiles.forEach(({ nodeId, fileName }) => {
-      if (!preSelected[nodeId]) preSelected[nodeId] = [];
-      preSelected[nodeId].push(fileName);
-    });
-  }
-
-  const handleFilesOpened = (allResults) => {
+  const handleFilesOpened = useCallback((allResults) => {
     setDataResults(allResults);
     setActiveFileIndices(allResults.map((_, idx) => idx === 0));
-  };
+  }, []);
+
+  const closeFilters = useCallback(() => setIsFiltersopen(false), []);
+  const toggleView = useCallback(() => toggleShownView((shown) => !shown), []);
+  const toggleFilters = useCallback(() => setIsFiltersopen((open) => !open), []);
 
   return (
     <div className={DiscoveryStyles.dropContainer}>
@@ -342,7 +345,7 @@ function Discovery() {
         filters={filters}
         setFilters={setFilters}
         setFilteredDataStatistics={setFilteredDataStatistics}
-        closeModal={() => setIsFiltersopen(false)}
+        closeModal={closeFilters}
         dataResults={dataResults}
         activeFileIndices={activeFileIndices}
         setDataResults={setDataResults}
@@ -382,9 +385,9 @@ function Discovery() {
           selectedEntry={selectedEntry}
           setSelectedEntry={setSelectedEntry}
           showIndividualView={showIndividualView}
-          toggleView={() => toggleShownView((v) => !v)}
+          toggleView={toggleView}
           filters={filters}
-          toggleFilters={() => setIsFiltersopen((open) => !open)}
+          toggleFilters={toggleFilters}
           dataResults={dataResults}
           activeFileIndices={activeFileIndices}
           toggleFileActive={toggleFileActive}

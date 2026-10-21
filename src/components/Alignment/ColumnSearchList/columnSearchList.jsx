@@ -13,7 +13,7 @@ import {
 } from "./columnMappingStatus";
 import ColumnSearchListStyles from "./columnSearchList.module.css";
 
-function SourceColumnItem({
+const SourceColumnItem = React.memo(function SourceColumnItem({
   column,
   targets,
   isAnnotationOpen,
@@ -83,7 +83,7 @@ function SourceColumnItem({
           className={ColumnSearchListStyles.annotationButton}
           onClick={(event) => {
             event.stopPropagation();
-            onAnnotationOpen();
+            onAnnotationOpen(columnReferenceKey(column));
           }}
           aria-label={`Annotate ${column.column} with SNOMED CT`}
           title="Add or edit SNOMED CT annotation"
@@ -102,7 +102,7 @@ function SourceColumnItem({
       )}
     </div>
   );
-}
+});
 
 function ColumnSearchList({
   columnsData = [],
@@ -161,6 +161,8 @@ function ColumnSearchList({
   const toggleGroup = useCallback((groupKey) => {
     setCollapsed((previous) => ({ ...previous, [groupKey]: !previous[groupKey] }));
   }, []);
+  const openAnnotation = useCallback((columnKey) => setAnnotationColumnKey(columnKey), []);
+  const closeAnnotation = useCallback(() => setAnnotationColumnKey(null), []);
   const openAll = useCallback(() => setCollapsed({}), []);
   const collapseAll = useCallback(() => {
     const next = {};
@@ -224,8 +226,8 @@ function ColumnSearchList({
                         column={column}
                         targets={columnStates.get(itemKey) || []}
                         isAnnotationOpen={annotationColumnKey === itemKey}
-                        onAnnotationOpen={() => setAnnotationColumnKey(itemKey)}
-                        onAnnotationClose={() => setAnnotationColumnKey(null)}
+                        onAnnotationOpen={openAnnotation}
+                        onAnnotationClose={closeAnnotation}
                         onTerminologyChange={onTerminologyChange}
                         handleColumnClick={handleColumnClick}
                         handleDragStart={handleDragStart}
@@ -253,4 +255,4 @@ function ColumnSearchList({
   );
 }
 
-export default ColumnSearchList;
+export default React.memo(ColumnSearchList);

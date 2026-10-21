@@ -988,4 +988,4 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
   );
 }
 
-export default ColumnMapping;
+export default React.memo(ColumnMapping);

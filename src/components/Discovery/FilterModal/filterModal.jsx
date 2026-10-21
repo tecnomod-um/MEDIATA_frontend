@@ -752,4 +752,4 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
   );
 }
 
-export default FilterModal;
+export default React.memo(FilterModal);

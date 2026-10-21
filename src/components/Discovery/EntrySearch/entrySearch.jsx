@@ -67,4 +67,13 @@ function EntrySearch({ resultData, onRowSelect, selectedEntry, type }) {
   );
 }
 
-export default EntrySearch;
+const selectedFeatureForType = (selectedEntry, type) =>
+  selectedEntry?.type === type ? selectedEntry.featureName : null;
+
+export default React.memo(EntrySearch, (previous, next) =>
+  previous.resultData === next.resultData &&
+  previous.onRowSelect === next.onRowSelect &&
+  previous.type === next.type &&
+  selectedFeatureForType(previous.selectedEntry, previous.type) ===
+    selectedFeatureForType(next.selectedEntry, next.type)
+);

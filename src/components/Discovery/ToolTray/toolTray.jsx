@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { MdChevronRight, MdChevronLeft, MdSync } from "react-icons/md";
 import Switch from "react-switch";
 import { toast } from "react-toastify";
@@ -9,6 +9,49 @@ import CompareFilesModal from "../CompareFilesModal/compareFilesModal";
 import { recalculateFeature } from "../../../util/petitionHandler";
 import { updateNodeAxiosBaseURL } from "../../../util/nodeAxiosSetup";
 import { useNode } from "../../../context/nodeContext";
+
+const getEntrySet = (dataSet) => {
+  if (!dataSet) return [];
+  return [
+    ...(dataSet.dateFeatures || []).map((item) => ({
+      featureName: item.featureName,
+      type: "date",
+      fileName: item.fileName,
+    })),
+    ...(dataSet.categoricalFeatures || []).map((item) => ({
+      featureName: item.featureName,
+      type: "categorical",
+      fileName: item.fileName,
+    })),
+    ...(dataSet.continuousFeatures || []).map((item) => ({
+      featureName: item.featureName,
+      type: "continuous",
+      fileName: item.fileName,
+    })),
+  ];
+};
+
+const FeatureToggle = React.memo(function FeatureToggle({ entry, checked, onToggle }) {
+  const handleChange = useCallback(() => onToggle(entry), [entry, onToggle]);
+
+  return (
+    <li className={ToolTrayStyles.featureItem}>
+      <label title={entry.featureName}>
+        <Switch
+          aria-label={entry.featureName}
+          checked={checked}
+          onChange={handleChange}
+          height={20}
+          width={40}
+          handleDiameter={16}
+          offColor="#888"
+          onColor="#9ABDDC"
+        />
+        {entry.featureName}
+      </label>
+    </li>
+  );
+});
 
 // Sidebar holding all the discovery view controls
 function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, setShowOutliers, isToolTrayOpen, toggleToolTray, selectedEntry, setSelectedEntry, showIndividualView, toggleView, filters, toggleFilters, dataResults = [], activeFileIndices = [], toggleFileActive }) {
@@ -35,39 +78,6 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
     setTimeout(() => {
       circle.remove();
     }, 600);
-  };
-
-  const getEntrySet = (dataSet) => {
-    if (!dataSet) return [];
-    let entries = [];
-    if (dataSet.dateFeatures) {
-      entries = entries.concat(
-        dataSet.dateFeatures.map((item) => ({
-          featureName: item.featureName,
-          type: "date",
-          fileName: item.fileName,
-        }))
-      );
-    }
-    if (dataSet.categoricalFeatures) {
-      entries = entries.concat(
-        dataSet.categoricalFeatures.map((item) => ({
-          featureName: item.featureName,
-          type: "categorical",
-          fileName: item.fileName,
-        }))
-      );
-    }
-    if (dataSet.continuousFeatures) {
-      entries = entries.concat(
-        dataSet.continuousFeatures.map((item) => ({
-          featureName: item.featureName,
-          type: "continuous",
-          fileName: item.fileName,
-        }))
-      );
-    }
-    return entries;
   };
 
   const getOriginalFeatureName = (name) => {
@@ -108,12 +118,6 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
     }
     console.log("lookupFileName: Found matching entry, fileName =", found.fileName);
     return found.fileName;
-  };
-
-  const isFeatureChecked = (featureName, featureType) => {
-    return filteredData[`${featureType}Features`]?.some(
-      (item) => item.featureName === featureName
-    );
   };
 
   const toggleFeatureType = async () => {
@@ -260,18 +264,45 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
     return acc;
   }, {});
 
-  const entrySet = getEntrySet(data);
+  const entrySet = useMemo(() => getEntrySet(data), [data]);
 
   // Filter entries based on the search term
-  const displayedFeatures = entrySet.filter((entry) =>
-    entry.featureName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const displayedFeatures = useMemo(() => {
+    const normalizedSearch = searchTerm.toLowerCase();
+    return entrySet.filter((entry) =>
+      entry.featureName.toLowerCase().includes(normalizedSearch)
+    );
+  }, [entrySet, searchTerm]);
 
-  const allDisplayedChecked = displayedFeatures.every((entry) =>
-    isFeatureChecked(entry.featureName, entry.type)
-  );
+  const isFeatureChecked = useCallback((entry) =>
+    filteredData[`${entry.type}Features`]?.some(
+      (item) => item.featureName === entry.featureName
+    ) ?? false,
+  [filteredData]);
 
-  const toggleAllDisplayedFeatures = () => {
+  const allDisplayedChecked = useMemo(() =>
+    displayedFeatures.every(isFeatureChecked),
+  [displayedFeatures, isFeatureChecked]);
+
+  const toggleFeature = useCallback((entry) => {
+    setFilteredData((previous) => {
+      const featureKey = `${entry.type}Features`;
+      const nextFiltered = { ...previous };
+      const features = [...(nextFiltered[featureKey] || [])];
+      const index = features.findIndex((feature) => feature.featureName === entry.featureName);
+
+      if (index >= 0) {
+        features.splice(index, 1);
+      } else {
+        const feature = data[featureKey]?.find((item) => item.featureName === entry.featureName);
+        if (feature) features.push(feature);
+      }
+      nextFiltered[featureKey] = features;
+      return nextFiltered;
+    });
+  }, [data, setFilteredData]);
+
+  const toggleAllDisplayedFeatures = useCallback(() => {
     setFilteredData((prev) => {
       const newFiltered = { ...prev };
       displayedFeatures.forEach((entry) => {
@@ -295,7 +326,7 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
       });
       return newFiltered;
     });
-  };
+  }, [allDisplayedChecked, data, displayedFeatures, setFilteredData]);
 
   return (
     <div className={`${ToolTrayStyles.container} ${isToolTrayOpen ? ToolTrayStyles.open : ToolTrayStyles.closed}`}>
@@ -379,40 +410,12 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
       <div className={ToolTrayStyles.featuresList}>
         <ul>
           {displayedFeatures.map((entry) => (
-            <li key={entry.featureName} className={ToolTrayStyles.featureItem}>
-              <label title={entry.featureName}>
-                <Switch
-                  aria-label={entry.featureName}
-                  checked={isFeatureChecked(entry.featureName, entry.type)}
-                  onChange={() =>
-                    setFilteredData((prev) => {
-                      const featKey = `${entry.type}Features`;
-                      const newFiltered = { ...prev };
-                      const arr = [...(newFiltered[featKey] || [])];
-                      const i = arr.findIndex(
-                        (f) => f.featureName === entry.featureName
-                      );
-                      if (i >= 0) {
-                        arr.splice(i, 1);
-                      } else {
-                        const item = data[featKey]?.find(
-                          (f) => f.featureName === entry.featureName
-                        );
-                        if (item) arr.push(item);
-                      }
-                      newFiltered[featKey] = arr;
-                      return newFiltered;
-                    })
-                  }
-                  height={20}
-                  width={40}
-                  handleDiameter={16}
-                  offColor="#888"
-                  onColor="#9ABDDC"
-                />
-                {entry.featureName}
-              </label>
-            </li>
+            <FeatureToggle
+              key={`${entry.type}:${entry.featureName}`}
+              entry={entry}
+              checked={isFeatureChecked(entry)}
+              onToggle={toggleFeature}
+            />
           ))}
         </ul>
       </div>
@@ -498,4 +501,4 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
   );
 }
 
-export default ToolTray;
+export default React.memo(ToolTray);

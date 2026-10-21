@@ -408,22 +408,24 @@ function MappingHierarchy({ mappingIndex, mappingKey, mapping, columnsData, onDe
 
   return (
     <div className={`${MappingHierarchyStyles.entryContainer} ${editing.type ? MappingHierarchyStyles.editing : ""}`}>
-      <Popper
-        open={metaOpen}
-        anchorEl={metaAnchorEl}
-        placement="bottom-start"
-        className={MappingHierarchyStyles.metaPopper}
-        modifiers={[
-          { name: "offset", options: { offset: [0, 8] } },
-          { name: "preventOverflow", options: { padding: 8 } },
-        ]}
-      >
-        <ClickAwayListener onClickAway={closeMeta}>
-          <Paper elevation={10} className={MappingHierarchyStyles.metaPaper}>
-            {popperContent}
-          </Paper>
-        </ClickAwayListener>
-      </Popper>
+      {metaOpen && (
+        <Popper
+          open
+          anchorEl={metaAnchorEl}
+          placement="bottom-start"
+          className={MappingHierarchyStyles.metaPopper}
+          modifiers={[
+            { name: "offset", options: { offset: [0, 8] } },
+            { name: "preventOverflow", options: { padding: 8 } },
+          ]}
+        >
+          <ClickAwayListener onClickAway={closeMeta}>
+            <Paper elevation={10} className={MappingHierarchyStyles.metaPaper}>
+              {popperContent}
+            </Paper>
+          </ClickAwayListener>
+        </Popper>
+      )}
 
       <div
         className={`${MappingHierarchyStyles.headerRow} ${!isOpen ? MappingHierarchyStyles.headerRowClosed : ""}`}
@@ -540,4 +542,4 @@ function MappingHierarchy({ mappingIndex, mappingKey, mapping, columnsData, onDe
   );
 }
 
-export default MappingHierarchy;
+export default React.memo(MappingHierarchy);

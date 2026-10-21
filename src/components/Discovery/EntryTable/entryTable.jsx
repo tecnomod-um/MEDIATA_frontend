@@ -52,6 +52,24 @@ const Row = React.memo(
         ))}
       </tr>
     );
+  },
+  (previous, next) => {
+    if (
+      previous.rowIndex !== next.rowIndex ||
+      previous.filteredLists !== next.filteredLists ||
+      previous.onRowClick !== next.onRowClick ||
+      previous.type !== next.type
+    ) {
+      return false;
+    }
+
+    const wasSelected =
+      previous.selectedEntry?.type === previous.type &&
+      previous.selectedEntry?.featureName === previous.filteredLists.Name[previous.rowIndex];
+    const isSelected =
+      next.selectedEntry?.type === next.type &&
+      next.selectedEntry?.featureName === next.filteredLists.Name[next.rowIndex];
+    return wasSelected === isSelected;
   }
 );
 

@@ -53,7 +53,7 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
     [labels, chartDataPoints]
   );
 
-  const chartOptions = {
+  const chartOptions = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: true,
     animation: true,
@@ -96,7 +96,7 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
         radius: 0,
       },
     },
-  };
+  }), [dateDataKey]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -129,4 +129,4 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
   );
 }
 
-export default DateChart;
+export default React.memo(DateChart);
