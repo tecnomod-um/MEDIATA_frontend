@@ -432,4 +432,4 @@ const ElementDetailPanel = ({ activeElement, currentSelection, onSelectOption, a
   );
 }
 
-export default ElementDetailPanel;
+export default React.memo(ElementDetailPanel);

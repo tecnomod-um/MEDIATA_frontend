@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { CSSTransition } from 'react-transition-group';
 import HL7FHIRStyles from './hl7FHIR.module.css';
 import UploadFilePicker from '../../components/Common/FilePicker/uploadFilePicker';
@@ -47,8 +47,8 @@ export default function HL7FHIR() {
   const [selectedCluster, setSelectedCluster] = useState(null);
   const [showClustersPanel, setShowClustersPanel] = useState(false);
 
-  const handleDragStart = () => setIsDragging(true);
-  const handleDragEnd = () => setIsDragging(false);
+  const handleDragStart = useCallback(() => setIsDragging(true), []);
+  const handleDragEnd = useCallback(() => setIsDragging(false), []);
 
   // 1) CSV upload → parse elements + init form values
   const processCsvData = csvText => {
@@ -76,11 +76,11 @@ export default function HL7FHIR() {
   };
 
   // 2) Element selection & form state
-  const handleSelectElement = el => {
+  const handleSelectElement = useCallback(el => {
     setSelectedElement(el);
     setSelectedCluster(null);
-  };
-  const handleFormChange = (field, value) => {
+  }, []);
+  const handleFormChange = useCallback((field, value) => {
     if (!selectedElement) return;
     setElementFormValues(prev => ({
       ...prev,
@@ -89,7 +89,7 @@ export default function HL7FHIR() {
         [field]: value
       }
     }));
-  };
+  }, [selectedElement]);
 
   // 3) detect built classes
   const builtClasses = useMemo(() => {

@@ -46,6 +46,12 @@ const buildSemanticCdeOutputName = (datasetFileName, conversion) => {
   return `${stem}-${conversion.outputSuffix}.${extension}`;
 };
 
+const useStableEvent = (handler) => {
+  const handlerRef = useRef(handler);
+  handlerRef.current = handler;
+  return useCallback((...args) => handlerRef.current(...args), []);
+};
+
 // Semantic integration page for RDF mapping and ontology connections
 function SemanticIntegration() {
   const location = useLocation();
@@ -471,10 +477,10 @@ function SemanticIntegration() {
       setMobileView("detail");
     }
   };
-  const getActiveItem = () => {
+  const activeItem = useMemo(() => {
     if (!elements || activeElementIndex == null) return null;
     return { ...elements.elements[activeElementIndex], isCategory: false };
-  };
+  }, [activeElementIndex, elements]);
 
   /*
     const getActiveItem = () => {
@@ -494,8 +500,6 @@ function SemanticIntegration() {
       return { ...parent, isCategory: false };
     };
   */
-  const activeItem = getActiveItem();
-
   const handleBuildClass = (formFields) => {
     if (!activeItem || activeElementIndex === null) return;
     const itemKey =
@@ -719,6 +723,21 @@ function SemanticIntegration() {
     setMobileView((prev) => (prev === "detail" ? "workspace" : "detail"));
   };
 
+  const selectElement = useStableEvent(handleSelectElement);
+  const selectOption = useStableEvent((option) => {
+    if (activeElementIndex === null) return;
+    const key = activeCategoryIndex != null
+      ? `${activeElementIndex}-cat-${activeCategoryIndex}`
+      : `${activeElementIndex}`;
+    setElementSelections((prev) => ({ ...prev, [key]: option }));
+  });
+  const buildClass = useStableEvent(handleBuildClass);
+  const deleteClass = useStableEvent(handleDeleteByBuiltKey);
+  const startCardMouseDrag = useStableEvent(handleMouseDownCard);
+  const startCardTouchDrag = useStableEvent(handleTouchStartCard);
+  const selectCard = useStableEvent(handleCardClick);
+  const removeCard = useStableEvent(handleRemoveCard);
+
   const renderDesktopLayout = () => {
     return (
       <CSSTransition
@@ -739,7 +758,7 @@ function SemanticIntegration() {
                 elements={elements}
                 activeElementIndex={activeElementIndex}
                 activeCategoryIndex={activeCategoryIndex}
-                onSelectElement={handleSelectElement}
+                onSelectElement={selectElement}
                 builtClasses={builtClasses}
               />
             )}
@@ -760,23 +779,13 @@ function SemanticIntegration() {
                   ]
                   : null
               }
-              onSelectOption={(option) => {
-                if (activeElementIndex === null) return;
-                const key =
-                  activeCategoryIndex != null
-                    ? `${activeElementIndex}-cat-${activeCategoryIndex}`
-                    : `${activeElementIndex}`;
-                setElementSelections((prev) => ({
-                  ...prev,
-                  [key]: option,
-                }));
-              }}
+              onSelectOption={selectOption}
               activeElementIndex={activeElementIndex}
               activeCategoryIndex={activeCategoryIndex}
               elementFormValues={elementFormValues}
               setElementFormValues={setElementFormValues}
-              onBuildClass={(formFields) => handleBuildClass(formFields)}
-              onDeleteClass={handleDeleteByBuiltKey}
+              onBuildClass={buildClass}
+              onDeleteClass={deleteClass}
               builtClasses={builtClasses}
             />
           </div>
@@ -814,10 +823,10 @@ function SemanticIntegration() {
                 <RdfCard
                   key={card.id}
                   card={card}
-                  onMouseDown={(e) => handleMouseDownCard(e, card.id)}
-                  onTouchStart={(e) => handleTouchStartCard(e, card.id)}
-                  onCardClick={() => handleCardClick(card.id)}
-                  onRemoveCard={() => handleRemoveCard(card.id)}
+                  onMouseDown={startCardMouseDrag}
+                  onTouchStart={startCardTouchDrag}
+                  onCardClick={selectCard}
+                  onRemoveCard={removeCard}
                 />
               ))}
             </div>
@@ -899,7 +908,7 @@ function SemanticIntegration() {
             elements={elements}
             activeElementIndex={activeElementIndex}
             activeCategoryIndex={activeCategoryIndex}
-            onSelectElement={handleSelectElement}
+            onSelectElement={selectElement}
             builtClasses={builtClasses}
           />
           <button
@@ -923,23 +932,13 @@ function SemanticIntegration() {
                     ]
                     : null
                 }
-                onSelectOption={(option) => {
-                  if (activeElementIndex === null) return;
-                  const key =
-                    activeCategoryIndex != null
-                      ? `${activeElementIndex}-cat-${activeCategoryIndex}`
-                      : `${activeElementIndex}`;
-                  setElementSelections((prev) => ({
-                    ...prev,
-                    [key]: option,
-                  }));
-                }}
+                onSelectOption={selectOption}
                 activeElementIndex={activeElementIndex}
                 activeCategoryIndex={activeCategoryIndex}
                 elementFormValues={elementFormValues}
                 setElementFormValues={setElementFormValues}
-                onBuildClass={(formFields) => handleBuildClass(formFields)}
-                onDeleteClass={handleDeleteByBuiltKey}
+                onBuildClass={buildClass}
+                onDeleteClass={deleteClass}
                 builtClasses={builtClasses}
               />
             </div>
@@ -963,10 +962,10 @@ function SemanticIntegration() {
                   <RdfCard
                     key={card.id}
                     card={card}
-                    onMouseDown={(e) => handleMouseDownCard(e, card.id)}
-                    onTouchStart={(e) => handleTouchStartCard(e, card.id)}
-                    onCardClick={() => handleCardClick(card.id)}
-                    onRemoveCard={() => handleRemoveCard(card.id)}
+                    onMouseDown={startCardMouseDrag}
+                    onTouchStart={startCardTouchDrag}
+                    onCardClick={selectCard}
+                    onRemoveCard={removeCard}
                   />
                 ))}
               </div>

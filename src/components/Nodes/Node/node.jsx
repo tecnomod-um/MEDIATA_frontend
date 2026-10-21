@@ -14,7 +14,7 @@ const getNodeColor = (nodeColor) => {
 };
 
 // Three.js 'sphere-like' node in the scene
-const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descriptionSize, fontSize }) => {
+const Node = ({ node, position = node.position, onNodeClick, isDragging, globalIsDragging, nodeSize, descriptionSize, fontSize }) => {
   const ref = useRef();
   const auraRef = useRef();
   const rippleMeshRef = useRef();
@@ -86,14 +86,14 @@ const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descr
     (clock) => {
       if (!ref.current) return;
       const elapsedTime = clock.getElapsedTime();
-      const targetY = node.position.y + Math.sin(elapsedTime) * 0.1;
+      const targetY = position.y + Math.sin(elapsedTime) * 0.1;
       if (!isDragging) {
         ref.current.position.y = ref.current.position.y + (targetY - ref.current.position.y) * 0.1;
       } else {
-        ref.current.position.y = node.position.y;
+        ref.current.position.y = position.y;
       }
     },
-    [isDragging, node.position.y]
+    [isDragging, position.y]
   );
 
   const updateAuraScale = useCallback((clock) => {
@@ -178,7 +178,7 @@ const Node = ({ node, onNodeClick, isDragging, globalIsDragging, nodeSize, descr
   return (
     <a.mesh
       ref={ref}
-      position={[node.position.x, node.position.y, 0]}
+      position={[position.x, position.y, 0]}
       onDoubleClick={handleDoubleClick}
       onClick={handleSingleClick}
       onPointerOver={() => !clickDelayActive && setHovered(true)}

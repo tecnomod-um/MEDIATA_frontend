@@ -39,4 +39,4 @@ const NodeScene = ({ nodes, onNodeClick, onJoinNodesDoubleClick }) => {
   );
 }
 
-export default NodeScene;
+export default React.memo(NodeScene);

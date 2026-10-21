@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { getNodeList, getNodeInfo, getNodeMetadata, nodeAuth } from "../../util/petitionHandler";
 import NodeScene from "../../components/Nodes/NodeScene/nodeScene";
 import NodesStyles from "./nodes.module.css";
@@ -49,52 +49,55 @@ const Nodes = () => {
     const fetchNodes = async () => {
       try {
         const data = await getNodeList(projectId);
-        const newNodes = data.map((node) => {
-          rememberNodeRouting(node, {
-            proxyRequired: node.proxyRequired,
-            proxyBasePath: node.proxyBasePath,
+        if (!Array.isArray(data)) return;
+        setNodes((currentNodes) => {
+          const newNodes = data.map((node) => {
+            rememberNodeRouting(node, {
+              proxyRequired: node.proxyRequired,
+              proxyBasePath: node.proxyBasePath,
+            });
+            const existingNode = currentNodes.find((item) => item.nodeId === node.nodeId);
+            return {
+              ...node,
+              position: existingNode
+                ? existingNode.position
+                : {
+                  x: (Math.random() - 0.5) * 10,
+                  y: (Math.random() - 0.5) * 10,
+                  z: 0,
+                },
+            };
           });
-          const existingNode = nodes.find((n) => n.nodeId === node.nodeId);
-          return {
-            ...node,
-            position: existingNode
-              ? existingNode.position
-              : {
-                x: (Math.random() - 0.5) * 10,
-                y: (Math.random() - 0.5) * 10,
-                z: 0,
-              },
-          };
+
+          const nodesChanged =
+            newNodes.length !== currentNodes.length ||
+            newNodes.some((newNode, idx) => {
+              const oldNode = currentNodes[idx];
+              if (!oldNode) return true;
+              return Object.keys(newNode).some(
+                (key) => newNode[key] !== oldNode[key]
+              );
+            });
+
+          return nodesChanged ? newNodes : currentNodes;
         });
-
-        const nodesChanged =
-          newNodes.length !== nodes.length ||
-          newNodes.some((newNode, idx) => {
-            const oldNode = nodes[idx];
-            if (!oldNode) return true;
-            return Object.keys(newNode).some(
-              (key) => newNode[key] !== oldNode[key]
-            );
-          });
-
-        if (nodesChanged) setNodes(newNodes);
         setShowError(false);
         setTimeout(() => {
           setError(null);
         }, 500);
-        if (!initialFetchDone) setInitialFetchDone(true);
+        setInitialFetchDone(true);
       } catch (err) {
         console.error("Failed to fetch nodes:", err);
         setError("Failed to fetch nodes");
         setShowError(true);
-        if (!initialFetchDone) setInitialFetchDone(true);
+        setInitialFetchDone(true);
       }
     };
 
     fetchNodes();
     const intervalId = setInterval(fetchNodes, config.pollingInterval);
     return () => clearInterval(intervalId);
-  }, [nodes, initialFetchDone, projectId]);
+  }, [projectId]);
 
   useEffect(() => {
     if (initialFetchDone) {
@@ -112,7 +115,7 @@ const Nodes = () => {
     }
   }, [initialFetchDone]);
 
-  const handleNodeClick = async (nodeId) => {
+  const handleNodeClick = useCallback(async (nodeId) => {
     const node = nodes.find((n) => n.nodeId === nodeId);
     if (!node) {
       console.error(`Node with ID ${nodeId} not found.`);
@@ -140,7 +143,7 @@ const Nodes = () => {
     } finally {
       setLoadingMetadata(false);
     }
-  };
+  }, [nodes]);
 
   const handleAccessNode = async () => {
     setAccessingNode(true);
@@ -173,11 +176,11 @@ const Nodes = () => {
   };
 
 
-  const handleJoinNodesDoubleClick = (joinedNodeIds) => {
+  const handleJoinNodesDoubleClick = useCallback((joinedNodeIds) => {
     const groupNodes = nodes.filter((n) => joinedNodeIds.includes(n.nodeId));
     setJoinedNodes(groupNodes);
     setShowJoinedNodesModal(true);
-  };
+  }, [nodes]);
 
   const handleAccessJoinedNodes = async () => {
     setAccessingNode(true);

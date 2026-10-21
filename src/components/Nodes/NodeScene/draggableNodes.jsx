@@ -66,20 +66,6 @@ const DraggableNodes = ({ nodes, onNodeClick, onJoinNodesDoubleClick }) => {
     return distance < nodeSize;
   };
 
-  const memoizedNodes = useMemo(() =>
-    nodes.map(node => ({
-      ...node,
-      position: nodePositions[node.nodeId] || node.position,
-      _meta: Object.freeze({
-        adjustedNodeSize,
-        descriptionSize,
-        adjustedFontSize,
-        viewport
-      })
-    })),
-    [nodes, nodePositions, adjustedNodeSize, descriptionSize, adjustedFontSize, viewport]
-  );
-
   const handleCollisions = () => {
     const updatedPositions = { ...targetPositionsRef.current };
 
@@ -138,20 +124,35 @@ const DraggableNodes = ({ nodes, onNodeClick, onJoinNodesDoubleClick }) => {
   );
 
   useFrame(() => {
-    const newPositions = { ...nodePositionsRef.current };
+    const currentPositions = nodePositionsRef.current;
+    let newPositions = currentPositions;
+    let positionsChanged = false;
 
-    for (const nodeId in newPositions) {
+    for (const nodeId in currentPositions) {
       const target = targetPositionsRef.current[nodeId];
       if (target) {
-        newPositions[nodeId] = {
-          x: newPositions[nodeId].x + (target.x - newPositions[nodeId].x) * 0.1,
-          y: newPositions[nodeId].y + (target.y - newPositions[nodeId].y) * 0.1,
-        };
+        const current = currentPositions[nodeId];
+        const deltaX = target.x - current.x;
+        const deltaY = target.y - current.y;
+        if (Math.abs(deltaX) > 0.001 || Math.abs(deltaY) > 0.001) {
+          if (!positionsChanged) newPositions = { ...currentPositions };
+          positionsChanged = true;
+          newPositions[nodeId] = {
+            x: current.x + deltaX * 0.1,
+            y: current.y + deltaY * 0.1,
+          };
+        } else if (deltaX !== 0 || deltaY !== 0) {
+          if (!positionsChanged) newPositions = { ...currentPositions };
+          positionsChanged = true;
+          newPositions[nodeId] = target;
+        }
       }
     }
 
-    setNodePositions(newPositions);
-    nodePositionsRef.current = newPositions;
+    if (positionsChanged) {
+      nodePositionsRef.current = newPositions;
+      setNodePositions(newPositions);
+    }
     handleCollisions();
   });
 
@@ -263,17 +264,18 @@ const DraggableNodes = ({ nodes, onNodeClick, onJoinNodesDoubleClick }) => {
   return (
     <>
       <group ref={groupRef}>
-        {memoizedNodes.map((node) => (
+        {nodes.map((node) => (
           <Node
             key={node.nodeId}
             node={node}
+            position={nodePositions[node.nodeId] || node.position}
             onNodeClick={onNodeClick}
             isDragging={draggedNodeId === node.nodeId}
             globalIsDragging={globalIsDragging}
-            nodeSize={node._meta.adjustedNodeSize}
-            descriptionSize={node._meta.descriptionSize}
-            fontSize={node._meta.adjustedFontSize}
-            viewport={node._meta.viewport}
+            nodeSize={adjustedNodeSize}
+            descriptionSize={descriptionSize}
+            fontSize={adjustedFontSize}
+            viewport={viewport}
           />
         ))}
       </group>
@@ -287,4 +289,4 @@ const DraggableNodes = ({ nodes, onNodeClick, onJoinNodesDoubleClick }) => {
   );
 }
 
-export default DraggableNodes;
+export default React.memo(DraggableNodes);

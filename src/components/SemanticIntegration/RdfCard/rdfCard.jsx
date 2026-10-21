@@ -50,4 +50,4 @@ const RdfCard = ({ card, onMouseDown, onTouchStart, onCardClick, onRemoveCard })
   );
 }
 
-export default RdfCard;
+export default React.memo(RdfCard);

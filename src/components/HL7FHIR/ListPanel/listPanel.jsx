@@ -1,18 +1,25 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import ElementList from '../../Common/ElementList/elementList';
 
 // List panel wrapper for FHIR elements using ElementList component
-export default function ListPanel({ elements, selectedElement, builtClasses, onSelectElement, onDragStart, onDragEnd }) {
-  const items = elements.map(el => ({ id: el.id, label: el.label }));
+function ListPanel({ elements, selectedElement, builtClasses, onSelectElement, onDragStart, onDragEnd }) {
+  const items = useMemo(
+    () => elements.map(el => ({ id: el.id, label: el.label })),
+    [elements]
+  );
   const activeIndex = selectedElement
     ? elements.findIndex(el => el.id === selectedElement.id)
     : null;
+  const handleSelect = useCallback(
+    (index) => onSelectElement(elements[index]),
+    [elements, onSelectElement]
+  );
 
   return (
     <ElementList
       items={items}
       activeIndex={activeIndex}
-      onSelect={(idx) => onSelectElement(elements[idx])}
+      onSelect={handleSelect}
       builtClasses={builtClasses}
       searchPlaceholder="Filter elements"
       showCategories={false}
@@ -23,3 +30,5 @@ export default function ListPanel({ elements, selectedElement, builtClasses, onS
     />
   );
 }
+
+export default React.memo(ListPanel);
