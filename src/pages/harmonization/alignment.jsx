@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";
 import { ToastContainer, toast } from "react-toastify";
@@ -1402,6 +1402,11 @@ function Alignment() {
     []
   );
 
+  const similaritySources = useMemo(
+    () => attachTerminologyToSuggestionSources(columnsData, mappings),
+    [columnsData, mappings]
+  );
+
   const handleOpenFileMapper = useCallback(() => setIsFileMapperOpen(true), []);
   const handleSchemaChange = useCallback((newSchema) => setSchema(newSchema), []);
 
@@ -1592,6 +1597,8 @@ function Alignment() {
           >
             <ColumnMapping
               columnsData={columnsData}
+              similaritySources={similaritySources}
+              onAddSourceColumn={handleColumnClick}
               onMappingChange={handleMappingChange}
               groups={temporaryGroups}
               onSave={saveMapping}

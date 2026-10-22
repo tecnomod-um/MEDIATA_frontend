@@ -1,8 +1,9 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { vi } from "vitest";
 import DroppedColumnsList from "./droppedColumnsList";
+import { rankSimilarColumns as rankSimilarColumnsApi } from "../../../util/petitionHandler";
 
 vi.mock(
   "./droppedColumnsList.module.css",
@@ -23,6 +24,10 @@ vi.mock("@mui/icons-material/Close", () => ({
   default: () => <span data-testid="CloseIcon" />,
 }));
 
+vi.mock("../../../util/petitionHandler", () => ({
+  rankSimilarColumns: vi.fn(async () => []),
+}));
+
 const makeDataTransfer = (payloadObj) => ({
   getData: vi.fn((type) =>
     type === "column" ? JSON.stringify(payloadObj) : ""
@@ -36,6 +41,40 @@ const makeDataTransfer = (payloadObj) => ({
 });
 
 describe("DroppedColumnsList", () => {
+  it("opens similar variables and adds one through the source-column callback", () => {
+    const anchor = { nodeId: "n1", fileName: "a.csv", column: "ToiletBART1", values: ["0", "5", "10"] };
+    const match = { nodeId: "n2", fileName: "b.csv", column: "ToiletBART2", values: ["0", "5", "10"] };
+    const onAddGroup = vi.fn();
+    render(<DroppedColumnsList groups={[anchor]} sourceColumns={[anchor, match]}
+      onAddGroup={onAddGroup} onDeleteGroup={vi.fn()} onDrop={vi.fn()} height={200} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Find variables similar to ToiletBART1" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add ToiletBART2 from b.csv" }));
+    expect(onAddGroup).toHaveBeenCalledWith(match);
+  });
+
+  it("adds a semantic match without sending source values to the orchestrator", async () => {
+    const anchor = { nodeId: "n1", fileName: "a.csv", column: "Sex", values: ["Male", "Female"] };
+    const match = { nodeId: "n2", fileName: "b.csv", column: "Gender", values: ["Man", "Woman"] };
+    vi.mocked(rankSimilarColumnsApi).mockResolvedValueOnce([
+      { nodeId: "n2", fileName: "b.csv", column: "Gender", score: 0.7 },
+    ]);
+    const onAddGroup = vi.fn();
+    render(<DroppedColumnsList groups={[anchor]} sourceColumns={[anchor, match]}
+      onAddGroup={onAddGroup} onDeleteGroup={vi.fn()} onDrop={vi.fn()} height={200} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Find variables similar to Sex" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Add Gender from b.csv" }))
+      .toBeInTheDocument());
+    expect(rankSimilarColumnsApi).toHaveBeenCalledWith({
+      anchor: { nodeId: "n1", fileName: "a.csv", column: "Sex", terminology: undefined },
+      candidates: [{ nodeId: "n2", fileName: "b.csv", column: "Gender", terminology: undefined }],
+      signal: expect.any(AbortSignal),
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add Gender from b.csv" }));
+    expect(onAddGroup).toHaveBeenCalledWith(match);
+  });
+
   it("renders empty state with drop text when no groups", () => {
     render(
       <DroppedColumnsList

@@ -735,6 +735,15 @@ export const suggestMappings = async ({ elementFiles, schema }) => {
   return response.data;
 };
 
+export const rankSimilarColumns = async ({ anchor, candidates, signal }) => {
+  const response = await axiosInstance.post(
+    "/api/mappings/similar-columns",
+    { anchor, candidates },
+    { signal }
+  );
+  return response.data;
+};
+
 export const enrichMappingsStart = async ({ hierarchy, schema }) => {
   const payload = {
     hierarchy,

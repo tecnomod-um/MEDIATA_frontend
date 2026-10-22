@@ -55,7 +55,7 @@ const HeaderInfoTooltip = React.memo(function HeaderInfoTooltip() {
   );
 });
 
-function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loadedDraft, onSuggestMappings, hasExistingMappings, onGenerateMetadata, isGenerateMetadataLoading = false, generateMetadataProgress = 0 }) {
+function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loadedDraft, onSuggestMappings, hasExistingMappings, onGenerateMetadata, isGenerateMetadataLoading = false, generateMetadataProgress = 0, similaritySources = [], onAddSourceColumn }) {
   const [unionName, setUnionName] = useState("");
   const [unionTerminology, setUnionTerminology] = useState("");
 
@@ -757,6 +757,8 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
 
       <DroppedColumnsList
         groups={groups}
+        sourceColumns={similaritySources}
+        onAddGroup={onAddSourceColumn}
         onDeleteGroup={handleDeleteGroup}
         onDrop={handleDrop}
         height={dropAreaHeight}
