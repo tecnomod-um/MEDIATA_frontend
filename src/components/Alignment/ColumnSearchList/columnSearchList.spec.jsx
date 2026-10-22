@@ -38,6 +38,7 @@ describe('<ColumnSearchList />', () => {
     expect(status).toHaveTextContent('Total 3');
     expect(status).toHaveTextContent('Annotated 0');
     expect(status).toHaveTextContent('Mapped 0');
+    expect(screen.getAllByLabelText('SNOMED CT not annotated')[0]).toHaveAttribute('title', 'SNOMED CT: Not annotated');
     expect(columnGroups.compareDocumentPosition(status) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
@@ -359,6 +360,9 @@ describe('<ColumnSearchList />', () => {
     expect(status).toHaveTextContent('Mapped 1');
     expect(screen.getByText('Ability to use toilet')).toBeInTheDocument();
     expect(screen.getByLabelText('SNOMED CT annotated: Ability to use toilet')).toBeInTheDocument();
+    expect(screen.getByLabelText('SNOMED CT annotated: Ability to use toilet')).toHaveAttribute(
+      'title', 'SNOMED CT: Ability to use toilet (284899001)'
+    );
     expect(screen.getByText('Custom')).toBeInTheDocument();
     expect(screen.getByText('Integer')).toBeInTheDocument();
     expect(container.querySelector('[data-column-key]').className).toMatch(/columnItemAnnotated/);

@@ -53,7 +53,9 @@ const SourceColumnItem = React.memo(function SourceColumnItem({
           {primaryAnnotation.label ? (
             <span
               className={ColumnSearchListStyles.snomedBadge}
-              title={column.terminology}
+              title={primaryAnnotation.code
+                ? `SNOMED CT: ${primaryAnnotation.label} (${primaryAnnotation.code})`
+                : `SNOMED CT: ${primaryAnnotation.label}`}
               aria-label={`SNOMED CT annotated: ${primaryAnnotation.label}`}
             >
               <b className={ColumnSearchListStyles.snomedPrefix}>SCT</b>
@@ -61,7 +63,7 @@ const SourceColumnItem = React.memo(function SourceColumnItem({
               <CheckIcon className={ColumnSearchListStyles.compactSnomedStatus} aria-hidden="true" />
             </span>
           ) : (
-            <span className={ColumnSearchListStyles.pendingBadge} aria-label="SNOMED CT not annotated">
+            <span className={ColumnSearchListStyles.pendingBadge} aria-label="SNOMED CT not annotated" title="SNOMED CT: Not annotated">
               <b className={ColumnSearchListStyles.snomedPrefix}>SCT</b>
               <span className={ColumnSearchListStyles.snomedText}>Not annotated</span>
               <CloseIcon className={ColumnSearchListStyles.compactSnomedStatus} aria-hidden="true" />
