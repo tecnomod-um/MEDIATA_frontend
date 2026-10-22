@@ -3,7 +3,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: var(--space-1);
+  padding: 0;
   box-sizing: border-box;
   container-name: source-list;
   container-type: inline-size;
