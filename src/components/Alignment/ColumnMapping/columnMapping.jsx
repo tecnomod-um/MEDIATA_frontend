@@ -24,6 +24,37 @@ const MIN_DROP = 50;
 const MIN_CREATE_DESKTOP = 260;
 const MIN_CREATE_MOBILE = 140;
 
+const StableAutocompleteInput = React.memo(AutocompleteInput);
+
+function useStableEvent(handler) {
+  const handlerRef = useRef(handler);
+  handlerRef.current = handler;
+  return useCallback((...args) => handlerRef.current(...args), []);
+}
+
+const HeaderInfoTooltip = React.memo(function HeaderInfoTooltip() {
+  const [open, setOpen] = useState(false);
+  const buttonRef = useRef(null);
+  return (
+    <div className={ColumnMappingStyles.tooltipContainer}>
+      <InfoOutlinedIcon
+        ref={buttonRef}
+        className={ColumnMappingStyles.tooltipIcon}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+      />
+      {open && (
+        <TooltipPopup
+          message={"Create a column in the datasets with a given name.\nIt's values will be set based on the defined mappings from the selected columns."}
+          buttonRef={buttonRef}
+          onClose={() => setOpen(false)}
+          offsetY={-10}
+        />
+      )}
+    </div>
+  );
+});
+
 function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loadedDraft, onSuggestMappings, hasExistingMappings, onGenerateMetadata, isGenerateMetadataLoading = false, generateMetadataProgress = 0 }) {
   const [unionName, setUnionName] = useState("");
   const [unionTerminology, setUnionTerminology] = useState("");
@@ -49,8 +80,6 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
   const snomedDebouncersRef = useRef(new Map());
   const snomedRequestVersionsRef = useRef(new Map());
 
-  const [showHeaderTooltip, setShowHeaderTooltip] = useState(false);
-  const headerTooltipButtonRef = useRef(null);
 
   const getGroupKey = (g) => `${g.nodeId}::${g.fileName}::${g.column}`;
 
@@ -277,7 +306,7 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
     if (!alreadyExists) onMappingChange([...groups, droppedColumn]);
   }, [groups, onMappingChange]);
 
-  const handleUnionNameChange = (val) => setUnionName(val);
+  const handleUnionNameChange = useCallback((val) => setUnionName(val), []);
 
   const unionTerminologySuggestionLabels = useMemo(() => {
     const schemaList = unionNameSuggestions || [];
@@ -674,18 +703,6 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
 
   const valueContentSuggestions = useMemo(() => (unionEnumSuggestions || []).map((x) => String(x)), [unionEnumSuggestions]);
 
-  const valueTerminologySuggestionLabelsFor = useCallback(
-    (customValueId) => {
-      const schemaList = (unionEnumSuggestions || []).map((x) => String(x));
-      const snomedList = (snomedValueTerminologySuggestions[customValueId] || []).map((s) => s.label);
-
-      const schemaSet = new Set(schemaList.map((x) => x.toLowerCase()));
-      const snomedAppended = snomedList.filter((x) => !schemaSet.has(String(x).toLowerCase()));
-      return [...schemaList, ...snomedAppended];
-    },
-    [unionEnumSuggestions, snomedValueTerminologySuggestions]
-  );
-
   const isLockedNumericValue = useCallback((cv) => {
     const vals = (cv?.mapping || []).map((m) => m?.value);
     if (!vals.length) return false;
@@ -693,6 +710,25 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
       (v) => typeof v === "string" && (v === "integer" || v === "double" || v === "date")
     );
   }, []);
+
+  const changeUnionTerminology = useStableEvent(handleUnionTerminologyChange);
+  const closeValueTooltip = useCallback(() => setTooltipShown(false), []);
+  const changeValueName = useStableEvent(handleValueNameChange);
+  const changeValueSnomed = useStableEvent(handleValueSnomedChange);
+  const addValueMapping = useStableEvent((index) => {
+    if (groups.length <= 0) triggerTooltip("No set elements to get the values from.", index);
+    else handleAddMapping(index);
+  });
+  const removeValueMapping = useStableEvent(handleRemoveMapping);
+  const removeCustomValue = useStableEvent(removeValue);
+  const openValueDescription = useStableEvent((index) => {
+    const items = [
+      { kind: "union", label: unionName, index: 0 },
+      ...customValues.map((cv, i) => ({ kind: "value", id: cv.id, label: cv.name, index: i })),
+    ];
+    setDescriptionItems(items);
+    openDescriptionModalAt(index + 1);
+  });
 
   return (
     <div className={ColumnMappingStyles.mappingSection} ref={containerRef}>
@@ -737,22 +773,7 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
           <div className={ColumnMappingStyles.titleWithInfo}>
             <h2 className={ColumnMappingStyles.sectionTitle}>Define mapping rules</h2>
 
-            <div className={ColumnMappingStyles.tooltipContainer}>
-              <InfoOutlinedIcon
-                ref={headerTooltipButtonRef}
-                className={ColumnMappingStyles.tooltipIcon}
-                onMouseEnter={() => setShowHeaderTooltip(true)}
-                onMouseLeave={() => setShowHeaderTooltip(false)}
-              />
-              {showHeaderTooltip && (
-                <TooltipPopup
-                  message={"Create a column in the datasets with a given name.\nIt's values will be set based on the defined mappings from the selected columns."}
-                  buttonRef={headerTooltipButtonRef}
-                  onClose={() => setShowHeaderTooltip(false)}
-                  offsetY={-10}
-                />
-              )}
-            </div>
+            <HeaderInfoTooltip />
           </div>
 
           <div className={ColumnMappingStyles.headerActions}>
@@ -820,22 +841,17 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
 
         </div>
         <div className={ColumnMappingStyles.entryHeaderRow}>
-          <AutocompleteInput
+          <StableAutocompleteInput
             value={unionName}
-            onChange={(raw) => handleUnionNameChange(raw)}
+            onChange={handleUnionNameChange}
             placeholder="New column's name"
             className={ColumnMappingStyles.unionInput}
             suggestions={unionNameSuggestions}
           />
 
-          <AutocompleteInput
+          <StableAutocompleteInput
             value={unionTerminology}
-            onChange={(raw) => {
-              const hit = (snomedUnionTerminologySuggestions || []).find(
-                (s) => s.value === raw || s.label === raw
-              );
-              handleUnionTerminologyChange(hit ? hit.value : raw);
-            }}
+            onChange={changeUnionTerminology}
             placeholder="Column's terminology"
             className={ColumnMappingStyles.snomedInput}
             suggestions={unionTerminologySuggestionLabels}
@@ -872,7 +888,7 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
           </button>
         </div>
 
-        <MappingSelectorPane
+        {isPaneVisible && currentGroupIndex !== null && <MappingSelectorPane
           isPaneVisible={isPaneVisible && currentGroupIndex !== null}
           currentValueName={currentValueName}
           groups={groups}
@@ -886,34 +902,22 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
             setIsPaneVisible(false);
           }}
           paneRef={paneRef}
-        />
+        />}
 
         <ValuesList
           customValues={customValues}
-          groups={groups}
           valueContentSuggestions={valueContentSuggestions}
-          valueTerminologySuggestionLabelsFor={valueTerminologySuggestionLabelsFor}
           snomedValueTerminologySuggestions={snomedValueTerminologySuggestions}
           isTooltipShown={isTooltipShown}
           tooltipRef={tooltipRef}
           tooltipMessage={tooltipMessage}
-          onTooltipClose={() => setTooltipShown(false)}
-          onValueNameChange={handleValueNameChange}
-          onValueSnomedChange={handleValueSnomedChange}
-          onAddMapping={(index) => {
-            if (groups.length <= 0) triggerTooltip("No set elements to get the values from.", index);
-            else handleAddMapping(index);
-          }}
-          onRemoveMapping={handleRemoveMapping}
-          onRemoveValue={removeValue}
-          onOpenDescription={(index) => {
-            const items = [
-              { kind: "union", label: unionName, index: 0 },
-              ...customValues.map((cv, i) => ({ kind: "value", id: cv.id, label: cv.name, index: i })),
-            ];
-            setDescriptionItems(items);
-            openDescriptionModalAt(index + 1);
-          }}
+          onTooltipClose={closeValueTooltip}
+          onValueNameChange={changeValueName}
+          onValueSnomedChange={changeValueSnomed}
+          onAddMapping={addValueMapping}
+          onRemoveMapping={removeValueMapping}
+          onRemoveValue={removeCustomValue}
+          onOpenDescription={openValueDescription}
           isLockedNumericValue={isLockedNumericValue}
           buttonRefs={buttonRefs}
           containerRef={valueListRef}

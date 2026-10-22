@@ -153,4 +153,4 @@ function FileToolbar({
   );
 }
 
-export default FileToolbar;
+export default React.memo(FileToolbar);

@@ -44,6 +44,27 @@ export const getColumnMappingTargets = (column, mappings) => {
   });
 };
 
+export const getColumnMappingStatuses = (mappings) => {
+  const statuses = new Map();
+  (mappings || []).forEach((mappingObject) => {
+    Object.entries(mappingObject || {}).forEach(([mappingKey, mapping]) => {
+      (mapping?.groups || []).forEach((group) => {
+        (group?.values || []).forEach((value) => {
+          (value?.mapping || []).forEach((entry) => {
+            const key = `${entry?.nodeId ?? ""}::${entry?.fileName ?? ""}::${entry?.groupColumn ?? ""}`;
+            const isDefault = mappingKey === entry?.groupColumn &&
+              String(mapping?.fileName || "") === String(entry?.fileName || "");
+            if (!isDefault || !statuses.has(key)) {
+              statuses.set(key, isDefault ? "Default" : "Custom");
+            }
+          });
+        });
+      });
+    });
+  });
+  return statuses;
+};
+
 export const parseTerminology = (terminology) => {
   const raw = String(terminology || "").trim();
   if (!raw) return { label: "", code: "" };

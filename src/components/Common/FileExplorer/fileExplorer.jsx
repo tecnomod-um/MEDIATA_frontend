@@ -1256,6 +1256,21 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
 
   const toolbarDisabled = busy || loading;
 
+  const toolbarActionsRef = useRef({});
+  toolbarActionsRef.current = {
+    doProcessSelected, startRename, toggleCleanPanel, requestDelete,
+    load, navigate, toggleRelatedDatasets,
+  };
+  const toolbarActions = useMemo(() => ({
+    open: (...args) => toolbarActionsRef.current.doProcessSelected(...args),
+    rename: (...args) => toolbarActionsRef.current.startRename(...args),
+    clean: (...args) => toolbarActionsRef.current.toggleCleanPanel(...args),
+    delete: (...args) => toolbarActionsRef.current.requestDelete(...args),
+    refresh: () => toolbarActionsRef.current.load(true),
+    back: () => toolbarActionsRef.current.navigate("/nodes"),
+    related: (...args) => toolbarActionsRef.current.toggleRelatedDatasets(...args),
+  }), []);
+
   return (
     <CSSTransition
       in={isOpen}
@@ -1275,27 +1290,27 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
           <div ref={toolbarRef}>
             <FileToolbar
               toolbarDisabled={toolbarDisabled}
-              doOpenSelected={doProcessSelected}
+              doOpenSelected={toolbarActions.open}
               hasSelection={hasSelection}
               onOpenFile={onOpenFile}
               onFilesSelected={onFilesSelected}
               onFilesOpened={onFilesOpened}
               renamingName={renamingKey ? (findFileByKey(renamingKey)?.name || "") : null}
               selectedCount={selected.size}
-              startRename={startRename}
-              openCleanPanel={toggleCleanPanel}
-              requestDelete={requestDelete}
+              startRename={toolbarActions.rename}
+              openCleanPanel={toolbarActions.clean}
+              requestDelete={toolbarActions.delete}
               multiMode={multiMode}
               setMultiMode={setMultiMode}
               busy={busy}
-              load={() => load(true)}
+              load={toolbarActions.refresh}
               onClose={onClose}
-              onBack={() => navigate("/nodes")}
+              onBack={toolbarActions.back}
               category={category}
               canShowRelated={canShowRelated}
               relatedMode={relatedMode}
               relatedBusy={relatedBusy}
-              onToggleRelated={toggleRelatedDatasets}
+              onToggleRelated={toolbarActions.related}
             />
           </div>
           <div className={FileExplorerStyles.contentShell}>

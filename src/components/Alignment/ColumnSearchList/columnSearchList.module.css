@@ -55,13 +55,14 @@
 
 .summary {
   width: 100%;
-  min-height: 24px;
+  box-sizing: border-box;
+  min-height: 28px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   flex: 0 0 auto;
   margin-top: var(--space-1);
-  border-top: 1px solid var(--border-color-secondary);
-  border-bottom: 1px solid var(--border-color-secondary);
+  border: 1px solid var(--border-color-secondary);
+  border-radius: 4px;
   background: var(--background-color-3);
   color: var(--text-color-tertiary);
   font-size: var(--font-size-xs);

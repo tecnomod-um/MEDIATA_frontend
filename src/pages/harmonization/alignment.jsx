@@ -52,6 +52,12 @@ function PanelWrapper({ isMobile, panel, activeMobilePanel, styles, children }) 
   );
 }
 
+function useStableEvent(handler) {
+  const handlerRef = useRef(handler);
+  handlerRef.current = handler;
+  return useCallback((...args) => handlerRef.current(...args), []);
+}
+
 function reconcileLoadedMappingsWithColumnsData(mappings, columnsData) {
   const availableColumns = new Set(
     (columnsData || []).map((col) => `${col.nodeId}::${col.fileName}::${col.column}`)
@@ -1468,6 +1474,13 @@ function Alignment() {
     [selectedMappingId, mappings, columnsData, isMobile, buildOneHotDraft, buildStandardDraft]
   );
 
+  const saveMapping = useStableEvent(handleSave);
+  const suggestMappingsForEditor = useStableEvent(handleSuggestAndNavigate);
+  const generateMetadata = useStableEvent(handleGenerateMetadata);
+  const deleteMapping = useStableEvent(handleDeleteMapping);
+  const undoDelete = useStableEvent(handleUndoDelete);
+  const selectMapping = useStableEvent(handleSelectMapping);
+
   return (
     <div className={AlignmentStyles.pageContainer}>
       <FileMapperModal
@@ -1576,13 +1589,13 @@ function Alignment() {
               columnsData={columnsData}
               onMappingChange={handleMappingChange}
               groups={temporaryGroups}
-              onSave={handleSave}
+              onSave={saveMapping}
               {...(isMobile && { onClear: handleClearMappingEditor })}
               schema={schema}
               loadedDraft={loadedDraft}
-              onSuggestMappings={handleSuggestAndNavigate}
+              onSuggestMappings={suggestMappingsForEditor}
               hasExistingMappings={mappings?.length > 0}
-              onGenerateMetadata={handleGenerateMetadata}
+              onGenerateMetadata={generateMetadata}
               isGenerateMetadataLoading={isGenerateMetadataLoading}
               generateMetadataProgress={generateMetadataProgress}
             />
@@ -1613,13 +1626,13 @@ function Alignment() {
               columnsData={columnsData}
               deletedItems={deletedItems}
               processingStatus={processingStatus}
-              onUndoDelete={handleUndoDelete}
-              onDeleteMapping={handleDeleteMapping}
+              onUndoDelete={undoDelete}
+              onDeleteMapping={deleteMapping}
               onOpenFileMapper={handleOpenFileMapper}
               formatValue={formatValue}
               setMappings={setMappings}
               onUploadMappings={handleUploadMappingsSpec}
-              onSelectMapping={handleSelectMapping}
+              onSelectMapping={selectMapping}
             />
           </PanelWrapper>
         </CSSTransition>

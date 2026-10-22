@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getColumnMappingStatuses,
   getColumnMappingTargets,
   inferColumnType,
   parseTerminology,
@@ -41,6 +42,21 @@ describe("column mapping status", () => {
       expect.objectContaining({ mappingKey: "AgeAtAdmission", kind: "custom" }),
       expect.objectContaining({ mappingKey: "Age", kind: "default" }),
     ]);
+  });
+
+  it("counts referenced source variables and keeps custom status ahead of default", () => {
+    const mappings = [
+      { Age: { fileName: "elements.csv", groups: [{ values: [{ mapping: [reference] }] }] } },
+      { AgeAtAdmission: { fileName: "custom_mapping", groups: [{ values: [{ mapping: [reference] }] }] } },
+      { Age: { fileName: "elements.csv", groups: [{ values: [{ mapping: [
+        { ...reference, nodeId: "node-2" },
+      ] }] }] } },
+    ];
+
+    const statuses = getColumnMappingStatuses(mappings);
+    expect(statuses.get("node-1::elements.csv::Age")).toBe("Custom");
+    expect(statuses.get("node-2::elements.csv::Age")).toBe("Default");
+    expect(statuses.size).toBe(2);
   });
 
   it("parses a stored label and SCTID without losing embedded punctuation", () => {

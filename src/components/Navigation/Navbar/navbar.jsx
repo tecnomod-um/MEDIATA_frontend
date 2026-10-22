@@ -22,7 +22,7 @@ function FileSearchIcon() {
 }
 
 // Main navigation bar used throughout the app
-export default function Navbar() {
+function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [animate, setAnimate] = useState(false);
 
@@ -253,3 +253,5 @@ export default function Navbar() {
     </nav>
   );
 }
+
+export default React.memo(Navbar);

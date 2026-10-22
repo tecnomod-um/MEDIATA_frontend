@@ -7,7 +7,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import SnomedAnnotationPopover from "./snomedAnnotationPopover";
 import {
   columnReferenceKey,
-  getColumnMappingTargets,
+  getColumnMappingStatuses,
   inferColumnType,
   parseTerminology,
 } from "./columnMappingStatus";
@@ -15,7 +15,7 @@ import ColumnSearchListStyles from "./columnSearchList.module.css";
 
 const SourceColumnItem = React.memo(function SourceColumnItem({
   column,
-  targets,
+  mappingStatus,
   isAnnotationOpen,
   onAnnotationOpen,
   onAnnotationClose,
@@ -26,9 +26,7 @@ const SourceColumnItem = React.memo(function SourceColumnItem({
   const annotationButtonRef = useRef(null);
   const primaryAnnotation = parseTerminology(column.terminology);
   const isAnnotated = Boolean(primaryAnnotation.label);
-  const hasCustomMapping = targets.some((target) => target.kind === "custom");
-  const hasDefaultMapping = targets.some((target) => target.kind === "default");
-  const mappingStatus = hasCustomMapping ? "Custom" : hasDefaultMapping ? "Default" : "Unmapped";
+  const hasCustomMapping = mappingStatus === "Custom";
   const itemClassName = [
     ColumnSearchListStyles.columnItem,
     isAnnotated ? ColumnSearchListStyles.columnItemAnnotated : "",
@@ -115,20 +113,17 @@ function ColumnSearchList({
   const [collapsed, setCollapsed] = useState({});
   const [annotationColumnKey, setAnnotationColumnKey] = useState(null);
 
-  const columnStates = useMemo(() => {
-    const states = new Map();
-    (columnsData || []).forEach((column) => {
-      states.set(columnReferenceKey(column), getColumnMappingTargets(column, mappings));
-    });
-    return states;
-  }, [columnsData, mappings]);
+  const columnStates = useMemo(() => getColumnMappingStatuses(mappings), [mappings]);
 
   const counts = useMemo(() => {
     const annotated = columnsData.filter((column) =>
       Boolean(String(column?.terminology || "").trim())
     ).length;
-    return { annotated, pending: Math.max(0, columnsData.length - annotated) };
-  }, [columnsData]);
+    const mapped = columnsData.filter((column) =>
+      columnStates.has(columnReferenceKey(column))
+    ).length;
+    return { total: columnsData.length, annotated, mapped };
+  }, [columnsData, columnStates]);
 
   const handleChange = (event) => setSearchTerm(event.target.value.toLowerCase());
 
@@ -224,7 +219,7 @@ function ColumnSearchList({
                       <SourceColumnItem
                         key={itemKey}
                         column={column}
-                        targets={columnStates.get(itemKey) || []}
+                        mappingStatus={columnStates.get(itemKey) || "Unmapped"}
                         isAnnotationOpen={annotationColumnKey === itemKey}
                         onAnnotationOpen={openAnnotation}
                         onAnnotationClose={closeAnnotation}
@@ -243,12 +238,15 @@ function ColumnSearchList({
         {grouped.length === 0 && <div className={ColumnSearchListStyles.emptyState} role="status">No columns found.</div>}
       </div>
 
-      <div className={ColumnSearchListStyles.summary} aria-label="Annotation progress">
+      <div className={ColumnSearchListStyles.summary} aria-label="Source variable status">
+        <span title={`${counts.total} source variables`}>
+          Total <strong>{counts.total}</strong>
+        </span>
         <span title={`${counts.annotated} source variables annotated with SNOMED CT`}>
           Annotated <strong>{counts.annotated}</strong>
         </span>
-        <span title={`${counts.pending} source variables pending annotation`}>
-          Pending <strong>{counts.pending}</strong>
+        <span title={`${counts.mapped} source variables used in mappings`}>
+          Mapped <strong>{counts.mapped}</strong>
         </span>
       </div>
     </section>
