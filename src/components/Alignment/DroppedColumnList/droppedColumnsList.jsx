@@ -40,13 +40,26 @@ function DroppedColumnsList({ groups, onDeleteGroup, onDrop, height }) {
                 <h4 className={ColumnMappingStyles.groupTitle} title={group.column}>
                   {group.column}
                 </h4>
-                <div className={ColumnMappingStyles.groupMetadata}>
-                  <span className={ColumnMappingStyles.groupType}>{type}</span>
-                  <span aria-hidden="true">&middot;</span>
-                  <span className={ColumnMappingStyles.groupFile} title={group.fileName}>
-                    {group.fileName}
+                {annotation.label && (
+                  <span
+                    className={ColumnMappingStyles.annotationBadge}
+                    title={annotationTitle}
+                    aria-label={annotationTitle}
+                  >
+                    <strong>{annotation.code ? "SCT" : "Term"}</strong>
+                    <span className={ColumnMappingStyles.annotationText}>{annotation.label}</span>
                   </span>
-                </div>
+                )}
+              </div>
+              <div className={ColumnMappingStyles.groupMetadata}>
+                <span className={ColumnMappingStyles.groupType}>
+                  <span className={ColumnMappingStyles.typePrefix}>Type: </span>
+                  <span>{type}</span>
+                </span>
+                <span className={ColumnMappingStyles.groupFile} title={group.fileName}>
+                  <span className={ColumnMappingStyles.filePrefix}>from </span>
+                  <em>{group.fileName}</em>
+                </span>
               </div>
               <button
                 type="button"
@@ -58,17 +71,6 @@ function DroppedColumnsList({ groups, onDeleteGroup, onDrop, height }) {
                 <CloseIcon fontSize="small" />
               </button>
             </div>
-
-            {annotation.label && (
-              <span
-                className={ColumnMappingStyles.annotationBadge}
-                title={annotationTitle}
-                aria-label={annotationTitle}
-              >
-                <strong>{annotation.code ? "SCT" : "Term"}</strong>
-                <span className={ColumnMappingStyles.annotationText}>{annotation.label}</span>
-              </span>
-            )}
 
             {type === "Categorical" && values.length > 0 && (
               <div className={ColumnMappingStyles.groupContent}>
