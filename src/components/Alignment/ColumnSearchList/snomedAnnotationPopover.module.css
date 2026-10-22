@@ -12,7 +12,7 @@
   flex-direction: column;
   overflow: hidden;
 
-  padding: var(--space-3);
+  padding: var(--space-2);
   border: 1px solid var(--border-color-secondary);
   border-radius: 8px;
 
@@ -27,8 +27,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--space-3);
-  margin-bottom: var(--space-3);
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .headingBlock { min-width: 0; }
@@ -51,7 +51,7 @@
   white-space: nowrap;
 }
 
-.iconButton,
+.closeButton,
 .removeButton {
   width: 34px;
   height: 34px;
@@ -60,21 +60,26 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 1px solid var(--border-color-secondary);
   border-radius: 6px;
   background: transparent;
   color: var(--text-color-primary);
   cursor: pointer;
 }
 
-.iconButton:hover,
+.closeButton { border: 0; }
+.removeButton { border: 1px solid var(--border-color-secondary); }
+
+.closeButton:hover,
 .removeButton:hover { background: var(--background-color-3); }
+
+.closeButton:focus-visible,
+.removeButton:focus-visible { outline: 2px solid var(--annotation-accent); outline-offset: 2px; }
 
 .currentAnnotation {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-2);
   padding: var(--space-2);
   border-left: 3px solid var(--annotation-accent);
   background: color-mix(in srgb, var(--annotation-accent) 9%, var(--background-color-card));
@@ -167,6 +172,27 @@
   font-size: var(--font-size-sm);
   text-align: center;
 }
+
+.emptyMessage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: var(--space-2) var(--space-1);
+}
+
+.useInputButton {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--annotation-accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.useInputButton:hover { color: var(--annotation-text); }
 
 .error { color: var(--error-color); }
 

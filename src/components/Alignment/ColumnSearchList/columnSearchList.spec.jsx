@@ -421,6 +421,34 @@ describe('<ColumnSearchList />', () => {
     );
   });
 
+  it('uses the trimmed search input as uncoded terminology when no concepts match', async () => {
+    fetchSuggestions.mockResolvedValue([]);
+    const onTerminologyChange = vi.fn();
+    const sourceColumn = {
+      column: 'Unknown assessment',
+      nodeId: 'node-1',
+      fileName: 'elements.csv',
+      values: ['integer'],
+    };
+    const props = {
+      columnsData: [sourceColumn],
+      onTerminologyChange,
+      handleColumnClick: vi.fn(),
+      handleDragStart: vi.fn(),
+    };
+    const { rerender } = render(<ColumnSearchList {...props} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /annotate unknown assessment/i }));
+    const search = screen.getByRole('searchbox', { name: /search snomed ct concepts/i });
+    fireEvent.change(search, { target: { value: '  Local clinical term  ' } });
+    await waitFor(() => expect(fetchSuggestions).toHaveBeenCalledWith('Local clinical term', 'snomed'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Use "Local clinical term" as terminology' }));
+
+    expect(onTerminologyChange).toHaveBeenCalledWith(sourceColumn, 'Local clinical term');
+    rerender(<ColumnSearchList {...props} columnsData={[{ ...sourceColumn, terminology: 'Local clinical term' }]} />);
+    expect(screen.getByLabelText('Terminology annotated: Local clinical term')).toHaveTextContent('Term');
+  });
+
   it('starts the initial column-name lookup without the typing debounce', async () => {
     vi.useFakeTimers();
     fetchSuggestions.mockClear();

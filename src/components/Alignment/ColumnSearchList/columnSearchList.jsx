@@ -26,6 +26,7 @@ const SourceColumnItem = React.memo(function SourceColumnItem({
   const annotationButtonRef = useRef(null);
   const primaryAnnotation = parseTerminology(column.terminology);
   const isAnnotated = Boolean(primaryAnnotation.label);
+  const hasSctid = Boolean(primaryAnnotation.code);
   const hasCustomMapping = mappingStatus === "Custom";
   const itemClassName = [
     ColumnSearchListStyles.columnItem,
@@ -53,12 +54,12 @@ const SourceColumnItem = React.memo(function SourceColumnItem({
           {primaryAnnotation.label ? (
             <span
               className={ColumnSearchListStyles.snomedBadge}
-              title={primaryAnnotation.code
+              title={hasSctid
                 ? `SNOMED CT: ${primaryAnnotation.label} (${primaryAnnotation.code})`
-                : `SNOMED CT: ${primaryAnnotation.label}`}
-              aria-label={`SNOMED CT annotated: ${primaryAnnotation.label}`}
+                : `Terminology: ${primaryAnnotation.label}`}
+              aria-label={`${hasSctid ? "SNOMED CT" : "Terminology"} annotated: ${primaryAnnotation.label}`}
             >
-              <b className={ColumnSearchListStyles.snomedPrefix}>SCT</b>
+              <b className={ColumnSearchListStyles.snomedPrefix}>{hasSctid ? "SCT" : "Term"}</b>
               <span className={ColumnSearchListStyles.snomedText}>{primaryAnnotation.label}</span>
               <CheckIcon className={ColumnSearchListStyles.compactSnomedStatus} aria-hidden="true" />
             </span>

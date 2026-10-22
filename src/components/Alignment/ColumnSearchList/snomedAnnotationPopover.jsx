@@ -226,7 +226,7 @@ function SnomedAnnotationPopover({
           <span className={styles.eyebrow}>SNOMED CT annotation</span>
           <h3 className={styles.title}>{column?.column}</h3>
         </div>
-        <button type="button" className={styles.iconButton} onClick={onClose} aria-label="Close annotation search">
+        <button type="button" className={styles.closeButton} onClick={onClose} aria-label="Close annotation search" title="Close">
           <CloseIcon fontSize="small" />
         </button>
       </header>
@@ -234,7 +234,9 @@ function SnomedAnnotationPopover({
       {currentTerm.label && (
         <div className={styles.currentAnnotation}>
           <div className={styles.currentText}>
-            <span className={styles.currentLabel}>Current annotation</span>
+            <span className={styles.currentLabel}>
+              {currentTerm.code ? "Current SNOMED CT concept" : "Current terminology"}
+            </span>
             <strong>{currentTerm.label}</strong>
             {currentTerm.code && <span className={styles.code}>{currentTerm.code}</span>}
           </div>
@@ -265,7 +267,19 @@ function SnomedAnnotationPopover({
       <div className={styles.results} role="listbox" aria-label="SNOMED CT concepts">
         {status === "loading" && <div className={styles.message}>Searching Snowstorm...</div>}
         {status === "short" && <div className={styles.message}>Enter at least three characters.</div>}
-        {status === "empty" && <div className={styles.message}>No matching concepts.</div>}
+        {status === "empty" && (
+          <div className={`${styles.message} ${styles.emptyMessage}`}>
+            <span>No matching concepts.</span>
+            <button
+              type="button"
+              className={styles.useInputButton}
+              onClick={() => applyTerminology(query.trim())}
+              aria-label={`Use "${query.trim()}" as terminology`}
+            >
+              Use input as terminology
+            </button>
+          </div>
+        )}
         {status === "error" && <div className={`${styles.message} ${styles.error}`}>Snowstorm could not be reached.</div>}
         {results.map((result) => {
           const code = resultCode(result);
