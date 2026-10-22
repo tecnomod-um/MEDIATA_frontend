@@ -17,10 +17,12 @@ const formatValue = (value, type) => {
   return value !== undefined && value !== null ? value.toString() : "";
 };
 
-const bracketed = (value) => {
-  const text = (value ?? "").trim();
-  if (!text) return "";
-  return text.startsWith("[") && text.endsWith("]") ? text : "[" + text + "]";
+const rangeLabel = (value) => {
+  const type = String(value ?? "").trim().toLowerCase();
+  if (type === "integer") return "Range of integers";
+  if (type === "double") return "Range of doubles";
+  if (type === "date") return "Date range";
+  return "Range";
 };
 
 const ValueRow = React.memo(function ValueRow({
@@ -40,7 +42,7 @@ const ValueRow = React.memo(function ValueRow({
     <div ref={rowRef} className={ColumnMappingStyles.valueMappingContainer}>
       <div className={ColumnMappingStyles.valueMappingRow}>
         <AutocompleteInput
-          value={isLocked ? bracketed(customValue.name + " range") : customValue.name}
+          value={isLocked ? rangeLabel(customValue.mapping[0]?.value) : customValue.name}
           onChange={(raw) => {
             if (!isLocked) actions.valueName(customValue.id, raw);
           }}
@@ -69,14 +71,12 @@ const ValueRow = React.memo(function ValueRow({
             <DescriptionIcon fontSize="inherit" className={ColumnMappingStyles.buttonIcon} />
           </span>
         </button>
-        {!isLocked && (
-          <button ref={buttonRef} onClick={() => actions.addMapping(index)} className={ColumnMappingStyles.addMappingButton}>
-            <span className={ColumnMappingStyles.buttonText}>Add Mapping</span>
-            <span className={ColumnMappingStyles.iconWrapper}>
-              <AddIcon fontSize="inherit" className={ColumnMappingStyles.buttonIcon} />
-            </span>
-          </button>
-        )}
+        <button ref={buttonRef} onClick={() => actions.addMapping(index)} className={ColumnMappingStyles.addMappingButton}>
+          <span className={ColumnMappingStyles.buttonText}>Add Mapping</span>
+          <span className={ColumnMappingStyles.iconWrapper}>
+            <AddIcon fontSize="inherit" className={ColumnMappingStyles.buttonIcon} />
+          </span>
+        </button>
         <button onClick={() => actions.removeValue(index)} className={ColumnMappingStyles.closeIconButton}>
           <CloseIcon />
         </button>
@@ -106,11 +106,9 @@ const ValueRow = React.memo(function ValueRow({
                   From {mapping.groupColumn}{isAmbiguous ? " (from " + mapping.fileName + ")" : ""}:
                 </span>
                 <span className={ColumnMappingStyles.mappedValue}>{displayValue}</span>
-                {!isLocked && (
-                  <button className={ColumnMappingStyles.closeIconButton} onClick={() => actions.removeMapping(index, mapIndex)}>
-                    <CloseIcon />
-                  </button>
-                )}
+                <button type="button" aria-label={`Remove mapping from ${mapping.groupColumn}`} className={ColumnMappingStyles.closeIconButton} onClick={() => actions.removeMapping(index, mapIndex)}>
+                  <CloseIcon />
+                </button>
               </div>
             </li>
           );

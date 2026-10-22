@@ -307,7 +307,7 @@ describe('<MappingHierarchy />', () => {
       ],
     };
     render(<MappingHierarchy {...props} autoOpen={true} />);
-    expect(screen.getByText('range of integers')).toBeInTheDocument();
+    expect(screen.getByText('Range of integers')).toBeInTheDocument();
   });
 
   it('shows "range of doubles" for a defaultLoaded double value', () => {
@@ -327,7 +327,7 @@ describe('<MappingHierarchy />', () => {
       ],
     };
     render(<MappingHierarchy {...props} autoOpen={true} />);
-    expect(screen.getByText('range of doubles')).toBeInTheDocument();
+    expect(screen.getByText('Range of doubles')).toBeInTheDocument();
   });
 
   it('renders range value as "min - max" string', () => {

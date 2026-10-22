@@ -24,6 +24,12 @@ const MIN_DROP = 50;
 const MIN_CREATE_DESKTOP = 260;
 const MIN_CREATE_MOBILE = 140;
 
+const rangeNameForType = (type) => ({
+  integer: "Range of integers",
+  double: "Range of doubles",
+  date: "Date range",
+})[type] || "Range";
+
 const StableAutocompleteInput = React.memo(AutocompleteInput);
 
 function useStableEvent(handler) {
@@ -417,6 +423,10 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
           i === currentGroupIndex
             ? {
               ...cv,
+              name: (typeof value === "object" || ["integer", "double", "date"].includes(value))
+                && (!cv.name.trim() || /^\[?range\]?$/i.test(cv.name.trim()))
+                ? rangeNameForType(typeof value === "object" ? value.type : value)
+                : cv.name,
               mapping: [
                 ...cv.mapping,
                 {

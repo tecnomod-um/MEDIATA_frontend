@@ -158,9 +158,11 @@ function MappingHierarchy({ mappingIndex, mappingKey, mapping, columnsData, onDe
                   : valueObj.name
               : valueObj.name;
 
-          if (mappingType !== "one-hot" && isDefaultLoaded) {
-            if (normalized === "integer") valueLabel = "range of integers";
-            if (normalized === "double") valueLabel = "range of doubles";
+          if (mappingType !== "one-hot" && (isDefaultLoaded || normalized === "range" || normalized === "[range]")) {
+            const type = isDefaultLoaded ? normalized : maps.find((entry) => entry.value?.type)?.value?.type;
+            if (type === "integer") valueLabel = "Range of integers";
+            if (type === "double") valueLabel = "Range of doubles";
+            if (type === "date") valueLabel = "Date range";
           }
 
           const hasValueMeta = !!(valueObj?.terminology?.trim() || valueObj?.description?.trim());

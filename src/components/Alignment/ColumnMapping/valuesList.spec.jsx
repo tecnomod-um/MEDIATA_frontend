@@ -357,11 +357,36 @@ describe("ValuesList", () => {
     );
 
     const nameInput = screen.getByPlaceholderText("Value content");
-    expect(nameInput).toHaveValue("[age range]");
+    expect(nameInput).toHaveValue("Range of integers");
 
-    expect(
-      screen.queryByRole("button", { name: /add mapping/i })
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /add mapping/i })).toBeInTheDocument();
+  });
+
+  it("allows removing a numeric passthrough range mapping", () => {
+    const onRemoveMapping = vi.fn();
+    render(<ValuesList {...baseProps}
+      customValues={[{ id: 1, name: "integer", snomedTerm: "", mapping: [
+        { groupColumn: "age", value: "integer", fileName: "data.csv" },
+      ] }]}
+      isLockedNumericValue={() => true}
+      onRemoveMapping={onRemoveMapping}
+    />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove mapping from age" }));
+    expect(onRemoveMapping).toHaveBeenCalledWith(0, 0);
+  });
+
+  it("allows removing a selected numeric interval", () => {
+    const onRemoveMapping = vi.fn();
+    render(<ValuesList {...baseProps}
+      customValues={[{ id: 1, name: "Range of integers", snomedTerm: "", mapping: [
+        { groupColumn: "age", value: { minValue: 18, maxValue: 65, type: "integer" }, fileName: "data.csv" },
+      ] }]}
+      onRemoveMapping={onRemoveMapping}
+    />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove mapping from age" }));
+    expect(onRemoveMapping).toHaveBeenCalledWith(0, 0);
   });
 
   it("formats date values correctly", () => {

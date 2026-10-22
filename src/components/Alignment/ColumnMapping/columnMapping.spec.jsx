@@ -316,6 +316,19 @@ describe("ColumnMapping", () => {
     fireEvent.click(screen.getByRole("button", { name: "Mock RangePicker" }));
   });
 
+  it("names an unnamed manually selected integer range consistently", () => {
+    const groups = [{ nodeId: "n1", column: "age", values: ["integer", "min:0", "max:100"],
+      fileName: "data.csv", color: "#0000ff" }];
+    render(<ColumnMapping onMappingChange={vi.fn()} onSave={vi.fn()} groups={groups} schema={null} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /add value/i }));
+    fireEvent.click(screen.getByRole("button", { name: /add mapping/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Mock RangePicker" }));
+
+    expect(screen.getByPlaceholderText(/value content/i)).toHaveValue("Range of integers");
+    expect(screen.getByRole("button", { name: "Remove mapping from age" })).toBeInTheDocument();
+  });
+
   it("allows saving when a typed all-range passthrough mapping is present", () => {
     const onSave = vi.fn(() => true);
     const groups = [
@@ -350,6 +363,7 @@ describe("ColumnMapping", () => {
 
     fireEvent.click(saveBtn);
     expect(onSave).toHaveBeenCalledTimes(1);
+    expect(onSave.mock.calls[0][2][0].name).toBe("Range of integers");
   });
 
   it("handles date columns with range picker", () => {
