@@ -300,7 +300,7 @@ describe("ColumnMapping", () => {
       />
     );
 
-    expect(screen.getByText(/Type: Integer/i)).toBeInTheDocument();
+    expect(screen.getByText("Integer")).toBeInTheDocument();
     
     fireEvent.change(screen.getByPlaceholderText(/new column's name/i), {
       target: { value: "AgeRange" },
@@ -372,7 +372,7 @@ describe("ColumnMapping", () => {
       />
     );
 
-    expect(screen.getByText(/Type: Date/i)).toBeInTheDocument();
+    expect(screen.getByText("Date")).toBeInTheDocument();
   });
 
   it("handles double type columns", () => {
@@ -395,7 +395,7 @@ describe("ColumnMapping", () => {
       />
     );
 
-    expect(screen.getByText(/Type: Double/i)).toBeInTheDocument();
+    expect(screen.getByText("Double")).toBeInTheDocument();
   });
 
   it("prevents dropping duplicate columns", () => {

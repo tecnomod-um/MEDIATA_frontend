@@ -86,9 +86,9 @@ describe("DroppedColumnsList", () => {
     );
 
     expect(screen.getByText("color")).toBeInTheDocument();
-    expect(screen.getByText("from colors.csv")).toBeInTheDocument();
-    expect(screen.getByText("Type: Categorical")).toBeInTheDocument();
-    expect(screen.getByText("Categories:")).toBeInTheDocument();
+    expect(screen.getByText("colors.csv")).toBeInTheDocument();
+    expect(screen.getByText("Categorical")).toBeInTheDocument();
+    expect(screen.getByText("Categories")).toBeInTheDocument();
     expect(screen.getByText("red")).toBeInTheDocument();
     expect(screen.getByText("blue")).toBeInTheDocument();
     expect(screen.getByText("green")).toBeInTheDocument();
@@ -114,10 +114,8 @@ describe("DroppedColumnsList", () => {
       />
     );
 
-    expect(screen.getByText("Type: Integer")).toBeInTheDocument();
-    expect(
-      screen.getByText("This column represents numerical data.")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Integer")).toBeInTheDocument();
+    expect(screen.queryByText("Categories")).not.toBeInTheDocument();
   });
 
   it("renders double column with correct type", () => {
@@ -140,10 +138,7 @@ describe("DroppedColumnsList", () => {
       />
     );
 
-    expect(screen.getByText("Type: Double")).toBeInTheDocument();
-    expect(
-      screen.getByText("This column represents numerical data.")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Double")).toBeInTheDocument();
   });
 
   it("renders date column with correct type", () => {
@@ -166,10 +161,7 @@ describe("DroppedColumnsList", () => {
       />
     );
 
-    expect(screen.getByText("Type: Date")).toBeInTheDocument();
-    expect(
-      screen.getByText("This column represents date values.")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Date")).toBeInTheDocument();
   });
 
   it("calls onDeleteGroup when delete icon is clicked", () => {
@@ -282,7 +274,49 @@ describe("DroppedColumnsList", () => {
 
     expect(screen.getByText("color")).toBeInTheDocument();
     expect(screen.getByText("age")).toBeInTheDocument();
-    expect(screen.getByText("from colors.csv")).toBeInTheDocument();
-    expect(screen.getByText("from ages.csv")).toBeInTheDocument();
+    expect(screen.getByText("colors.csv")).toBeInTheDocument();
+    expect(screen.getByText("ages.csv")).toBeInTheDocument();
+  });
+
+  it("shows an existing source annotation with its full SCTID on hover", () => {
+    render(
+      <DroppedColumnsList
+        groups={[{
+          nodeId: "n1",
+          column: "ToiletBART1",
+          values: ["integer"],
+          fileName: "scuba.csv",
+          terminology: "Ability to use toilet | 284899001",
+        }]}
+        onDeleteGroup={vi.fn()}
+        onDrop={vi.fn()}
+        height={200}
+      />
+    );
+
+    expect(screen.getByLabelText("SNOMED CT: Ability to use toilet (284899001)"))
+      .toHaveAttribute("title", "SNOMED CT: Ability to use toilet (284899001)");
+    expect(screen.getByRole("button", { name: "Remove ToiletBART1 from mapping" }))
+      .toBeInTheDocument();
+  });
+
+  it("distinguishes uncoded terminology from a SNOMED CT concept", () => {
+    render(
+      <DroppedColumnsList
+        groups={[{
+          nodeId: "n1",
+          column: "LocalMeasure",
+          values: ["integer"],
+          fileName: "local.csv",
+          terminology: "Local clinical term",
+        }]}
+        onDeleteGroup={vi.fn()}
+        onDrop={vi.fn()}
+        height={200}
+      />
+    );
+
+    expect(screen.getByLabelText("Terminology: Local clinical term"))
+      .toHaveTextContent("Term");
   });
 });

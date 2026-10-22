@@ -1411,16 +1411,21 @@ function Alignment() {
 
   const handleSourceTerminologyChange = useCallback((column, terminology) => {
     const sourceKey = `${column?.nodeId ?? ""}::${column?.fileName ?? ""}::${column?.column ?? ""}`;
-    setColumnsData((previous) =>
-      previous.map((item) => {
+    const updateTerminology = (previous) => {
+      let changed = false;
+      const updated = previous.map((item) => {
         const itemKey = `${item?.nodeId ?? ""}::${item?.fileName ?? ""}::${item?.column ?? ""}`;
-        if (itemKey !== sourceKey) return item;
-        const updated = { ...item };
-        if (terminology) updated.terminology = terminology;
-        else delete updated.terminology;
-        return updated;
-      })
-    );
+        if (itemKey !== sourceKey || (item.terminology || "") === terminology) return item;
+        changed = true;
+        const next = { ...item };
+        if (terminology) next.terminology = terminology;
+        else delete next.terminology;
+        return next;
+      });
+      return changed ? updated : previous;
+    };
+    setColumnsData(updateTerminology);
+    setTemporaryGroups(updateTerminology);
   }, []);
 
   // Mobile flow continues in hierarchy once mappings are saved.

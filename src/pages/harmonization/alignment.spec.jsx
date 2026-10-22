@@ -1838,6 +1838,23 @@ describe('Alignment Page', () => {
       .toBe('');
   });
 
+  test('annotation changes stay in sync with an already-dropped source', async () => {
+    await renderWithColumns();
+    const source = capturedColumnSearchListProps.current.columnsData[0];
+
+    act(() => capturedColumnSearchListProps.current.handleColumnClick(source));
+    expect(capturedColumnMappingProps.current.groups[0].terminology).toBeUndefined();
+
+    act(() => capturedColumnSearchListProps.current.onTerminologyChange(
+      source, 'Clinical finding | 404684003'
+    ));
+    expect(capturedColumnMappingProps.current.groups[0].terminology)
+      .toBe('Clinical finding | 404684003');
+
+    act(() => capturedColumnSearchListProps.current.onTerminologyChange(source, ''));
+    expect(capturedColumnMappingProps.current.groups[0].terminology).toBeUndefined();
+  });
+
   describe('handleSaveMappings', () => {
     beforeEach(() => {
       mockToastSuccess.mockClear();

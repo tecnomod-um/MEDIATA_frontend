@@ -1,12 +1,15 @@
 .dropArea {
   width: 100%;
+  box-sizing: border-box;
   background-color: var(--background-color-secondary);
   border: 2px dashed var(--border-color);
   border-radius: 10px;
   display: flex;
   flex-wrap: wrap;
-  padding: 0.5vw;
-  gap: 0.5vw;
+  align-content: flex-start;
+  align-items: flex-start;
+  padding: var(--space-2);
+  gap: var(--space-2);
   transition: background-color 0.3s, border-color 0.3s;
   overflow-y: auto;
 
@@ -43,105 +46,147 @@
 }
 
 .droppedItem {
-  padding: 10px;
+  flex: 1 1 330px;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: var(--space-2) var(--space-3);
   background-color: var(--background-color-3);
   border: 1px solid var(--border-color-secondary);
-  border-radius: var(--space-2);
-  position: relative;
-  width: 100%;
+  border-left: 4px solid var(--file-accent);
+  border-radius: 6px;
   box-shadow: var(--box-shadow-sm);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition: box-shadow var(--transition-duration-fast) var(--transition-ease);
   display: flex;
   flex-direction: column;
+  gap: var(--space-2);
   color: var(--text-color-primary);
 }
 
 .droppedItem:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--box-shadow-md);
 }
 
-.deleteIcon {
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  font-size: var(--font-size-md);
-  color: var(--button-delete-color);
+.deleteButton {
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-color-tertiary);
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.3s;
 }
 
-.droppedItem:hover .deleteIcon {
-  opacity: 1;
+.deleteButton:hover,
+.deleteButton:focus-visible {
+  border-color: var(--border-color-secondary);
+  background: var(--background-color-card);
+  color: var(--button-delete-color);
 }
 
 .groupHeader {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: var(--space-2);
 }
 
-.groupTypeFileWrapper {
+.groupIdentity {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  gap: 2px;
 }
 
 .groupTitle {
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: var(--font-size-base);
   font-weight: 700;
   color: var(--text-color-primary);
 }
 
-.groupType {
-  font-size: var(--font-size-sm);
-  color: var(--text-color-primary);
-  font-weight: 600;
+.groupMetadata {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-color-tertiary);
+  font-size: var(--font-size-xs);
 }
 
+.groupType { flex: 0 0 auto; font-weight: 600; }
 .groupFile {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.annotationBadge {
+  align-self: flex-start;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 7px;
+  border: 1px solid color-mix(in srgb, var(--annotation-accent) 28%, var(--border-color-secondary));
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--annotation-accent) 10%, var(--background-color-card));
+  color: var(--annotation-text);
   font-size: var(--font-size-xs);
-  color: var(--text-color-muted);
-  margin-top: 2px;
+}
+
+.annotationText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .groupContent {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: var(--space-1);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-color-secondary);
 }
 
 .groupDetail {
   margin: 0;
-  font-size: var(--font-size-sm);
-  color: var(--text-color-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-color-tertiary);
 }
 
 .categoryList {
   list-style-type: none;
-  padding-left: 0;
+  padding: 0;
+  margin: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--space-1);
 }
 
 .categoryItem {
   background-color: var(--background-color-4);
   color: var(--text-color-primary);
   border: 1px solid var(--border-color-secondary);
-  padding: 5px 10px;
-  border-radius: var(--space-1);
-  font-size: var(--font-size-sm);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: var(--font-size-xs);
 }
-
-.columnName {
-  font-weight: 600;
-}
-
 
 @media (max-width: 768px) {
   .dropArea {
-    max-height: 10vh;
+    max-height: 28vh;
   }
 }
