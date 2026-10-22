@@ -188,13 +188,19 @@
   gap: var(--space-1);
 }
 
-.categoryItem {
+.categoryItem,
+.rangeValue {
   background-color: var(--background-color-4);
   color: var(--text-color-primary);
   border: 1px solid var(--border-color-secondary);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: var(--font-size-xs);
+}
+
+.rangeValue {
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 @container (max-width: 500px) {

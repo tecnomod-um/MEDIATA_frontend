@@ -115,6 +115,8 @@ describe("DroppedColumnsList", () => {
     );
 
     expect(screen.getByText("Integer")).toBeInTheDocument();
+    expect(screen.getByText("Range")).toBeInTheDocument();
+    expect(screen.getByText("0\u2013100")).toBeInTheDocument();
     expect(screen.queryByText("Categories")).not.toBeInTheDocument();
   });
 
@@ -139,6 +141,7 @@ describe("DroppedColumnsList", () => {
     );
 
     expect(screen.getByText("Double")).toBeInTheDocument();
+    expect(screen.getByText("0.0\u2013999.99")).toBeInTheDocument();
   });
 
   it("renders date column with correct type", () => {
@@ -162,6 +165,22 @@ describe("DroppedColumnsList", () => {
     );
 
     expect(screen.getByText("Date")).toBeInTheDocument();
+    expect(screen.getByText("2000-01-01\u20132024-12-31")).toBeInTheDocument();
+  });
+
+  it("shows a single bound without implying a complete range", () => {
+    render(
+      <DroppedColumnsList
+        groups={[{ column: "age", values: ["integer", "min:18"], fileName: "data.csv" }]}
+        onDeleteGroup={vi.fn()}
+        onDrop={vi.fn()}
+        height={200}
+      />
+    );
+
+    expect(screen.getByText("Minimum")).toBeInTheDocument();
+    expect(screen.getByText("18")).toBeInTheDocument();
+    expect(screen.queryByText("Range")).not.toBeInTheDocument();
   });
 
   it("calls onDeleteGroup when delete icon is clicked", () => {

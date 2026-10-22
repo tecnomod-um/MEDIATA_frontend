@@ -3,6 +3,10 @@ import CloseIcon from "@mui/icons-material/Close";
 import { parseTerminology } from "../ColumnSearchList/columnMappingStatus";
 import ColumnMappingStyles from "./droppedColumnsList.module.css";
 
+const boundValue = (values, prefix) =>
+  values.find((value) => typeof value === "string" && value.startsWith(prefix))
+    ?.slice(prefix.length).trim();
+
 // Component for displaying dropped columns in the drop area
 function DroppedColumnsList({ groups, onDeleteGroup, onDrop, height }) {
   const handleDragOver = (e) => e.preventDefault();
@@ -24,6 +28,10 @@ function DroppedColumnsList({ groups, onDeleteGroup, onDrop, height }) {
         const type = values.includes("integer") ? "Integer"
           : values.includes("double") ? "Double"
           : values.includes("date") ? "Date" : "Categorical";
+        const lower = type === "Date" ? boundValue(values, "earliest:") : boundValue(values, "min:");
+        const upper = type === "Date" ? boundValue(values, "latest:") : boundValue(values, "max:");
+        const rangeLabel = lower && upper ? "Range" : lower ? "Minimum" : "Maximum";
+        const rangeText = lower && upper ? `${lower}\u2013${upper}` : lower || upper;
         const annotation = parseTerminology(group.terminology);
         const annotationTitle = annotation.code
           ? `SNOMED CT: ${annotation.label} (${annotation.code})`
@@ -80,6 +88,14 @@ function DroppedColumnsList({ groups, onDeleteGroup, onDrop, height }) {
                     <li key={valueIndex} className={ColumnMappingStyles.categoryItem}>{value}</li>
                   ))}
                 </ul>
+              </div>
+            )}
+            {type !== "Categorical" && rangeText && (
+              <div className={ColumnMappingStyles.groupContent}>
+                <span className={ColumnMappingStyles.groupDetail}>{rangeLabel}</span>
+                <span className={ColumnMappingStyles.rangeValue} title={`${rangeLabel}: ${rangeText}`}>
+                  {rangeText}
+                </span>
               </div>
             )}
           </div>
