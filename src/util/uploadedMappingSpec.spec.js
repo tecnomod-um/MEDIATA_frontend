@@ -364,6 +364,20 @@ describe('rebuildMappingsFromSpec', () => {
     expect(result[0]['age'].groups[0].values[0].mapping[0].value).toBe('integer');
   });
 
+  it('rebuilds text passthrough rules as Natural Language mappings', () => {
+    const spec = makeSpec({ mappings: [{
+      id: 'm1', targetField: 'note', mappingType: 'standard', sourceConfigFile: 'cfg',
+      inputs: [], rules: [{
+        id: 'r1',
+        logic: { is_text: [{ var: 'node1::file.csv::note_col' }] },
+        then: { kind: 'source-value', sourceId: 'node1::file.csv', column: 'note_col' },
+      }],
+    }] });
+
+    const result = rebuildMappingsFromSpec(spec);
+    expect(result[0].note.groups[0].values[0].mapping[0].value).toBe('Natural Language');
+  });
+
   it('rebuilds standard mapping from double rule (is_number logic) → value is "double"', () => {
     const spec = makeSpec({
       mappings: [
@@ -410,6 +424,7 @@ describe('rebuildMappingsFromSpec', () => {
 
     const result = rebuildMappingsFromSpec(spec);
     expect(result[0]['dob'].groups[0].values[0].mapping[0].value).toBe('date');
+    expect(result[0]['dob'].groups[0].values[0].outputMode).toBe('constant');
   });
 
   it('rebuilds standard mapping from numeric range (and with to_number) → value is {type:"double", minValue, maxValue}', () => {

@@ -316,7 +316,7 @@ describe("ColumnMapping", () => {
     fireEvent.click(screen.getByRole("button", { name: "Mock RangePicker" }));
   });
 
-  it("names an unnamed manually selected integer range consistently", () => {
+  it("leaves an explicitly selected integer interval unnamed", () => {
     const groups = [{ nodeId: "n1", column: "age", values: ["integer", "min:0", "max:100"],
       fileName: "data.csv", color: "#0000ff" }];
     render(<ColumnMapping onMappingChange={vi.fn()} onSave={vi.fn()} groups={groups} schema={null} />);
@@ -325,7 +325,7 @@ describe("ColumnMapping", () => {
     fireEvent.click(screen.getByRole("button", { name: /add mapping/i }));
     fireEvent.click(screen.getByRole("button", { name: "Mock RangePicker" }));
 
-    expect(screen.getByPlaceholderText(/value content/i)).toHaveValue("Range of integers");
+    expect(screen.getByPlaceholderText(/value content/i)).toHaveValue("");
     expect(screen.getByRole("button", { name: "Remove mapping from age" })).toBeInTheDocument();
   });
 
@@ -358,12 +358,69 @@ describe("ColumnMapping", () => {
     fireEvent.click(screen.getByRole("button", { name: /add mapping/i }));
     fireEvent.click(screen.getByRole("button", { name: "Mock RangePicker All" }));
 
+    expect(screen.getByText("Range of integers")).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/value content/i)).not.toBeInTheDocument();
+
     const saveBtn = screen.getByRole("button", { name: /save/i });
     expect(saveBtn).toHaveAttribute("aria-disabled", "false");
 
     fireEvent.click(saveBtn);
     expect(onSave).toHaveBeenCalledTimes(1);
     expect(onSave.mock.calls[0][2][0].name).toBe("Range of integers");
+  });
+
+  it("treats Natural Language as a removable text passthrough", () => {
+    const onSave = vi.fn(() => true);
+    const groups = [{ nodeId: "n1", column: "note", values: ["Natural Language"],
+      fileName: "notes.csv", color: "#0000ff" }];
+    render(<ColumnMapping onMappingChange={vi.fn()} onSave={onSave} groups={groups} schema={null} />);
+
+    fireEvent.change(screen.getByPlaceholderText(/new column's name/i), { target: { value: "Note" } });
+    fireEvent.click(screen.getByRole("button", { name: /add value/i }));
+    fireEvent.click(screen.getByRole("button", { name: /add mapping/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Natural Language" }));
+
+    expect(screen.getByTitle("Natural Language")).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/value content/i)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /save/i }));
+    expect(onSave.mock.calls[0][2][0]).toEqual(expect.objectContaining({
+      name: "Natural Language", mapping: [expect.objectContaining({ value: "Natural Language" })],
+    }));
+  });
+
+  it("clears the generated range label when the all-range mapping is removed", () => {
+    const groups = [{ nodeId: "n1", column: "age", values: ["integer", "min:0", "max:100"],
+      fileName: "data.csv", color: "#0000ff" }];
+    render(<ColumnMapping onMappingChange={vi.fn()} onSave={vi.fn()} groups={groups} schema={null} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /add value/i }));
+    fireEvent.click(screen.getByRole("button", { name: /add mapping/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Mock RangePicker All" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove mapping from age" }));
+
+    expect(screen.getByPlaceholderText(/value content/i)).toHaveValue("");
+    expect(screen.queryByText("Range of integers")).not.toBeInTheDocument();
+  });
+
+  it("allows a constant output value for the entire integer range", () => {
+    const onSave = vi.fn(() => true);
+    const groups = [{ nodeId: "n1", column: "age", values: ["integer", "min:0", "max:100"],
+      fileName: "data.csv", color: "#0000ff" }];
+    render(<ColumnMapping onMappingChange={vi.fn()} onSave={onSave} groups={groups} schema={null} />);
+
+    fireEvent.change(screen.getByPlaceholderText(/new column's name/i), { target: { value: "AgeGroup" } });
+    fireEvent.click(screen.getByRole("button", { name: /add value/i }));
+    fireEvent.click(screen.getByRole("button", { name: /add mapping/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Mock RangePicker All" }));
+    fireEvent.click(screen.getByRole("button", { name: "Set custom value" }));
+
+    const input = screen.getByPlaceholderText(/value content/i);
+    expect(input).toHaveValue("");
+    expect(screen.getByRole("button", { name: /save/i })).toHaveAttribute("aria-disabled", "true");
+    fireEvent.change(input, { target: { value: "Adult" } });
+    fireEvent.click(screen.getByRole("button", { name: /save/i }));
+
+    expect(onSave.mock.calls[0][2][0]).toEqual(expect.objectContaining({ name: "Adult", outputMode: "constant" }));
   });
 
   it("handles date columns with range picker", () => {

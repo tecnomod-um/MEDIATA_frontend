@@ -46,6 +46,13 @@ vi.mock("../RangePicker/rangePicker", () => ({
       >
         Mock RangePicker All
       </button>
+      <button type="button" data-testid="range-picker-full-set"
+        onClick={() => props.onRangeChange?.({
+          minValue: props.type === "date" ? new Date(props.min) : props.min,
+          maxValue: props.type === "date" ? new Date(props.max) : props.max,
+        })}>
+        Mock RangePicker Full Set
+      </button>
     </div>
   ),
 }));
@@ -314,6 +321,18 @@ describe("MappingSelectorPane", () => {
     fireEvent.click(screen.getByTestId("range-picker-all"));
 
     expect(onSelectMapping).toHaveBeenCalledWith(groups[0], "integer");
+  });
+
+  it.each(["integer", "date"])("treats a full %s range selected with Set as all", (type) => {
+    const onSelectMapping = vi.fn();
+    const values = type === "date"
+      ? ["date", "earliest:2020-01-01", "latest:2024-12-31"]
+      : ["integer", "min:0", "max:100"];
+    const group = { nodeId: "n1", column: "age", values, fileName: "data.csv", color: "#0000ff" };
+    render(<MappingSelectorPane {...baseProps} groups={[group]} onSelectMapping={onSelectMapping} />);
+
+    fireEvent.click(screen.getByTestId("range-picker-full-set"));
+    expect(onSelectMapping).toHaveBeenCalledWith(group, type);
   });
 
   it("shows all mapped message when no available values", () => {

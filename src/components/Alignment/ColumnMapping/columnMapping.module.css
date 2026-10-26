@@ -343,7 +343,7 @@
   justify-content: space-between;
   align-items: stretch;
   gap: 0;
-  padding: 6px;
+  padding: 6px 30px 6px 6px;
   background-color: var(--background-color-5);
   border-radius: 5px;
   flex-wrap: nowrap;
@@ -351,6 +351,61 @@
 
 .valueMappingRow>* {
   min-height: 40px;
+}
+
+.rangeBadgeSlot {
+  box-sizing: border-box;
+  flex: 1 1 0;
+  min-width: 50px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-color);
+  border-radius: 5px 0 0 5px;
+  background: var(--background-color-card);
+}
+
+.rangeBadge {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 100%;
+  padding: 3px var(--space-2);
+  border: 1px solid var(--border-color-secondary);
+  border-radius: 4px;
+  background: var(--background-color-3);
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+.rangeBadgeText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rangeBadgeDismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-color-muted);
+  cursor: pointer;
+}
+
+.rangeBadgeDismiss:hover {
+  color: var(--button-delete-color);
+}
+
+.rangeBadgeDismiss svg {
+  font-size: var(--font-size-sm);
 }
 
 .mappingSummary {
@@ -421,6 +476,56 @@
 
 .closeIconButton:hover svg {
   color: var(--button-delete-color);
+}
+
+.removeValueButton {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  z-index: 2;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.removeValueButton svg {
+  font-size: var(--font-size-md);
+}
+
+@media (max-width: 560px) {
+  .valueMappingRow {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .valueMappingRow > * {
+    min-width: 0;
+  }
+
+  .valueMappingRow .descriptionButton,
+  .valueMappingRow .addMappingButton {
+    border-top: 0;
+    border-radius: 0;
+  }
+
+  .valueMappingRow .descriptionButton {
+    border-left: 1px solid var(--border-color-secondary);
+    border-bottom-left-radius: 5px;
+  }
+
+  .valueMappingRow .addMappingButton {
+    border-bottom-right-radius: 5px;
+  }
+
+  .valueMappingRow .buttonText {
+    display: inline-block !important;
+  }
+
+  .valueMappingRow .iconWrapper {
+    display: none;
+  }
 }
 
 .slidingPane {
@@ -719,11 +824,6 @@
 .descriptionButton {
   background-color: var(--button-description-color);
   color: var(--text-color-on-darkbg);
-}
-
-.descriptionButtonLocked {
-  border-top-right-radius: 5px;
-  border-bottom-right-radius: 5px;
 }
 
 .descriptionButton:hover {

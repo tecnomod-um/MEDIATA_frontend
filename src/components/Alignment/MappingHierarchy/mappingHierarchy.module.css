@@ -14,19 +14,17 @@
 }
 
 .deleteIcon {
-  position: absolute;
-  right: 8px;
-  top: 8px;
-  font-size: var(--font-size-xl);
-  color: #ff0000;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.3s ease-in-out;
-  z-index: 2;
+  flex: 0 0 28px;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: var(--space-1) !important;
+  color: var(--text-color-muted) !important;
 }
 
-.entryContainer:hover .deleteIcon {
-  opacity: 1;
+.deleteIcon:hover,
+.deleteIcon:focus-visible {
+  color: var(--error-color) !important;
+  background-color: var(--error-bg) !important;
 }
 
 .entryContainer.editing .deleteIcon {
@@ -36,11 +34,7 @@
 .headerRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding-right: var(--space-6);
   gap: var(--space-1);
-  cursor: pointer;
-  user-select: none;
 }
 
 .headerLeft {
@@ -60,8 +54,27 @@
 }
 
 .collapseBtn:hover {
-  background: rgba(0, 0, 0, 0.08) !important;
+  background: var(--background-color-secondary) !important;
   color: var(--text-color-primary) !important;
+}
+
+.titleButton {
+  min-width: 0;
+  flex: 1;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.titleButton:hover h4 {
+  text-decoration: underline;
+}
+
+.titleButton:focus-visible {
+  outline: 2px solid var(--button-color);
+  outline-offset: 2px;
 }
 
 .entryContainer h4 {
@@ -265,6 +278,14 @@
   flex-grow: 1;
 }
 
+.editableHover .typeBadge {
+  flex-grow: 0;
+  padding: 2px 6px;
+  border: 1px solid var(--border-color-secondary);
+  border-radius: var(--space-1);
+  background-color: var(--background-color-secondary);
+}
+
 .editIcon {
   opacity: 0;
   font-size: 14px !important;
@@ -301,7 +322,7 @@
 }
 
 .metaBtn:hover {
-  background: rgba(0, 0, 0, 0.08) !important;
+  background: var(--background-color-secondary) !important;
   color: var(--text-color-primary) !important;
 }
 
@@ -424,9 +445,6 @@
     word-break: break-word;
   }
 
-  .headerRow {
-    padding-right: 28px;
-  }
 }
 
 .editing {

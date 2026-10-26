@@ -66,12 +66,18 @@ function MappingSelectorPane({ isPaneVisible, currentValueName, groups, getGroup
                     onSelectMapping(group, firstValueType);
                   }}
                   onRangeChange={(newRange) => {
-                    onSelectMapping(group, {
-                      minValue: newRange.minValue,
-                      maxValue: newRange.maxValue,
-                      type: firstValueType,
-                      mode: newRange.mode || "include",
-                    });
+                    const lower = firstValueType === "date" ? new Date(newRange.minValue).getTime() : newRange.minValue;
+                    const upper = firstValueType === "date" ? new Date(newRange.maxValue).getTime() : newRange.maxValue;
+                    if (lower === min && upper === max && (newRange.mode || "include") === "include") {
+                      onSelectMapping(group, firstValueType);
+                    } else {
+                      onSelectMapping(group, {
+                        minValue: newRange.minValue,
+                        maxValue: newRange.maxValue,
+                        type: firstValueType,
+                        mode: newRange.mode || "include",
+                      });
+                    }
                   }}
                   existingRanges={existingRanges}
                 />

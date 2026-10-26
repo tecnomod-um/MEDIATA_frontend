@@ -17,6 +17,7 @@
   overflow-y: auto;
   position: relative;
   padding-right: 2px;
+  padding-bottom: var(--space-1);
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
@@ -34,44 +35,89 @@
   background-color: var(--scrollbar-track);
 }
 
-.undoContainer {
-  position: sticky;
-  top: 0;
-  left: 0;
-  background-color: var(--tooltray-background-color-transparent);
-  padding: 5px 10px;
-  font-size: var(--font-size-base);
+.restoreMenuButton {
+  box-sizing: border-box;
+  flex: 0 0 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--border-color-secondary);
+  border-radius: 6px;
+  background-color: var(--background-color-card);
+  color: var(--button-color);
   cursor: pointer;
-  z-index: 2;
-  transition: background-color var(--transition-duration-fast) ease-in-out;
 }
 
-.undoContainer:hover {
-  background-color: var(--tooltray-background-color);
+.restoreMenuButton:hover:not(:disabled) {
+  background-color: var(--background-color-3);
+}
+
+.restoreMenuButton:disabled { opacity: 0.45; cursor: not-allowed; }
+.restoreMenuButton:focus-visible {
+  outline: 2px solid var(--button-color);
+  outline-offset: 1px;
+}
+
+.restoreMenu {
+  min-width: 225px;
+  border: 1px solid var(--border-color-secondary);
+  border-radius: 6px;
+  background-color: var(--background-color-card);
+  color: var(--text-color-primary);
+  box-shadow: var(--box-shadow-md);
+}
+
+.restoreMenu :global(.MuiMenuItem-root) {
+  min-height: 36px;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.restoreMenu :global(.MuiMenuItem-root:hover) {
+  background-color: var(--background-color-3);
+}
+
+.restoreCount {
+  margin-left: auto;
+  color: var(--text-color-secondary);
 }
 
 .searchRow {
-  position: sticky;
-  top: 0;
-  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
   padding-bottom: var(--space-1);
   background: var(--background-color-card);
 }
 
-.searchInput {
+.searchActions {
+  display: flex;
+  gap: 3px;
+  flex: 0 0 auto;
+}
+
+.clearMappingsButton {
   box-sizing: border-box;
-  width: 100%;
+  flex: 0 0 36px;
   height: 36px;
-  padding: 0 var(--space-2);
-  outline: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--error-color);
   border-radius: 6px;
-  border: 1px solid var(--border-color);
-  background-color: var(--background-color-card);
-  color: var(--text-color-primary);
-  font-size: var(--font-size-sm);
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  background: var(--background-color-card);
+  color: var(--error-color);
+  cursor: pointer;
+}
+
+.clearMappingsButton:hover:not(:disabled) { background: var(--error-bg); }
+.clearMappingsButton:disabled { opacity: 0.45; cursor: not-allowed; }
+.clearMappingsButton:focus-visible {
+  outline: 2px solid var(--error-color);
+  outline-offset: 2px;
 }
 
 .bottomActions {
@@ -108,18 +154,15 @@
   border: none;
   color: var(--text-color-on-darkbg);
   font-size: var(--font-size-base);
-  font-weight: 400;
+  font-weight: 500;
   padding: 0 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   text-align: center;
-  background-image: var(--button-gradient);
-  transition:
-    background-position var(--transition-duration-fast) ease-in-out,
-    background-color var(--transition-duration-fast) ease-in-out,
-    box-shadow var(--transition-duration-fast) ease-in-out;
+  background-color: var(--button-color);
+  transition: background-color var(--transition-duration-fast) ease-in-out;
 }
 
 .uploadMappingsButton {
@@ -132,9 +175,7 @@
 
 .uploadMappingsButton:hover,
 .downloadMappingsButton:hover {
-  background-position: 100% 0;
   background-color: var(--button-color-hover);
-  box-shadow: var(--box-shadow-md);
 }
 
 .uploadArrowButtonWrapper {

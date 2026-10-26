@@ -17,11 +17,12 @@ const formatValue = (value, type) => {
   return value !== undefined && value !== null ? value.toString() : "";
 };
 
-const rangeLabel = (value) => {
+const passthroughLabel = (value) => {
   const type = String(value ?? "").trim().toLowerCase();
   if (type === "integer") return "Range of integers";
   if (type === "double") return "Range of doubles";
   if (type === "date") return "Date range";
+  if (type === "natural language") return "Natural Language";
   return "Range";
 };
 
@@ -41,16 +42,26 @@ const ValueRow = React.memo(function ValueRow({
   return (
     <div ref={rowRef} className={ColumnMappingStyles.valueMappingContainer}>
       <div className={ColumnMappingStyles.valueMappingRow}>
-        <AutocompleteInput
-          value={isLocked ? rangeLabel(customValue.mapping[0]?.value) : customValue.name}
-          onChange={(raw) => {
-            if (!isLocked) actions.valueName(customValue.id, raw);
-          }}
-          placeholder="Value content"
-          className={[ColumnMappingStyles.valueNameInput, isLocked ? ColumnMappingStyles.lockedValueInput : ""].join(" ")}
-          suggestions={valueContentSuggestions}
-          disabled={isLocked}
-        />
+        {isLocked ? (
+          <div className={ColumnMappingStyles.rangeBadgeSlot}>
+            <span className={ColumnMappingStyles.rangeBadge}>
+              <span className={ColumnMappingStyles.rangeBadgeText} title={passthroughLabel(customValue.mapping[0]?.value)}>{passthroughLabel(customValue.mapping[0]?.value)}</span>
+              <button type="button" className={ColumnMappingStyles.rangeBadgeDismiss}
+                onClick={() => actions.dismissRangeBadge(customValue.id)}
+                aria-label="Set custom value" title="Set custom value">
+                <CloseIcon />
+              </button>
+            </span>
+          </div>
+        ) : (
+          <AutocompleteInput
+            value={customValue.name}
+            onChange={(raw) => actions.valueName(customValue.id, raw)}
+            placeholder="Value content"
+            className={ColumnMappingStyles.valueNameInput}
+            suggestions={valueContentSuggestions}
+          />
+        )}
         <AutocompleteInput
           value={customValue.snomedTerm || ""}
           onChange={(raw) => {
@@ -63,7 +74,7 @@ const ValueRow = React.memo(function ValueRow({
         />
         <button
           type="button"
-          className={[ColumnMappingStyles.descriptionButton, isLocked ? ColumnMappingStyles.descriptionButtonLocked : ""].join(" ")}
+          className={ColumnMappingStyles.descriptionButton}
           onClick={() => actions.description(index)}
         >
           <span className={ColumnMappingStyles.buttonText}>Description</span>
@@ -77,10 +88,10 @@ const ValueRow = React.memo(function ValueRow({
             <AddIcon fontSize="inherit" className={ColumnMappingStyles.buttonIcon} />
           </span>
         </button>
-        <button onClick={() => actions.removeValue(index)} className={ColumnMappingStyles.closeIconButton}>
-          <CloseIcon />
-        </button>
       </div>
+      <button type="button" onClick={() => actions.removeValue(index)} className={`${ColumnMappingStyles.closeIconButton} ${ColumnMappingStyles.removeValueButton}`} aria-label="Remove value" title="Remove value">
+        <CloseIcon />
+      </button>
       {!isLocked && customValue.mapping.length > 0 && (
         <div className={ColumnMappingStyles.mappingSummary}>
           {customValue.mapping.length} values from{" "}
@@ -121,17 +132,18 @@ const ValueRow = React.memo(function ValueRow({
 // The list owns transitions while unchanged values retain their row instances.
 function ValuesList({ customValues, valueContentSuggestions, snomedValueTerminologySuggestions,
   isTooltipShown, tooltipRef, tooltipMessage, onTooltipClose, onValueNameChange,
-  onValueSnomedChange, onAddMapping, onRemoveMapping, onRemoveValue, onOpenDescription,
-  isLockedNumericValue, buttonRefs, containerRef, disableExitAnimation = false }) {
+  onValueSnomedChange, onDismissRangeBadge, onAddMapping, onRemoveMapping, onRemoveValue, onOpenDescription,
+  isLockedPassthroughValue, buttonRefs, containerRef, disableExitAnimation = false }) {
   const mappingRefs = useRef({});
   const latestActions = useRef({});
   latestActions.current = {
-    onValueNameChange, onValueSnomedChange, onAddMapping, onRemoveMapping,
+    onValueNameChange, onValueSnomedChange, onDismissRangeBadge, onAddMapping, onRemoveMapping,
     onRemoveValue, onOpenDescription,
   };
   const actions = useMemo(() => ({
     valueName: (...args) => latestActions.current.onValueNameChange(...args),
     valueSnomed: (...args) => latestActions.current.onValueSnomedChange(...args),
+    dismissRangeBadge: (...args) => latestActions.current.onDismissRangeBadge(...args),
     addMapping: (...args) => latestActions.current.onAddMapping(...args),
     removeMapping: (...args) => latestActions.current.onRemoveMapping(...args),
     removeValue: (...args) => latestActions.current.onRemoveValue(...args),
@@ -179,7 +191,7 @@ function ValuesList({ customValues, valueContentSuggestions, snomedValueTerminol
               <ValueRow
                 customValue={customValue}
                 index={index}
-                isLocked={isLockedNumericValue(customValue)}
+                isLocked={isLockedPassthroughValue(customValue)}
                 valueContentSuggestions={valueContentSuggestions}
                 snomedSuggestions={snomedValueTerminologySuggestions[customValue.id] || EMPTY_SUGGESTIONS}
                 buttonRef={buttonRefs.current[index]}

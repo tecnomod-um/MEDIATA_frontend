@@ -148,6 +148,9 @@ function MappingHierarchy({ mappingIndex, mappingKey, mapping, columnsData, onDe
             valueObj.mapping[0]?.value === valueObj.name;
 
           const normalized = String(valueObj.name || "").trim().toLowerCase();
+          const isPassthroughValue = valueObj.outputMode !== "constant" && maps.length > 0 &&
+            maps.every(({ value }) => typeof value === "string" &&
+              ["integer", "double", "date", "natural language"].includes(value.toLowerCase()));
 
           let valueLabel =
             mappingType === "one-hot"
@@ -216,7 +219,7 @@ function MappingHierarchy({ mappingIndex, mappingKey, mapping, columnsData, onDe
                 }}
                 title={title}
               >
-                <span>{valueLabel}</span>
+                <span className={isPassthroughValue ? MappingHierarchyStyles.typeBadge : undefined}>{valueLabel}</span>
                 {mappingType === "standard" && isOpen && (
                   <EditIcon className={MappingHierarchyStyles.editIcon} titleAccess={title} />
                 )}
@@ -367,6 +370,7 @@ function MappingHierarchy({ mappingIndex, mappingKey, mapping, columnsData, onDe
             size="small"
             className={MappingHierarchyStyles.metaCloseBtn}
             onClick={closeMeta}
+            aria-label="Close metadata"
             title="Close"
           >
             <CloseIcon fontSize="inherit" />
@@ -401,8 +405,7 @@ function MappingHierarchy({ mappingIndex, mappingKey, mapping, columnsData, onDe
     onSelect?.();
   };
 
-  const onToggleArrowClick = (e) => {
-    e.stopPropagation();
+  const onToggleArrowClick = () => {
     closeMeta();
     cancelEdit();
     setIsOpen((v) => !v);
@@ -429,23 +432,15 @@ function MappingHierarchy({ mappingIndex, mappingKey, mapping, columnsData, onDe
         </Popper>
       )}
 
-      <div
-        className={`${MappingHierarchyStyles.headerRow} ${!isOpen ? MappingHierarchyStyles.headerRowClosed : ""}`}
-        onClick={onHeaderClick}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") onHeaderClick();
-        }}
-        title={!isOpen ? "Open" : undefined}
-      >
+      <div className={MappingHierarchyStyles.headerRow}>
         <div className={MappingHierarchyStyles.headerLeft}>
           <IconButton
             size="small"
             className={MappingHierarchyStyles.collapseBtn}
             onClick={onToggleArrowClick}
-            aria-label={isOpen ? "Collapse" : "Expand"}
-            title={isOpen ? "Collapse" : "Expand"}
+            aria-label={`${isOpen ? "Collapse" : "Expand"} ${mappingKey}`}
+            aria-expanded={isOpen}
+            title={`${isOpen ? "Collapse" : "Expand"} ${mappingKey}`}
           >
             {isOpen ? <KeyboardArrowUpIcon fontSize="inherit" /> : <KeyboardArrowDownIcon fontSize="inherit" />}
           </IconButton>
@@ -481,41 +476,53 @@ function MappingHierarchy({ mappingIndex, mappingKey, mapping, columnsData, onDe
               />
             </div>
           ) : (
-            <div
-              className={MappingHierarchyStyles.editableHover}
+            <button
+              type="button"
+              className={MappingHierarchyStyles.titleButton}
+              onClick={onHeaderClick}
               onDoubleClick={(e) => {
                 e.stopPropagation();
                 if (mappingType === "standard" && isOpen) handleEdit("columnTitle", null, null, mappingKey);
               }}
-              title={mappingType === "standard" && isOpen ? `Edit ${mappingKey}` : mappingKey}
+              aria-label={`Select ${mappingKey} mapping`}
+              title={`Select ${mappingKey} mapping`}
             >
               <h4>{mappingKey}</h4>
-              {mappingType === "standard" && isOpen && (
-                <EditIcon className={MappingHierarchyStyles.editIcon} titleAccess={`Edit ${mappingKey}`} />
-              )}
-            </div>
+            </button>
           )}
         </div>
-      </div>
-
-      <div
-        className={MappingHierarchyStyles.deleteIcon}
-        onClick={(e) => {
-          e.stopPropagation();
-          onDeleteMapping(mappingIndex, mappingKey);
-        }}
-      >
-        <CloseIcon />
+        {!editing.type && (
+          <IconButton
+            size="small"
+            className={MappingHierarchyStyles.deleteIcon}
+            onClick={() => onDeleteMapping(mappingIndex, mappingKey)}
+            aria-label={`Remove ${mappingKey} mapping`}
+            title={`Remove ${mappingKey} mapping`}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        )}
       </div>
 
       {isOpen && (
         <>
           <div className={MappingHierarchyStyles.fileRow}>
             <div className={MappingHierarchyStyles.fileName}>
-              <em>{displayFileLabel}</em>
+              <em title={displayFileLabel}>{displayFileLabel}</em>
             </div>
 
             <div className={MappingHierarchyStyles.fileRowActions}>
+              {mappingType === "standard" && (
+                <IconButton
+                  size="small"
+                  className={MappingHierarchyStyles.metaBtn}
+                  aria-label={`Rename ${mappingKey}`}
+                  onClick={() => handleEdit("columnTitle", null, null, mappingKey)}
+                  title={`Rename ${mappingKey}`}
+                >
+                  <EditIcon fontSize="inherit" />
+                </IconButton>
+              )}
               {hasColumnMeta && (
                 <IconButton
                   size="small"

@@ -8,6 +8,7 @@ import { useNode } from "../../context/nodeContext";
 import AlignmentStyles from "./alignment.module.css";
 import ColumnMapping from "../../components/Alignment/ColumnMapping/columnMapping";
 import ColumnSearchList from "../../components/Alignment/ColumnSearchList/columnSearchList";
+import { getColumnMappingTargets } from "../../components/Alignment/ColumnSearchList/columnMappingStatus";
 import FileMapperModal from "../../components/Alignment/FileMapperModal/fileMapperModal";
 import FileExplorer from "../../components/Common/FileExplorer/fileExplorer";
 import SchemaTray from "../../components/Common/SchemaTray/schemaTray";
@@ -56,6 +57,36 @@ function useStableEvent(handler) {
   const handlerRef = useRef(handler);
   handlerRef.current = handler;
   return useCallback((...args) => handlerRef.current(...args), []);
+}
+
+const mappingIdentity = (key, mapping) =>
+  JSON.stringify([key, mapping?.nodeId ?? "", mapping?.fileName ?? ""]);
+
+function buildDefaultMappings(data, fileName, nodeId) {
+  return data.reduce((acc, column) => {
+    const filteredValues = column.values.filter((value) => {
+      if (column.values.includes("integer") || column.values.includes("double"))
+        return !value.startsWith("min:") && !value.startsWith("max:");
+      if (column.values.includes("date"))
+        return !value.startsWith("earliest:") && !value.startsWith("latest:");
+      return true;
+    });
+
+    const groupKey = `${nodeId}::${fileName}::${column.column}`;
+    acc[column.column] = {
+      fileName,
+      nodeId,
+      columns: [column.column],
+      groups: [{
+        column: column.column,
+        values: filteredValues.map((val) => ({
+          name: val,
+          mapping: [{ groupKey, groupColumn: column.column, fileName, nodeId, value: val }],
+        })),
+      }],
+    };
+    return acc;
+  }, {});
 }
 
 function reconcileLoadedMappingsWithColumnsData(mappings, columnsData) {
@@ -407,44 +438,7 @@ function Alignment() {
   }, [isGenerateMetadataLoading, mappings, schema]);
 
   const initializeMappings = useCallback((data, fileName, nodeId) => {
-    const newMapping = data.reduce((acc, column) => {
-      const filteredValues = column.values.filter((value) => {
-        if (column.values.includes("integer") || column.values.includes("double"))
-          return !value.startsWith("min:") && !value.startsWith("max:");
-        if (column.values.includes("date"))
-          return !value.startsWith("earliest:") && !value.startsWith("latest:");
-        return true;
-      });
-
-      const groupKey = `${nodeId}::${fileName}::${column.column}`;
-
-      acc[column.column] = {
-        fileName,
-        nodeId,
-        columns: [column.column],
-        groups: [
-          {
-            column: column.column,
-            values: filteredValues.map((val) => ({
-              name: val,
-              mapping: [
-                {
-                  groupKey,
-                  groupColumn: column.column,
-                  fileName,
-                  nodeId,
-                  value: val,
-                },
-              ],
-            })),
-          },
-        ],
-      };
-
-      return acc;
-    }, {});
-
-    setMappings((prev) => [...prev, newMapping]);
+    setMappings((prev) => [...prev, buildDefaultMappings(data, fileName, nodeId)]);
   }, []);
 
   const handleProcessSelectedElements = useCallback(
@@ -1102,20 +1096,72 @@ function Alignment() {
     setMappings(updatedMappings);
   }, [mappings]);
 
-  const handleUndoDelete = useCallback(() => {
-    if (deletedItems.length > 0) {
-      const lastDeletedItem = deletedItems[deletedItems.length - 1];
-      const { index, key, mapping } = lastDeletedItem;
+  const missingDefaultColumns = useMemo(() => columnsData.filter((column) =>
+    !getColumnMappingTargets(column, mappings).some((target) => target.kind === "default")
+  ), [columnsData, mappings]);
 
-      const updatedMappings = mappings.map((mappingObj, idx) => {
-        if (idx === index) return { ...mappingObj, [key]: mapping };
-        return mappingObj;
-      });
-
-      setMappings(updatedMappings);
-      setDeletedItems(deletedItems.slice(0, -1));
-    }
+  const undoableDeletedItems = useMemo(() => {
+    const currentIds = new Set(mappings.flatMap((mappingObj) =>
+      Object.entries(mappingObj).map(([key, mapping]) => mappingIdentity(key, mapping))
+    ));
+    return deletedItems.filter((item) => item.type === "all"
+      ? item.mappings.some((mappingObj) => Object.entries(mappingObj).some(([key, mapping]) =>
+        !currentIds.has(mappingIdentity(key, mapping))))
+      : !currentIds.has(mappingIdentity(item.key, item.mapping)));
   }, [deletedItems, mappings]);
+
+  const handleUndoDelete = useCallback(() => {
+    const lastDeletedItem = undoableDeletedItems[undoableDeletedItems.length - 1];
+    if (!lastDeletedItem) return;
+    if (lastDeletedItem.type === "all") {
+      setMappings((previous) => {
+        const currentIds = new Set(previous.flatMap((mappingObj) =>
+          Object.entries(mappingObj).map(([key, mapping]) => mappingIdentity(key, mapping))
+        ));
+        const restored = lastDeletedItem.mappings.map((mappingObj) =>
+          Object.fromEntries(Object.entries(mappingObj).filter(([key, mapping]) =>
+            !currentIds.has(mappingIdentity(key, mapping))))
+        );
+        return [...restored, ...previous];
+      });
+    } else {
+      const { index, key, mapping } = lastDeletedItem;
+      setMappings((previous) => {
+        if (previous[index]) return previous.map((mappingObj, idx) =>
+          idx === index ? { ...mappingObj, [key]: mapping } : mappingObj
+        );
+        const restored = [...previous];
+        restored.splice(Math.min(index, restored.length), 0, { [key]: mapping });
+        return restored;
+      });
+    }
+    setDeletedItems((previous) => previous.filter((item) => item !== lastDeletedItem));
+  }, [undoableDeletedItems]);
+
+  const handleClearAllMappings = useCallback(() => {
+    const count = mappings.reduce((total, mappingObj) => total + Object.keys(mappingObj).length, 0);
+    if (!count) return;
+    setDeletedItems((previous) => [...previous, { type: "all", mappings, count }]);
+    setMappings([]);
+    setProcessingStatus("idle");
+    handleClearMappingEditor();
+  }, [handleClearMappingEditor, mappings]);
+
+  const handleRestoreDefaults = useCallback(() => {
+    if (!missingDefaultColumns.length) return;
+    const byFile = new Map();
+    missingDefaultColumns.forEach((column) => {
+      const fileName = column.fileName;
+      const nodeId = column.nodeId;
+      const fileKey = JSON.stringify([nodeId, fileName]);
+      if (!byFile.has(fileKey)) byFile.set(fileKey, { fileName, nodeId, columns: [] });
+      byFile.get(fileKey).columns.push(column);
+    });
+    const restored = Array.from(byFile.values(), ({ columns, fileName, nodeId }) =>
+      buildDefaultMappings(columns, fileName, nodeId)
+    );
+    setMappings((previous) => [...previous, ...restored]);
+  }, [missingDefaultColumns]);
 
   useEffect(() => {
     (async function loadSchema() {
@@ -1489,6 +1535,8 @@ function Alignment() {
   const generateMetadata = useStableEvent(handleGenerateMetadata);
   const deleteMapping = useStableEvent(handleDeleteMapping);
   const undoDelete = useStableEvent(handleUndoDelete);
+  const clearAllMappings = useStableEvent(handleClearAllMappings);
+  const restoreDefaults = useStableEvent(handleRestoreDefaults);
   const selectMapping = useStableEvent(handleSelectMapping);
 
   return (
@@ -1636,10 +1684,13 @@ function Alignment() {
               mappings={mappings}
               schema={schema}
               columnsData={columnsData}
-              deletedItems={deletedItems}
+              deletedItems={undoableDeletedItems}
+              missingDefaultCount={missingDefaultColumns.length}
               processingStatus={processingStatus}
               onUndoDelete={undoDelete}
               onDeleteMapping={deleteMapping}
+              onClearMappings={clearAllMappings}
+              onRestoreDefaults={restoreDefaults}
               onOpenFileMapper={handleOpenFileMapper}
               formatValue={formatValue}
               setMappings={setMappings}

@@ -66,6 +66,10 @@ function buildTypeLogic(mappingEntry) {
     return { is_date: [variableRef] };
   }
 
+  if (valueType === "natural language") {
+    return { is_text: [variableRef] };
+  }
+
   return { "==": [variableRef, normalizePrimitive(mappingEntry.value)] };
 }
 
@@ -159,7 +163,7 @@ function buildLogicClause(mappingEntry) {
 
   if (typeof rawValue === "string") {
     const lowered = rawValue.trim().toLowerCase();
-    if (lowered === "integer" || lowered === "double" || lowered === "date") {
+    if (["integer", "double", "date", "natural language"].includes(lowered)) {
       return buildTypeLogic(mappingEntry);
     }
   }
@@ -217,7 +221,7 @@ function isTypePassthroughEntry(mappingEntry) {
   if (typeof rawValue !== "string") return false;
 
   const lowered = rawValue.trim().toLowerCase();
-  return lowered === "integer" || lowered === "double" || lowered === "date";
+  return ["integer", "double", "date", "natural language"].includes(lowered);
 }
 
 function buildStandardRule(valueObj, ruleIndex) {
@@ -225,7 +229,8 @@ function buildStandardRule(valueObj, ruleIndex) {
   const logicClauses = mappingEntries.map(buildLogicClause);
   const logic = combineLogicWithOr(logicClauses);
 
-  const passthroughEntry = mappingEntries.find(isTypePassthroughEntry);
+  const passthroughEntry = valueObj?.outputMode === "constant"
+    ? null : mappingEntries.find(isTypePassthroughEntry);
 
   return {
     id: `rule-${ruleIndex}`,
@@ -265,6 +270,9 @@ function buildTypePassthroughRule(valueObj, mappingEntry, ruleIndex) {
 
 function buildStandardRules(valueObj, ruleIndexPrefix) {
   const mappingEntries = valueObj?.mapping || [];
+  if (valueObj?.outputMode === "constant") {
+    return [buildStandardRule(valueObj, ruleIndexPrefix)];
+  }
   const passthroughEntries = mappingEntries.filter(isTypePassthroughEntry);
 
   if (passthroughEntries.length > 0) {

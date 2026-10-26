@@ -109,6 +109,21 @@ describe('buildMappingSpec', () => {
     expect(rule.then).toEqual({ kind: 'source-value', sourceId: 'n1::data.csv', column: 'age_col' });
   });
 
+  it('exports Natural Language as a text passthrough, not a literal match', () => {
+    const mappings = [{ Note: {
+      mappingType: 'standard',
+      fileName: 'notes_elements.csv',
+      groups: [{ values: [{
+        name: 'Natural Language',
+        mapping: [{ nodeId: 'n1', fileName: 'notes_elements.csv', groupColumn: 'note', value: 'Natural Language' }],
+      }] }],
+    } }];
+
+    const rule = buildMappingSpec({ mappings }).mappings[0].rules[0];
+    expect(rule.logic).toEqual({ is_text: [{ var: 'n1::notes_elements.csv::note' }] });
+    expect(rule.then).toEqual({ kind: 'source-value', sourceId: 'n1::notes_elements.csv', column: 'note' });
+  });
+
   it('builds one passthrough rule per typed source entry', () => {
     const mappings = [
       {
@@ -142,6 +157,18 @@ describe('buildMappingSpec', () => {
     expect(rules[0].then).toEqual({ kind: 'source-value', sourceId: 'n1::a.csv', column: 'age' });
     expect(rules[1].logic).toEqual({ is_integer: [{ var: 'n2::b.csv::years' }] });
     expect(rules[1].then).toEqual({ kind: 'source-value', sourceId: 'n2::b.csv', column: 'years' });
+  });
+
+  it('writes a constant for every source value when an all-range badge is replaced', () => {
+    const mappings = [{ AgeGroup: { mappingType: 'standard', groups: [{ values: [{
+      name: 'Adult', outputMode: 'constant', mapping: [
+        { nodeId: 'n1', fileName: 'data.csv', groupColumn: 'age', value: 'integer' },
+      ],
+    }] }] } }];
+
+    const rule = buildMappingSpec({ mappings }).mappings[0].rules[0];
+    expect(rule.logic).toEqual({ is_integer: [{ var: 'n1::data.csv::age' }] });
+    expect(rule.then).toEqual({ kind: 'constant', value: 'Adult' });
   });
 
   it('builds a standard mapping with double type logic', () => {

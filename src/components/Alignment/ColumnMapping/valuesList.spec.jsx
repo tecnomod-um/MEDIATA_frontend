@@ -78,12 +78,13 @@ describe("ValuesList", () => {
     tooltipMessage: "",
     onTooltipClose: vi.fn(),
     onValueNameChange: vi.fn(),
+    onDismissRangeBadge: vi.fn(),
     onValueSnomedChange: vi.fn(),
     onAddMapping: vi.fn(),
     onRemoveMapping: vi.fn(),
     onRemoveValue: vi.fn(),
     onOpenDescription: vi.fn(),
-    isLockedNumericValue: vi.fn(() => false),
+    isLockedPassthroughValue: vi.fn(() => false),
     buttonRefs: mockButtonRefs,
   };
 
@@ -346,20 +347,36 @@ describe("ValuesList", () => {
       },
     ];
 
-    const isLockedNumericValue = vi.fn(() => true);
+    const isLockedPassthroughValue = vi.fn(() => true);
 
     render(
       <ValuesList
         {...baseProps}
         customValues={customValues}
-        isLockedNumericValue={isLockedNumericValue}
+        isLockedPassthroughValue={isLockedPassthroughValue}
       />
     );
 
-    const nameInput = screen.getByPlaceholderText("Value content");
-    expect(nameInput).toHaveValue("Range of integers");
+    expect(screen.getByText("Range of integers")).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Value content")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Set custom value" }));
+    expect(baseProps.onDismissRangeBadge).toHaveBeenCalledWith(1);
 
     expect(screen.getByRole("button", { name: /add mapping/i })).toBeInTheDocument();
+  });
+
+  it("shows Natural Language as a removable passthrough badge", () => {
+    render(<ValuesList {...baseProps}
+      customValues={[{ id: 1, name: "Natural Language", snomedTerm: "", mapping: [
+        { groupColumn: "note", value: "Natural Language", fileName: "notes.csv" },
+      ] }]}
+      isLockedPassthroughValue={() => true}
+    />);
+
+    expect(screen.getByTitle("Natural Language")).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Value content")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Set custom value" }));
+    expect(baseProps.onDismissRangeBadge).toHaveBeenCalledWith(1);
   });
 
   it("allows removing a numeric passthrough range mapping", () => {
@@ -368,7 +385,7 @@ describe("ValuesList", () => {
       customValues={[{ id: 1, name: "integer", snomedTerm: "", mapping: [
         { groupColumn: "age", value: "integer", fileName: "data.csv" },
       ] }]}
-      isLockedNumericValue={() => true}
+      isLockedPassthroughValue={() => true}
       onRemoveMapping={onRemoveMapping}
     />);
 
@@ -387,6 +404,18 @@ describe("ValuesList", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Remove mapping from age" }));
     expect(onRemoveMapping).toHaveBeenCalledWith(0, 0);
+  });
+
+  it("keeps a selected numeric interval editable", () => {
+    render(<ValuesList {...baseProps}
+      customValues={[{ id: 1, name: "", snomedTerm: "", mapping: [
+        { groupColumn: "age", value: { minValue: 18, maxValue: 65, type: "integer" }, fileName: "data.csv" },
+      ] }]}
+    />);
+
+    expect(screen.getByPlaceholderText("Value content")).toHaveValue("");
+    expect(screen.queryByText("Range of integers")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Remove value" })).toBeInTheDocument();
   });
 
   it("formats date values correctly", () => {

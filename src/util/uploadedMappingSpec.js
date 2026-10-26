@@ -336,6 +336,20 @@ function extractLogicEntries(logic) {
     ];
   }
 
+  if (logic.is_text) {
+    const args = unwrapJsonLogicArgs(logic.is_text);
+    const refArg = args[0];
+    if (!refArg?.var) return [];
+    const ref = parseVarName(refArg.var);
+
+    return [{
+      nodeId: ref.nodeId,
+      fileName: ref.fileName,
+      groupColumn: ref.column,
+      value: "Natural Language",
+    }];
+  }
+
   if (logic.and) {
     const clauses = unwrapJsonLogicArgs(logic.and);
 
@@ -460,6 +474,7 @@ function rebuildStandardMappingFromSpec(mappingDef) {
 
     return {
       name: thenObj?.kind === "constant" ? String(thenObj?.value ?? "") : "",
+      ...(thenObj?.kind === "constant" ? { outputMode: "constant" } : {}),
       mapping: entries.map((entry) => ({
         groupKey: `${entry.nodeId}::${entry.fileName}::${entry.groupColumn}`,
         groupColumn: entry.groupColumn,

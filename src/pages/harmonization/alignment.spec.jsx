@@ -2016,6 +2016,127 @@ describe('Alignment Page', () => {
       });
     });
 
+    test('undoDelete restores multiple deletions in reverse order', async () => {
+      await renderWithColumns();
+      act(() => capturedMappingsResultProps.current.setMappings([{ Alpha: {}, Beta: {} }]));
+      act(() => capturedMappingsResultProps.current.onDeleteMapping(0, 'Alpha'));
+      act(() => capturedMappingsResultProps.current.onDeleteMapping(0, 'Beta'));
+
+      expect(capturedMappingsResultProps.current.deletedItems.map((item) => item.key)).toEqual(['Alpha', 'Beta']);
+      act(() => capturedMappingsResultProps.current.onUndoDelete());
+      expect(capturedMappingsResultProps.current.mappings[0]).toHaveProperty('Beta');
+      expect(capturedMappingsResultProps.current.deletedItems.map((item) => item.key)).toEqual(['Alpha']);
+      act(() => capturedMappingsResultProps.current.onUndoDelete());
+      expect(capturedMappingsResultProps.current.mappings[0]).toHaveProperty('Alpha');
+    });
+
+    test('undoDelete does not overwrite a newly reused target name', async () => {
+      await renderWithColumns();
+      act(() => capturedMappingsResultProps.current.setMappings([{ Alpha: { old: true } }]));
+      act(() => capturedMappingsResultProps.current.onDeleteMapping(0, 'Alpha'));
+      act(() => capturedMappingsResultProps.current.setMappings((previous) => [...previous, { Alpha: { new: true } }]));
+
+      expect(capturedMappingsResultProps.current.deletedItems).toEqual([]);
+      act(() => capturedMappingsResultProps.current.onUndoDelete());
+      expect(capturedMappingsResultProps.current.mappings[0]).not.toHaveProperty('Alpha');
+      expect(capturedMappingsResultProps.current.mappings[1].Alpha).toEqual({ new: true });
+    });
+
+    test('undoDelete restores one default when another file has the same target name', async () => {
+      await renderWithColumns();
+      act(() => capturedMappingsResultProps.current.setMappings([
+        { Age: { nodeId: 'node1', fileName: 'first.csv' } },
+        { Age: { nodeId: 'node2', fileName: 'second.csv' } },
+      ]));
+      act(() => capturedMappingsResultProps.current.onDeleteMapping(0, 'Age'));
+
+      expect(capturedMappingsResultProps.current.deletedItems).toHaveLength(1);
+      act(() => capturedMappingsResultProps.current.onUndoDelete());
+      expect(capturedMappingsResultProps.current.mappings[0].Age.fileName).toBe('first.csv');
+      expect(capturedMappingsResultProps.current.mappings[1].Age.fileName).toBe('second.csv');
+    });
+
+    test('restore defaults regenerates removed file mappings without changing custom mappings', async () => {
+      await renderWithColumns();
+      const original = capturedMappingsResultProps.current.mappings[0].col1;
+      act(() => capturedMappingsResultProps.current.onDeleteMapping(0, 'col1'));
+      act(() => capturedMappingsResultProps.current.setMappings((previous) =>
+        [...previous, { Custom: { fileName: 'custom_mapping' } }]));
+
+      expect(capturedMappingsResultProps.current.missingDefaultCount).toBe(1);
+      act(() => capturedMappingsResultProps.current.onRestoreDefaults());
+      expect(capturedMappingsResultProps.current.mappings.flatMap((item) => Object.keys(item)))
+        .toEqual(['Custom', 'col1']);
+      expect(capturedMappingsResultProps.current.mappings[2].col1).toEqual(original);
+      expect(capturedMappingsResultProps.current.missingDefaultCount).toBe(0);
+    });
+
+    test('restore defaults works after clearing the whole target schema', async () => {
+      await renderWithColumns();
+      const original = capturedMappingsResultProps.current.mappings[0].col1;
+      act(() => capturedMappingsResultProps.current.onClearMappings());
+      expect(capturedMappingsResultProps.current.missingDefaultCount).toBe(1);
+
+      act(() => capturedMappingsResultProps.current.onRestoreDefaults());
+      expect(capturedMappingsResultProps.current.mappings[0].col1).toEqual(original);
+      expect(capturedMappingsResultProps.current.missingDefaultCount).toBe(0);
+    });
+
+    test('clear all restores the whole mapping set in one undo action', async () => {
+      await renderWithColumns();
+      const original = [{ Alpha: { value: 1 } }, { Beta: { value: 2 } }];
+      act(() => capturedMappingsResultProps.current.setMappings(original));
+      act(() => capturedMappingsResultProps.current.onClearMappings());
+
+      expect(capturedMappingsResultProps.current.mappings).toEqual([]);
+      expect(capturedMappingsResultProps.current.deletedItems).toEqual([
+        { type: 'all', mappings: original, count: 2 },
+      ]);
+
+      act(() => capturedMappingsResultProps.current.onUndoDelete());
+      expect(capturedMappingsResultProps.current.mappings).toEqual(original);
+      expect(capturedMappingsResultProps.current.deletedItems).toEqual([]);
+    });
+
+    test('restoring clear all preserves mappings added afterward', async () => {
+      await renderWithColumns();
+      act(() => capturedMappingsResultProps.current.setMappings([{ Alpha: { old: true }, Beta: {} }]));
+      act(() => capturedMappingsResultProps.current.onClearMappings());
+      act(() => capturedMappingsResultProps.current.setMappings([{ Alpha: { new: true }, Gamma: {} }]));
+
+      act(() => capturedMappingsResultProps.current.onUndoDelete());
+      const restored = capturedMappingsResultProps.current.mappings;
+      expect(restored.flatMap((mappingObj) => Object.keys(mappingObj))).toEqual(['Beta', 'Alpha', 'Gamma']);
+      expect(restored[1].Alpha).toEqual({ new: true });
+    });
+
+    test('bulk restore leaves earlier single deletions available in order', async () => {
+      await renderWithColumns();
+      act(() => capturedMappingsResultProps.current.setMappings([{ Alpha: {}, Beta: {} }]));
+      act(() => capturedMappingsResultProps.current.onDeleteMapping(0, 'Alpha'));
+      act(() => capturedMappingsResultProps.current.onClearMappings());
+
+      expect(capturedMappingsResultProps.current.deletedItems.at(-1).type).toBe('all');
+      act(() => capturedMappingsResultProps.current.onUndoDelete());
+      expect(capturedMappingsResultProps.current.mappings[0]).toHaveProperty('Beta');
+      expect(capturedMappingsResultProps.current.deletedItems.map((item) => item.key)).toEqual(['Alpha']);
+
+      act(() => capturedMappingsResultProps.current.onUndoDelete());
+      expect(capturedMappingsResultProps.current.mappings[0]).toHaveProperty('Alpha');
+    });
+
+    test('older deletion remains restorable when its original slot no longer exists', async () => {
+      await renderWithColumns();
+      act(() => capturedMappingsResultProps.current.setMappings([{ Alpha: {} }, { Beta: {} }]));
+      act(() => capturedMappingsResultProps.current.onDeleteMapping(1, 'Beta'));
+      act(() => capturedMappingsResultProps.current.onClearMappings());
+      act(() => capturedMappingsResultProps.current.setMappings([{ Alpha: {} }]));
+
+      expect(capturedMappingsResultProps.current.deletedItems.map((item) => item.key)).toEqual(['Beta']);
+      act(() => capturedMappingsResultProps.current.onUndoDelete());
+      expect(capturedMappingsResultProps.current.mappings[1]).toHaveProperty('Beta');
+    });
+
     test('undoDelete is a no-op when nothing was deleted', async () => {
       await renderWithColumns();
 

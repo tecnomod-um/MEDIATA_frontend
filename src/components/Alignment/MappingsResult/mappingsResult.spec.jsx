@@ -334,22 +334,97 @@ describe('<MappingsResult />', () => {
     vi.clearAllMocks();
   });
 
-  it('renders hierarchies, undo bar, and triggers callbacks', () => {
+  it('shows the latest deleted mapping and restores it on demand', () => {
     render(
       <MappingsResult
         mappings={sampleMappings}
         columnsData={columnsData}
-        deletedItems={['dummy']}
+        deletedItems={[{ key: 'Deleted A' }, { key: 'Deleted B' }]}
         processingStatus="idle"
         {...defaultHandlers}
       />
     );
 
-    fireEvent.click(screen.getByText(/undo changes/i));
+    fireEvent.click(screen.getByRole('button', { name: 'Restore mappings' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Restore Deleted B' }));
     expect(defaultHandlers.onUndoDelete).toHaveBeenCalled();
 
     fireEvent.click(screen.getByText(/process datasets/i));
     expect(defaultHandlers.onOpenFileMapper).toHaveBeenCalled();
+  });
+
+  it('labels a clear-all snapshot as one restore action', () => {
+    render(
+      <MappingsResult
+        mappings={[]}
+        columnsData={columnsData}
+        deletedItems={[{ type: 'all', count: 3, mappings: sampleMappings }]}
+        processingStatus="idle"
+        {...defaultHandlers}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Restore mappings' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Restore 3 mappings' }));
+    expect(defaultHandlers.onUndoDelete).toHaveBeenCalledOnce();
+  });
+
+  it('offers restoration of missing defaults independently of undo history', () => {
+    const onRestoreDefaults = vi.fn();
+    render(
+      <MappingsResult
+        mappings={[]}
+        columnsData={columnsData}
+        deletedItems={[]}
+        missingDefaultCount={2}
+        processingStatus="idle"
+        onRestoreDefaults={onRestoreDefaults}
+        {...defaultHandlers}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Restore mappings' }));
+    expect(screen.queryByRole('menuitem', { name: /Nothing to undo/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('menuitem', { name: /Restore missing defaults/ }));
+    expect(onRestoreDefaults).toHaveBeenCalledOnce();
+  });
+
+  it('confirms before removing all mappings', () => {
+    const onClearMappings = vi.fn();
+    render(
+      <MappingsResult
+        mappings={sampleMappings}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="idle"
+        onClearMappings={onClearMappings}
+        {...defaultHandlers}
+      />
+    );
+
+    const clearButton = screen.getByRole('button', { name: 'Remove all target-schema mappings' });
+    fireEvent.click(clearButton);
+    expect(screen.getByRole('dialog', { name: 'Remove all mappings confirmation' })).toBeInTheDocument();
+    expect(onClearMappings).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.click(clearButton);
+    fireEvent.click(screen.getByRole('button', { name: 'Remove all' }));
+    expect(onClearMappings).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('disables clear-all when there are no mappings', () => {
+    render(
+      <MappingsResult
+        mappings={[]}
+        columnsData={columnsData}
+        deletedItems={[]}
+        processingStatus="idle"
+        {...defaultHandlers}
+      />
+    );
+    expect(screen.getByRole('button', { name: 'Remove all target-schema mappings' })).toBeDisabled();
   });
 
   it('disables process button while processing and shows loader', () => {

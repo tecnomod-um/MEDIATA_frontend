@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import MappingHierarchy from './mappingHierarchy';
 import { vi } from "vitest";
@@ -60,11 +61,10 @@ describe('<MappingHierarchy />', () => {
     expect(screen.getByText('Val2')).toBeInTheDocument();
   });
 
-  it('invokes onDeleteMapping when the close icon is clicked', () => {
+  it('invokes onDeleteMapping from the remove button', () => {
     const props = makeProps();
     render(<MappingHierarchy {...props} />);
-    const closeSvg = screen.getByTestId('CloseIcon');
-    fireEvent.click(closeSvg);
+    fireEvent.click(screen.getByRole('button', { name: 'Remove TargetCol mapping' }));
 
     expect(props.onDeleteMapping).toHaveBeenCalledWith(
       props.mappingIndex,
@@ -108,6 +108,12 @@ describe('<MappingHierarchy />', () => {
     );
   });
 
+  it('offers a rename button when the mapping is expanded', () => {
+    render(<MappingHierarchy {...makeProps()} autoOpen={true} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Rename TargetCol' }));
+    expect(screen.getByDisplayValue('TargetCol')).toHaveFocus();
+  });
+
   it('shows "custom mapping" when fileName is custom_mapping', () => {
     const props = makeProps();
     props.mapping = { ...props.mapping, fileName: 'custom_mapping' };
@@ -121,9 +127,7 @@ describe('<MappingHierarchy />', () => {
     render(<MappingHierarchy {...props} autoOpen={false} />);
     expect(screen.queryByText(/file\.csv/i)).not.toBeInTheDocument();
 
-    // The header row has role="button" with name "TargetCol" (the h4 inside)
-    const headerRow = screen.getByRole('button', { name: 'TargetCol' });
-    fireEvent.click(headerRow);
+    fireEvent.click(screen.getByRole('button', { name: 'Select TargetCol mapping' }));
     expect(screen.getByText(/file\.csv/i)).toBeInTheDocument();
   });
 
@@ -131,8 +135,7 @@ describe('<MappingHierarchy />', () => {
     const onSelect = vi.fn();
     const props = { ...makeProps(), onSelect, autoOpen: true };
     render(<MappingHierarchy {...props} />);
-    const headerRow = screen.getAllByRole('button')[0].closest('[role="button"]') || document.querySelector('[role="button"]');
-    fireEvent.click(headerRow);
+    fireEvent.click(screen.getByRole('button', { name: 'Select TargetCol mapping' }));
     expect(onSelect).toHaveBeenCalled();
   });
 
@@ -142,31 +145,45 @@ describe('<MappingHierarchy />', () => {
     expect(screen.getByText(/file\.csv/i)).toBeInTheDocument();
 
     // Click the collapse button (KeyboardArrowUpIcon is shown when open)
-    const collapseBtn = screen.getByLabelText('Collapse');
+    const collapseBtn = screen.getByRole('button', { name: 'Collapse TargetCol' });
     fireEvent.click(collapseBtn);
 
     // Now closed — file row gone
     expect(screen.queryByText(/file\.csv/i)).not.toBeInTheDocument();
 
     // Click again to re-open (label changes to Expand)
-    const expandBtn = screen.getByLabelText('Expand');
+    const expandBtn = screen.getByRole('button', { name: 'Expand TargetCol' });
     fireEvent.click(expandBtn);
     expect(screen.getByText(/file\.csv/i)).toBeInTheDocument();
   });
 
-  it('opens via Enter key on the header row', () => {
+  it('keeps expand and remove separate from selecting a mapping', () => {
+    const props = { ...makeProps(), onSelect: vi.fn() };
+    render(<MappingHierarchy {...props} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand TargetCol' }));
+    expect(props.onSelect).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove TargetCol mapping' }));
+    expect(props.onSelect).not.toHaveBeenCalled();
+    expect(props.onDeleteMapping).toHaveBeenCalledWith(0, 'TargetCol');
+  });
+
+  it('opens via Enter key on the title button', async () => {
     const props = makeProps();
     render(<MappingHierarchy {...props} autoOpen={false} />);
-    const headerRow = document.querySelector('[role="button"]');
-    fireEvent.keyDown(headerRow, { key: 'Enter' });
+    const headerButton = screen.getByRole('button', { name: 'Select TargetCol mapping' });
+    headerButton.focus();
+    await userEvent.keyboard('{Enter}');
     expect(screen.getByText(/file\.csv/i)).toBeInTheDocument();
   });
 
-  it('opens via Space key on the header row', () => {
+  it('opens via Space key on the title button', async () => {
     const props = makeProps();
     render(<MappingHierarchy {...props} autoOpen={false} />);
-    const headerRow = document.querySelector('[role="button"]');
-    fireEvent.keyDown(headerRow, { key: ' ' });
+    const headerButton = screen.getByRole('button', { name: 'Select TargetCol mapping' });
+    headerButton.focus();
+    await userEvent.keyboard(' ');
     expect(screen.getByText(/file\.csv/i)).toBeInTheDocument();
   });
 
@@ -308,6 +325,17 @@ describe('<MappingHierarchy />', () => {
     };
     render(<MappingHierarchy {...props} autoOpen={true} />);
     expect(screen.getByText('Range of integers')).toBeInTheDocument();
+  });
+
+  it('shows a Natural Language passthrough as a badge', () => {
+    const props = makeProps();
+    props.mapping.groups[0].values = [{
+      name: 'Natural Language',
+      mapping: [{ groupColumn: 'TargetCol', value: 'Natural Language', fileName: 'file.csv' }],
+    }];
+    render(<MappingHierarchy {...props} autoOpen={true} />);
+
+    expect(screen.getByText('Natural Language').className).toContain('typeBadge');
   });
 
   it('shows "range of doubles" for a defaultLoaded double value', () => {

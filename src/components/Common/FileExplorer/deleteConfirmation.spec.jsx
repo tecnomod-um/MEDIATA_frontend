@@ -43,6 +43,15 @@ describe('DeleteConfirmation', () => {
     expect(screen.getByRole('dialog')).toHaveTextContent('Delete');
   });
 
+  it('uses custom confirmation wording and closes on Escape', () => {
+    render(<DeleteConfirmation {...defaultProps} title="Remove all mappings" message="Clear every stack?" confirmLabel="Remove all" portal />);
+    const dialog = screen.getByRole('dialog', { name: 'Remove all mappings confirmation' });
+    expect(dialog).toHaveTextContent('Clear every stack?');
+    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus();
+    fireEvent.keyDown(dialog, { key: 'Escape' });
+    expect(defaultProps.onCancel).toHaveBeenCalledOnce();
+  });
+
   it('calls onCancel when cancel button is clicked', () => {
     render(<DeleteConfirmation {...defaultProps} />);
     fireEvent.click(screen.getByRole('button', { name: /cancel/i }));

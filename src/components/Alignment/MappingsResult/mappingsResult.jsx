@@ -1,7 +1,13 @@
 import React, { useCallback, useMemo, useRef, useState, useEffect } from "react";
 import MappingsResultStyles from "./mappingsResult.module.css";
+import ColumnSearchListStyles from "../ColumnSearchList/columnSearchList.module.css";
 import MappingHierarchy from "../MappingHierarchy/mappingHierarchy";
 import MappingsExporter from "./mappingsExporter";
+import DeleteConfirmation from "../../Common/FileExplorer/deleteConfirmation";
+import DeleteSweepOutlinedIcon from "@mui/icons-material/DeleteSweepOutlined";
+import RestoreOutlinedIcon from "@mui/icons-material/RestoreOutlined";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 
 const MappingHierarchyEntry = React.memo(function MappingHierarchyEntry({
   mappingIndex,
@@ -33,8 +39,10 @@ const MappingHierarchyEntry = React.memo(function MappingHierarchyEntry({
   );
 });
 
-function MappingsResult({ mappings, columnsData, deletedItems, processingStatus, onUndoDelete, onDeleteMapping, onOpenFileMapper, formatValue, setMappings, onSelectMapping, schema, onUploadMappings }) {
+function MappingsResult({ mappings, columnsData, deletedItems, missingDefaultCount = 0, processingStatus, onUndoDelete, onDeleteMapping, onClearMappings, onRestoreDefaults, onOpenFileMapper, formatValue, setMappings, onSelectMapping, schema, onUploadMappings }) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
+  const [restoreAnchor, setRestoreAnchor] = useState(null);
   const [autoOpenId, setAutoOpenId] = useState(null);
   const prevKeysRef = useRef(new Set());
   const didInitRef = useRef(false);
@@ -127,24 +135,73 @@ function MappingsResult({ mappings, columnsData, deletedItems, processingStatus,
     );
   }, [setMappings]);
 
+  const hasMappings = mappings.some((mapping) => Object.keys(mapping).length > 0);
+  const undoItem = deletedItems[deletedItems.length - 1];
+  const restoreLabel = undoItem?.type === "all" ? `Restore ${undoItem.count} mappings` : `Restore ${undoItem?.key}`;
+  const confirmClearMappings = () => {
+    onClearMappings?.();
+    setSearchTerm("");
+    setIsClearConfirmOpen(false);
+  };
+
   return (
     <div className={MappingsResultStyles.resultingSection}>
-      <div className={MappingsResultStyles.scrollableContainer}>
-        <div className={MappingsResultStyles.searchRow}>
-          <input
-            className={MappingsResultStyles.searchInput}
-            type="search"
-            placeholder="Search target schema"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className={MappingsResultStyles.searchRow}>
+        <input
+          className={ColumnSearchListStyles.input}
+          type="search"
+          placeholder="Search target schema"
+          aria-label="Search target schema"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <div className={MappingsResultStyles.searchActions}>
+          <button
+            className={MappingsResultStyles.restoreMenuButton}
+            type="button"
+            aria-label="Restore mappings"
+            aria-haspopup="menu"
+            aria-expanded={Boolean(restoreAnchor)}
+            title="Restore mappings"
+            disabled={!undoItem && !missingDefaultCount}
+            onClick={(event) => setRestoreAnchor(event.currentTarget)}
+          >
+            <RestoreOutlinedIcon fontSize="small" />
+          </button>
+          <button
+            className={MappingsResultStyles.clearMappingsButton}
+            type="button"
+            onClick={() => setIsClearConfirmOpen(true)}
+            disabled={!hasMappings}
+            aria-label="Remove all target-schema mappings"
+            title="Remove all target-schema mappings"
+          >
+            <DeleteSweepOutlinedIcon fontSize="small" />
+          </button>
         </div>
+        <Menu
+          anchorEl={restoreAnchor}
+          open={Boolean(restoreAnchor)}
+          onClose={() => setRestoreAnchor(null)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+          transformOrigin={{ vertical: "top", horizontal: "right" }}
+          PaperProps={{ className: MappingsResultStyles.restoreMenu }}
+        >
+          {undoItem && <MenuItem onClick={() => {
+            setRestoreAnchor(null);
+            onUndoDelete?.();
+          }}>{restoreLabel}</MenuItem>}
+          {missingDefaultCount > 0 && <MenuItem onClick={() => {
+            setRestoreAnchor(null);
+            onRestoreDefaults?.();
+          }}>
+              Restore missing defaults
+              <span className={MappingsResultStyles.restoreCount}>{missingDefaultCount}</span>
+            </MenuItem>}
+        </Menu>
+      </div>
 
-        {deletedItems.length > 0 && (
-          <div onClick={onUndoDelete} className={MappingsResultStyles.undoContainer}>
-            Undo Changes
-          </div>
-        )}
+      <div className={MappingsResultStyles.scrollableContainer}>
 
         {filteredMappings.map(({ originalIndex, mappingObj }) =>
           Object.entries(mappingObj).map(([mappingKey, mapping]) => {
@@ -193,6 +250,16 @@ function MappingsResult({ mappings, columnsData, deletedItems, processingStatus,
           )}
         </button>
       </div>
+
+      <DeleteConfirmation
+        show={isClearConfirmOpen}
+        title="Remove all mappings"
+        message="All target-schema mappings will be removed and can be restored with Undo. Unsaved mapping edits will be discarded."
+        confirmLabel="Remove all"
+        onCancel={() => setIsClearConfirmOpen(false)}
+        onConfirm={confirmClearMappings}
+        portal
+      />
     </div>
   );
 }

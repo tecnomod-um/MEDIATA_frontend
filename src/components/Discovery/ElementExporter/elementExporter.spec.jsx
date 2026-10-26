@@ -128,6 +128,22 @@ describe('<ElementExporter />', () => {
     });
   });
 
+  it('does not export privacy-suppressed features as Natural Language', async () => {
+    mockSaveDatasetElements.mockResolvedValue({});
+    const suppressedData = {
+      ...combinedData,
+      omittedFeatures: [{ featureName: 'PrivateNote (file.csv)', fileName: 'file.csv',
+        reason: 'Suppressed for privacy: 5 or fewer observations' }],
+    };
+
+    render(<ElementExporter dataResults={dataResults} activeFileIndices={[true]}
+      combinedData={suppressedData} filteredData={suppressedData} />);
+    fireEvent.click(screen.getByText('Upload Elements'));
+
+    await waitFor(() => expect(saveDatasetElements).toHaveBeenCalled());
+    expect(saveDatasetElements.mock.calls[0][1]).not.toContain('PrivateNote');
+  });
+
   it('navigates when small button clicked and uploads exist', async () => {
     mockSaveDatasetElements.mockResolvedValue({});
 

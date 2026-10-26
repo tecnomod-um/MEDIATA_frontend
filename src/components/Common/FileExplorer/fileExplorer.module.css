@@ -440,6 +440,11 @@
   place-items: center;
 }
 
+.confirmOverlayFixed {
+  position: fixed;
+  z-index: 1001;
+}
+
 .confirmCard {
   position: relative;
   width: min(520px, 92vw);
@@ -454,23 +459,6 @@
 .confirmTitle {
   font-size: var(--font-size-md);
   color: var(--text-color-primary);
-}
-
-.confirmCloseIcon {
-  position: absolute !important;
-  top: 10px;
-  right: 10px;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px !important;
-
-  border: 1px solid var(--border-color) !important;
-  background: var(--background-color-3) !important;
-  color: var(--text-color-primary) !important;
-}
-
-.confirmCloseIcon:hover:not(:disabled) {
-  background: var(--background-color-2) !important;
 }
 
 .confirmCancelBtn,
@@ -510,11 +498,11 @@
 .confirmCancelBtn {
   border: 1px solid var(--background-color-1);
   background: var(--background-color-card);
-  color: #222;
+  color: var(--text-color-primary);
 }
 
 .confirmCancelBtn:hover:not(:disabled) {
-  background: #f7f9fb;
+  background: var(--background-color-2);
 }
 
 .confirmCancelBtn:disabled {

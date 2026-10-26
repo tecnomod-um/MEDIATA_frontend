@@ -56,6 +56,7 @@ function ElementExporter({ dataResults = [], activeFileIndices = [], combinedDat
     const omittedFeatures = (combinedData.omittedFeatures || []).filter(
       (feature) =>
         feature.fileName === fileName &&
+        !feature.reason?.startsWith("Suppressed for privacy:") &&
         isFeatureVisible(feature, "omitted")
     );
   

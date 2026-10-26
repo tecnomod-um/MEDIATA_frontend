@@ -226,7 +226,7 @@
 .snomedText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .snomedBadge em { font-style: normal; font-weight: 700; }
 .pendingBadge {
-  min-width: 0;
+  flex: 0 0 auto;
   overflow: hidden;
   border: 1px dashed var(--border-color);
   color: var(--text-color-tertiary);
@@ -256,9 +256,12 @@ svg.compactSnomedStatus { display: none; }
   text-align: center;
 }
 
-@container column-main (max-width: 172px) {
+@container column-main (max-width: 205px) {
   .snomedBadge,
   .pendingBadge {
+    box-sizing: border-box;
+    flex: 0 0 18px;
+    min-width: 18px;
     width: 18px;
     height: 18px;
     justify-content: center;

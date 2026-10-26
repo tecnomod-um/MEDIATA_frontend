@@ -24,11 +24,30 @@ const MIN_DROP = 50;
 const MIN_CREATE_DESKTOP = 260;
 const MIN_CREATE_MOBILE = 140;
 
-const rangeNameForType = (type) => ({
+const passthroughNameForType = (type) => ({
   integer: "Range of integers",
   double: "Range of doubles",
   date: "Date range",
-})[type] || "Range";
+  "natural language": "Natural Language",
+})[String(type).toLowerCase()] || "Range";
+
+const isWholePassthroughMapping = (mapping) =>
+  mapping?.length > 0 &&
+  ["integer", "double", "date", "natural language"].includes(String(mapping[0]?.value).toLowerCase()) &&
+  mapping.every(({ value }) => value === mapping[0].value);
+
+const nameForUpdatedPassthroughMapping = (current, mapping) => {
+  if (current.outputMode === "constant") return current.name;
+  const wasPassthrough = isWholePassthroughMapping(current.mapping);
+  const isPassthrough = isWholePassthroughMapping(mapping);
+  const previousGeneratedName = wasPassthrough ? passthroughNameForType(current.mapping[0].value) : "";
+
+  if (isPassthrough && (!current.name.trim() || /^\[?range\]?$/i.test(current.name.trim()) || current.name === previousGeneratedName)) {
+    return passthroughNameForType(mapping[0].value);
+  }
+  if (wasPassthrough && !isPassthrough && current.name === previousGeneratedName) return "";
+  return current.name;
+};
 
 const StableAutocompleteInput = React.memo(AutocompleteInput);
 
@@ -363,6 +382,12 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
     );
   };
 
+  const handleDismissRangeBadge = (customValueId) => {
+    setCustomValues((prev) => prev.map((cv) =>
+      cv.id === customValueId ? { ...cv, name: "", outputMode: "constant" } : cv
+    ));
+  };
+
   const triggerTooltip = (message, buttonIndex) => {
     setTooltipRef(buttonRefs.current[buttonIndex]);
     setTooltipMessage(message);
@@ -418,43 +443,34 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
     const groupKey = getGroupKey(group);
 
     if (currentGroupIndex !== null) {
-      setCustomValues((prev) =>
-        prev.map((cv, i) =>
-          i === currentGroupIndex
-            ? {
-              ...cv,
-              name: (typeof value === "object" || ["integer", "double", "date"].includes(value))
-                && (!cv.name.trim() || /^\[?range\]?$/i.test(cv.name.trim()))
-                ? rangeNameForType(typeof value === "object" ? value.type : value)
-                : cv.name,
-              mapping: [
-                ...cv.mapping,
-                {
-                  groupKey,
-                  groupColumn: group.column,
-                  fileName: group.fileName,
-                  nodeId: group.nodeId,
-                  value:
-                    typeof value === "object"
-                      ? { minValue: value.minValue, maxValue: value.maxValue, type: value.type, ...(value.mode ? { mode: value.mode } : {}) }
-                      : value,
-                },
-              ],
-            }
-            : cv
-        )
-      );
+      setCustomValues((prev) => prev.map((cv, i) => {
+        if (i !== currentGroupIndex) return cv;
+        const mapping = [
+          ...cv.mapping,
+          {
+            groupKey,
+            groupColumn: group.column,
+            fileName: group.fileName,
+            nodeId: group.nodeId,
+            value:
+              typeof value === "object"
+                ? { minValue: value.minValue, maxValue: value.maxValue, type: value.type, ...(value.mode ? { mode: value.mode } : {}) }
+                : value,
+          },
+        ];
+        return { ...cv, name: nameForUpdatedPassthroughMapping(cv, mapping), mapping };
+      }));
       setIsPaneVisible(false);
       setCurrentGroupIndex(null);
     }
   };
 
   const handleRemoveMapping = (valueIndex, mapIndex) => {
-    setCustomValues((prev) =>
-      prev.map((cv, i) =>
-        i === valueIndex ? { ...cv, mapping: cv.mapping.filter((_, mi) => mi !== mapIndex) } : cv
-      )
-    );
+    setCustomValues((prev) => prev.map((cv, i) => {
+      if (i !== valueIndex) return cv;
+      const mapping = cv.mapping.filter((_, mi) => mi !== mapIndex);
+      return { ...cv, name: nameForUpdatedPassthroughMapping(cv, mapping), mapping };
+    }));
   };
 
   const handleDeleteGroup = useCallback((groupToDelete) => {
@@ -473,7 +489,7 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
     if (unionName.trim().length === 0) return "Please set a new column name.";
     if (customValues.length === 0) return "Please add at least one value.";
     const unnamedIndex = customValues.findIndex(
-      (cv) => !isLockedNumericValue(cv) && cv.name.trim().length === 0
+      (cv) => !isLockedPassthroughValue(cv) && cv.name.trim().length === 0
     );
     if (unnamedIndex !== -1) return `Value #${unnamedIndex + 1} has no contents.`;
 
@@ -494,10 +510,11 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
       return;
     }
 
-    const cleanedCustomValues = customValues.map(({ id, snomedTerm, name, mapping }) => ({
+    const cleanedCustomValues = customValues.map(({ id, snomedTerm, name, mapping, outputMode }) => ({
       id,
       name,
       mapping,
+      ...(outputMode === "constant" ? { outputMode } : {}),
       terminology: snomedTerm || "",
       description: valueDescriptions[id] || "",
     }));
@@ -551,7 +568,7 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
     const hasAtLeastOneValue = customValues.length > 0;
     const allValuesNamed =
       hasAtLeastOneValue &&
-      customValues.every((cv) => isLockedNumericValue(cv) || cv.name.trim().length > 0);
+      customValues.every((cv) => isLockedPassthroughValue(cv) || cv.name.trim().length > 0);
     const allValuesMapped = hasAtLeastOneValue && customValues.every((cv) => (cv.mapping?.length ?? 0) > 0);
     return !(hasValidName && hasAtLeastOneValue && allValuesNamed && allValuesMapped);
   };
@@ -713,18 +730,13 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
 
   const valueContentSuggestions = useMemo(() => (unionEnumSuggestions || []).map((x) => String(x)), [unionEnumSuggestions]);
 
-  const isLockedNumericValue = useCallback((cv) => {
-    const vals = (cv?.mapping || []).map((m) => m?.value);
-    if (!vals.length) return false;
-    return vals.every(
-      (v) => typeof v === "string" && (v === "integer" || v === "double" || v === "date")
-    );
-  }, []);
+  const isLockedPassthroughValue = useCallback((cv) => cv?.outputMode !== "constant" && isWholePassthroughMapping(cv?.mapping), []);
 
   const changeUnionTerminology = useStableEvent(handleUnionTerminologyChange);
   const closeValueTooltip = useCallback(() => setTooltipShown(false), []);
   const changeValueName = useStableEvent(handleValueNameChange);
   const changeValueSnomed = useStableEvent(handleValueSnomedChange);
+  const dismissRangeBadge = useStableEvent(handleDismissRangeBadge);
   const addValueMapping = useStableEvent((index) => {
     if (groups.length <= 0) triggerTooltip("No set elements to get the values from.", index);
     else handleAddMapping(index);
@@ -926,11 +938,12 @@ function ColumnMapping({ onMappingChange, onSave, onClear, groups, schema, loade
           onTooltipClose={closeValueTooltip}
           onValueNameChange={changeValueName}
           onValueSnomedChange={changeValueSnomed}
+          onDismissRangeBadge={dismissRangeBadge}
           onAddMapping={addValueMapping}
           onRemoveMapping={removeValueMapping}
           onRemoveValue={removeCustomValue}
           onOpenDescription={openValueDescription}
-          isLockedNumericValue={isLockedNumericValue}
+          isLockedPassthroughValue={isLockedPassthroughValue}
           buttonRefs={buttonRefs}
           containerRef={valueListRef}
           disableExitAnimation={disableValueExitAnimation}
