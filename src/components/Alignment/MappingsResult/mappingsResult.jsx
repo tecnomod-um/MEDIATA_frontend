@@ -254,11 +254,13 @@ function MappingsResult({ mappings, columnsData, deletedItems, missingDefaultCou
       <DeleteConfirmation
         show={isClearConfirmOpen}
         title="Remove all mappings"
-        message="All target-schema mappings will be removed and can be restored with Undo. Unsaved mapping edits will be discarded."
+        message="Remove all mappings from the target schema?"
+        icon={<DeleteSweepOutlinedIcon fontSize="small" />}
         confirmLabel="Remove all"
         onCancel={() => setIsClearConfirmOpen(false)}
         onConfirm={confirmClearMappings}
         portal
+        compact
       />
     </div>
   );

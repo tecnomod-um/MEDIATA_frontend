@@ -4,7 +4,7 @@ import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 import FileExplorerStyles from "./fileExplorer.module.css";
 
-function DeleteConfirmation({ show, selectedCount, onCancel, onConfirm, busy, title = "Delete", message, confirmLabel = "Delete", portal = false }) {
+function DeleteConfirmation({ show, selectedCount, onCancel, onConfirm, busy, title = "Delete", message, icon, confirmLabel = "Delete", portal = false, compact = false }) {
   const cancelButtonRef = useRef(null);
 
   useEffect(() => {
@@ -20,7 +20,7 @@ function DeleteConfirmation({ show, selectedCount, onCancel, onConfirm, busy, ti
       role="presentation"
     >
       <div
-        className={FileExplorerStyles.confirmCard}
+        className={`${FileExplorerStyles.confirmCard} ${compact ? FileExplorerStyles.confirmCardCompact : ""}`}
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           if (e.key === "Escape" && !busy) onCancel();
@@ -40,7 +40,10 @@ function DeleteConfirmation({ show, selectedCount, onCancel, onConfirm, busy, ti
         </IconButton>
 
         <div className={FileExplorerStyles.confirmHeader}>
-          <div className={FileExplorerStyles.confirmTitle}>{title}</div>
+          <div className={FileExplorerStyles.confirmTitleRow}>
+            {icon && <span className={FileExplorerStyles.confirmTitleIcon} aria-hidden="true">{icon}</span>}
+            <div className={FileExplorerStyles.confirmTitle}>{title}</div>
+          </div>
           <div className={FileExplorerStyles.confirmText}>
             {message ?? `Delete ${selectedCount} file${selectedCount === 1 ? "" : "s"}?`}
           </div>

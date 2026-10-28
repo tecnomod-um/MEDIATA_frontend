@@ -525,6 +525,57 @@
   cursor: not-allowed;
 }
 
+.confirmCardCompact {
+  box-sizing: border-box;
+  width: min(440px, calc(100vw - 24px));
+  padding: 20px;
+  border-radius: 8px;
+  border-color: var(--border-color-secondary);
+  box-shadow: var(--box-shadow-xl);
+}
+
+.confirmCardCompact .confirmTitleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-right: 32px;
+}
+
+.confirmTitleIcon {
+  display: inline-flex;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--error-color) 10%, transparent);
+  color: var(--error-color);
+}
+
+.confirmCardCompact .confirmTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.confirmCardCompact .confirmText {
+  margin: 14px 0 0;
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
+}
+
+.confirmCardCompact .confirmActions {
+  margin-top: 16px;
+  gap: var(--space-2);
+}
+
+.confirmCardCompact .confirmCancelBtn,
+.confirmCardCompact .confirmDeleteBtn {
+  border-radius: 6px;
+}
+
 .confirmEnter {
   opacity: 0;
 }

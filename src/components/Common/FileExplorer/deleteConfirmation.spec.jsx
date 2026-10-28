@@ -52,6 +52,14 @@ describe('DeleteConfirmation', () => {
     expect(defaultProps.onCancel).toHaveBeenCalledOnce();
   });
 
+  it('adds the compact title icon only when requested', () => {
+    const { rerender } = render(<DeleteConfirmation {...defaultProps} />);
+    expect(screen.queryByText('!')).not.toBeInTheDocument();
+
+    rerender(<DeleteConfirmation {...defaultProps} compact icon={<span>!</span>} />);
+    expect(screen.getByText('!').parentElement).toHaveAttribute('aria-hidden', 'true');
+  });
+
   it('calls onCancel when cancel button is clicked', () => {
     render(<DeleteConfirmation {...defaultProps} />);
     fireEvent.click(screen.getByRole('button', { name: /cancel/i }));

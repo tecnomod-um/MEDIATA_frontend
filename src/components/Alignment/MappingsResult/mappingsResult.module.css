@@ -37,7 +37,7 @@
 
 .restoreMenuButton {
   box-sizing: border-box;
-  flex: 0 0 36px;
+  width: 36px;
   height: 36px;
   display: inline-flex;
   align-items: center;
@@ -88,8 +88,14 @@
   display: flex;
   align-items: center;
   gap: var(--space-1);
+  min-width: 0;
   padding-bottom: var(--space-1);
   background: var(--background-color-card);
+}
+
+.searchRow > input {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .searchActions {
@@ -100,7 +106,7 @@
 
 .clearMappingsButton {
   box-sizing: border-box;
-  flex: 0 0 36px;
+  width: 36px;
   height: 36px;
   display: inline-flex;
   align-items: center;
