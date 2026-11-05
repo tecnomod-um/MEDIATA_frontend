@@ -11,12 +11,14 @@ jobs:
   review:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
 
-      - name: Dependency Review
-        id: depreview
-        uses: actions/dependency-review-action@v4
-        continue-on-error: true
+      - uses: actions/setup-node@v7.1.0
         with:
-          fail-on-severity: critical
-          allow-licenses: MIT, Apache-2.0, BSD-3-Clause
+          node-version: 22
+          cache: npm
+
+      - run: npm ci --ignore-scripts
+
+      - name: Audit all installed dependencies
+        run: npm audit --audit-level=low
