@@ -159,15 +159,13 @@ const Nodes = () => {
       const validationResponse = await nodeAuth(nodeInfo.serviceUrl, token);
       if (validationResponse.error) throw new Error(validationResponse.error);
 
-      const { jwtNodeToken } = validationResponse;
-      console.log("Got node JWT for node", selectedNode.nodeId, ":", jwtNodeToken);
       selectNode(nodeInfo);
       setShowMetadataModal(false);
       setTimeout(() => {
         navigate("/discovery");
       }, 200);
     } catch (err) {
-      console.error("Failed to fetch node info:", err);
+      console.error("Failed to fetch node info:", err.message);
       setError(err.message);
       setShowError(true);
     } finally {
@@ -198,12 +196,11 @@ const Nodes = () => {
         return { ...nodeInfo, jwtNodeToken: validationResponse.jwtNodeToken };
       });
       const accessedNodes = await Promise.all(accessPromises);
-      console.log("Accessed nodes", accessedNodes);
       selectNodes(accessedNodes);
       setShowJoinedNodesModal(false);
       navigate("/discovery");
     } catch (err) {
-      console.error("Failed to access joined nodes:", err);
+      console.error("Failed to access joined nodes:", err.message);
       setError(err.message);
       setShowError(true);
     } finally {

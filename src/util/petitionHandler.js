@@ -99,7 +99,6 @@ export const getNodeInfo = async (nodeId) => {
     const response = await axiosInstance.get(`/nodes/connect/info/${nodeId}`);
     return response.data;
   } catch (error) {
-    console.log(error);
     if (error.response && error.response.data && error.response.data.error) {
       if (error.response.data.error.includes("Failed to request Kerberos service ticket")) {
         localStorage.removeItem("jwtToken");
@@ -236,7 +235,6 @@ export const fetchClasses = async () => {
 export const fetchClassFields = async (type) => {
   try {
     const response = await axiosInstance.get(`/rdf/class/${encodeURIComponent(type)}`);
-    console.log("response: ", response)
     return response.data;
   } catch (error) {
     console.error(
