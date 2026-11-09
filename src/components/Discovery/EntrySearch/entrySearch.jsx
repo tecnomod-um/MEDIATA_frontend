@@ -3,7 +3,7 @@ import EntryTable from "../EntryTable/entryTable";
 import EntrySearchStyles from "./entrySearch.module.css";
 
 // Search wrapper for the feature entries table
-function EntrySearch({ resultData, onRowSelect, selectedEntry, type, actions, rowTitles, rowFilters }) {
+function EntrySearch({ resultData, onRowSelect, selectedEntries = [], type, actions, rowTitles, rowFilters }) {
   const [searchTerm, setSearchTerm] = useState("");
 
   const handleChange = useCallback((e) => {
@@ -51,7 +51,7 @@ function EntrySearch({ resultData, onRowSelect, selectedEntry, type, actions, ro
           filteredLists={filteredResult}
           minCellWidth={100}
           onRowSelect={onRowSelect}
-          selectedEntry={selectedEntry}
+          selectedEntries={selectedEntries}
           type={type}
           rowTitles={rowTitles}
           rowFilters={rowFilters}
@@ -70,16 +70,4 @@ function EntrySearch({ resultData, onRowSelect, selectedEntry, type, actions, ro
   );
 }
 
-const selectedFeatureForType = (selectedEntry, type) =>
-  selectedEntry?.type === type ? selectedEntry.featureName : null;
-
-export default React.memo(EntrySearch, (previous, next) =>
-  previous.resultData === next.resultData &&
-  previous.onRowSelect === next.onRowSelect &&
-  previous.type === next.type &&
-  previous.actions === next.actions &&
-  previous.rowTitles === next.rowTitles &&
-  previous.rowFilters === next.rowFilters &&
-  selectedFeatureForType(previous.selectedEntry, previous.type) ===
-    selectedFeatureForType(next.selectedEntry, next.type)
-);
+export default React.memo(EntrySearch);

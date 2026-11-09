@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 import FilterModal from './filterModal';
@@ -75,6 +75,7 @@ vi.mock('react-select', () => ({
     <select
       data-testid="mock-select"
       multiple={!!props.isMulti}
+      aria-label={props["aria-label"]}
       value={
         props.isMulti
           ? props.value?.map((v) => v.value) ?? []
@@ -163,7 +164,7 @@ describe('<FilterModal />', () => {
 
     const catSelect = screen
       .getAllByTestId('mock-select')
-      .find((s) => s.multiple);
+      .find((s) => s.multiple && s.getAttribute("aria-label") !== "Select feature to filter");
 
     const redOpt = screen.getByRole('option', { name: 'red' });
     redOpt.selected = true;
@@ -180,7 +181,7 @@ describe('<FilterModal />', () => {
 
     const catSelect = screen
       .getAllByTestId('mock-select')
-      .find((s) => s.multiple);
+      .find((s) => s.multiple && s.getAttribute("aria-label") !== "Select feature to filter");
 
     const blueOpt = screen.getByRole('option', { name: 'blue' });
     blueOpt.selected = true;
@@ -258,7 +259,7 @@ describe('<FilterModal />', () => {
 
     const catSelect = screen
       .getAllByTestId('mock-select')
-      .find((s) => s.multiple);
+      .find((s) => s.multiple && s.getAttribute("aria-label") !== "Select feature to filter");
 
     const redOpt = screen.getByRole('option', { name: 'red' });
     redOpt.selected = true;
@@ -354,7 +355,7 @@ describe('<FilterModal />', () => {
     });
 
     // The less-than path shows the single-value input (not min/max)
-    const valueInput = document.getElementById('continuous-value');
+    const valueInput = screen.getByLabelText('Value');
     expect(valueInput).toBeTruthy();
     fireEvent.change(valueInput, { target: { value: '100' } });
 
@@ -375,7 +376,7 @@ describe('<FilterModal />', () => {
       target: { value: 'greater' },
     });
 
-    const valueInput = document.getElementById('continuous-value');
+    const valueInput = screen.getByLabelText('Value');
     expect(valueInput).toBeTruthy();
     fireEvent.change(valueInput, { target: { value: '10' } });
 
@@ -390,7 +391,7 @@ describe('<FilterModal />', () => {
 
     // Add filter for Amount (continuous)
     fireEvent.change(screen.getAllByTestId('mock-select')[0], { target: { value: 'Amount' } });
-    const amountInput = document.getElementById('continuous-value');
+    const amountInput = screen.getByLabelText('Value');
     fireEvent.change(amountInput, { target: { value: '5' } });
     fireEvent.click(screen.getByRole('button', { name: /add filter/i }));
 
@@ -410,7 +411,7 @@ describe('<FilterModal />', () => {
     render(<FilterModal {...commonProps} />);
 
     fireEvent.change(screen.getAllByTestId('mock-select')[0], { target: { value: 'Amount' } });
-    const amountInput = document.getElementById('continuous-value');
+    const amountInput = screen.getByLabelText('Value');
     fireEvent.change(amountInput, { target: { value: '5' } });
     fireEvent.click(screen.getByRole('button', { name: /add filter/i }));
 
@@ -436,7 +437,7 @@ it('filters the correct site when filenames are identical and sends the original
   render(<FilterModal {...commonProps} dataStatistics={stats} dataResults={[
     {fileName:'patients.csv',nodeId:'n1'}, {fileName:'patients.csv',nodeId:'n2'},
   ]} activeFileIndices={[true,true]} />);
-  fireEvent.click(screen.getByRole('checkbox', { name: 'Apply to matching columns in other datasets' }));
+  fireEvent.click(screen.getByRole('switch', { name: 'Apply to matching columns in other datasets' }));
   fireEvent.change(screen.getAllByTestId('mock-select')[0], {target:{value:betaLabel}});
   fireEvent.change(screen.getByLabelText('Value'), {target:{value:'25'}});
   fireEvent.click(screen.getByRole('button', {name:/add filter/i}));
@@ -493,4 +494,20 @@ it('resets the prior cohort when all restored criteria are removed', async () =>
   fireEvent.click(screen.getByRole('button', { name: 'Reset Previous Filters' }));
   await waitFor(() => expect(mockFilterMultipleFiles).toHaveBeenCalledWith({ multipleFileFilters: [{ fileName: 'file.csv', filters: null }] }, 'http://node'));
   expect(mockSetFilters).toHaveBeenCalledWith([]);
+});
+
+
+it("preselects every chosen feature and keeps editors independent without adding criteria automatically", () => {
+  render(<FilterModal {...commonProps} selectedEntries={[{featureName:"Amount"},{featureName:"Color"}]} />);
+  const selected=Array.from(screen.getByLabelText("Select feature to filter").selectedOptions).map(option=>option.value);
+  expect(selected).toEqual(expect.arrayContaining(["Amount","Color"]));
+  const amount=screen.getByRole("region",{name:"Filter Amount"});
+  const color=screen.getByRole("region",{name:"Filter Color"});
+  expect(within(amount).getByLabelText("Value")).toHaveValue(null);
+  expect(within(color).getByLabelText("Categories for Color")).toBeInTheDocument();
+  expect(screen.queryByRole("button",{name:/Remove criterion/})).not.toBeInTheDocument();
+  fireEvent.change(within(amount).getByLabelText("Value"),{target:{value:"12"}});
+  fireEvent.click(within(amount).getByRole("button",{name:"Add Filter"}));
+  expect(within(color).getByRole("button",{name:"Add Filter"})).toBeDisabled();
+  expect(screen.getByRole("button",{name:"Remove criterion 1 for Amount"})).toBeInTheDocument();
 });

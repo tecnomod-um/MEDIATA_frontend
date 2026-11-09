@@ -1,17 +1,17 @@
 import {beforeEach, expect, it, vi} from "vitest";
-import {requestFeatureTypeChange, reconcileFeatureVisibility} from "./featureTypeChanges";
+import {requestFeatureTypeChanges, reconcileFeatureVisibility} from "./featureTypeChanges";
 import {filterDiscoveryDatasets} from "./CombinedStatistics/filterDiscoveryDatasets";
 vi.mock("./CombinedStatistics/filterDiscoveryDatasets", () => ({filterDiscoveryDatasets: vi.fn()}));
 beforeEach(() => vi.resetAllMocks());
 const source = {nodeId: 0, nodeName: "Alpha", fileName: "same.csv", featureTypes: {Flag: "categorical"}};
 const entry = {featureName: "Age (years) (same.csv · Alpha)", originalName: "Age (years)", nodeId: 0, fileName: "same.csv", type: "continuous"};
-const options = () => ({entry, statistics: {continuousFeatures: [entry]}, sources: [source, {...source, nodeId: 2}], nodes: [{nodeId: 0, serviceUrl: "http://alpha"}]});
+const options = () => ({entries: [entry], targetType: "categorical", statistics: {continuousFeatures: [entry]}, sources: [source, {...source, nodeId: 2}], nodes: [{nodeId: 0, serviceUrl: "http://alpha"}]});
 
 it("uses the exact column and site, preserving earlier overrides without mutating inputs", async () => {
   const response = {categoricalFeatures: [{featureName: "Age (years)"}]};
   filterDiscoveryDatasets.mockResolvedValue([response]);
   const input = options(), before = JSON.stringify(input);
-  expect(await requestFeatureTypeChange(input)).toMatchObject({nodeId: 0, featureName: "Age (years)", type: "categorical", response});
+  expect((await requestFeatureTypeChanges(input))[0]).toMatchObject({nodeId: 0, featureName: "Age (years)", type: "categorical", response});
   const [sources, nodes, getFilters] = filterDiscoveryDatasets.mock.calls[0];
   expect(sources).toEqual([{...source, featureTypes: {Flag: "categorical", "Age (years)": "categorical"}}]);
   expect(nodes).toBe(input.nodes);
@@ -21,26 +21,26 @@ it("uses the exact column and site, preserving earlier overrides without mutatin
 
 it("keeps dates as dates when restoring their numerical interpretation", async () => {
   filterDiscoveryDatasets.mockResolvedValue([{dateFeatures: [{featureName: "Age (years)"}]}]);
-  const input = options(); input.entry = {...entry, type: "categorical"};
-  expect(await requestFeatureTypeChange(input)).toMatchObject({type: "continuous"});
+  const input = options(); input.entries = [{...entry, type: "categorical"}]; input.targetType = "continuous";
+  expect((await requestFeatureTypeChanges(input))[0]).toMatchObject({type: "continuous"});
 });
 
 it("respects an explicit source identity even if older display labels collide", async () => {
   const input=options();
-  input.entry={...entry,nodeId:2};
-  input.statistics={continuousFeatures:[entry,input.entry]};
+  input.entries=[{...entry,nodeId:2}];
+  input.statistics={continuousFeatures:[entry,...input.entries]};
   filterDiscoveryDatasets.mockResolvedValue([{categoricalFeatures:[{featureName:'Age (years)'}]}]);
-  expect(await requestFeatureTypeChange(input)).toMatchObject({nodeId:2});
+  expect((await requestFeatureTypeChanges(input))[0]).toMatchObject({nodeId:2});
   expect(filterDiscoveryDatasets.mock.calls[0][0][0].nodeId).toBe(2);
 });
 
 it("rejects ambiguous sites, pooled columns, withheld results and wrong-type responses", async () => {
-  await expect(requestFeatureTypeChange({...options(), entry: {...entry, pooled: true}})).rejects.toThrow("individual");
-  await expect(requestFeatureTypeChange({...options(), entry: {featureName: "Unknown", fileName: "same.csv"}})).rejects.toThrow("unambiguous");
+  await expect(requestFeatureTypeChanges({...options(), entries: [{...entry, pooled: true}]})).rejects.toThrow("individual");
+  await expect(requestFeatureTypeChanges({...options(), entries: [{featureName: "Unknown", fileName: "same.csv"}]})).rejects.toThrow("unambiguous");
   filterDiscoveryDatasets.mockResolvedValue([{categoricalFeatures: []}]);
-  await expect(requestFeatureTypeChange(options())).rejects.toThrow("withheld");
+  await expect(requestFeatureTypeChanges(options())).rejects.toThrow("withheld");
   filterDiscoveryDatasets.mockResolvedValue([{continuousFeatures: [{featureName: "Age (years)"}]}]);
-  await expect(requestFeatureTypeChange(options())).rejects.toThrow("requested");
+  await expect(requestFeatureTypeChanges(options())).rejects.toThrow("requested");
 });
 
 it("preserves hidden columns across type changes without hiding another site's same-named column", () => {
@@ -59,4 +59,22 @@ it("preserves hidden columns across type changes without hiding another site's s
   const removed = reconcileFeatureVisibility(next, result, disabled, reconciled.hidden);
   const reenabled = reconcileFeatureVisibility(disabled, disabled, next, removed.hidden);
   expect(reenabled.statistics.categoricalFeatures).toEqual([]);
+});
+
+
+it("batches selected columns into one dataset refresh, retaining existing overrides", async () => {
+  const second = {...entry, featureName:"Score", originalName:"Score"};
+  const response = {categoricalFeatures:[{featureName:"Age (years)"},{featureName:"Score"}]};
+  filterDiscoveryDatasets.mockResolvedValue([response]);
+  const input={...options(),entries:[entry,second,entry],statistics:{continuousFeatures:[entry,second]}};
+  const result=await requestFeatureTypeChanges(input);
+  expect(filterDiscoveryDatasets).toHaveBeenCalledTimes(1);
+  expect(filterDiscoveryDatasets.mock.calls[0][0]).toEqual([{...source,featureTypes:{Flag:"categorical","Age (years)":"categorical",Score:"categorical"}}]);
+  expect(result).toHaveLength(2);
+  expect(result.every(change=>change.response===response)).toBe(true);
+});
+
+it("rejects the complete batch when any requested conversion is absent", async () => {
+  filterDiscoveryDatasets.mockResolvedValue([{categoricalFeatures:[{featureName:"Age (years)"}]}]);
+  await expect(requestFeatureTypeChanges({...options(),entries:[entry,{...entry,featureName:"Score",originalName:"Score"}]})).rejects.toThrow("withheld");
 });

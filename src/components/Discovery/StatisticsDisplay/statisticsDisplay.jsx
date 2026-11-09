@@ -7,6 +7,7 @@ import StatisticsDisplayStyles from "./statisticsDisplay.module.css";
 import ChartPreview from "../ChartPreview/chartPreview";
 import { sourceLabel } from "../CombinedStatistics/combinedStatistics";
 import { sourceFilter } from "../FilterModal/appliedFilters";
+import { isFeatureSelected } from "../featureSelection";
 import { formatCategoryPercent } from "../discoveryStatistics";
 
 const ContinuousOverviewChart = React.memo(function ContinuousOverviewChart({
@@ -17,8 +18,8 @@ const ContinuousOverviewChart = React.memo(function ContinuousOverviewChart({
   onPreview,
   filterDescription,
 }) {
-  const handleClick = useCallback(() => {
-    onSelect({ type: "continuous", featureName: feature.featureName });
+  const handleClick = useCallback((event) => {
+    onSelect({ type: "continuous", featureName: feature.featureName }, event);
   }, [feature.featureName, onSelect]);
   const handleDoubleClick = useCallback(() => {
     onPreview("continuous", feature, showOutliers);
@@ -44,8 +45,8 @@ const CategoricalOverviewChart = React.memo(function CategoricalOverviewChart({
   onPreview,
   filterDescription,
 }) {
-  const handleClick = useCallback(() => {
-    onSelect({ type: "categorical", featureName: feature.featureName });
+  const handleClick = useCallback((event) => {
+    onSelect({ type: "categorical", featureName: feature.featureName }, event);
   }, [feature.featureName, onSelect]);
   const handleDoubleClick = useCallback(() => {
     onPreview("categorical", feature, false);
@@ -71,8 +72,8 @@ const DateOverviewChart = React.memo(function DateOverviewChart({
   onPreview,
   filterDescription,
 }) {
-  const handleClick = useCallback(() => {
-    onSelect({ type: "continuous", featureName: feature.featureName });
+  const handleClick = useCallback((event) => {
+    onSelect({ type: "continuous", featureName: feature.featureName }, event);
   }, [feature.featureName, onSelect]);
   const handleDoubleClick = useCallback(() => {
     onPreview("date", feature, showOutliers);
@@ -93,7 +94,7 @@ const DateOverviewChart = React.memo(function DateOverviewChart({
 
 // Display for individual statistics, contains tables and graphs
 const StatisticsDisplay = React.memo(
-  ({ data, tableData = data, numericalTableActions, categoricalTableActions, combinedTables = false, showOutliers, setSelectedEntry, selectedEntry, featureFilters, appliedFilters }) => {
+  ({ data, tableData = data, numericalTableActions, categoricalTableActions, combinedTables = false, showOutliers, onSelectFeature, selectedEntries = [], selectedSourceFeatures = selectedEntries, featureFilters, appliedFilters }) => {
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [previewContent, setPreviewContent] = useState(null);
     const rowTitles = useMemo(() => Object.fromEntries(["continuousFeatures", "categoricalFeatures", "dateFeatures"].flatMap(key => (tableData[key] || [])
@@ -205,10 +206,10 @@ const StatisticsDisplay = React.memo(
       return table;
     }, [tableData, combinedTables, formatMissingEntries]);
 
-    const selectTableRow = useCallback(entry => {
+    const selectTableRow = useCallback((entry, event) => {
       const feature = [...tableData.continuousFeatures, ...tableData.categoricalFeatures, ...(tableData.dateFeatures || [])].find(f => f.featureName === entry.featureName);
-      setSelectedEntry(feature?.pooled ? { ...entry, pooled: true } : entry);
-    }, [tableData, setSelectedEntry]);
+      onSelectFeature(feature?.pooled ? { ...entry, pooled: true } : entry, event);
+    }, [tableData, onSelectFeature]);
 
     const handleChartDoubleClick = useCallback((chartType, feature, previewShowOutliers) => {
       if (window.innerWidth < 768) return;
@@ -255,7 +256,7 @@ const StatisticsDisplay = React.memo(
             <EntrySearch
               resultData={continuousDataForTable}
               onRowSelect={selectTableRow}
-              selectedEntry={selectedEntry}
+              selectedEntries={selectedEntries}
               type="continuous"
               actions={numericalTableActions}
               rowTitles={rowTitles}
@@ -266,7 +267,7 @@ const StatisticsDisplay = React.memo(
             <EntrySearch
               resultData={categoricalDataForTable}
               onRowSelect={selectTableRow}
-              selectedEntry={selectedEntry}
+              selectedEntries={selectedEntries}
               type="categorical"
               actions={categoricalTableActions}
               rowTitles={rowTitles}
@@ -280,12 +281,11 @@ const StatisticsDisplay = React.memo(
             key={`continuous-${feature.featureName}`}
             feature={feature}
             showOutliers={showOutliers}
-            onSelect={setSelectedEntry}
+            onSelect={onSelectFeature}
             onPreview={handleChartDoubleClick}
             filterDescription={sourceFilter(appliedFilters, feature)}
             isSelected={
-              selectedEntry?.type === "continuous" &&
-              selectedEntry?.featureName === feature.featureName
+              isFeatureSelected(selectedSourceFeatures, feature.featureName, "continuous")
             }
           />
         ))}
@@ -294,12 +294,11 @@ const StatisticsDisplay = React.memo(
           <CategoricalOverviewChart
             key={`categorical-${feature.featureName}`}
             feature={feature}
-            onSelect={setSelectedEntry}
+            onSelect={onSelectFeature}
             onPreview={handleChartDoubleClick}
             filterDescription={sourceFilter(appliedFilters, feature)}
             isSelected={
-              selectedEntry?.type === "categorical" &&
-              selectedEntry?.featureName === feature.featureName
+              isFeatureSelected(selectedSourceFeatures, feature.featureName, "categorical")
             }
           />
         ))}
@@ -309,12 +308,11 @@ const StatisticsDisplay = React.memo(
             key={`date-${feature.featureName}`}
             feature={feature}
             showOutliers={showOutliers}
-            onSelect={setSelectedEntry}
+            onSelect={onSelectFeature}
             onPreview={handleChartDoubleClick}
             filterDescription={sourceFilter(appliedFilters, feature)}
             isSelected={
-              selectedEntry?.type === "continuous" &&
-              selectedEntry?.featureName === feature.featureName
+              isFeatureSelected(selectedSourceFeatures, feature.featureName, "continuous")
             }
           />
         ))}

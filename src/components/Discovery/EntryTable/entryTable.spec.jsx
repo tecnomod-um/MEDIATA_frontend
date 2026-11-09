@@ -29,14 +29,14 @@ describe("<EntryTable />", () => {
     render(<EntryTable filteredLists={{ Name: ['Age'], Count: ['54'] }} minCellWidth={50} type="continuous" onRowSelect={select} rowFilters={{ Age: 'cluster (= 1)' }} />);
     expect(screen.getByRole('img', { name: 'Filtered records: cluster (= 1)' })).toHaveTextContent('*');
     fireEvent.click(screen.getByText('Age'));
-    expect(select).toHaveBeenCalledWith({ featureName: 'Age', type: 'continuous' });
+    expect(select).toHaveBeenCalledWith({ featureName: 'Age', type: 'continuous' }, expect.any(Object));
   });
   const filteredLists = {
     Name: ["foo", "bar"],
     Age: ["10", "20"],
   };
   const type = "myType";
-  const selectedEntry = { featureName: "foo", type };
+  const selectedEntries = [{ featureName: "foo", type }];
 
   it("renders exactly 2 data rows + 6 filler rows (8 total)", () => {
     const onRowSelect = vi.fn();
@@ -45,7 +45,7 @@ describe("<EntryTable />", () => {
         filteredLists={filteredLists}
         minCellWidth={50}
         onRowSelect={onRowSelect}
-        selectedEntry={selectedEntry}
+        selectedEntries={selectedEntries}
         type={type}
       />
     );
@@ -81,7 +81,7 @@ describe("<EntryTable />", () => {
         filteredLists={filteredLists}
         minCellWidth={50}
         onRowSelect={onRowSelect}
-        selectedEntry={selectedEntry}
+        selectedEntries={selectedEntries}
         type={type}
       />
     );
@@ -91,7 +91,7 @@ describe("<EntryTable />", () => {
     const bodyRows = within(tbody).getAllByRole("row");
     fireEvent.click(bodyRows[1]);
 
-    expect(onRowSelect).toHaveBeenCalledWith({ featureName: "bar", type: "myType" });
+    expect(onRowSelect).toHaveBeenCalledWith({ featureName: "bar", type: "myType" }, expect.any(Object));
   });
 
   it("marks only the selected row with selectedRow class", () => {
@@ -101,7 +101,7 @@ describe("<EntryTable />", () => {
         filteredLists={filteredLists}
         minCellWidth={50}
         onRowSelect={onRowSelect}
-        selectedEntry={selectedEntry}
+        selectedEntries={selectedEntries}
         type={type}
       />
     );
@@ -121,7 +121,7 @@ describe("<EntryTable />", () => {
         filteredLists={filteredLists}
         minCellWidth={50}
         onRowSelect={onRowSelect}
-        selectedEntry={selectedEntry}
+        selectedEntries={selectedEntries}
         type={type}
       />
     );
@@ -146,7 +146,7 @@ describe("<EntryTable />", () => {
         filteredLists={filteredLists}
         minCellWidth={50}
         onRowSelect={onRowSelect}
-        selectedEntry={selectedEntry}
+        selectedEntries={selectedEntries}
         type={type}
       />
     );
@@ -156,7 +156,7 @@ describe("<EntryTable />", () => {
     const bodyRows = within(tbody).getAllByRole("row");
 
     fireEvent.keyDown(bodyRows[1], { key: 'Enter' });
-    expect(onRowSelect).toHaveBeenCalledWith({ featureName: "bar", type: "myType" });
+    expect(onRowSelect).toHaveBeenCalledWith({ featureName: "bar", type: "myType" }, expect.any(Object));
   });
 
   it("handles keyboard navigation with Space key", () => {
@@ -166,7 +166,7 @@ describe("<EntryTable />", () => {
         filteredLists={filteredLists}
         minCellWidth={50}
         onRowSelect={onRowSelect}
-        selectedEntry={selectedEntry}
+        selectedEntries={selectedEntries}
         type={type}
       />
     );
@@ -176,7 +176,7 @@ describe("<EntryTable />", () => {
     const bodyRows = within(tbody).getAllByRole("row");
 
     fireEvent.keyDown(bodyRows[0], { key: ' ' });
-    expect(onRowSelect).toHaveBeenCalledWith({ featureName: "foo", type: "myType" });
+    expect(onRowSelect).toHaveBeenCalledWith({ featureName: "foo", type: "myType" }, expect.any(Object));
   });
 
   it("ignores other key presses", () => {
@@ -186,7 +186,7 @@ describe("<EntryTable />", () => {
         filteredLists={filteredLists}
         minCellWidth={50}
         onRowSelect={onRowSelect}
-        selectedEntry={selectedEntry}
+        selectedEntries={selectedEntries}
         type={type}
       />
     );
@@ -206,7 +206,7 @@ describe("<EntryTable />", () => {
         filteredLists={{}}
         minCellWidth={50}
         onRowSelect={onRowSelect}
-        selectedEntry={null}
+        selectedEntries={[]}
         type={type}
       />
     );
@@ -222,7 +222,7 @@ describe("<EntryTable />", () => {
         filteredLists={null}
         minCellWidth={50}
         onRowSelect={onRowSelect}
-        selectedEntry={null}
+        selectedEntries={[]}
         type={type}
       />
     );
@@ -238,7 +238,7 @@ describe("<EntryTable />", () => {
         filteredLists={undefined}
         minCellWidth={50}
         onRowSelect={onRowSelect}
-        selectedEntry={null}
+        selectedEntries={[]}
         type={type}
       />
     );
@@ -258,7 +258,7 @@ describe("<EntryTable />", () => {
         filteredLists={largeLists}
         minCellWidth={50}
         onRowSelect={onRowSelect}
-        selectedEntry={null}
+        selectedEntries={[]}
         type={type}
       />
     );
@@ -270,14 +270,14 @@ describe("<EntryTable />", () => {
     expect(bodyRows.length).toBeGreaterThanOrEqual(8);
   });
 
-  it("does not mark any row as selected when selectedEntry is null", () => {
+  it("does not mark any row as selected when selectedEntries is null", () => {
     const onRowSelect = vi.fn();
     render(
       <EntryTable
         filteredLists={filteredLists}
         minCellWidth={50}
         onRowSelect={onRowSelect}
-        selectedEntry={null}
+        selectedEntries={[]}
         type={type}
       />
     );
@@ -299,7 +299,7 @@ describe("<EntryTable />", () => {
         filteredLists={filteredLists}
         minCellWidth={50}
         onRowSelect={onRowSelect}
-        selectedEntry={differentTypeEntry}
+        selectedEntries={[differentTypeEntry]}
         type={type}
       />
     );
@@ -318,7 +318,7 @@ describe("<EntryTable />", () => {
         filteredLists={filteredLists}
         minCellWidth={50}
         onRowSelect={onRowSelect}
-        selectedEntry={selectedEntry}
+        selectedEntries={selectedEntries}
         type={type}
       />
     );
@@ -338,7 +338,7 @@ describe("<EntryTable />", () => {
         filteredLists={filteredLists}
         minCellWidth={50}
         onRowSelect={onRowSelect}
-        selectedEntry={selectedEntry}
+        selectedEntries={selectedEntries}
         type={type}
       />
     );
@@ -359,7 +359,7 @@ describe("<EntryTable />", () => {
         filteredLists={filteredLists}
         minCellWidth={50}
         onRowSelect={onRowSelect}
-        selectedEntry={selectedEntry}
+        selectedEntries={selectedEntries}
         type={type}
       />
     );
@@ -375,7 +375,7 @@ describe("<EntryTable />", () => {
         filteredLists={filteredLists}
         minCellWidth={50}
         onRowSelect={onRowSelect}
-        selectedEntry={selectedEntry}
+        selectedEntries={selectedEntries}
         type={type}
       />
     );
@@ -398,7 +398,7 @@ describe("<EntryTable />", () => {
         filteredLists={filteredLists}
         minCellWidth={50}
         onRowSelect={onRowSelect}
-        selectedEntry={selectedEntry}
+        selectedEntries={selectedEntries}
         type={type}
       />
     );
@@ -415,7 +415,7 @@ describe("<EntryTable />", () => {
         filteredLists={filteredLists}
         minCellWidth={50}
         onRowSelect={onRowSelect}
-        selectedEntry={differentEntry}
+        selectedEntries={[differentEntry]}
         type={type}
       />
     );
@@ -435,7 +435,7 @@ describe("<EntryTable />", () => {
         filteredLists={filteredLists}
         minCellWidth={50}
         onRowSelect={onRowSelect}
-        selectedEntry={selectedEntry}
+        selectedEntries={selectedEntries}
         type={type}
       />
     );
@@ -467,7 +467,7 @@ describe("<EntryTable />", () => {
         filteredLists={filteredLists}
         minCellWidth={50}
         onRowSelect={onRowSelect}
-        selectedEntry={selectedEntry}
+        selectedEntries={selectedEntries}
         type={type}
       />
     );

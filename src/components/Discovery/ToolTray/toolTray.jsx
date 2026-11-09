@@ -6,7 +6,7 @@ import ToolTrayStyles from "./toolTray.module.css";
 import DataExporter from "../DataExporter/dataExporter";
 import ElementExporter from "../ElementExporter/elementExporter";
 import CompareFilesModal from "../CompareFilesModal/compareFilesModal";
-import { requestFeatureTypeChange } from "../featureTypeChanges";
+import { requestFeatureTypeChanges } from "../featureTypeChanges";
 import { useNode } from "../../../context/nodeContext";
 import FilterIndicator from "../FilterModal/filterIndicator";
 import { sourceFilter } from "../FilterModal/appliedFilters";
@@ -70,28 +70,39 @@ const FeatureToggle = React.memo(function FeatureToggle({ entry, checked, onTogg
 });
 
 // Sidebar holding all the discovery view controls
-function ToolTray({ refreshControllerRef, data, filteredData, setFilteredData, showOutliers, setShowOutliers, isToolTrayOpen, toggleToolTray, selectedEntry, setSelectedEntry, filters, toggleFilters, dataResults = [], activeFileIndices = [], toggleFileActive, showIndividualView, toggleView, isCombining = false, onFeatureRecalculated, onTypeChanging, statisticsExport, relationshipExport, appliedFilters, featureFilters }) {
+function ToolTray({ refreshControllerRef, data, filteredData, setFilteredData, showOutliers, setShowOutliers, isToolTrayOpen, toggleToolTray, selectedEntries = [], selectedSourceFeatures = selectedEntries, filters, toggleFilters, dataResults = [], activeFileIndices = [], toggleFileActive, showIndividualView, toggleView, isCombining = false, onFeatureRecalculated, onTypeChanging, statisticsExport, relationshipExport, appliedFilters, featureFilters }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const controlsId = useId();
   const { selectedNodes } = useNode();
+  const selectedEntry = selectedEntries.length === 1 ? selectedEntries[0] : null;
+  const selectionNames = [...new Set(selectedEntries.map(entry => entry.originalName || entry.featureName))].join(", ");
+  const selectionTitle = selectedEntries.map(entry => `${entry.originalName || entry.featureName}${entry.fileName ? ` (${entry.nodeName || ""} / ${entry.fileName})` : ""}`).join("\n");
   const selectedSourceName = selectedEntry?.nodeName || dataResults.find(source =>
     String(source.nodeId) === String(selectedEntry?.nodeId) && source.fileName === selectedEntry?.fileName
   )?.nodeName;
+  const selectionType = selectedSourceFeatures.every(entry => entry.type === "categorical") ? "categorical"
+    : selectedSourceFeatures.every(entry => entry.type !== "categorical") ? "continuous" : "mixed";
+  const targetType = selectionType === "categorical" ? "continuous" : "categorical";
+  const hasCombinedSelection = selectedEntries.some(entry => entry.pooled);
+  const sourceDetails = hasCombinedSelection ? selectedEntries.flatMap(entry => entry.pooled
+    ? (entry.combinedSummary?.contributions || []).map(part => ({...part.source, originalName: part.columnName}))
+    : [entry]) : selectedSourceFeatures;
+  const combinedSources = [...new Set(sourceDetails.map(entry =>
+    `${entry.nodeName ? `${entry.nodeName} / ` : ""}${entry.fileName}`))];
+  const combinedDetails = sourceDetails.map(entry => `${entry.originalName || entry.featureName}: ${entry.nodeName || ""} / ${entry.fileName}`).join("\n");
+  const combinedSites = [...new Set(sourceDetails.map(entry => entry.nodeName).filter(Boolean))];
   const hasDatasetFilters = (Array.isArray(filters) ? filters.length > 0 : Object.values(filters || {}).some(value => value?.length));
 
   const toggleFeatureType = async () => {
-    if (!selectedEntry || isLoading || isCombining || hasDatasetFilters || selectedEntry.pooled) return;
+    if (!selectedSourceFeatures.length || isLoading || isCombining || hasDatasetFilters) return;
     setIsLoading(true);
     onTypeChanging?.(true);
     try {
-      const change = await requestFeatureTypeChange({entry: selectedEntry, statistics: data, sources: dataResults, nodes: selectedNodes, signal: refreshControllerRef?.current?.signal});
+      const changes = await requestFeatureTypeChanges({entries: selectedSourceFeatures, targetType, statistics: data, sources: dataResults, nodes: selectedNodes, signal: refreshControllerRef?.current?.signal});
       if (!onFeatureRecalculated) throw new Error("Feature type updates are unavailable in this view.");
-      onFeatureRecalculated(change);
-      setSelectedEntry(current => current?.featureName === selectedEntry.featureName
-        ? {...current, nodeId: change.nodeId, fileName: change.fileName, originalName: change.featureName, type: change.type}
-        : current);
+      onFeatureRecalculated(changes);
     } catch (error) {
       toast.error("Feature recalculation failed: " + error.message);
     } finally {
@@ -178,31 +189,38 @@ function ToolTray({ refreshControllerRef, data, filteredData, setFilteredData, s
       <div id={controlsId} className={ToolTrayStyles.scrollContent} role="region" aria-label="Sidebar content" tabIndex={0} inert={isToolTrayOpen ? undefined : ""} aria-hidden={!isToolTrayOpen}>
 
       <div className={ToolTrayStyles.topSection}>
-        {selectedEntry && selectedEntry.featureName ? (
+        {selectedEntries.length > 0 ? (
           <>
-            <h3 title={selectedEntry.featureName}>{selectedEntry.originalName || selectedEntry.featureName}<FilterIndicator description={featureFilters?.[selectedEntry.featureName] || sourceFilter(appliedFilters, selectedEntry)} /></h3>
-            {selectedEntry.fileName && <small className={ToolTrayStyles.selectedSource} title={`${selectedSourceName ? `${selectedSourceName} / ` : ""}${selectedEntry.fileName}`}>{selectedSourceName ? `${selectedSourceName} / ` : ""}{selectedEntry.fileName}</small>}
+            <h3 title={selectionTitle}>{selectionNames}<FilterIndicator description={selectedEntries.map(entry => featureFilters?.[entry.featureName] || sourceFilter(appliedFilters, entry)).filter(Boolean).join("; ")} /></h3>
+            {hasCombinedSelection ? <small className={ToolTrayStyles.combinedSources} title={combinedDetails}>
+              {combinedSites.length ? `${combinedSites.join(" ↔ ")} · ${combinedSources.length} datasets` : combinedSources.join(" ↔ ")}
+            </small> : <>
+            <small className={ToolTrayStyles.selectedSource} title={selectionTitle}>
+              {selectedEntry?.fileName ? `${selectedSourceName ? `${selectedSourceName} / ` : ""}${selectedEntry.fileName}`
+                : `${selectedSourceFeatures.length} features · ${combinedSources.length} dataset${combinedSources.length === 1 ? "" : "s"}`}
+            </small>
             <button
               className={`${ToolTrayStyles.toggleFeatureTypeButton} ${isLoading ? ToolTrayStyles.loading : ""
                 }`}
               onClick={toggleFeatureType}
               type="button"
-              disabled={isLoading || isCombining || hasDatasetFilters || selectedEntry.pooled}
-              title={selectedEntry.pooled ? "Select an individual dataset column to change its type" : hasDatasetFilters ? "Clear dataset filters before changing variable types" : `${selectedEntry.type === "categorical" ? "Categorical" : "Continuous"} · switch to ${selectedEntry.type === "categorical" ? "continuous" : "categorical"}`}
-              aria-label="Toggle the selected feature's type between categorical and continuous"
+              disabled={isLoading || isCombining || hasDatasetFilters || !selectedSourceFeatures.length}
+              title={hasDatasetFilters ? "Clear dataset filters before changing variable types" : `Set ${selectedSourceFeatures.length} selected feature${selectedSourceFeatures.length === 1 ? "" : "s"} to ${targetType}`}
+              aria-label={selectedEntries.length === 1 ? "Toggle the selected feature's type between categorical and continuous" : `Set selected features to ${targetType}`}
               aria-busy={isLoading}
             >
               {isLoading ? (
                 <div className={ToolTrayStyles.spinner} role="progressbar" aria-label="Recalculating feature statistics"></div>
               ) : (
                 <>
-                  <span className={ToolTrayStyles.entryType} aria-label={selectedEntry.type === "categorical" ? "Categorical" : "Continuous"}>
-                    {selectedEntry.type === "categorical" ? "Categorical" : "Continuous"}
+                  <span className={ToolTrayStyles.entryType} aria-label={selectionType === "categorical" ? "Categorical" : selectionType === "mixed" ? "Mixed types" : "Continuous"}>
+                    {selectionType === "categorical" ? "Categorical" : selectionType === "mixed" ? "Mixed types" : "Continuous"}
                   </span>
                   <MdSync className={ToolTrayStyles.iconSpin} aria-hidden="true" />
                 </>
               )}
             </button>
+            </>}
           </>
         ) : (
           <h3 className={ToolTrayStyles.emptySelection}>No entry selected</h3>

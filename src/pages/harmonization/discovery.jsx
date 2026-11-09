@@ -23,6 +23,7 @@ import LinearProgress from "@mui/material/LinearProgress";
 import { useNode } from "../../context/nodeContext";
 import { collectDiscoveryStatistics, updateSourceFeature } from "../../components/Discovery/discoveryStatistics";
 import { reconcileFeatureVisibility } from "../../components/Discovery/featureTypeChanges";
+import { reconcileFeatureSelection, toggleFeatureSelection, sourceFeatureSelection, selectableFeatures } from "../../components/Discovery/featureSelection";
 
 // Discovery page for data profiling and statistics visualization
 function Discovery() {
@@ -42,7 +43,7 @@ function Discovery() {
   const hiddenFeaturesRef = useRef(new Set());
   const [showOutliers, setShowOutliers] = useState(false);
   const [isToolTrayOpen, setIsToolTrayOpen] = useState(() => window.innerWidth > 768);
-  const [selectedEntry, setSelectedEntry] = useState(null);
+  const [selectedEntries, setSelectedEntries] = useState([]);
   const [isFiltersOpen, setIsFiltersopen] = useState(false);
   const [filters, setFilters] = useState([]);
 
@@ -292,7 +293,7 @@ function Discovery() {
   const handleFilesOpened = useCallback((allResults) => {
     previousStatisticsRef.current = null;
     hiddenFeaturesRef.current = new Set();
-    setSelectedEntry(null);
+    setSelectedEntries([]);
     baselineResultsRef.current = allResults;
     setFilters([]);
     setFilterLogic({ operators: {}, operator: "AND", matchColumns: true });
@@ -301,15 +302,8 @@ function Discovery() {
     setActiveFileIndices(allResults.map(() => true));
   }, []);
 
-  const selectFeature = useCallback((entry) => {
-    const feature = ["continuousFeatures", "categoricalFeatures", "dateFeatures"]
-      .flatMap(key => filteredDataStatistics?.[key] || [])
-      .find(item => item.featureName === entry?.featureName);
-    setSelectedEntry(feature ? { ...entry, nodeId: feature.nodeId, fileName: feature.fileName, originalName: feature.originalName } : entry);
-  }, [filteredDataStatistics]);
-
-  const updateFeatureType = ({ nodeId, fileName, featureName, response }) => {
-    const update = source => updateSourceFeature(source, { nodeId, fileName, featureName, response });
+  const updateFeatureTypes = changes => {
+    const update = source => changes.reduce((current, change) => updateSourceFeature(current, change), source);
     baselineResultsRef.current = baselineResultsRef.current.map(update);
     setDataResults(previous => previous.map(update));
   };
@@ -336,13 +330,15 @@ function Discovery() {
       cohort: combinedFilter(appliedFilters, feature.contributions.map(part => part.source)) || "All records"})),
     cohort: filterSummary(filters, filterLogic),
   } : undefined, [combinedTablesActive, tableStatistics, filters, filterLogic, appliedFilters]);
+  const selectFeature = useCallback((entry, event) => {
+    const feature = selectableFeatures(entry.pooled ? tableStatistics : filteredDataStatistics)
+      .find(feature => feature.featureName === entry.featureName);
+    if (feature) setSelectedEntries(previous => toggleFeatureSelection(previous, feature, !!(event?.ctrlKey || event?.metaKey)));
+  }, [tableStatistics, filteredDataStatistics]);
   useEffect(() => {
-    if (selectedEntry?.pooled && !["continuousFeatures", "categoricalFeatures", "dateFeatures"].some(key => tableStatistics?.[key]?.some(f => f.pooled && f.featureName === selectedEntry.featureName))) setSelectedEntry(null);
-  }, [tableStatistics, selectedEntry]);
-  useEffect(() => {
-    if (selectedEntry && !selectedEntry.pooled && !["continuousFeatures", "categoricalFeatures", "dateFeatures"]
-      .some(key => dataStatistics?.[key]?.some(feature => feature.featureName === selectedEntry.featureName))) setSelectedEntry(null);
-  }, [dataStatistics, selectedEntry]);
+    setSelectedEntries(previous => reconcileFeatureSelection(previous, filteredDataStatistics, tableStatistics));
+  }, [filteredDataStatistics, tableStatistics]);
+  const selectedSourceFeatures = useMemo(() => sourceFeatureSelection(selectedEntries, filteredDataStatistics), [selectedEntries, filteredDataStatistics]);
 
   const applyColumnMappings = async next => {
     const invalid = validateColumnMappings(next, baselineResultsRef.current);
@@ -388,6 +384,7 @@ function Discovery() {
         setFilterLogic={setFilterLogic}
         onFilteringChange={setIsCombining}
         columnMappings={columnMappings}
+        selectedEntries={selectedSourceFeatures}
       />
       {mappingDialogOpen && <ColumnMappingsDialog open mappings={columnMappings} sources={baselineResultsRef.current}
         appliedFilters={appliedFilters} onClose={() => setMappingDialogOpen(false)} onApply={applyColumnMappings} />}
@@ -422,8 +419,8 @@ function Discovery() {
           setShowOutliers={setShowOutliers}
           isToolTrayOpen={isToolTrayOpen}
           toggleToolTray={toggleToolTray}
-          selectedEntry={selectedEntry}
-          setSelectedEntry={setSelectedEntry}
+          selectedEntries={selectedEntries}
+          selectedSourceFeatures={selectedSourceFeatures}
           filters={filters}
           toggleFilters={toggleFilters}
           showIndividualView={showIndividualView}
@@ -433,7 +430,7 @@ function Discovery() {
           relationshipExport={showIndividualView ? undefined : { data: relationshipStatistics, featureFilters: relationshipFilters, appliedFilters }}
           appliedFilters={appliedFilters}
           featureFilters={featureFilters}
-          onFeatureRecalculated={updateFeatureType}
+          onFeatureRecalculated={updateFeatureTypes}
           onTypeChanging={setIsCombining}
           dataResults={dataResults}
           activeFileIndices={activeFileIndices}
@@ -481,8 +478,9 @@ function Discovery() {
                     numericalTableActions={tableActions("Numerical")}
                     categoricalTableActions={tableActions("Categorical")}
                     showOutliers={showOutliers}
-                    setSelectedEntry={selectFeature}
-                    selectedEntry={selectedEntry}
+                    onSelectFeature={selectFeature}
+                    selectedEntries={selectedEntries}
+                    selectedSourceFeatures={selectedSourceFeatures}
                   />
                 </div>
               </CSSTransition>

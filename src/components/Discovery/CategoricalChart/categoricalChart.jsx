@@ -140,9 +140,10 @@ const CategoricalChart = React.memo(
         onClick={onClick}
         onDoubleClick={onDoubleClick}
         role="button"
+        aria-pressed={!!isSelected}
         tabIndex={0}
         aria-label={`Chart for ${feature.featureName}`}
-        title={filterDescription ? `Filtered records: ${filterDescription}` : undefined}
+        title={[onClick && "Ctrl/Cmd-click to select multiple features", filterDescription && `Filtered records: ${filterDescription}`].filter(Boolean).join("\n") || undefined}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();

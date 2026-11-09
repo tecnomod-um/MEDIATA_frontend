@@ -56,7 +56,7 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
 
   const chartOptions = useMemo(() => ({
     responsive: true,
-    maintainAspectRatio: true,
+    maintainAspectRatio: !isSelected,
     animation: true,
     scales: {
       x: {
@@ -97,7 +97,7 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
         radius: 0,
       },
     },
-  }), [dateData, dateDataKey, filterDescription]);
+  }), [dateData, dateDataKey, filterDescription, isSelected]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -122,7 +122,17 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
       className={`${DateChartStyles.chartContainer} ${isSelected ? DateChartStyles.selected : ""
         }`}
       onClick={onClick}
-      title={filterDescription ? `Filtered records: ${filterDescription}` : undefined}
+      role="button"
+      tabIndex={0}
+      aria-label={`Chart for ${dateDataKey}`}
+      aria-pressed={!!isSelected}
+      onKeyDown={event => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onClick?.(event);
+        }
+      }}
+      title={[onClick && "Ctrl/Cmd-click to select multiple features", filterDescription && `Filtered records: ${filterDescription}`].filter(Boolean).join("\n") || undefined}
       style={{ maxWidth: "100%" }}
       onDoubleClick={onDoubleClick}
     >
