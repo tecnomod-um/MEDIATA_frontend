@@ -2,6 +2,7 @@ import { isFeatureSelected } from "../featureSelection";
 import React, { useState, useCallback, useEffect, useLayoutEffect, useRef, useMemo } from "react";
 import EntryTableStyles from "./entryTable.module.css";
 import FilterIndicator from "../FilterModal/filterIndicator";
+import useFeatureSelectionGesture from "../useFeatureSelectionGesture";
 
 const statisticDescriptions = {
   Count: "Non-missing observations. Rows are counted; patients are not deduplicated across datasets.",
@@ -21,6 +22,9 @@ function getTableHeaders(filteredLists) {
 
 const Row = React.memo(
   ({ rowIndex, filteredLists, onRowClick, selectedEntries, type, rowTitles, rowFilters }) => {
+    const featureName = filteredLists.Name[rowIndex];
+    const selectRow = useCallback(event => onRowClick({ featureName, type }, event), [onRowClick, featureName, type]);
+    const selectionGesture = useFeatureSelectionGesture(selectRow);
     const isRowSelected =
       isFeatureSelected(selectedEntries || [], filteredLists["Name"][rowIndex], type);
     const rowClassName = `${EntryTableStyles.resTr} ${isRowSelected ? EntryTableStyles.selectedRow : ""
@@ -31,13 +35,8 @@ const Row = React.memo(
         data-feature-selection
         key={`row-${rowIndex}`}
         className={rowClassName}
-        title="Ctrl/Cmd-click to select multiple features"
-        onClick={(event) =>
-          onRowClick({
-            featureName: filteredLists["Name"][rowIndex],
-            type: type,
-          }, event)
-        }
+        title="Long press or Ctrl/Cmd-click to select multiple features"
+        {...selectionGesture}
         role="row"
         aria-selected={isRowSelected}
         tabIndex={0}

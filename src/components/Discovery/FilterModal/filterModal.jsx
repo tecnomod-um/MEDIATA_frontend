@@ -264,7 +264,7 @@ const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal,
   if (!availableStatistics) return null;
 
   return (
-    <OverlayWrapper isOpen={isOpen} closeModal={closeModal}>
+    <OverlayWrapper isOpen={isOpen} closeModal={closeModal} modalClassName={FilterModalStyles.dialogFrame}>
       <div className={FilterModalStyles.filterModal} role="dialog" aria-modal="true" aria-labelledby="filter-modal-title">
         <div className={FilterModalStyles.modalHeader}>
           <h3 id="filter-modal-title">Filter displayed data</h3>
@@ -282,7 +282,9 @@ const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal,
           className={selectedFeatures.length ? FilterModalStyles.formRow : FilterModalStyles.centeredRow}
         >
           <div className={FilterModalStyles.featureSelection}>
+            <label htmlFor="feature-select">Features</label>
             <Select
+              className={FilterModalStyles.featurePicker}
               isMulti
               closeMenuOnSelect={false}
               classNamePrefix="react-select"

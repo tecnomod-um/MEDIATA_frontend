@@ -14,6 +14,7 @@
 
 .filterBody { min-height: 0; overflow-y: auto; overflow-x: hidden; }
 .modalHeader, .buttonRow { flex-shrink: 0; }
+.dialogFrame { width: min(64rem, 80vw); min-width: 0; }
 
 .featureSelection .matchColumns {
   display: flex;
@@ -29,7 +30,7 @@
   cursor: pointer;
 }
 .matchColumns > :last-child { flex-shrink: 0; }
-.matchCount { display: block; margin-top: var(--space-1); color: var(--text-color-secondary); font-weight: normal; }
+.matchCount { display: block; margin-top: var(--space-1); color: inherit; opacity: .75; font-size: var(--font-size-xs); font-weight: normal; }
 
 .modalContent {
   transition: height 0.5s ease-in-out;
@@ -82,10 +83,10 @@
 
 .formRow {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: minmax(0, .85fr) minmax(0, 1.4fr);
   gap: var(--space-5);
   padding: var(--space-5);
-  align-items: center;
+  align-items: start;
 }
 
 .centeredRow {
@@ -100,20 +101,34 @@
 }
 
 .featureEditors:empty { display: none; }
-.featureEditor { min-width: 0; }
+.featureEditor { min-width: 0; container-type: inline-size; }
 .featureEditor h4 { margin: 0 0 var(--space-2); overflow-wrap: anywhere; }
 .featureEditor .filterCriteria { box-sizing: border-box; }
 
-@media (max-width: 600px) {
+@media (max-width: 680px) {
+  .dialogFrame { width: 94vw; max-width: 94vw; }
   .formRow { grid-template-columns: minmax(0, 1fr); }
-  .featureEditor .filterCriteria { grid-template-columns: 1fr !important; }
-  .featureSelection { min-width: 0; }
 }
 
 .featureSelection {
   width: 100%;
-  min-width: 250px;
+  min-width: 0;
 }
+
+.featureSelection > label:first-child { text-align: left; font-size: var(--font-size-sm); }
+.featurePicker { min-width: 0; max-width: 100%; }
+.featurePicker :global(.react-select__control) { width: 100%; align-items: flex-start; }
+.featurePicker :global(.react-select__value-container) {
+  display: flex;
+  flex-wrap: wrap;
+  min-width: 0;
+  max-height: 18rem;
+  overflow-y: auto;
+}
+.featurePicker :global(.react-select__multi-value) { min-width: 0; max-width: 100%; }
+.featurePicker :global(.react-select__multi-value__label) { white-space: normal; overflow-wrap: anywhere; }
+.featurePicker :global(.react-select__multi-value__remove),
+.featurePicker :global(.react-select__indicators) { flex-shrink: 0; }
 
 .filterCriteria {
   width: 100%;
@@ -123,6 +138,20 @@
   border-radius: var(--space-2);
   display: grid;
   align-items: center;
+}
+
+.filterCriteria > div { min-width: 0; }
+.filterCriteria > button { white-space: nowrap; min-width: 7rem; }
+.categoricalCriteria { grid-template-columns: minmax(0, 1fr) max-content; }
+.valueCriteria { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr) max-content; }
+.rangeCriteria { grid-template-columns: repeat(3, minmax(0, 1fr)) max-content; }
+@container (max-width: 28rem) {
+  .rangeCriteria, .valueCriteria { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .valueCriteria > button { grid-column: 1 / -1; justify-self: end; }
+}
+@container (max-width: 20rem) {
+  .categoricalCriteria, .rangeCriteria, .valueCriteria { grid-template-columns: minmax(0, 1fr); }
+  .filterCriteria > button { grid-column: 1; justify-self: end; }
 }
 
 .betweenFields,
@@ -374,10 +403,14 @@
   border-radius: var(--space-1);
   margin-right: 10px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   justify-content: center;
+  min-width: 0;
+  max-width: 45%;
+  overflow-wrap: anywhere;
   font-size: var(--font-size-base);
-  text-align: right;
+  text-align: left;
   box-shadow: var(--box-shadow-sm);
 }
 
