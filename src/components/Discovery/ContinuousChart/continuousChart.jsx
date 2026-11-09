@@ -2,6 +2,8 @@ import React, { useRef, useEffect, useMemo } from "react";
 import { Bar } from "react-chartjs-2";
 import ContinuousChartStyles from "./continuousChart.module.css";
 import { Chart as ChartJS, registerables } from "chart.js";
+import { distributionTitle } from "../discoveryStatistics";
+import { sourceLabel } from "../CombinedStatistics/combinedStatistics";
 
 ChartJS.register(...registerables);
 
@@ -62,7 +64,7 @@ const ContinuousChart = React.memo(
         },
         plugins: {
           legend: { display: false },
-          title: { display: true, text: `${feature.featureName}${filterDescription ? " *" : ""}` },
+          title: { display: true, text: distributionTitle(feature, filterDescription) },
           tooltip: {
             callbacks: {
               title: (tooltipItems) => {
@@ -74,7 +76,7 @@ const ContinuousChart = React.memo(
           },
         },
       }),
-      [feature.featureName, binRanges, filterDescription]
+      [feature, binRanges, filterDescription]
     );
 
     useEffect(() => {
@@ -98,7 +100,10 @@ const ContinuousChart = React.memo(
         role="button"
         tabIndex={0}
         aria-label={`Chart for ${feature.featureName}`}
-        title={filterDescription ? `Filtered records: ${filterDescription}` : undefined}
+        title={[
+          filterDescription && `Filtered records: ${filterDescription}`,
+          feature.histogramStatus === "COARSENED" && "Adjacent histogram ranges were combined to avoid small cells.",
+        ].filter(Boolean).join("\n") || undefined}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
@@ -106,7 +111,13 @@ const ContinuousChart = React.memo(
           }
         }}
       >
-        <Bar ref={chartRef} data={chartData} options={chartOptions} />
+        {histogram?.length ? <Bar ref={chartRef} data={chartData} options={chartOptions} /> : (
+          <div className={ContinuousChartStyles.unavailable}>
+            <strong>{feature.originalName || feature.featureName}{filterDescription ? " *" : ""}</strong>
+            {feature.fileName && <span>{sourceLabel(feature)}</span>}
+            <span role="status">Histogram unavailable for this cohort</span>
+          </div>
+        )}
       </div>
     );
   }

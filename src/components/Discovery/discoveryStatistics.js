@@ -22,6 +22,12 @@ export function formatCategoryPercent(frequency, count) {
   return percent == null ? "N/A" : `${percent.toFixed(2)}%`;
 }
 
+export function distributionTitle(feature, filterDescription, suffix = "") {
+  const name = `${feature.originalName || feature.featureName}${filterDescription ? " *" : ""}${suffix}`;
+  return feature.fileName && (feature.nodeName || feature.nodeId != null)
+    ? [name, sourceLabel(feature)] : name;
+}
+
 // Use the same source-qualified identities in tables, filters, charts and relationships.
 // Relationship blocks remain local to their dataset; they are never averaged or pooled.
 export function collectDiscoveryStatistics(results, activeIndices) {

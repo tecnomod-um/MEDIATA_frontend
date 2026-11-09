@@ -4,6 +4,7 @@ import "@testing-library/jest-dom";
 import { vi } from "vitest";
 import StatisticsDisplay from "./statisticsDisplay";
 import { combineMappedTableData } from "../CombinedStatistics/statisticsTableData";
+import { collectDiscoveryStatistics } from "../discoveryStatistics";
 import { createColumnMappings } from "../CombinedStatistics/columnMappings";
 
 it("feeds combined summaries into the existing two tables while keeping individual charts", () => {
@@ -24,6 +25,23 @@ it("feeds combined summaries into the existing two tables while keeping individu
   expect(screen.getByLabelText('Overview Continuous chart for Age (1)')).toBeInTheDocument();
 });
 
+it("keeps three same-named files and feature distributions attached to their own nodes", () => {
+  const sources = ['Alpha','Beta','Gamma'].map((nodeName,index) => ({
+    nodeId:index+1, nodeName, fileName:'patients.csv',
+    continuousFeatures:[{featureName:'Age',count:18,mean:index*20,stdDev:1,min:0,max:100,qrt1:10,median:20,qrt3:30,missingValuesCount:0,histogram:[6+index,12-index],binRanges:['[0,50)','[50,100]']}],
+    categoricalFeatures:[],dateFeatures:[],
+  }));
+  const data = collectDiscoveryStatistics(sources,[true,true,true]);
+  const select = vi.fn();
+  render(<StatisticsDisplay data={data} showOutliers setSelectedEntry={select} />);
+  for (const [index,node] of ['Alpha','Beta','Gamma'].entries()) {
+    const chart = screen.getByLabelText(`Overview Continuous chart for Age (patients.csv · ${node})`);
+    expect(JSON.parse(chart.getAttribute('data-histogram'))).toEqual([6+index,12-index]);
+    fireEvent.click(chart);
+    expect(select).toHaveBeenLastCalledWith({type:'continuous',featureName:`Age (patients.csv · ${node})`});
+  }
+});
+
 vi.mock("../ContinuousChart/continuousChart", () => ({
   __esModule: true,
   default: (props) => {
@@ -33,6 +51,7 @@ vi.mock("../ContinuousChart/continuousChart", () => ({
       <div
         role="figure"
         aria-label={`${scope}Continuous chart for ${props.feature.featureName}`}
+        data-histogram={JSON.stringify(props.feature.histogram)}
         data-feature={props.feature.featureName}
         data-selected={props.isSelected ? "true" : "false"}
         onClick={props.onClick}
