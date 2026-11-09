@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useState, useCallback, useEffect, useMemo, useRef, useReducer } from "react";
 import { useLocation } from "react-router-dom";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 import DiscoveryStyles from "./discovery.module.css";
@@ -23,7 +23,7 @@ import LinearProgress from "@mui/material/LinearProgress";
 import { useNode } from "../../context/nodeContext";
 import { collectDiscoveryStatistics, updateSourceFeature } from "../../components/Discovery/discoveryStatistics";
 import { reconcileFeatureVisibility } from "../../components/Discovery/featureTypeChanges";
-import { reconcileFeatureSelection, toggleFeatureSelection, sourceFeatureSelection, selectableFeatures } from "../../components/Discovery/featureSelection";
+import { featureSelectionReducer, sourceFeatureSelection, selectableFeatures } from "../../components/Discovery/featureSelection";
 
 // Discovery page for data profiling and statistics visualization
 function Discovery() {
@@ -43,7 +43,8 @@ function Discovery() {
   const hiddenFeaturesRef = useRef(new Set());
   const [showOutliers, setShowOutliers] = useState(false);
   const [isToolTrayOpen, setIsToolTrayOpen] = useState(() => window.innerWidth > 768);
-  const [selectedEntries, setSelectedEntries] = useState([]);
+  const [selection, dispatchSelection] = useReducer(featureSelectionReducer, {entries:[], additive:false});
+  const selectedEntries = selection.entries;
   const [isFiltersOpen, setIsFiltersopen] = useState(false);
   const [filters, setFilters] = useState([]);
 
@@ -293,7 +294,7 @@ function Discovery() {
   const handleFilesOpened = useCallback((allResults) => {
     previousStatisticsRef.current = null;
     hiddenFeaturesRef.current = new Set();
-    setSelectedEntries([]);
+    dispatchSelection({type:"clear"});
     baselineResultsRef.current = allResults;
     setFilters([]);
     setFilterLogic({ operators: {}, operator: "AND", matchColumns: true });
@@ -333,10 +334,10 @@ function Discovery() {
   const selectFeature = useCallback((entry, event) => {
     const feature = selectableFeatures(entry.pooled ? tableStatistics : filteredDataStatistics)
       .find(feature => feature.featureName === entry.featureName);
-    if (feature) setSelectedEntries(previous => toggleFeatureSelection(previous, feature, !!(event?.ctrlKey || event?.metaKey)));
+    if (feature) dispatchSelection({type:"select", entry:feature, additive:!!(event?.additive || event?.ctrlKey || event?.metaKey)});
   }, [tableStatistics, filteredDataStatistics]);
   useEffect(() => {
-    setSelectedEntries(previous => reconcileFeatureSelection(previous, filteredDataStatistics, tableStatistics));
+    dispatchSelection({type:"reconcile", statistics:filteredDataStatistics, tableStatistics});
   }, [filteredDataStatistics, tableStatistics]);
   const selectedSourceFeatures = useMemo(() => sourceFeatureSelection(selectedEntries, filteredDataStatistics), [selectedEntries, filteredDataStatistics]);
 
@@ -364,9 +365,13 @@ function Discovery() {
 
   const closeFilters = useCallback(() => setIsFiltersopen(false), []);
   const toggleFilters = useCallback(() => setIsFiltersopen((open) => !open), []);
+  const clearOutsideSelection = useCallback(event => {
+    if (!event.target.closest?.('[data-feature-selection], button, input, select, textarea, label, a, [role="dialog"], [role="menu"], [role="combobox"], [role="separator"]'))
+      dispatchSelection({type:"clear"});
+  }, []);
 
   return (
-    <div className={DiscoveryStyles.dropContainer}>
+    <div className={DiscoveryStyles.dropContainer} onClick={clearOutsideSelection}>
       <FilterModal
         refreshControllerRef={refreshControllerRef}
         isOpen={isFiltersOpen}

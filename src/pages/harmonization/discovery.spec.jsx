@@ -730,3 +730,30 @@ test("selects multiple source features, preselects their filters, and reconciles
   act(()=>mockTrayProps.toggleFileActive(0));
   expect(mockTrayProps.selectedEntries).toEqual([]);
 });
+
+
+test("keeps adding after a long press, preserves selection on controls, and clears it on empty space", async () => {
+  mockGetNodeDatasets.mockResolvedValue([]);
+  render(<Discovery />);
+  await screen.findByTestId("FileExplorer");
+  act(()=>mockFileExplorerProps.onFilesOpened([{...PROCESSED_ITEM,nodeId:1,nodeName:"Alpha",
+    continuousFeatures:[{featureName:"Age",count:12},{featureName:"Score",count:12}],
+    categoricalFeatures:[{featureName:"Sex",count:12,categoryCounts:{F:6,M:6}}]}]));
+  await screen.findByTestId("tray");
+  const age={...mockTrayProps.data.continuousFeatures.find(feature=>feature.originalName==="Age"),type:"continuous"};
+  const score={...mockTrayProps.data.continuousFeatures.find(feature=>feature.originalName==="Score"),type:"continuous"};
+  const sex={...mockTrayProps.data.categoricalFeatures.find(feature=>feature.originalName==="Sex"),type:"categorical"};
+  act(()=>mockStatsProps.onSelectFeature(age));
+  act(()=>mockStatsProps.onSelectFeature(score,{additive:true}));
+  act(()=>mockStatsProps.onSelectFeature(sex));
+  expect(mockTrayProps.selectedEntries.map(entry=>entry.originalName)).toEqual(["Age","Score","Sex"]);
+  fireEvent.click(screen.getByRole("button",{name:"Display aggregate metrics"}));
+  expect(mockTrayProps.selectedEntries).toHaveLength(3);
+  fireEvent.click(screen.getByTestId("aggregate"));
+  expect(mockTrayProps.selectedEntries).toEqual([]);
+  act(()=>mockStatsProps.onSelectFeature(age));
+  act(()=>mockStatsProps.onSelectFeature(score));
+  expect(mockTrayProps.selectedEntries.map(entry=>entry.originalName)).toEqual(["Score"]);
+  fireEvent.click(screen.getByTestId("aggregate"));
+  expect(mockTrayProps.selectedEntries).toEqual([]);
+});

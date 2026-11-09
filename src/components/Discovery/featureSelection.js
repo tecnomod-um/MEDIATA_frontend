@@ -36,3 +36,17 @@ export function sourceFeatureSelection(entries, statistics) {
 
 export const isFeatureSelected = (entries, name, type) => entries.some(entry =>
   entry.featureName === name && entry.type === type);
+
+export function featureSelectionReducer(state, action) {
+  if (action.type === "clear") return state.entries.length || state.additive ? {entries:[], additive:false} : state;
+  if (action.type === "reconcile") {
+    const entries = reconcileFeatureSelection(state.entries, action.statistics, action.tableStatistics);
+    return {entries, additive:state.additive && entries.length > 0};
+  }
+  if (action.type === "select") {
+    const additive = state.additive || action.additive || state.entries.length > 1;
+    const entries = toggleFeatureSelection(state.entries, action.entry, additive);
+    return {entries, additive:!!additive && entries.length > 0};
+  }
+  return state;
+}

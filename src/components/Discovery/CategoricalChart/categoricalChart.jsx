@@ -1,3 +1,4 @@
+import useFeatureSelectionGesture from "../useFeatureSelectionGesture";
 import React, { useRef, useEffect, useMemo } from "react";
 import { Bar } from "react-chartjs-2";
 import chroma from "chroma-js";
@@ -22,6 +23,7 @@ const getCSSVariable = (varName, fallback = '') => {
 const CategoricalChart = React.memo(
   ({ feature, onClick, onDoubleClick, isSelected, inOverview, filterDescription }) => {
     const chartRef = useRef(null);
+    const selectionGesture = useFeatureSelectionGesture(onClick, onDoubleClick);
     const stats = useMemo(() => feature.categoryCounts || {}, [feature.categoryCounts]);
 
     const { finalLabels, finalDataValues, finalColors, omittedCount, omittedTotal } = useMemo(() => {
@@ -137,13 +139,13 @@ const CategoricalChart = React.memo(
     return (
       <div
         className={containerClasses}
-        onClick={onClick}
-        onDoubleClick={onDoubleClick}
-        role="button"
+        data-feature-selection
+        {...selectionGesture}
+          role="button"
         aria-pressed={!!isSelected}
         tabIndex={0}
         aria-label={`Chart for ${feature.featureName}`}
-        title={[onClick && "Ctrl/Cmd-click to select multiple features", filterDescription && `Filtered records: ${filterDescription}`].filter(Boolean).join("\n") || undefined}
+        title={[onClick && "Long press or Ctrl/Cmd-click to select multiple features", filterDescription && `Filtered records: ${filterDescription}`].filter(Boolean).join("\n") || undefined}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();

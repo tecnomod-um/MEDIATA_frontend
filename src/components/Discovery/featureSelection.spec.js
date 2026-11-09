@@ -1,5 +1,5 @@
 import {expect, it} from "vitest";
-import {toggleFeatureSelection, reconcileFeatureSelection, sourceFeatureSelection} from "./featureSelection";
+import {toggleFeatureSelection, reconcileFeatureSelection, sourceFeatureSelection, featureSelectionReducer} from "./featureSelection";
 
 const age = {featureName:"Age (same.csv · Alpha)", originalName:"Age", nodeId:1, fileName:"same.csv", type:"continuous"};
 const otherAge = {...age, nodeId:2, featureName:"Age (same.csv · Beta)"};
@@ -24,4 +24,21 @@ it("expands a selected combined row into its actual columns once, including diff
   const pooled={featureName:"Age",pooled:true,combinedSummary:{contributions:[
     {source:age,columnName:"Age"},{source:alias,columnName:"PatientAge"}]}};
   expect(sourceFeatureSelection([pooled,age],{continuousFeatures:[age,alias]})).toEqual([age,alias]);
+});
+
+it("keeps adding after a hold or multiple selection until an outside click clears the mode", () => {
+  let state={entries:[age],additive:false};
+  state=featureSelectionReducer(state,{type:"select",entry:otherAge,additive:true});
+  state=featureSelectionReducer(state,{type:"select",entry:sex});
+  expect(state.entries).toEqual([age,otherAge,sex]);
+  state=featureSelectionReducer(state,{type:"select",entry:otherAge});
+  state=featureSelectionReducer(state,{type:"select",entry:sex});
+  expect(state).toEqual({entries:[age],additive:true});
+  state=featureSelectionReducer(state,{type:"select",entry:sex});
+  expect(state.entries).toEqual([age,sex]);
+  state=featureSelectionReducer(state,{type:"clear"});
+  expect(state).toEqual({entries:[],additive:false});
+  state=featureSelectionReducer(state,{type:"select",entry:sex});
+  state=featureSelectionReducer(state,{type:"select",entry:age});
+  expect(state.entries).toEqual([age]);
 });

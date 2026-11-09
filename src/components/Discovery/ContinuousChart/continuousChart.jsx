@@ -1,3 +1,4 @@
+import useFeatureSelectionGesture from "../useFeatureSelectionGesture";
 import React, { useRef, useEffect, useMemo } from "react";
 import { Bar } from "react-chartjs-2";
 import ContinuousChartStyles from "./continuousChart.module.css";
@@ -11,6 +12,7 @@ ChartJS.register(...registerables);
 const ContinuousChart = React.memo(
   ({ feature, showOutliers, onClick, onDoubleClick, isSelected, inOverview, filterDescription }) => {
     const chartRef = useRef(null);
+    const selectionGesture = useFeatureSelectionGesture(onClick, onDoubleClick);
     const histogram = feature.histogram;
     const binRanges = useMemo(() => feature.binRanges || [], [feature.binRanges]);
 
@@ -95,14 +97,14 @@ const ContinuousChart = React.memo(
       <div
         className={`${ContinuousChartStyles.chartContainer} ${inOverview ? ContinuousChartStyles.overview : ""
           } ${isSelected ? ContinuousChartStyles.selected : ""}`}
-        onClick={onClick}
-        onDoubleClick={onDoubleClick}
-        role="button"
+        data-feature-selection
+        {...selectionGesture}
+          role="button"
         aria-pressed={!!isSelected}
         tabIndex={0}
         aria-label={`Chart for ${feature.featureName}`}
         title={[
-          onClick && "Ctrl/Cmd-click to select multiple features",
+          onClick && "Long press or Ctrl/Cmd-click to select multiple features",
           filterDescription && `Filtered records: ${filterDescription}`,
           feature.histogramStatus === "COARSENED" && "Adjacent histogram ranges were combined to avoid small cells.",
         ].filter(Boolean).join("\n") || undefined}
