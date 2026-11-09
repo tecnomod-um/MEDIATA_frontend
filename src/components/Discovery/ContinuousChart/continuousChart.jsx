@@ -57,7 +57,7 @@ const ContinuousChart = React.memo(
     const chartOptions = useMemo(
       () => ({
         responsive: true,
-        maintainAspectRatio: !isSelected,
+        maintainAspectRatio: true,
         animation: true,
         scales: {
           y: { beginAtZero: true },
@@ -76,7 +76,7 @@ const ContinuousChart = React.memo(
           },
         },
       }),
-      [feature, binRanges, filterDescription, isSelected]
+      [feature, binRanges, filterDescription]
     );
 
     useEffect(() => {

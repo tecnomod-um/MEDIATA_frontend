@@ -5,7 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { matchingFilterFeatures } from "./filterFeatures";
 import styles from "./filterModal.module.css";
 
-export default function FilterCriteriaEditor({selectedFeature, availableStatistics, filterConditions, matchColumns, columnMappings, isLoading, onAddConditions}) {
+export default function FilterCriteriaEditor({selectedFeature, showHeading, availableStatistics, filterConditions, matchColumns, columnMappings, isLoading, onAddConditions}) {
   const inputId = useId();
   const [filterType, setFilterType] = useState("equal");
   const [value, setValue] = useState("");
@@ -47,7 +47,7 @@ export default function FilterCriteriaEditor({selectedFeature, availableStatisti
   </div>;
 
   return <section className={styles.featureEditor} aria-label={`Filter ${selectedFeature}`}>
-    <h4>{selectedFeature}</h4>
+    {showHeading && <h4>{selectedFeature}</h4>}
     <div className={styles.filterCriteria} style={{gridTemplateColumns:categorical ? "3fr 1fr" : between ? "1fr 1fr 1fr 1fr" : "1fr 2fr 1fr"}}>
       {categorical ? <div>
         <label htmlFor={`${inputId}-categories`}>Choose categories:</label>

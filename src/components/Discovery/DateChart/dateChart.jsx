@@ -56,7 +56,7 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
 
   const chartOptions = useMemo(() => ({
     responsive: true,
-    maintainAspectRatio: !isSelected,
+    maintainAspectRatio: true,
     animation: true,
     scales: {
       x: {
@@ -97,7 +97,7 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
         radius: 0,
       },
     },
-  }), [dateData, dateDataKey, filterDescription, isSelected]);
+  }), [dateData, dateDataKey, filterDescription]);
 
   useEffect(() => {
     const handleResize = () => {
