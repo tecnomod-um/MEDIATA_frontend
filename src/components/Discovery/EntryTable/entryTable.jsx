@@ -28,6 +28,7 @@ const Row = React.memo(
 
     return (
       <tr
+        data-feature-selection
         key={`row-${rowIndex}`}
         className={rowClassName}
         title="Ctrl/Cmd-click to select multiple features"

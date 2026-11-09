@@ -1,3 +1,4 @@
+import useFeatureSelectionGesture from "../useFeatureSelectionGesture";
 import React, { useRef, useEffect, useMemo } from "react";
 import { Line } from "react-chartjs-2";
 import "chartjs-adapter-moment";
@@ -10,6 +11,7 @@ ChartJS.register(...registerables);
 // Display for the continuous features' histogram that are a datetype
 function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick, isSelected, filterDescription }) {
   const chartRef = useRef(null);
+  const selectionGesture = useFeatureSelectionGesture(onClick, onDoubleClick);
 
   const sortedEntries = useMemo(() =>
     Object.entries(dateData.dateHistogram).sort(
@@ -121,7 +123,8 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
     <div
       className={`${DateChartStyles.chartContainer} ${isSelected ? DateChartStyles.selected : ""
         }`}
-      onClick={onClick}
+      data-feature-selection
+        {...selectionGesture}
       role="button"
       tabIndex={0}
       aria-label={`Chart for ${dateDataKey}`}
@@ -132,9 +135,8 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
           onClick?.(event);
         }
       }}
-      title={[onClick && "Ctrl/Cmd-click to select multiple features", filterDescription && `Filtered records: ${filterDescription}`].filter(Boolean).join("\n") || undefined}
+      title={[onClick && "Long press or Ctrl/Cmd-click to select multiple features", filterDescription && `Filtered records: ${filterDescription}`].filter(Boolean).join("\n") || undefined}
       style={{ maxWidth: "100%" }}
-      onDoubleClick={onDoubleClick}
     >
       <Line ref={chartRef} data={chartData} options={chartOptions} />
     </div>
