@@ -12,7 +12,6 @@
   min-height: 0;
 }
 
-.dialogFrame { width: min(60rem, 94vw); max-width: 94vw; }
 .filterBody { min-height: 0; overflow-y: auto; overflow-x: hidden; }
 .modalHeader, .buttonRow { flex-shrink: 0; }
 
@@ -97,7 +96,7 @@
 .featureEditors {
   display: grid;
   gap: var(--space-3);
-  padding: 0 var(--space-5) var(--space-5);
+  min-width: 0;
 }
 
 .featureEditors:empty { display: none; }
@@ -106,6 +105,7 @@
 .featureEditor .filterCriteria { box-sizing: border-box; }
 
 @media (max-width: 600px) {
+  .formRow { grid-template-columns: minmax(0, 1fr); }
   .featureEditor .filterCriteria { grid-template-columns: 1fr !important; }
   .featureSelection { min-width: 0; }
 }

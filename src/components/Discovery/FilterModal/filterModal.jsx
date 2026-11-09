@@ -264,7 +264,7 @@ const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal,
   if (!availableStatistics) return null;
 
   return (
-    <OverlayWrapper isOpen={isOpen} closeModal={closeModal} modalClassName={FilterModalStyles.dialogFrame}>
+    <OverlayWrapper isOpen={isOpen} closeModal={closeModal}>
       <div className={FilterModalStyles.filterModal} role="dialog" aria-modal="true" aria-labelledby="filter-modal-title">
         <div className={FilterModalStyles.modalHeader}>
           <h3 id="filter-modal-title">Filter displayed data</h3>
@@ -279,7 +279,7 @@ const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal,
         </div>
         <div className={FilterModalStyles.filterBody}>
         <div
-          className={FilterModalStyles.centeredRow}
+          className={selectedFeatures.length ? FilterModalStyles.formRow : FilterModalStyles.centeredRow}
         >
           <div className={FilterModalStyles.featureSelection}>
             <Select
@@ -321,12 +321,13 @@ const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal,
           </div>
 
 
-        </div>
         <div className={FilterModalStyles.featureEditors}>
           {selectedFeatures.map(name => <FilterCriteriaEditor key={name} selectedFeature={name}
+            showHeading={selectedFeatures.length > 1}
             availableStatistics={availableStatistics} filterConditions={filterConditions}
             matchColumns={matchColumns} columnMappings={columnMappings} isLoading={isLoading}
             onAddConditions={addConditionsToFeature} />)}
+        </div>
         </div>
 
         {Object.keys(filterConditions).some((k) => filterConditions[k]) && (
