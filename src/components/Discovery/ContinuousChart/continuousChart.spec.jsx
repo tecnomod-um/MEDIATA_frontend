@@ -30,6 +30,24 @@ const FEATURE = {
 };
 
 describe('<ContinuousChart />', () => {
+  it('identifies the node and file explicitly when a feature name is shared', () => {
+    render(<ContinuousChart feature={{...FEATURE, originalName:'Age', nodeId:2, nodeName:'Beta', fileName:'patients.csv'}} showOutliers />);
+    expect(capturedBarProps.current.options.plugins.title.text).toEqual(['Age', 'Beta / patients.csv']);
+  });
+
+  it('explains an unavailable distribution instead of drawing empty axes', () => {
+    render(<ContinuousChart feature={{...FEATURE, histogram:[], binRanges:[], histogramStatus:'WITHHELD'}} showOutliers />);
+    expect(screen.queryByTestId('mock-bar')).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Histogram unavailable for this cohort');
+  });
+
+  it('plots all coarsened counts and uses their returned range labels in tooltips', () => {
+    render(<ContinuousChart feature={{...FEATURE, histogram:[11,13], binRanges:['[0 – 20)', '[20 – 40]'], outliers:[], histogramStatus:'COARSENED'}} showOutliers />);
+    expect(capturedBarProps.current.data.datasets[0].data).toEqual([11,13]);
+    expect(capturedBarProps.current.options.plugins.tooltip.callbacks.title([{dataIndex:1}])).toBe('[20 – 40]');
+    expect(screen.getByRole('button', {name:'Chart for ValueDist'})).toHaveAttribute('title', expect.stringContaining('ranges were combined'));
+  });
+
   it('marks a filtered chart without changing its feature identity', () => {
     render(<ContinuousChart feature={FEATURE} showOutliers filterDescription="cluster (= 1)" />);
     expect(capturedBarProps.current.options.plugins.title.text).toBe('ValueDist *');

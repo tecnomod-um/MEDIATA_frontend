@@ -708,6 +708,25 @@ describe("FileExplorer Main Component", () => {
     });
   });
 
+  test("opens and polls same-named files at three explicit node destinations", async () => {
+    const nodes = ['alpha','beta','gamma'].map(nodeId => ({nodeId, name:nodeId, serviceUrl:`https://${nodeId}.test`}));
+    petitionHandler.listExplorerFiles.mockImplementation(async () => [{name:'patients.csv',sizeBytes:100,createdAtMs:1,lastModifiedAtMs:1}]);
+    petitionHandler.processSelectedDatasets.mockResolvedValue({mode:'async',jobId:'job'});
+    petitionHandler.getProcessSelectedDatasetsResult.mockImplementation(async (_,url) => [{fileName:'patients.csv',marker:url}]);
+    const opened = vi.fn();
+    render(<FileExplorer nodes={nodes} category="clinical" isOpen autoProcess
+      preSelectedFiles={Object.fromEntries(nodes.map(node=>[node.nodeId,['patients.csv']]))} onFilesOpened={opened} />);
+    await waitFor(()=>expect(opened).toHaveBeenCalled());
+    const results = opened.mock.calls[0][0];
+    expect(results).toHaveLength(3);
+    for (const node of nodes) {
+      expect(petitionHandler.processSelectedDatasets).toHaveBeenCalledWith(['patients.csv'],node.serviceUrl);
+      expect(petitionHandler.getProcessSelectedDatasetsStatus).toHaveBeenCalledWith('job',node.serviceUrl);
+      expect(petitionHandler.getProcessSelectedDatasetsResult).toHaveBeenCalledWith('job',node.serviceUrl);
+      expect(results.find(result=>result.nodeId===node.nodeId)).toMatchObject({fileName:'patients.csv',marker:node.serviceUrl});
+    }
+  });
+
   test("opens selected files through the synchronous discovery path", async () => {
     const onFilesOpened = vi.fn();
 
@@ -716,7 +735,7 @@ describe("FileExplorer Main Component", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Open$/i }));
 
     await waitFor(() => {
-      expect(petitionHandler.processSelectedDatasets).toHaveBeenCalledWith(["file1.csv"]);
+      expect(petitionHandler.processSelectedDatasets).toHaveBeenCalledWith(["file1.csv"], "http://test.com");
       expect(onFilesOpened).toHaveBeenCalledWith([
         expect.objectContaining({
           rows: 2,

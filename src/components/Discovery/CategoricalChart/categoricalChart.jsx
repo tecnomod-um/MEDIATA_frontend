@@ -4,6 +4,7 @@ import chroma from "chroma-js";
 import { generateColorList } from "../../../util/colors";
 import CategoricalChartStyles from "./categoricalChart.module.css";
 import { Chart as ChartJS, registerables } from "chart.js";
+import { distributionTitle } from "../discoveryStatistics";
 
 ChartJS.register(...registerables);
 
@@ -91,10 +92,8 @@ const CategoricalChart = React.memo(
           legend: { display: false },
           title: {
             display: true,
-            text:
-              omittedCount > 0
-                ? `${feature.featureName}${filterDescription ? " *" : ""} (${omittedCount} categories grouped)`
-                : `${feature.featureName}${filterDescription ? " *" : ""}`,
+            text: distributionTitle(feature, filterDescription,
+              omittedCount > 0 ? ` (${omittedCount} categories grouped)` : ""),
           },
           tooltip: {
             callbacks: {
@@ -110,7 +109,7 @@ const CategoricalChart = React.memo(
           y: { ticks: { autoSkip: false } },
         },
       }),
-      [feature.featureName, inOverview, omittedCount, omittedTotal, filterDescription]
+      [feature, inOverview, omittedCount, omittedTotal, filterDescription]
     );
 
     useEffect(() => {

@@ -3,6 +3,7 @@ import { Line } from "react-chartjs-2";
 import "chartjs-adapter-moment";
 import DateChartStyles from "./dateChart.module.css";
 import { Chart as ChartJS, registerables } from "chart.js";
+import { distributionTitle } from "../discoveryStatistics";
 
 ChartJS.register(...registerables);
 
@@ -86,7 +87,7 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
     },
     plugins: {
       legend: { display: false },
-      title: { display: true, text: `${dateDataKey}${filterDescription ? " *" : ""} Distribution Over Time` },
+      title: { display: true, text: distributionTitle({...dateData, featureName:dateDataKey}, filterDescription, " Distribution Over Time") },
     },
     elements: {
       line: {
@@ -96,7 +97,7 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
         radius: 0,
       },
     },
-  }), [dateDataKey, filterDescription]);
+  }), [dateData, dateDataKey, filterDescription]);
 
   useEffect(() => {
     const handleResize = () => {

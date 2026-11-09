@@ -123,7 +123,7 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
         entries.map(async ([jobId, node]) => {
           try {
             if (node?.serviceUrl) updateNodeAxiosBaseURL(node.serviceUrl);
-            await cancelProcessSelectedDatasetsJob(jobId);
+            await cancelProcessSelectedDatasetsJob(jobId, node?.serviceUrl);
           } catch (e) {
             // ignore
           }
@@ -759,13 +759,13 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
       try {
         if (node?.serviceUrl) updateNodeAxiosBaseURL(node.serviceUrl);
 
-        const status = await getProcessSelectedDatasetsStatus(jobId);
+        const status = await getProcessSelectedDatasetsStatus(jobId, node?.serviceUrl);
         if (typeof status?.percent === "number") onProgress(status.percent);
 
         const state = String(status?.state || "").toUpperCase();
 
         if (state === "DONE") {
-          const results = await getProcessSelectedDatasetsResult(jobId);
+          const results = await getProcessSelectedDatasetsResult(jobId, node?.serviceUrl);
           activeJobsRef.current.delete(jobId);
           return results || [];
         }
@@ -832,7 +832,7 @@ function FileExplorer({ nodes = [], category, isOpen = true, onClose, onOpenFile
         for (const key of (keysByNode[g.nodeId] || [])) {
           const file = findFileByKey(key);
           if (!file) continue;
-          const result = await processSelectedDatasets([file.name]);
+          const result = await processSelectedDatasets([file.name], node?.serviceUrl);
 
           if (result?.mode === "sync") {
             const arr = result.results || [];

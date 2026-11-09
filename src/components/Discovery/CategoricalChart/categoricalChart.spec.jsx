@@ -51,6 +51,10 @@ const BASE_FEATURE = {
 };
 
 describe("<CategoricalChart />", () => {
+  it('includes the source node even when filenames and feature names match', () => {
+    render(<CategoricalChart feature={{...BASE_FEATURE, originalName:'Sex', nodeId:3, nodeName:'Gamma', fileName:'patients.csv'}} />);
+    expect(JSON.parse(screen.getByTestId('mock-bar').getAttribute('data-options')).plugins.title.text).toEqual(['Sex','Gamma / patients.csv']);
+  });
   it('marks a filtered categorical chart', () => {
     render(<CategoricalChart feature={BASE_FEATURE} filterDescription="cluster (= 1)" />);
     expect(JSON.parse(screen.getByTestId('mock-bar').getAttribute('data-options')).plugins.title.text).toBe('FeatureX *');
