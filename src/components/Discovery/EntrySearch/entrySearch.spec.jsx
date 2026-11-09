@@ -6,12 +6,12 @@ import EntrySearch from './entrySearch';
 
 vi.mock('../EntryTable/entryTable', () => ({
   __esModule: true,
-  default: ({ filteredLists, minCellWidth, onRowSelect, selectedEntry, type }) => (
+  default: ({ filteredLists, minCellWidth, onRowSelect, selectedEntries, type }) => (
     <div
       data-testid="entry-table"
       data-filtered={JSON.stringify(filteredLists)}
       data-min-cell-width={String(minCellWidth)}
-      data-selected-entry={selectedEntry ?? ''}
+      data-selected-entry={selectedEntries ?? ''}
       data-type={type}
       onClick={() => onRowSelect && onRowSelect('mock-row')}
     />
@@ -39,7 +39,7 @@ describe('<EntrySearch />', () => {
       <EntrySearch
         resultData={resultData}
         onRowSelect={onRowSelect}
-        selectedEntry="banana"
+        selectedEntries="banana"
         type="fruit"
       />
     );
@@ -53,7 +53,7 @@ describe('<EntrySearch />', () => {
       <EntrySearch
         resultData={{}}
         onRowSelect={onRowSelect}
-        selectedEntry={null}
+        selectedEntries={[]}
         type="none"
       />
     );
@@ -71,7 +71,7 @@ describe('<EntrySearch />', () => {
       <EntrySearch
         resultData={resultData}
         onRowSelect={onRowSelect}
-        selectedEntry="cherry"
+        selectedEntries="cherry"
         type="fruit"
       />
     );
@@ -87,7 +87,7 @@ describe('<EntrySearch />', () => {
       <EntrySearch
         resultData={resultData}
         onRowSelect={onRowSelect}
-        selectedEntry={null}
+        selectedEntries={[]}
         type="fruit"
       />
     );
@@ -103,7 +103,7 @@ describe('<EntrySearch />', () => {
       <EntrySearch
         resultData={resultData}
         onRowSelect={onRowSelect}
-        selectedEntry={null}
+        selectedEntries={[]}
         type="fruit"
       />
     );
@@ -124,7 +124,7 @@ describe('<EntrySearch />', () => {
       <EntrySearch
         resultData={resultData}
         onRowSelect={onRowSelect}
-        selectedEntry={null}
+        selectedEntries={[]}
         type="fruit"
       />
     );

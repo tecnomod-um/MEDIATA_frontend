@@ -12,7 +12,7 @@ it("feeds combined summaries into the existing two tables while keeping individu
   const data = { continuousFeatures: sources.map(source => ({ ...source.continuousFeatures[0], nodeId: source.nodeId, fileName: source.fileName, originalName: 'Age', featureName: `Age (${source.nodeId})`, qrt1: 20, median: 20, qrt3: 20 })), categoricalFeatures: [], dateFeatures: [] };
   const tableData = combineMappedTableData(data, sources, [true, true], createColumnMappings(sources));
   const select = vi.fn();
-  render(<StatisticsDisplay data={data} tableData={tableData} combinedTables numericalTableActions={<button>Table options</button>} setSelectedEntry={select} />);
+  render(<StatisticsDisplay data={data} tableData={tableData} combinedTables numericalTableActions={<button>Table options</button>} onSelectFeature={select} />);
   const tables = screen.getAllByRole('table');
   expect(tables).toHaveLength(2);
   const numeric = JSON.parse(tables[0].getAttribute('data-result'));
@@ -33,12 +33,12 @@ it("keeps three same-named files and feature distributions attached to their own
   }));
   const data = collectDiscoveryStatistics(sources,[true,true,true]);
   const select = vi.fn();
-  render(<StatisticsDisplay data={data} showOutliers setSelectedEntry={select} />);
+  render(<StatisticsDisplay data={data} showOutliers onSelectFeature={select} />);
   for (const [index,node] of ['Alpha','Beta','Gamma'].entries()) {
     const chart = screen.getByLabelText(`Overview Continuous chart for Age (patients.csv · ${node})`);
     expect(JSON.parse(chart.getAttribute('data-histogram'))).toEqual([6+index,12-index]);
     fireEvent.click(chart);
-    expect(select).toHaveBeenLastCalledWith({type:'continuous',featureName:`Age (patients.csv · ${node})`});
+    expect(select).toHaveBeenLastCalledWith({type:'continuous',featureName:`Age (patients.csv · ${node})`}, expect.any(Object));
   }
 });
 
@@ -185,10 +185,10 @@ describe("<StatisticsDisplay />", () => {
 
   const data = { continuousFeatures, categoricalFeatures, dateFeatures };
 
-  let setSelectedEntry;
+  let setSelectedEntries;
 
   beforeEach(() => {
-    setSelectedEntry = vi.fn();
+    setSelectedEntries = vi.fn();
     Object.defineProperty(window, "innerWidth", {
       writable: true,
       configurable: true,
@@ -201,8 +201,8 @@ describe("<StatisticsDisplay />", () => {
       <StatisticsDisplay
         data={data}
         showOutliers={true}
-        setSelectedEntry={setSelectedEntry}
-        selectedEntry={null}
+        onSelectFeature={setSelectedEntries}
+        selectedEntries={[]}
       />
     );
 
@@ -227,23 +227,23 @@ describe("<StatisticsDisplay />", () => {
     expect(dCharts[0]).toHaveAttribute("data-feature", "D");
   });
 
-  test("clicking a chart calls setSelectedEntry", () => {
+  test("clicking a chart calls setSelectedEntries", () => {
     render(
       <StatisticsDisplay
         data={data}
         showOutliers={false}
-        setSelectedEntry={setSelectedEntry}
-        selectedEntry={null}
+        onSelectFeature={setSelectedEntries}
+        selectedEntries={[]}
       />
     );
 
     const firstCont = screen.getByLabelText("Overview Continuous chart for B");
     fireEvent.click(firstCont);
 
-    expect(setSelectedEntry).toHaveBeenCalledWith({
+    expect(setSelectedEntries).toHaveBeenCalledWith({
       type: "continuous",
       featureName: "B",
-    });
+    }, expect.any(Object));
   });
 
   test("renders two EntrySearchs with correct types & data", () => {
@@ -251,8 +251,8 @@ describe("<StatisticsDisplay />", () => {
       <StatisticsDisplay
         data={data}
         showOutliers={false}
-        setSelectedEntry={setSelectedEntry}
-        selectedEntry={null}
+        onSelectFeature={setSelectedEntries}
+        selectedEntries={[]}
       />
     );
 
@@ -275,8 +275,8 @@ describe("<StatisticsDisplay />", () => {
       <StatisticsDisplay
         data={data}
         showOutliers={true}
-        setSelectedEntry={setSelectedEntry}
-        selectedEntry={null}
+        onSelectFeature={setSelectedEntries}
+        selectedEntries={[]}
       />
     );
 
@@ -300,8 +300,8 @@ describe("<StatisticsDisplay />", () => {
       <StatisticsDisplay
         data={data}
         showOutliers={false}
-        setSelectedEntry={setSelectedEntry}
-        selectedEntry={null}
+        onSelectFeature={setSelectedEntries}
+        selectedEntries={[]}
       />
     );
 
@@ -321,8 +321,8 @@ describe("<StatisticsDisplay />", () => {
       <StatisticsDisplay
         data={data}
         showOutliers={true}
-        setSelectedEntry={setSelectedEntry}
-        selectedEntry={null}
+        onSelectFeature={setSelectedEntries}
+        selectedEntries={[]}
       />
     );
 
@@ -348,8 +348,8 @@ describe("<StatisticsDisplay />", () => {
       <StatisticsDisplay
         data={data}
         showOutliers={true}
-        setSelectedEntry={setSelectedEntry}
-        selectedEntry={null}
+        onSelectFeature={setSelectedEntries}
+        selectedEntries={[]}
       />
     );
 
@@ -361,42 +361,42 @@ describe("<StatisticsDisplay />", () => {
     ).not.toBeInTheDocument();
   });
 
-  test("clicking categorical chart calls setSelectedEntry", () => {
+  test("clicking categorical chart calls setSelectedEntries", () => {
     render(
       <StatisticsDisplay
         data={data}
         showOutliers={false}
-        setSelectedEntry={setSelectedEntry}
-        selectedEntry={null}
+        onSelectFeature={setSelectedEntries}
+        selectedEntries={[]}
       />
     );
 
     const catChart = screen.getByLabelText("Overview Categorical chart for C");
     fireEvent.click(catChart);
 
-    expect(setSelectedEntry).toHaveBeenCalledWith({
+    expect(setSelectedEntries).toHaveBeenCalledWith({
       type: "categorical",
       featureName: "C",
-    });
+    }, expect.any(Object));
   });
 
-  test("clicking date chart calls setSelectedEntry", () => {
+  test("clicking date chart calls setSelectedEntries", () => {
     render(
       <StatisticsDisplay
         data={data}
         showOutliers={false}
-        setSelectedEntry={setSelectedEntry}
-        selectedEntry={null}
+        onSelectFeature={setSelectedEntries}
+        selectedEntries={[]}
       />
     );
 
     const dateChart = screen.getByLabelText("Overview Date chart for D");
     fireEvent.click(dateChart);
 
-    expect(setSelectedEntry).toHaveBeenCalledWith({
+    expect(setSelectedEntries).toHaveBeenCalledWith({
       type: "continuous",
       featureName: "D",
-    });
+    }, expect.any(Object));
   });
 
   test("marks categorical chart as selected", () => {
@@ -404,8 +404,8 @@ describe("<StatisticsDisplay />", () => {
       <StatisticsDisplay
         data={data}
         showOutliers={false}
-        setSelectedEntry={setSelectedEntry}
-        selectedEntry={{ type: "categorical", featureName: "C" }}
+        onSelectFeature={setSelectedEntries}
+        selectedEntries={[{ type: "categorical", featureName: "C" }]}
       />
     );
 
@@ -418,8 +418,8 @@ describe("<StatisticsDisplay />", () => {
       <StatisticsDisplay
         data={data}
         showOutliers={false}
-        setSelectedEntry={setSelectedEntry}
-        selectedEntry={{ type: "continuous", featureName: "D" }}
+        onSelectFeature={setSelectedEntries}
+        selectedEntries={[{ type: "continuous", featureName: "D" }]}
       />
     );
 
@@ -451,8 +451,8 @@ describe("<StatisticsDisplay />", () => {
       <StatisticsDisplay
         data={dataWithMissing}
         showOutliers={false}
-        setSelectedEntry={setSelectedEntry}
-        selectedEntry={null}
+        onSelectFeature={setSelectedEntries}
+        selectedEntries={[]}
       />
     );
 
@@ -485,8 +485,8 @@ describe("<StatisticsDisplay />", () => {
       <StatisticsDisplay
         data={dataNoMissing}
         showOutliers={false}
-        setSelectedEntry={setSelectedEntry}
-        selectedEntry={null}
+        onSelectFeature={setSelectedEntries}
+        selectedEntries={[]}
       />
     );
 
@@ -519,8 +519,8 @@ describe("<StatisticsDisplay />", () => {
       <StatisticsDisplay
         data={dataWithDateStdDev}
         showOutliers={false}
-        setSelectedEntry={setSelectedEntry}
-        selectedEntry={null}
+        onSelectFeature={setSelectedEntries}
+        selectedEntries={[]}
       />
     );
 

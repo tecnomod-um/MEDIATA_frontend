@@ -17,6 +17,8 @@ vi.mock("../../components/Discovery/CombinedStatistics/useRelationshipStatistics
 let mockFileExplorerProps;
 let mockAggregateProps;
 let mockTrayProps;
+let mockStatsProps;
+let mockFilterProps;
 
 test('keeps an opened mobile sidebar open during a keyboard or same-breakpoint resize', async () => {
   const originalWidth = window.innerWidth;
@@ -119,7 +121,7 @@ vi.mock("../../components/Discovery/ToolTray/toolTray", () => ({
 
 vi.mock("../../components/Discovery/StatisticsDisplay/statisticsDisplay", () => ({
   __esModule: true,
-  default: ({ tableData, numericalTableActions }) => <div data-testid="stats" data-result={JSON.stringify(tableData)}>{numericalTableActions}StatsDisplay</div>,
+  default: props => { mockStatsProps = props; return <div data-testid="stats" data-result={JSON.stringify(props.tableData)}>{props.numericalTableActions}StatsDisplay</div>; },
 }));
 
 vi.mock("../../components/Discovery/AggregatesDisplay/aggregateDisplay", () => ({
@@ -129,7 +131,7 @@ vi.mock("../../components/Discovery/AggregatesDisplay/aggregateDisplay", () => (
 
 vi.mock("../../components/Discovery/FilterModal/filterModal", () => ({
   __esModule: true,
-  default: () => <div data-testid="filter">FilterModal</div>,
+  default: props => { mockFilterProps=props; return <div data-testid="filter">FilterModal</div>; },
 }));
 
 const mockGetNodeDatasets = vi.fn();
@@ -687,7 +689,7 @@ test("type changes update saved mappings, relationships, exports and source meta
   expect(JSON.parse(screen.getByTestId('stats').getAttribute('data-result')).continuousFeatures.find(feature=>feature.featureName==='Age')).toMatchObject({count:24,mean:15});
   const response={...alpha,featureTypeSummaryVersion:1,featureTypes:{Age:'categorical'},
     continuousFeatures:[feature('Score',2)],categoricalFeatures:[{featureName:'Age',count:12,missingValuesCount:0,categoryCounts:{'10':12}}],numericPairSummaries:[],covariances:{}};
-  act(() => mockTrayProps.onFeatureRecalculated({nodeId:1,fileName:alpha.fileName,featureName:'Age',response}));
+  act(() => mockTrayProps.onFeatureRecalculated([{nodeId:1,fileName:alpha.fileName,featureName:'Age',response}]));
   await waitFor(() => expect(mockTrayProps.data.categoricalFeatures).toHaveLength(1));
   expect(mockTrayProps.dataResults[0].featureTypes).toEqual({Age:'categorical'});
   expect(mockTrayProps.data.continuousFeatures.some(feature=>feature.nodeId===1 && feature.originalName==='Age')).toBe(false);
@@ -701,4 +703,30 @@ test("type changes update saved mappings, relationships, exports and source meta
   act(() => mockTrayProps.toggleFileActive(0));
   act(() => mockTrayProps.toggleFileActive(0));
   expect(mockTrayProps.filteredData.continuousFeatures.some(feature=>feature.nodeId===1 && feature.originalName==='Score')).toBe(false);
+});
+
+
+test("selects multiple source features, preselects their filters, and reconciles batch types and disabled datasets", async () => {
+  mockGetNodeDatasets.mockResolvedValue([]);
+  render(<Discovery />);
+  await screen.findByTestId("FileExplorer");
+  const source = nodeId => ({...PROCESSED_ITEM,nodeId,nodeName:String(nodeId),
+    continuousFeatures:[{featureName:"Age",count:12},{featureName:"Score",count:12}],
+    categoricalFeatures:[{featureName:"Sex",count:12,categoryCounts:{F:6,M:6}}]});
+  act(()=>mockFileExplorerProps.onFilesOpened([source(1),source(2)]));
+  await screen.findByTestId("tray");
+  const age=mockTrayProps.data.continuousFeatures.find(f=>f.nodeId===1&&f.originalName==="Age");
+  const score=mockTrayProps.data.continuousFeatures.find(f=>f.nodeId===1&&f.originalName==="Score");
+  act(()=>mockStatsProps.onSelectFeature({...age,type:"continuous"}));
+  act(()=>mockStatsProps.onSelectFeature({...score,type:"continuous"},{ctrlKey:true}));
+  expect(mockTrayProps.selectedEntries.map(f=>f.originalName)).toEqual(["Age","Score"]);
+  act(()=>mockTrayProps.toggleFilters());
+  expect(mockFilterProps.isOpen).toBe(true);
+  expect(mockFilterProps.selectedEntries.map(f=>f.originalName)).toEqual(["Age","Score"]);
+  const response={...source(1),continuousFeatures:[],categoricalFeatures:[...source(1).categoricalFeatures,
+    {featureName:"Age",count:12,categoryCounts:{10:12}},{featureName:"Score",count:12,categoryCounts:{2:12}}]};
+  act(()=>mockTrayProps.onFeatureRecalculated([{nodeId:1,fileName:response.fileName,response}]));
+  expect(mockTrayProps.selectedEntries.every(f=>f.type==="categorical")).toBe(true);
+  act(()=>mockTrayProps.toggleFileActive(0));
+  expect(mockTrayProps.selectedEntries).toEqual([]);
 });

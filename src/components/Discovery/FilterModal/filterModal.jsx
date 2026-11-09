@@ -1,16 +1,17 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import OverlayWrapper from "../../Common/OverlayWrapper/overlayWrapper";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import Select from "react-select";
+import Switch from "react-switch";
 import FilterModalStyles from "./filterModal.module.css";
-import TooltipPopup from "../../Common/TooltipPopup/tooltipPopup";
 import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 import { filterDiscoveryDatasets } from "../CombinedStatistics/filterDiscoveryDatasets";
 import { filterFeatures, matchingFilterFeatures, fileFilterConditions } from "./filterFeatures";
+import FilterCriteriaEditor from "./filterCriteriaEditor";
 import { useNode } from "../../../context/nodeContext";
+
+const emptySelection = [];
 
 const initializeFilters = (dataStatistics) => {
   if (!dataStatistics) return {};
@@ -27,24 +28,14 @@ const initializeFilters = (dataStatistics) => {
 };
 
 // Modal that works with the features in dataStatistics. Allows to build a filter query for the backend to repopulate dataResults
-const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal, filters, setFilters, dataResults, setDataResults, onFiltered, onFilteringChange, filterLogic, setFilterLogic, columnMappings = [] }) => {
+const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal, filters, setFilters, dataResults, setDataResults, onFiltered, onFilteringChange, filterLogic, setFilterLogic, columnMappings = [], selectedEntries = emptySelection }) => {
   const [filterConditions, setFilterConditions] = useState({});
   const [logicalOperators, setLogicalOperators] = useState({});
   const [globalLogicalOperator, setGlobalLogicalOperator] = useState("AND");
   const [matchColumns, setMatchColumns] = useState(true);
 
-  const [selectedFeature, setSelectedFeature] = useState("");
-  const [dateFilterType, setDateFilterType] = useState("equal");
-  const [dateValue, setDateValue] = useState(new Date());
-  const [dateRange, setDateRange] = useState([new Date(), new Date()]);
-  const [continuousFilterType, setContinuousFilterType] = useState("equal");
-  const [minValue, setMinValue] = useState("");
-  const [maxValue, setMaxValue] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedFeatures, setSelectedFeatures] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-
-  const addButtonRef = useRef(null);
-  const [showTooltip, setShowTooltip] = useState(false);
   const { selectedNodes } = useNode();
 
   const availableStatistics = dataStatistics;
@@ -58,7 +49,9 @@ const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal,
     setLogicalOperators(filterLogic?.operators || Object.fromEntries(Object.entries(applied).map(([name, value]) => [name, new Array(Math.max(0, value.length - 1)).fill("AND")])));
     setGlobalLogicalOperator(filterLogic?.operator || "AND");
     setMatchColumns(filterLogic?.matchColumns ?? true);
-  }, [isOpen, availableStatistics, filters, filterLogic]);
+    const available = new Set(filterFeatures(availableStatistics).map(feature => feature.featureName));
+    setSelectedFeatures(selectedEntries.map(entry => entry.featureName).filter(name => available.has(name)));
+  }, [isOpen, availableStatistics, filters, filterLogic, selectedEntries]);
 
   const handleApplyFilters = async () => {
     setIsLoading(true);
@@ -76,7 +69,7 @@ const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal,
       const hasFilters = Object.values(filterConditions).some(criteria => criteria?.length);
       setFilters(hasFilters ? filterConditions : []);
       setFilterLogic?.({ operators: hasFilters ? logicalOperators : {}, operator: hasFilters ? globalLogicalOperator : "AND", matchColumns });
-      resetForm();
+
       closeModal();
     } catch (error) {
       // console.error("Error applying multi-file filters:", error);
@@ -84,65 +77,6 @@ const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal,
     } finally {
       setIsLoading(false);
       onFilteringChange?.(false);
-    }
-  };
-
-  const handleAddFilter = () => {
-    if (!selectedFeature) {
-      setShowTooltip(true);
-      return;
-    }
-
-    let newCondition = null;
-    let createdCategorical = false;
-    if (
-      availableStatistics?.categoricalFeatures?.some(
-        (f) => f.featureName === selectedFeature
-      )
-    ) {
-      const newConditions = selectedCategories.map((category) => ({
-        type: "equal",
-        value: category,
-        filterType: "categorical",
-      }));
-      addConditionsToFeature(selectedFeature, newConditions);
-      setSelectedCategories([]);
-      createdCategorical = newConditions.length > 0;
-    } else if (
-      availableStatistics?.continuousFeatures?.some(
-        (f) => f.featureName === selectedFeature
-      )
-    ) {
-      newCondition = {
-        type: continuousFilterType,
-        value:
-          continuousFilterType === "between"
-            ? [minValue, maxValue]
-            : minValue,
-        filterType: "continuous",
-      };
-    } else if (
-      availableStatistics?.dateFeatures?.some(
-        (f) => f.featureName === selectedFeature
-      )
-    ) {
-      newCondition = {
-        type: dateFilterType,
-        value:
-          dateFilterType === "between"
-            ? [dateRange[0].toISOString(), dateRange[1].toISOString()]
-            : dateValue.toISOString(),
-        filterType: "date",
-      };
-    }
-
-    if (newCondition) {
-      addConditionsToFeature(selectedFeature, [newCondition]);
-      setShowTooltip(false);
-    } else if (createdCategorical) {
-      setShowTooltip(false);
-    } else {
-      setShowTooltip(true);
     }
   };
 
@@ -178,32 +112,6 @@ const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal,
     }
     setFilterConditions(newFilterConditions);
     setLogicalOperators(newLogicalOperators);
-  };
-
-  const getCategoryOptions = (featureName) => {
-    const feature = availableStatistics?.categoricalFeatures?.find(
-      (f) => f.featureName === featureName
-    );
-    if (!feature) return [];
-    const usedCategories = filterConditions[featureName]
-      ? filterConditions[featureName].map((c) => c.value)
-      : [];
-    const members = matchColumns ? matchingFilterFeatures(availableStatistics, feature, columnMappings) : [feature];
-    return [...new Set(members.flatMap(member => Object.keys(member.categoryCounts || {})))]
-      .filter((cat) => !usedCategories.includes(cat))
-      .map((cat) => ({ value: cat, label: cat }));
-  };
-  const getGridTemplate = (feature, cType, dType) => {
-    if (
-      availableStatistics?.categoricalFeatures?.some(
-        (f) => f.featureName === feature
-      )
-    ) {
-      return "3fr 1fr"; // categories + button
-    } else if (cType === "between" || dType === "between") {
-      return "1fr 1fr 1fr 1fr"; // range fields + button
-    }
-    return "1fr 2fr 1fr";
   };
 
   const formatSingleCriteria = (condition, featureName) => {
@@ -330,17 +238,6 @@ const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal,
     ));
   };
 
-  const resetForm = () => {
-    setSelectedFeature("");
-    setSelectedCategories([]);
-    setDateFilterType("equal");
-    setDateValue(new Date());
-    setDateRange([new Date(), new Date()]);
-    setContinuousFilterType("equal");
-    setMinValue("");
-    setMaxValue("");
-  };
-
   const getOptions = (stats) => {
     if (!stats) return [];
     const opts = [];
@@ -356,33 +253,6 @@ const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal,
     return opts;
   };
 
-  const isAddFilterDisabled = () => {
-    if (!selectedFeature) return true;
-    if (
-      availableStatistics?.categoricalFeatures?.some(
-        (f) => f.featureName === selectedFeature
-      )
-    )
-      return selectedCategories.length === 0;
-    if (
-      availableStatistics?.continuousFeatures?.some(
-        (f) => f.featureName === selectedFeature
-      )
-    ) {
-      if (continuousFilterType === "between") return !minValue || !maxValue;
-      return !minValue;
-    }
-    if (
-      availableStatistics?.dateFeatures?.some(
-        (f) => f.featureName === selectedFeature
-      )
-    ) {
-      if (dateFilterType === "between") return !dateRange[0] || !dateRange[1];
-      return !dateValue;
-    }
-    return false;
-  };
-
   const hasAtLeastTwoFilters = () => {
     return (
       Object.values(filterConditions).filter(
@@ -394,7 +264,7 @@ const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal,
   if (!availableStatistics) return null;
 
   return (
-    <OverlayWrapper isOpen={isOpen} closeModal={closeModal}>
+    <OverlayWrapper isOpen={isOpen} closeModal={closeModal} modalClassName={FilterModalStyles.dialogFrame}>
       <div className={FilterModalStyles.filterModal} role="dialog" aria-modal="true" aria-labelledby="filter-modal-title">
         <div className={FilterModalStyles.modalHeader}>
           <h3 id="filter-modal-title">Filter displayed data</h3>
@@ -407,29 +277,28 @@ const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal,
             <IoMdClose />
           </button>
         </div>
+        <div className={FilterModalStyles.filterBody}>
         <div
-          className={
-            selectedFeature
-              ? FilterModalStyles.formRow
-              : FilterModalStyles.centeredRow
-          }
+          className={FilterModalStyles.centeredRow}
         >
           <div className={FilterModalStyles.featureSelection}>
             <Select
-            classNamePrefix="react-select"
+              isMulti
+              closeMenuOnSelect={false}
+              classNamePrefix="react-select"
               options={getOptions(availableStatistics)}
-              onChange={(option) => setSelectedFeature(option.value)}
-              value={getOptions(availableStatistics).find(
-                (o) => o.value === selectedFeature
-              )}
+              onChange={options => setSelectedFeatures((options || []).map(option => option.value))}
+              value={getOptions(availableStatistics).filter(option => selectedFeatures.includes(option.value))}
               isDisabled={isLoading}
               aria-label="Select feature to filter"
               inputId="feature-select"
             />
             {dataResults.length > 1 && (
               <label className={FilterModalStyles.matchColumns} title="Copies criteria using saved feature combinations, or matching names and types when no combination exists. Includes loaded datasets currently hidden.">
-                <input type="checkbox" checked={matchColumns} onChange={event => setMatchColumns(event.target.checked)} disabled={isLoading} />
-                Apply to matching columns in other datasets
+                <span>Apply to matching columns in other datasets</span>
+                <Switch checked={matchColumns} onChange={setMatchColumns} disabled={isLoading}
+                  aria-label="Apply to matching columns in other datasets"
+                  height={16} width={32} handleDiameter={12} offColor="#888" onColor="#9ABDDC" />
               </label>
             )}
             {hasAtLeastTwoFilters() && (
@@ -451,184 +320,13 @@ const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal,
             )}
           </div>
 
-          {selectedFeature && (
-            <div
-              className={FilterModalStyles.filterCriteria}
-              style={{
-                gridTemplateColumns: getGridTemplate(
-                  selectedFeature,
-                  continuousFilterType,
-                  dateFilterType
-                ),
-              }}
-            >
-              {availableStatistics?.categoricalFeatures?.some(
-                (f) => f.featureName === selectedFeature
-              ) && (
-                  <div>
-                    <label>Choose categories:</label>
-                    <Select
-                      isMulti
-                      classNamePrefix="react-select"
-                      options={getCategoryOptions(selectedFeature)}
-                      onChange={(vals) =>
-                        setSelectedCategories(vals.map((v) => v.value))
-                      }
-                      value={getCategoryOptions(selectedFeature).filter((opt) =>
-                        selectedCategories.includes(opt.value)
-                      )}
-                      isDisabled={isLoading}
-                    />
-                  </div>
-                )}
 
-              {availableStatistics?.continuousFeatures?.some(
-                (f) => f.featureName === selectedFeature
-              ) && (
-                  <>
-                    <div>
-                      <label htmlFor="continuous-filter-type">Filter Type</label>
-                      <select
-                        id="continuous-filter-type"
-                        data-testid="continuous-filter-type"
-                        className={FilterModalStyles.select}
-                        onChange={(e) => setContinuousFilterType(e.target.value)}
-                        value={continuousFilterType}
-                        disabled={isLoading}
-                      >
-                        <option value="equal">Equal</option>
-                        <option value="between">Between</option>
-                        <option value="less">Less than</option>
-                        <option value="greater">Greater than</option>
-                      </select>
-                    </div>
-                    {continuousFilterType === "between" ? (
-                      <>
-                        <div>
-                          <label htmlFor="min-value">Min Value</label>
-                          <input
-                            id="min-value"
-                            data-testid="min-value-input"
-                            type="number"
-                            className={FilterModalStyles.input}
-                            onChange={(e) => setMinValue(e.target.value)}
-                            value={minValue}
-                            disabled={isLoading}
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor="max-value">Max Value</label>
-                          <input
-                            id="max-value"
-                            data-testid="max-value-input"
-                            type="number"
-                            className={FilterModalStyles.input}
-                            onChange={(e) => setMaxValue(e.target.value)}
-                            value={maxValue}
-                            disabled={isLoading}
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <div>
-                        <label htmlFor="continuous-value">Value</label>
-                        <input
-                          id="continuous-value"
-                          type="number"
-                          className={FilterModalStyles.input}
-                          onChange={(e) => setMinValue(e.target.value)}
-                          value={minValue}
-                          disabled={isLoading}
-                        />
-                      </div>
-                    )}
-                  </>
-                )}
-              {availableStatistics?.dateFeatures?.some(
-                (f) => f.featureName === selectedFeature
-              ) && (
-                  <>
-                    <div>
-                      <label htmlFor="date-filter-type">Filter Type</label>
-                      <select
-                        id="date-filter-type"
-                        data-testid="date-filter-type"
-                        className={FilterModalStyles.select}
-                        onChange={(e) => setDateFilterType(e.target.value)}
-                        value={dateFilterType}
-                        disabled={isLoading}
-                      >
-                        <option value="equal">Equal</option>
-                        <option value="between">Between</option>
-                        <option value="less">Sooner than</option>
-                        <option value="greater">Later than</option>
-                      </select>
-                    </div>
-                    {dateFilterType === "between" ? (
-                      <>
-                        <div>
-                          <label>Start Date</label>
-                          <DatePicker
-                            selected={dateRange[0]}
-                            onChange={(date) =>
-                              setDateRange([date, dateRange[1]])
-                            }
-                            className={FilterModalStyles.datePicker}
-                            disabled={isLoading}
-                          />
-                        </div>
-                        <div>
-                          <label>End Date</label>
-                          <DatePicker
-                            selected={dateRange[1]}
-                            onChange={(date) =>
-                              setDateRange([dateRange[0], date])
-                            }
-                            className={FilterModalStyles.datePicker}
-                            disabled={isLoading}
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <div>
-                        <label>Date</label>
-                        <DatePicker
-                          selected={dateValue}
-                          onChange={(date) => setDateValue(date)}
-                          className={FilterModalStyles.datePicker}
-                          disabled={isLoading}
-                        />
-                      </div>
-                    )}
-                  </>
-                )}
-
-              <button
-                className={FilterModalStyles.addButton}
-                onClick={() => {
-                  if (isAddFilterDisabled()) {
-                    setShowTooltip(true);
-                  } else {
-                    handleAddFilter();
-                  }
-                }}
-                ref={addButtonRef}
-                disabled={isAddFilterDisabled() || isLoading}
-              >
-                {filterConditions[selectedFeature] &&
-                  filterConditions[selectedFeature].length > 0
-                  ? "Add More Criteria"
-                  : "Add Filter"}
-              </button>
-              {showTooltip && (
-                <TooltipPopup
-                  message={"Please fill in all fields"}
-                  buttonRef={addButtonRef}
-                  onClose={() => setShowTooltip(false)}
-                />
-              )}
-            </div>
-          )}
+        </div>
+        <div className={FilterModalStyles.featureEditors}>
+          {selectedFeatures.map(name => <FilterCriteriaEditor key={name} selectedFeature={name}
+            availableStatistics={availableStatistics} filterConditions={filterConditions}
+            matchColumns={matchColumns} columnMappings={columnMappings} isLoading={isLoading}
+            onAddConditions={addConditionsToFeature} />)}
         </div>
 
         {Object.keys(filterConditions).some((k) => filterConditions[k]) && (
@@ -678,6 +376,7 @@ const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal,
           </div>
         )}
 
+        </div>
         <div className={FilterModalStyles.buttonRow}>
           <button
             className={FilterModalStyles.cancelButton}

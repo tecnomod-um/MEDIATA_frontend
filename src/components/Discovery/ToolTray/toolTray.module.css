@@ -256,6 +256,17 @@
 
 .topSection .emptySelection { text-align: center; grid-row: 1 / -1; }
 .topSection > .selectedSource { grid-column: 1; grid-row: 2; text-align: left; white-space: nowrap; min-width: 0; line-height: 20px; }
+.topSection > .combinedSources {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: inherit;
+  opacity: .75;
+  font-size: var(--font-size-xs);
+  text-align: center;
+}
 
 .toggleFeatureTypeButton {
   grid-column: 2;

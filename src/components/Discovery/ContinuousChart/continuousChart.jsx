@@ -57,7 +57,7 @@ const ContinuousChart = React.memo(
     const chartOptions = useMemo(
       () => ({
         responsive: true,
-        maintainAspectRatio: true,
+        maintainAspectRatio: !isSelected,
         animation: true,
         scales: {
           y: { beginAtZero: true },
@@ -76,7 +76,7 @@ const ContinuousChart = React.memo(
           },
         },
       }),
-      [feature, binRanges, filterDescription]
+      [feature, binRanges, filterDescription, isSelected]
     );
 
     useEffect(() => {
@@ -98,9 +98,11 @@ const ContinuousChart = React.memo(
         onClick={onClick}
         onDoubleClick={onDoubleClick}
         role="button"
+        aria-pressed={!!isSelected}
         tabIndex={0}
         aria-label={`Chart for ${feature.featureName}`}
         title={[
+          onClick && "Ctrl/Cmd-click to select multiple features",
           filterDescription && `Filtered records: ${filterDescription}`,
           feature.histogramStatus === "COARSENED" && "Adjacent histogram ranges were combined to avoid small cells.",
         ].filter(Boolean).join("\n") || undefined}

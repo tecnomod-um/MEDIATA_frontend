@@ -1,3 +1,4 @@
+import { isFeatureSelected } from "../featureSelection";
 import React, { useState, useCallback, useEffect, useLayoutEffect, useRef, useMemo } from "react";
 import EntryTableStyles from "./entryTable.module.css";
 import FilterIndicator from "../FilterModal/filterIndicator";
@@ -19,11 +20,9 @@ function getTableHeaders(filteredLists) {
 }
 
 const Row = React.memo(
-  ({ rowIndex, filteredLists, onRowClick, selectedEntry, type, rowTitles, rowFilters }) => {
+  ({ rowIndex, filteredLists, onRowClick, selectedEntries, type, rowTitles, rowFilters }) => {
     const isRowSelected =
-      selectedEntry &&
-      filteredLists["Name"][rowIndex] === selectedEntry.featureName &&
-      type === selectedEntry.type;
+      isFeatureSelected(selectedEntries || [], filteredLists["Name"][rowIndex], type);
     const rowClassName = `${EntryTableStyles.resTr} ${isRowSelected ? EntryTableStyles.selectedRow : ""
       }`;
 
@@ -31,11 +30,12 @@ const Row = React.memo(
       <tr
         key={`row-${rowIndex}`}
         className={rowClassName}
-        onClick={() =>
+        title="Ctrl/Cmd-click to select multiple features"
+        onClick={(event) =>
           onRowClick({
             featureName: filteredLists["Name"][rowIndex],
             type: type,
-          })
+          }, event)
         }
         role="row"
         aria-selected={isRowSelected}
@@ -46,7 +46,7 @@ const Row = React.memo(
             onRowClick({
               featureName: filteredLists["Name"][rowIndex],
               type: type,
-            });
+            }, e);
           }
         }}
       >
@@ -77,17 +77,13 @@ const Row = React.memo(
       return false;
     }
 
-    const wasSelected =
-      previous.selectedEntry?.type === previous.type &&
-      previous.selectedEntry?.featureName === previous.filteredLists.Name[previous.rowIndex];
-    const isSelected =
-      next.selectedEntry?.type === next.type &&
-      next.selectedEntry?.featureName === next.filteredLists.Name[next.rowIndex];
+    const wasSelected = isFeatureSelected(previous.selectedEntries || [], previous.filteredLists.Name[previous.rowIndex], previous.type);
+    const isSelected = isFeatureSelected(next.selectedEntries || [], next.filteredLists.Name[next.rowIndex], next.type);
     return wasSelected === isSelected;
   }
 );
 
-function getTableContent(filteredLists, maxRows, onRowClick, selectedEntry, type, rowTitles, rowFilters) {
+function getTableContent(filteredLists, maxRows, onRowClick, selectedEntries, type, rowTitles, rowFilters) {
   if (!filteredLists || Object.keys(filteredLists).length === 0) return null;
   const actualRowCount = Math.min(
     Object.values(filteredLists)[0].length,
@@ -103,7 +99,7 @@ function getTableContent(filteredLists, maxRows, onRowClick, selectedEntry, type
           rowIndex={rowIndex}
           filteredLists={filteredLists}
           onRowClick={onRowClick}
-          selectedEntry={selectedEntry}
+          selectedEntries={selectedEntries}
           type={type}
           rowTitles={rowTitles}
           rowFilters={rowFilters}
@@ -130,7 +126,7 @@ function getTableContent(filteredLists, maxRows, onRowClick, selectedEntry, type
 }
 
 // Table component for displaying data entries with virtual scrolling and resizable columns
-function EntryTable({ filteredLists, minCellWidth, maxRows = 1000, onRowSelect, selectedEntry, type, rowTitles, rowFilters }) {
+function EntryTable({ filteredLists, minCellWidth, maxRows = 1000, onRowSelect, selectedEntries, type, rowTitles, rowFilters }) {
   const [tableHeight, setTableHeight] = useState("auto");
   const [activeIndex, setActiveIndex] = useState(null);
   const columns = useMemo(() => createHeaders(getTableHeaders(filteredLists)), [filteredLists]);
@@ -263,7 +259,7 @@ function EntryTable({ filteredLists, minCellWidth, maxRows = 1000, onRowSelect, 
           filteredLists,
           maxRows,
           onRowSelect,
-          selectedEntry,
+          selectedEntries,
           type,
           rowTitles,
           rowFilters

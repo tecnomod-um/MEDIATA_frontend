@@ -8,9 +8,28 @@
   flex-direction: column;
   justify-content: space-between;
   transition: height 0.5s ease-in-out;
+  max-height: 90dvh;
+  min-height: 0;
 }
 
-.matchColumns { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-3); color: var(--text-color-secondary); font-size: var(--font-size-sm); cursor: pointer; }
+.dialogFrame { width: min(60rem, 94vw); max-width: 94vw; }
+.filterBody { min-height: 0; overflow-y: auto; overflow-x: hidden; }
+.modalHeader, .buttonRow { flex-shrink: 0; }
+
+.featureSelection .matchColumns {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: var(--space-3) 0 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--background-color-tertiary);
+  border-radius: var(--space-1);
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+.matchColumns > :last-child { flex-shrink: 0; }
 .matchCount { display: block; margin-top: var(--space-1); color: var(--text-color-secondary); font-weight: normal; }
 
 .modalContent {
@@ -73,6 +92,22 @@
 .centeredRow {
   display: flex;
   padding: var(--space-5);
+}
+
+.featureEditors {
+  display: grid;
+  gap: var(--space-3);
+  padding: 0 var(--space-5) var(--space-5);
+}
+
+.featureEditors:empty { display: none; }
+.featureEditor { min-width: 0; }
+.featureEditor h4 { margin: 0 0 var(--space-2); overflow-wrap: anywhere; }
+.featureEditor .filterCriteria { box-sizing: border-box; }
+
+@media (max-width: 600px) {
+  .featureEditor .filterCriteria { grid-template-columns: 1fr !important; }
+  .featureSelection { min-width: 0; }
 }
 
 .featureSelection {

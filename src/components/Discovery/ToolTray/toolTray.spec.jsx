@@ -3,7 +3,7 @@ import { render, fireEvent, screen, waitFor, within } from '@testing-library/rea
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 import { toast } from 'react-toastify';
-import { requestFeatureTypeChange } from '../featureTypeChanges';
+import { requestFeatureTypeChanges } from '../featureTypeChanges';
 
 import ToolTray from './toolTray';
 
@@ -54,7 +54,7 @@ vi.mock('../CompareFilesModal/compareFilesModal', () => ({
     ) : null,
 }));
 
-vi.mock('../featureTypeChanges', () => ({ requestFeatureTypeChange: vi.fn() }));
+vi.mock('../featureTypeChanges', () => ({ requestFeatureTypeChanges: vi.fn() }));
 vi.mock('../../../context/nodeContext', () => ({
   __esModule: true,
   useNode: () => ({
@@ -95,7 +95,7 @@ function getDefaultProps() {
     setShowOutliers: vi.fn(),
     isToolTrayOpen: true,
     toggleToolTray: vi.fn(),
-    selectedEntry: data.categoricalFeatures[0],
+    selectedEntries: [data.categoricalFeatures[0]],
     setSelectedEntry: vi.fn(),
     onFeatureRecalculated: vi.fn(),
     onTypeChanging: vi.fn(),
@@ -203,8 +203,8 @@ describe('<ToolTray/>', () => {
       expect(screen.getByRole('button', { name: 'Open tool tray' }).querySelector('[data-testid="chevron-right"]')).toBeInTheDocument();
     });
 
-    it('shows "No entry selected" when selectedEntry is null', () => {
-      const props = { ...getDefaultProps(), selectedEntry: null };
+    it('shows "No entry selected" when selectedEntries is null', () => {
+      const props = { ...getDefaultProps(), selectedEntries: [] };
       render(<ToolTray {...props} />);
 
       expect(screen.getByText(/no entry selected/i)).toBeInTheDocument();
@@ -267,22 +267,19 @@ describe('<ToolTray/>', () => {
 
     it('commits one full source response and brackets the request with the shared busy state', async () => {
       const change = {nodeId: 1, fileName: 'fileA.csv', featureName: 'Fruit', type: 'continuous', response: {featureTypeSummaryVersion: 1}};
-      requestFeatureTypeChange.mockResolvedValue(change);
+      requestFeatureTypeChanges.mockResolvedValue([change]);
       const props = getDefaultProps();
       render(<ToolTray {...props} />);
       fireEvent.click(screen.getByRole('button', {name: /toggle the selected feature's type/i}));
-      await waitFor(() => expect(props.onFeatureRecalculated).toHaveBeenCalledWith(change));
+      await waitFor(() => expect(props.onFeatureRecalculated).toHaveBeenCalledWith([change]));
       expect(props.onTypeChanging.mock.calls).toEqual([[true], [false]]);
       expect(props.setData).not.toHaveBeenCalled();
       expect(props.setFilteredData).not.toHaveBeenCalled();
-      const update = props.setSelectedEntry.mock.calls[0][0];
-      expect(update(props.selectedEntry)).toMatchObject({type: 'continuous', nodeId: 1});
-      const newerSelection = {featureName: 'Price', type: 'continuous'};
-      expect(update(newerSelection)).toBe(newerSelection);
+
     });
 
     it('retains prior statistics and restores the busy state on a refused or failed type change', async () => {
-      requestFeatureTypeChange.mockRejectedValue(new Error('Statistics withheld'));
+      requestFeatureTypeChanges.mockRejectedValue(new Error('Statistics withheld'));
       const props = getDefaultProps();
       render(<ToolTray {...props} />);
       fireEvent.click(screen.getByRole('button', {name: /toggle the selected feature\x27s type/i}));
@@ -292,10 +289,10 @@ describe('<ToolTray/>', () => {
       expect(props.onTypeChanging).toHaveBeenLastCalledWith(false);
     });
 
-    it.each([{isCombining: true}, {selectedEntry: {featureName: 'Fruit', pooled: true}}])('blocks type changes for a pooled selection or pending refresh', extra => {
+    it.each([{isCombining: true}])('blocks type changes for a pending refresh', extra => {
       render(<ToolTray {...getDefaultProps()} {...extra} />);
       expect(screen.getByRole('button', {name: /toggle the selected feature\x27s type/i})).toBeDisabled();
-      expect(requestFeatureTypeChange).not.toHaveBeenCalled();
+      expect(requestFeatureTypeChanges).not.toHaveBeenCalled();
     });
     it('toggles individual feature on/off', () => {
       const props = getDefaultProps();
@@ -456,4 +453,27 @@ describe('<ToolTray/>', () => {
 it('requires clearing cohort filters before recalculating a variable type', () => {
   render(<ToolTray {...getDefaultProps()} filters={{ Age: [{ type: 'equal', value: 25 }] }} />);
   expect(screen.getByRole('button', { name: "Toggle the selected feature's type between categorical and continuous" })).toBeDisabled();
+});
+
+
+it("lists multiple names and converts a mixed selection to categorical in one batch", async () => {
+  vi.useRealTimers();
+  const props=getDefaultProps();
+  props.selectedEntries=[props.data.continuousFeatures[0],props.data.categoricalFeatures[0]];
+  requestFeatureTypeChanges.mockResolvedValue([]);
+  render(<ToolTray {...props} />);
+  expect(screen.getByRole("heading",{name:"Price, Fruit"})).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button",{name:"Set selected features to categorical"}));
+  await waitFor(()=>expect(props.onFeatureRecalculated).toHaveBeenCalledWith([]));
+  expect(requestFeatureTypeChanges).toHaveBeenCalledWith(expect.objectContaining({entries:props.selectedEntries,targetType:"categorical"}));
+});
+
+
+it("shows combined provenance in place of the type control", () => {
+  const props=getDefaultProps();
+  props.selectedEntries=[{featureName:"Age",pooled:true,combinedSummary:{contributions:[{source:{nodeName:"Alpha",fileName:"a.csv"},columnName:"Age"},{source:{nodeName:"Beta",fileName:"b.csv"},columnName:"PatientAge"}]}}];
+  props.selectedSourceFeatures=[{featureName:"Age",nodeName:"Alpha",fileName:"a.csv"},{featureName:"PatientAge",nodeName:"Beta",fileName:"b.csv"}];
+  render(<ToolTray {...props} />);
+  expect(screen.getByText("Alpha ↔ Beta · 2 datasets")).toBeInTheDocument();
+  expect(screen.queryByRole("button",{name:/selected feature.*type/})).not.toBeInTheDocument();
 });
