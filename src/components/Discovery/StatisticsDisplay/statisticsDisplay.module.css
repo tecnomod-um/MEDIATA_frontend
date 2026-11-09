@@ -1,14 +1,14 @@
-.chartGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
-  align-items: start;
+.chartFlexContainer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
   gap: 1.5vh;
   padding: 1.5vh;
 }
 
 
 .tablesContainer {
-  grid-column: 1 / -1;
   display: flex;
   justify-content: center;
   gap: 1.5vh;

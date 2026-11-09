@@ -246,7 +246,7 @@ const StatisticsDisplay = React.memo(
     const closePreview = useCallback(() => setIsPreviewOpen(false), []);
 
     return (
-      <div className={StatisticsDisplayStyles.chartGrid} role="region" aria-label="Statistics display">
+      <div className={StatisticsDisplayStyles.chartFlexContainer} role="region" aria-label="Statistics display">
         <ChartPreview
           isOpen={isPreviewOpen}
           content={previewContent}
