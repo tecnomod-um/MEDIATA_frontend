@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import { render, screen, fireEvent, within, act } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import EntryTable from "./entryTable";
 import { vi } from "vitest";
@@ -483,4 +483,21 @@ describe("<EntryTable />", () => {
 
     expect(firstHandle).not.toHaveClass("active");
   });
+});
+
+
+it("long-presses a row through its cell using the shared additive gesture and consumes the release click", () => {
+  vi.useFakeTimers();
+  try {
+    const select=vi.fn();
+    render(<EntryTable filteredLists={{Name:["Age","Stroke Type"],Count:["12","12"]}} minCellWidth={50} type="continuous" onRowSelect={select} />);
+    fireEvent.click(screen.getByText("Age"));
+    const second=screen.getByText("Stroke Type");
+    fireEvent.pointerDown(second,{button:0,isPrimary:true,clientX:10,clientY:10});
+    act(()=>vi.advanceTimersByTime(400));
+    fireEvent.pointerUp(second);
+    fireEvent.click(second);
+    expect(select).toHaveBeenCalledTimes(2);
+    expect(select).toHaveBeenLastCalledWith({featureName:"Stroke Type",type:"continuous"},{additive:true});
+  } finally {vi.useRealTimers();}
 });

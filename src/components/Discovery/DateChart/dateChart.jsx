@@ -3,13 +3,14 @@ import React, { useRef, useEffect, useMemo } from "react";
 import { Line } from "react-chartjs-2";
 import "chartjs-adapter-moment";
 import DateChartStyles from "./dateChart.module.css";
+import ChartOverviewStyles from "../chartOverview.module.css";
 import { Chart as ChartJS, registerables } from "chart.js";
 import { distributionTitle } from "../discoveryStatistics";
 
 ChartJS.register(...registerables);
 
 // Display for the continuous features' histogram that are a datetype
-function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick, isSelected, filterDescription }) {
+function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick, isSelected, inOverview, filterDescription }) {
   const chartRef = useRef(null);
   const selectionGesture = useFeatureSelectionGesture(onClick, onDoubleClick);
 
@@ -58,7 +59,7 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
 
   const chartOptions = useMemo(() => ({
     responsive: true,
-    maintainAspectRatio: true,
+    maintainAspectRatio: !inOverview,
     animation: true,
     scales: {
       x: {
@@ -99,7 +100,7 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
         radius: 0,
       },
     },
-  }), [dateData, dateDataKey, filterDescription]);
+  }), [dateData, dateDataKey, filterDescription, inOverview]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -121,7 +122,7 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
 
   return (
     <div
-      className={`${DateChartStyles.chartContainer} ${isSelected ? DateChartStyles.selected : ""
+      className={`${DateChartStyles.chartContainer} ${inOverview ? ChartOverviewStyles.overview : ""} ${isSelected ? DateChartStyles.selected : ""
         }`}
       data-feature-selection
         {...selectionGesture}

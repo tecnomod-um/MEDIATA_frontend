@@ -4,6 +4,7 @@ import { Bar } from "react-chartjs-2";
 import chroma from "chroma-js";
 import { generateColorList } from "../../../util/colors";
 import CategoricalChartStyles from "./categoricalChart.module.css";
+import ChartOverviewStyles from "../chartOverview.module.css";
 import { Chart as ChartJS, registerables } from "chart.js";
 import { distributionTitle } from "../discoveryStatistics";
 
@@ -130,7 +131,7 @@ const CategoricalChart = React.memo(
       () =>
         [
           CategoricalChartStyles.chartContainer,
-          inOverview ? CategoricalChartStyles.overview : "",
+          inOverview ? ChartOverviewStyles.overview : "",
           isSelected ? CategoricalChartStyles.selected : "",
         ].join(" "),
       [inOverview, isSelected]

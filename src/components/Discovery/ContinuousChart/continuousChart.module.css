@@ -24,10 +24,6 @@
     outline: 2px solid transparent;
 }
 
-.overview {
-    max-height: none;
-    max-width: none;
-}
 
 .unavailable {
     display: flex;

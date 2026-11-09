@@ -48,7 +48,7 @@ export default function FilterCriteriaEditor({selectedFeature, showHeading, avai
 
   return <section className={styles.featureEditor} aria-label={`Filter ${selectedFeature}`}>
     {showHeading && <h4>{selectedFeature}</h4>}
-    <div className={styles.filterCriteria} style={{gridTemplateColumns:categorical ? "3fr 1fr" : between ? "1fr 1fr 1fr 1fr" : "1fr 2fr 1fr"}}>
+    <div className={`${styles.filterCriteria} ${categorical ? styles.categoricalCriteria : between ? styles.rangeCriteria : styles.valueCriteria}`}>
       {categorical ? <div>
         <label htmlFor={`${inputId}-categories`}>Choose categories:</label>
         <Select inputId={`${inputId}-categories`} aria-label={`Categories for ${selectedFeature}`} isMulti classNamePrefix="react-select"

@@ -2,6 +2,7 @@ import useFeatureSelectionGesture from "../useFeatureSelectionGesture";
 import React, { useRef, useEffect, useMemo } from "react";
 import { Bar } from "react-chartjs-2";
 import ContinuousChartStyles from "./continuousChart.module.css";
+import ChartOverviewStyles from "../chartOverview.module.css";
 import { Chart as ChartJS, registerables } from "chart.js";
 import { distributionTitle } from "../discoveryStatistics";
 import { sourceLabel } from "../CombinedStatistics/combinedStatistics";
@@ -59,7 +60,7 @@ const ContinuousChart = React.memo(
     const chartOptions = useMemo(
       () => ({
         responsive: true,
-        maintainAspectRatio: true,
+        maintainAspectRatio: !inOverview,
         animation: true,
         scales: {
           y: { beginAtZero: true },
@@ -78,7 +79,7 @@ const ContinuousChart = React.memo(
           },
         },
       }),
-      [feature, binRanges, filterDescription]
+      [feature, binRanges, filterDescription, inOverview]
     );
 
     useEffect(() => {
@@ -95,7 +96,7 @@ const ContinuousChart = React.memo(
 
     return (
       <div
-        className={`${ContinuousChartStyles.chartContainer} ${inOverview ? ContinuousChartStyles.overview : ""
+        className={`${ContinuousChartStyles.chartContainer} ${inOverview ? ChartOverviewStyles.overview : ""
           } ${isSelected ? ContinuousChartStyles.selected : ""}`}
         data-feature-selection
         {...selectionGesture}

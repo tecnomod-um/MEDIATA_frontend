@@ -1,18 +1,18 @@
-.chartFlexContainer {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: flex-start;
+.chartGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+  align-items: start;
   gap: 1.5vh;
   padding: 1.5vh;
 }
 
 
 .tablesContainer {
+  grid-column: 1 / -1;
   display: flex;
   justify-content: center;
   gap: 1.5vh;
-  width: calc(100% - 1.5vh);
+  width: 100%;
   flex-wrap: nowrap;
 }
 

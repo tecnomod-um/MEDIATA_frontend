@@ -14,10 +14,6 @@
   justify-content: center;
 }
 
-.overview {
-  max-width: none;
-  max-height: none;
-}
 
 .modalContainer .chartContainer {
   width: 100%;
