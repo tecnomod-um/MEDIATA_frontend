@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import OverlayWrapper from "../../Common/OverlayWrapper/overlayWrapper";
-import Select from "react-select";
+import FilterSelect from "./filterSelect";
 import Switch from "react-switch";
 import FilterModalStyles from "./filterModal.module.css";
 import { IoMdClose } from "react-icons/io";
@@ -283,7 +283,7 @@ const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal,
         >
           <div className={FilterModalStyles.featureSelection}>
             <label htmlFor="feature-select">Features</label>
-            <Select
+            <FilterSelect
               className={FilterModalStyles.featurePicker}
               isMulti
               closeMenuOnSelect={false}
@@ -296,7 +296,7 @@ const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal,
               inputId="feature-select"
             />
             {dataResults.length > 1 && (
-              <label className={FilterModalStyles.matchColumns} title="Copies criteria using saved feature combinations, or matching names and types when no combination exists. Includes loaded datasets currently hidden.">
+              <label className={`${FilterModalStyles.filterOption} ${FilterModalStyles.matchColumns}`} title="Copies criteria using saved feature combinations, or matching names and types when no combination exists. Includes loaded datasets currently hidden.">
                 <span>Apply to matching columns in other datasets</span>
                 <Switch checked={matchColumns} onChange={setMatchColumns} disabled={isLoading}
                   aria-label="Apply to matching columns in other datasets"
@@ -304,9 +304,10 @@ const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal,
               </label>
             )}
             {hasAtLeastTwoFilters() && (
-              <div className={FilterModalStyles.globalLogicalOperatorContainer}>
-                <label>Combine all filters with</label>
+              <div className={FilterModalStyles.filterOption}>
+                <label htmlFor="global-filter-operator">Combine all filters with</label>
                 <button
+                  id="global-filter-operator"
                   className={FilterModalStyles.logicalOperatorButton}
                   onClick={() =>
                     setGlobalLogicalOperator(
