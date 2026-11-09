@@ -1,5 +1,17 @@
-import React, { useState, useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useLayoutEffect, useRef, useMemo } from "react";
 import EntryTableStyles from "./entryTable.module.css";
+import FilterIndicator from "../FilterModal/filterIndicator";
+
+const statisticDescriptions = {
+  Count: "Non-missing observations. Rows are counted; patients are not deduplicated across datasets.",
+  "Total Count": "Non-missing observations. Rows are counted; patients are not deduplicated across datasets.",
+  "Std. Dev.": "Population standard deviation (divisor n). Date deviations are measured in days.",
+  "1st Qrt.": "25th percentile with linear interpolation (R7). Exact pooled percentiles require complete approved value frequencies.",
+  Median: "50th percentile with linear interpolation (R7): the average of the two middle values for an even-sized numerical cohort.",
+  "3rd Qrt.": "75th percentile with linear interpolation (R7). Exact pooled percentiles require complete approved value frequencies.",
+  "Mode %": "Mode frequency divided by non-missing count. Missing observations are reported separately.",
+  "2nd Mode %": "Second mode frequency divided by non-missing count.",
+};
 
 function getTableHeaders(filteredLists) {
   if (!filteredLists) return [];
@@ -7,7 +19,7 @@ function getTableHeaders(filteredLists) {
 }
 
 const Row = React.memo(
-  ({ rowIndex, filteredLists, onRowClick, selectedEntry, type }) => {
+  ({ rowIndex, filteredLists, onRowClick, selectedEntry, type, rowTitles, rowFilters }) => {
     const isRowSelected =
       selectedEntry &&
       filteredLists["Name"][rowIndex] === selectedEntry.featureName &&
@@ -45,8 +57,8 @@ const Row = React.memo(
               }`}
             role="cell"
           >
-            <span className={EntryTableStyles.resSpan}>
-              {filteredLists[key][rowIndex]}
+            <span className={key === "Name" && rowFilters?.[filteredLists.Name[rowIndex]] ? EntryTableStyles.filteredName : EntryTableStyles.resSpan} title={key === "Name" && rowTitles?.[filteredLists.Name[rowIndex]] || String(filteredLists[key][rowIndex] ?? "")}>
+              {key === "Name" && rowFilters?.[filteredLists.Name[rowIndex]] ? <><span className={EntryTableStyles.resSpan}>{filteredLists[key][rowIndex]}</span><FilterIndicator description={rowFilters[filteredLists.Name[rowIndex]]} /></> : filteredLists[key][rowIndex]}
             </span>
           </td>
         ))}
@@ -59,6 +71,8 @@ const Row = React.memo(
       previous.filteredLists !== next.filteredLists ||
       previous.onRowClick !== next.onRowClick ||
       previous.type !== next.type
+      || previous.rowTitles !== next.rowTitles
+      || previous.rowFilters !== next.rowFilters
     ) {
       return false;
     }
@@ -73,7 +87,7 @@ const Row = React.memo(
   }
 );
 
-function getTableContent(filteredLists, maxRows, onRowClick, selectedEntry, type) {
+function getTableContent(filteredLists, maxRows, onRowClick, selectedEntry, type, rowTitles, rowFilters) {
   if (!filteredLists || Object.keys(filteredLists).length === 0) return null;
   const actualRowCount = Math.min(
     Object.values(filteredLists)[0].length,
@@ -91,6 +105,8 @@ function getTableContent(filteredLists, maxRows, onRowClick, selectedEntry, type
           onRowClick={onRowClick}
           selectedEntry={selectedEntry}
           type={type}
+          rowTitles={rowTitles}
+          rowFilters={rowFilters}
         />
       ))}
       {[...Array(fillerRowCount)].map((_, fillerIndex) => (
@@ -114,10 +130,10 @@ function getTableContent(filteredLists, maxRows, onRowClick, selectedEntry, type
 }
 
 // Table component for displaying data entries with virtual scrolling and resizable columns
-function EntryTable({ filteredLists, minCellWidth, maxRows = 1000, onRowSelect, selectedEntry, type }) {
+function EntryTable({ filteredLists, minCellWidth, maxRows = 1000, onRowSelect, selectedEntry, type, rowTitles, rowFilters }) {
   const [tableHeight, setTableHeight] = useState("auto");
   const [activeIndex, setActiveIndex] = useState(null);
-  const [columns, setColumns] = useState(createHeaders(["."]));
+  const columns = useMemo(() => createHeaders(getTableHeaders(filteredLists)), [filteredLists]);
   const tableElement = useRef(null);
   const tbodyElement = useRef(null);
   const gridTemplateColumns = columns.map(() => "minmax(100px, 1fr)").join(" ");
@@ -132,11 +148,6 @@ function EntryTable({ filteredLists, minCellWidth, maxRows = 1000, onRowSelect, 
       ref: React.createRef(),
     }));
   }
-
-  useEffect(() => {
-    const tableHeaders = getTableHeaders(filteredLists);
-    setColumns(createHeaders(tableHeaders));
-  }, [filteredLists]);
 
   useLayoutEffect(() => {
     if (tbodyElement.current && tbodyElement.current.children.length > 0) {
@@ -233,7 +244,7 @@ function EntryTable({ filteredLists, minCellWidth, maxRows = 1000, onRowSelect, 
         <tr className={EntryTableStyles.resTr} role="row">
           {columns.map(({ ref, text }, i) => (
             <th className={EntryTableStyles.resTh} ref={ref} key={text} role="columnheader">
-              <span className={EntryTableStyles.resSpan}>{text}</span>
+              <span className={EntryTableStyles.resSpan} title={statisticDescriptions[text]}>{text}</span>
               <div
                 style={{ height: tableHeight }}
                 role="separator"
@@ -253,7 +264,9 @@ function EntryTable({ filteredLists, minCellWidth, maxRows = 1000, onRowSelect, 
           maxRows,
           onRowSelect,
           selectedEntry,
-          type
+          type,
+          rowTitles,
+          rowFilters
         )}
       </tbody>
     </table>

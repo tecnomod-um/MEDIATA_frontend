@@ -5,6 +5,9 @@ import DateChart from "../DateChart/dateChart";
 import EntrySearch from "../EntrySearch/entrySearch";
 import StatisticsDisplayStyles from "./statisticsDisplay.module.css";
 import ChartPreview from "../ChartPreview/chartPreview";
+import { sourceLabel } from "../CombinedStatistics/combinedStatistics";
+import { sourceFilter } from "../FilterModal/appliedFilters";
+import { formatCategoryPercent } from "../discoveryStatistics";
 
 const ContinuousOverviewChart = React.memo(function ContinuousOverviewChart({
   feature,
@@ -12,6 +15,7 @@ const ContinuousOverviewChart = React.memo(function ContinuousOverviewChart({
   isSelected,
   onSelect,
   onPreview,
+  filterDescription,
 }) {
   const handleClick = useCallback(() => {
     onSelect({ type: "continuous", featureName: feature.featureName });
@@ -28,6 +32,7 @@ const ContinuousOverviewChart = React.memo(function ContinuousOverviewChart({
       onDoubleClick={handleDoubleClick}
       isSelected={isSelected}
       inOverview
+      filterDescription={filterDescription}
     />
   );
 });
@@ -37,6 +42,7 @@ const CategoricalOverviewChart = React.memo(function CategoricalOverviewChart({
   isSelected,
   onSelect,
   onPreview,
+  filterDescription,
 }) {
   const handleClick = useCallback(() => {
     onSelect({ type: "categorical", featureName: feature.featureName });
@@ -52,6 +58,7 @@ const CategoricalOverviewChart = React.memo(function CategoricalOverviewChart({
       onDoubleClick={handleDoubleClick}
       isSelected={isSelected}
       inOverview
+      filterDescription={filterDescription}
     />
   );
 });
@@ -62,6 +69,7 @@ const DateOverviewChart = React.memo(function DateOverviewChart({
   isSelected,
   onSelect,
   onPreview,
+  filterDescription,
 }) {
   const handleClick = useCallback(() => {
     onSelect({ type: "continuous", featureName: feature.featureName });
@@ -78,18 +86,22 @@ const DateOverviewChart = React.memo(function DateOverviewChart({
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
       isSelected={isSelected}
+      filterDescription={filterDescription}
     />
   );
 });
 
 // Display for individual statistics, contains tables and graphs
 const StatisticsDisplay = React.memo(
-  ({ data, showOutliers, setSelectedEntry, selectedEntry }) => {
+  ({ data, tableData = data, numericalTableActions, categoricalTableActions, combinedTables = false, showOutliers, setSelectedEntry, selectedEntry, featureFilters, appliedFilters }) => {
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [previewContent, setPreviewContent] = useState(null);
+    const rowTitles = useMemo(() => Object.fromEntries(["continuousFeatures", "categoricalFeatures", "dateFeatures"].flatMap(key => (tableData[key] || [])
+      .filter(feature => feature.pooled).map(feature => [feature.featureName, feature.combinedSummary.contributions.map(contribution => `${sourceLabel(contribution.source)} / ${contribution.columnName || contribution.feature?.featureName || feature.featureName}`).join(" ↔ ")]))), [tableData]);
 
     const formatMissingEntries = useCallback((count, missingValuesCount) => {
-      const missingPercentage = ((missingValuesCount / count) * 100).toFixed(2);
+      if (count == null || missingValuesCount == null) return "N/A";
+      const missingPercentage = ((missingValuesCount / (count + missingValuesCount)) * 100).toFixed(2);
       return missingValuesCount === 0
         ? "0 (0%)"
         : `${missingValuesCount} (${missingPercentage}%)`;
@@ -123,27 +135,29 @@ const StatisticsDisplay = React.memo(
         Max: [],
         "Missing Entries": [],
       };
-      data.continuousFeatures.forEach((feature) => {
+      if (combinedTables) table.Datasets = [];
+      tableData.continuousFeatures.forEach((feature) => {
         table.Name.push(feature.featureName);
-        table["Count"].push(feature.count.toString());
-        table["Mean"].push(feature.mean.toFixed(2));
-        table["Std. Dev."].push(feature.stdDev.toFixed(2));
-        table["Min"].push(feature.min.toString());
-        table["1st Qrt."].push(feature.qrt1.toFixed(2));
-        table["Median"].push(feature.median.toFixed(2));
-        table["3rd Qrt."].push(feature.qrt3.toFixed(2));
-        table["Max"].push(feature.max.toString());
+        table["Count"].push(feature.count?.toString() ?? "N/A");
+        table["Mean"].push(feature.mean?.toFixed(2) ?? "N/A");
+        table["Std. Dev."].push(feature.stdDev?.toFixed(2) ?? "N/A");
+        table["Min"].push(feature.min?.toString() ?? "N/A");
+        table["1st Qrt."].push(feature.qrt1?.toFixed(2) ?? "N/A");
+        table["Median"].push(feature.median?.toFixed(2) ?? "N/A");
+        table["3rd Qrt."].push(feature.qrt3?.toFixed(2) ?? "N/A");
+        table["Max"].push(feature.max?.toString() ?? "N/A");
         table["Missing Entries"].push(
           formatMissingEntries(feature.count, feature.missingValuesCount)
         );
+        if (combinedTables) table.Datasets.push(feature.datasetCount || "1");
       });
-      if (data.dateFeatures && data.dateFeatures.length > 0) {
-        data.dateFeatures.forEach((dateStat) => {
+      if (tableData.dateFeatures && tableData.dateFeatures.length > 0) {
+        tableData.dateFeatures.forEach((dateStat) => {
           table.Name.push(dateStat.featureName);
-          table["Count"].push(dateStat.count.toString());
+          table["Count"].push(dateStat.count?.toString() ?? "N/A");
           table["Mean"].push(dateStat.mean ?? "N/A");
           table["Std. Dev."].push(
-            dateStat.stdDev ? dateStat.stdDev.toFixed(2) : "N/A"
+            dateStat.stdDev?.toFixed(2) ?? "N/A"
           );
           table["Min"].push(dateStat.earliestDate || "N/A");
           table["1st Qrt."].push(dateStat.q1 || "N/A");
@@ -153,40 +167,48 @@ const StatisticsDisplay = React.memo(
           table["Missing Entries"].push(
             formatMissingEntries(dateStat.count, dateStat.missingValuesCount)
           );
+          if (combinedTables) table.Datasets.push(dateStat.datasetCount || "1");
         });
       }
+      if (combinedTables) table.Status = [...tableData.continuousFeatures, ...(tableData.dateFeatures || [])].map(feature => feature.status || "Individual dataset");
       return table;
-    }, [data, formatMissingEntries]);
+    }, [tableData, combinedTables, formatMissingEntries]);
 
     const categoricalDataForTable = useMemo(() => {
-      return {
-        Name: data.categoricalFeatures.map((f) => f.featureName),
-        "Total Count": data.categoricalFeatures.map((f) =>
-          f.count.toString()
+      const table = {
+        Name: tableData.categoricalFeatures.map((f) => f.featureName),
+        "Total Count": tableData.categoricalFeatures.map((f) =>
+          f.count?.toString() ?? "N/A"
         ),
-        Mode: data.categoricalFeatures.map((f) => f.mode || "N/A"),
-        "Mode Frequency": data.categoricalFeatures.map((f) =>
-          f.modeFrequency ? f.modeFrequency.toString() : "N/A"
+        Mode: tableData.categoricalFeatures.map((f) => f.mode ?? "N/A"),
+        "Mode Frequency": tableData.categoricalFeatures.map((f) =>
+          f.modeFrequency?.toString() ?? "N/A"
         ),
-        "Mode %": data.categoricalFeatures.map((f) =>
-          f.modeFrequencyPercentage
-            ? `${f.modeFrequencyPercentage.toFixed(2)}%`
-            : "N/A"
+        "Mode %": tableData.categoricalFeatures.map((f) =>
+          formatCategoryPercent(f.modeFrequency, f.count)
         ),
-        "2nd Mode": data.categoricalFeatures.map((f) => f.secondMode || "N/A"),
-        "2nd Mode Frequency": data.categoricalFeatures.map((f) =>
-          f.secondModeFrequency ? f.secondModeFrequency.toString() : "N/A"
+        "2nd Mode": tableData.categoricalFeatures.map((f) => f.secondMode ?? "N/A"),
+        "2nd Mode Frequency": tableData.categoricalFeatures.map((f) =>
+          f.secondModeFrequency?.toString() ?? "N/A"
         ),
-        "2nd Mode %": data.categoricalFeatures.map((f) =>
-          f.secondModePercentage
-            ? `${f.secondModePercentage.toFixed(2)}%`
-            : "N/A"
+        "2nd Mode %": tableData.categoricalFeatures.map((f) =>
+          formatCategoryPercent(f.secondModeFrequency, f.count)
         ),
-        "Missing Entries": data.categoricalFeatures.map((f) =>
+        "Missing Entries": tableData.categoricalFeatures.map((f) =>
           formatMissingEntries(f.count, f.missingValuesCount)
         ),
       };
-    }, [data, formatMissingEntries]);
+      if (combinedTables) {
+        table.Datasets = tableData.categoricalFeatures.map(feature => feature.datasetCount || "1");
+        table.Status = tableData.categoricalFeatures.map(feature => feature.status || "Individual dataset");
+      }
+      return table;
+    }, [tableData, combinedTables, formatMissingEntries]);
+
+    const selectTableRow = useCallback(entry => {
+      const feature = [...tableData.continuousFeatures, ...tableData.categoricalFeatures, ...(tableData.dateFeatures || [])].find(f => f.featureName === entry.featureName);
+      setSelectedEntry(feature?.pooled ? { ...entry, pooled: true } : entry);
+    }, [tableData, setSelectedEntry]);
 
     const handleChartDoubleClick = useCallback((chartType, feature, previewShowOutliers) => {
       if (window.innerWidth < 768) return;
@@ -196,11 +218,11 @@ const StatisticsDisplay = React.memo(
       switch (chartType) {
         case "continuous":
           ChartComponent = ContinuousChart;
-          chartProps = { feature, showOutliers: previewShowOutliers };
+          chartProps = { feature, showOutliers: previewShowOutliers, filterDescription: sourceFilter(appliedFilters, feature) };
           break;
         case "categorical":
           ChartComponent = CategoricalChart;
-          chartProps = { feature };
+          chartProps = { feature, filterDescription: sourceFilter(appliedFilters, feature) };
           break;
         case "date":
           ChartComponent = DateChart;
@@ -208,6 +230,7 @@ const StatisticsDisplay = React.memo(
             dateData: feature,
             dateDataKey: feature.featureName,
             showOutliers: previewShowOutliers,
+            filterDescription: sourceFilter(appliedFilters, feature),
           };
           break;
         default:
@@ -216,7 +239,7 @@ const StatisticsDisplay = React.memo(
       }
       setPreviewContent(<ChartComponent {...chartProps} />);
       setIsPreviewOpen(true);
-    }, []);
+    }, [appliedFilters]);
 
     const closePreview = useCallback(() => setIsPreviewOpen(false), []);
 
@@ -231,17 +254,23 @@ const StatisticsDisplay = React.memo(
           <div className={StatisticsDisplayStyles.entrySearchWrapper}>
             <EntrySearch
               resultData={continuousDataForTable}
-              onRowSelect={setSelectedEntry}
+              onRowSelect={selectTableRow}
               selectedEntry={selectedEntry}
               type="continuous"
+              actions={numericalTableActions}
+              rowTitles={rowTitles}
+              rowFilters={featureFilters}
             />
           </div>
           <div className={StatisticsDisplayStyles.entrySearchWrapper}>
             <EntrySearch
               resultData={categoricalDataForTable}
-              onRowSelect={setSelectedEntry}
+              onRowSelect={selectTableRow}
               selectedEntry={selectedEntry}
               type="categorical"
+              actions={categoricalTableActions}
+              rowTitles={rowTitles}
+              rowFilters={featureFilters}
             />
           </div>
         </div>
@@ -253,6 +282,7 @@ const StatisticsDisplay = React.memo(
             showOutliers={showOutliers}
             onSelect={setSelectedEntry}
             onPreview={handleChartDoubleClick}
+            filterDescription={sourceFilter(appliedFilters, feature)}
             isSelected={
               selectedEntry?.type === "continuous" &&
               selectedEntry?.featureName === feature.featureName
@@ -266,6 +296,7 @@ const StatisticsDisplay = React.memo(
             feature={feature}
             onSelect={setSelectedEntry}
             onPreview={handleChartDoubleClick}
+            filterDescription={sourceFilter(appliedFilters, feature)}
             isSelected={
               selectedEntry?.type === "categorical" &&
               selectedEntry?.featureName === feature.featureName
@@ -280,6 +311,7 @@ const StatisticsDisplay = React.memo(
             showOutliers={showOutliers}
             onSelect={setSelectedEntry}
             onPreview={handleChartDoubleClick}
+            filterDescription={sourceFilter(appliedFilters, feature)}
             isSelected={
               selectedEntry?.type === "continuous" &&
               selectedEntry?.featureName === feature.featureName

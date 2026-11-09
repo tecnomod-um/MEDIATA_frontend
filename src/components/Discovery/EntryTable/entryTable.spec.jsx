@@ -24,6 +24,13 @@ vi.mock("./entryTable.module.css", () => ({
 }));
 
 describe("<EntryTable />", () => {
+  it("shows a filter marker without changing the feature identity passed to selection", () => {
+    const select = vi.fn();
+    render(<EntryTable filteredLists={{ Name: ['Age'], Count: ['54'] }} minCellWidth={50} type="continuous" onRowSelect={select} rowFilters={{ Age: 'cluster (= 1)' }} />);
+    expect(screen.getByRole('img', { name: 'Filtered records: cluster (= 1)' })).toHaveTextContent('*');
+    fireEvent.click(screen.getByText('Age'));
+    expect(select).toHaveBeenCalledWith({ featureName: 'Age', type: 'continuous' });
+  });
   const filteredLists = {
     Name: ["foo", "bar"],
     Age: ["10", "20"],

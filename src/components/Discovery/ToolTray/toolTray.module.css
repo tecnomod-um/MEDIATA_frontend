@@ -1,18 +1,39 @@
 .container {
+  box-sizing: border-box;
   background-color: var(--tooltray-background-color);
   color: var(--tooltray-text-color);
   left: 0;
   top: 55px;
   bottom: 0;
-  width: 250px;
+  width: var(--discovery-sidebar-width, 18rem);
   position: fixed;
   transition: transform 0.3s ease;
   display: flex;
   flex-direction: column;
-  padding: 15px;
+  padding: 0;
   z-index: 10;
   min-height: 0;
 }
+
+.scrollContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-3);
+  gap: var(--space-2);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--tooltray-button-hover) var(--tooltray-background-color);
+}
+
+.featureToggleText { display: flex; align-items: center; gap: var(--space-2); flex: 1; min-width: 0; }
+.featureToggleName, .featureSource { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.featureToggleName { flex: 1; min-width: 0; }
+.featureSource { flex: 0 1 auto; max-width: 52%; margin-left: auto; text-align: right; font-size: var(--font-size-xs); opacity: .7; }
+.featureSwitch { flex-shrink: 0; }
+.selectedSource { display: block; font-size: var(--font-size-xs); font-weight: 400; opacity: .7; overflow: hidden; text-overflow: ellipsis; }
 
 .open {
   transform: translateX(0);
@@ -47,6 +68,8 @@
   top: 0px;
   width: 30px;
   height: 55px;
+  border: none;
+  font-size: var(--font-size-xl);
   background-color: var(--button-color);
   color: var(--text-color-on-darkbg);
   display: none;
@@ -63,11 +86,11 @@
 
 .multiFileSelector {
   background-color: var(--tooltray-section-bg);
-  padding: 10px;
-  border-radius: 5px;
-  margin-bottom: 10px;
+  padding: var(--space-2);
+  border-radius: var(--space-1);
   flex: 0 1 auto;
-  min-height: 0;
+  min-height: 4rem;
+  max-height: clamp(4rem, 22dvh, 13rem);
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -79,7 +102,7 @@
 }
 
 .nodeGroup {
-  margin-bottom: 10px;
+  margin-bottom: var(--space-2);
 }
 
 .nodeGroup:last-child {
@@ -87,19 +110,31 @@
 }
 
 .nodeGroupTitle {
-  margin: 0 0 6px 0;
-  font-size: var(--font-size-xs);
-  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--space-6);
+  padding-block: var(--space-1);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
   color: var(--tooltray-text-color);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  position: sticky;
+  top: calc(var(--space-2) * -1);
+  z-index: 1;
+  background: var(--tooltray-section-bg);
+  cursor: pointer;
+  list-style: none;
 }
+.nodeGroupTitle::-webkit-details-marker { display: none; }
+.nodeChevron { flex-shrink: 0; transition: transform .15s; }
+.nodeGroup[open] > .nodeGroupTitle .nodeChevron { transform: rotate(90deg); }
+.nodeName { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.nodeCount { flex-shrink: 0; font-size: var(--font-size-xs); font-weight: 400; opacity: .7; }
 
 .filesRow {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-direction: column;
+  gap: var(--space-1);
   overflow-y: visible;
   overflow-x: hidden;
   max-height: none;
@@ -117,9 +152,11 @@
   border-radius: var(--space-1);
   cursor: pointer;
   font-size: var(--font-size-sm);
-  padding: 5px 8px;
-  transition: background-color 0.3s ease, transform 0.3s ease;
-  flex: 1 1 auto;
+  padding: var(--space-1) var(--space-2);
+  min-height: 32px;
+  box-sizing: border-box;
+  transition: background-color 0.2s ease;
+  flex: 0 0 auto;
   min-width: 0;
   white-space: nowrap;
   user-select: none;
@@ -138,22 +175,6 @@
 
 .fileToggleActive:hover {
   background-color: var(--button-color-hover);
-}
-
-.ripple {
-  position: absolute;
-  border-radius: 50%;
-  transform: scale(0);
-  animation: rippleEffect 0.6s linear;
-  background: rgba(255, 255, 255, 0.4);
-  pointer-events: none;
-}
-
-@keyframes rippleEffect {
-  to {
-    transform: scale(4);
-    opacity: 0;
-  }
 }
 
 .fileToggle input[type="checkbox"] {
@@ -204,26 +225,44 @@
 }
 
 .topSection {
+  height: 3.25rem;
+  box-sizing: border-box;
   background-color: var(--tooltray-section-bg);
-  padding: 10px;
-  border-radius: 5px;
-  margin-bottom: 10px;
+  padding: calc(var(--space-1) * 1.5) var(--space-2);
+  border-radius: var(--space-1);
   text-align: center;
   flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 6.5rem;
+  grid-template-rows: 18px 20px;
+  align-items: center;
+  gap: calc(var(--space-1) / 2) var(--space-2);
 }
 
 .topSection h3 {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  line-height: 18px;
+  margin: 0;
   font-weight: bold;
   font-size: var(--font-size-base);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  text-align: center;
 }
 
+.topSection .emptySelection { text-align: center; grid-row: 1 / -1; }
+.topSection > .selectedSource { grid-column: 1; grid-row: 2; text-align: left; white-space: nowrap; min-width: 0; line-height: 20px; }
+
 .toggleFeatureTypeButton {
+  grid-column: 2;
+  grid-row: 2;
   background-color: var(--tooltray-button-bg);
   color: var(--tooltray-text-color);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-1);
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -232,9 +271,10 @@
   justify-content: center;
   gap: 5px;
   font-size: var(--font-size-xs);
-  width: 100%;
-  margin-top: 5px;
-  height: 36px;
+  width: 6.5rem;
+  min-width: 6.5rem;
+  margin-top: 0;
+  height: 20px;
   transition: background-color 0.3s;
   box-sizing: border-box;
 }
@@ -258,8 +298,9 @@
 }
 
 .spinner {
-  width: var(--spinner-size-sm);
-  height: var(--spinner-size-sm);
+  width: 14px;
+  height: 14px;
+  box-sizing: border-box;
   border: var(--spinner-border-width-md) solid var(--spinner-border-base);
   border-top: var(--spinner-border-width-md) solid var(--tooltray-text-color);
   border-radius: 50%;
@@ -271,14 +312,23 @@
   100% { transform: rotate(-360deg); }
 }
 
+.featureControls {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 8rem;
+  min-height: calc(4rem + 32px + var(--space-1) / 2);
+  gap: calc(var(--space-1) / 2);
+}
+
 .featuresList {
   background-color: var(--tooltray-section-bg);
-  padding: 10px;
+  padding: var(--space-2);
   overflow-y: auto;
   overflow-x: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  flex: 1 1 0;
-  min-height: 0;
+  flex: 1 1 6rem;
+  min-height: 4rem;
+  box-sizing: border-box;
   font-size: var(--font-size-sm);
   border-radius: 5px;
 }
@@ -290,7 +340,7 @@
 }
 
 .featuresList li {
-  padding: 5px 0;
+  padding: var(--space-1) 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -298,10 +348,10 @@
 
 .featuresList label {
   flex-grow: 1;
-  margin-right: 10px;
+  margin-right: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2);
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
@@ -345,9 +395,9 @@
   align-items: center;
   justify-content: center;
   gap: 5px;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   width: 100%;
-  height: 36px;
+  height: 34px;
   box-sizing: border-box;
   cursor: pointer;
   transition: background-color 0.3s;
@@ -359,7 +409,7 @@
 }
 
 .buttonContainer {
-  margin-bottom: 10px;
+  margin: 0;
   display: flex;
   width: 100%;
   flex: 0 0 auto;
@@ -370,7 +420,8 @@
   background-color: var(--tooltray-button-bg);
   border: none;
   color: var(--tooltray-text-color);
-  padding: 10px 15px;
+  padding: var(--space-1) var(--space-2);
+  min-height: 34px;
   border-radius: 5px;
   width: 100%;
   font-size: var(--font-size-sm);
@@ -387,9 +438,7 @@
 .searchContainer {
   display: flex;
   align-items: center;
-  gap: 2px;
-  margin-top: 2px;
-  margin-bottom: 10px;
+  gap: var(--space-1);
   border-radius: 5px;
   width: 100%;
   box-sizing: border-box;
@@ -399,7 +448,9 @@
 .searchInput {
   flex: 1 1 auto;
   min-width: 0;
-  padding: 6px 8px;
+  padding: var(--space-1) var(--space-2);
+  height: 32px;
+  box-sizing: border-box;
   border-radius: var(--space-1);
   border: none;
   background-color: var(--tooltray-button-bg);
@@ -420,7 +471,7 @@
   border: none;
   border-radius: var(--space-1);
   font-size: var(--font-size-sm);
-  height: 100%;
+  align-self: stretch;
   padding: 0 2px 0 2px;
   line-height: normal;
   cursor: pointer;
@@ -430,4 +481,15 @@
 
 .toggleAllButton:hover {
   background-color: var(--tooltray-button-hover);
+}
+
+.actionStack { display: flex; flex-direction: column; flex: 0 0 auto; gap: var(--space-1); }
+.actionStack .buttonContainer { min-width: 0; }
+.actionStack .outliersLabel > div { flex-shrink: 0; }
+
+@media (max-height: 640px) {
+  .scrollContent { padding: var(--space-2); gap: var(--space-1); }
+  .multiFileSelector { max-height: 20dvh; min-height: 2rem; }
+  .featuresList { min-height: 3.5rem; }
+  .featureControls { min-height: calc(3.5rem + 32px + var(--space-1) / 2); }
 }

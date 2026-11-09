@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useId, useMemo, useState } from "react";
 import { MdChevronRight, MdChevronLeft, MdSync } from "react-icons/md";
 import Switch from "react-switch";
 import { toast } from "react-toastify";
@@ -6,9 +6,11 @@ import ToolTrayStyles from "./toolTray.module.css";
 import DataExporter from "../DataExporter/dataExporter";
 import ElementExporter from "../ElementExporter/elementExporter";
 import CompareFilesModal from "../CompareFilesModal/compareFilesModal";
-import { recalculateFeature } from "../../../util/petitionHandler";
-import { updateNodeAxiosBaseURL } from "../../../util/nodeAxiosSetup";
+import { requestFeatureTypeChange } from "../featureTypeChanges";
 import { useNode } from "../../../context/nodeContext";
+import FilterIndicator from "../FilterModal/filterIndicator";
+import { sourceFilter } from "../FilterModal/appliedFilters";
+import DatasetSelector from "./datasetSelector";
 
 const getEntrySet = (dataSet) => {
   if (!dataSet) return [];
@@ -17,21 +19,30 @@ const getEntrySet = (dataSet) => {
       featureName: item.featureName,
       type: "date",
       fileName: item.fileName,
+      nodeId: item.nodeId,
+      originalName: item.originalName,
+      nodeName: item.nodeName,
     })),
     ...(dataSet.categoricalFeatures || []).map((item) => ({
       featureName: item.featureName,
       type: "categorical",
       fileName: item.fileName,
+      nodeId: item.nodeId,
+      originalName: item.originalName,
+      nodeName: item.nodeName,
     })),
     ...(dataSet.continuousFeatures || []).map((item) => ({
       featureName: item.featureName,
       type: "continuous",
       fileName: item.fileName,
+      nodeId: item.nodeId,
+      originalName: item.originalName,
+      nodeName: item.nodeName,
     })),
   ];
 };
 
-const FeatureToggle = React.memo(function FeatureToggle({ entry, checked, onToggle }) {
+const FeatureToggle = React.memo(function FeatureToggle({ entry, checked, onToggle, filterDescription }) {
   const handleChange = useCallback(() => onToggle(entry), [entry, onToggle]);
 
   return (
@@ -41,229 +52,53 @@ const FeatureToggle = React.memo(function FeatureToggle({ entry, checked, onTogg
           aria-label={entry.featureName}
           checked={checked}
           onChange={handleChange}
-          height={20}
-          width={40}
-          handleDiameter={16}
+          height={16}
+          width={32}
+          handleDiameter={12}
           offColor="#888"
           onColor="#9ABDDC"
+          className={ToolTrayStyles.featureSwitch}
         />
-        {entry.featureName}
+        <span className={ToolTrayStyles.featureToggleText}>
+          <span className={ToolTrayStyles.featureToggleName}>{entry.originalName || entry.featureName}</span>
+          {entry.fileName && <small className={ToolTrayStyles.featureSource} title={`${entry.nodeName ? `${entry.nodeName} / ` : ""}${entry.fileName}`}>{entry.nodeName ? `${entry.nodeName} / ` : ""}{entry.fileName}</small>}
+        </span>
+        <FilterIndicator description={filterDescription} />
       </label>
     </li>
   );
 });
 
 // Sidebar holding all the discovery view controls
-function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, setShowOutliers, isToolTrayOpen, toggleToolTray, selectedEntry, setSelectedEntry, showIndividualView, toggleView, filters, toggleFilters, dataResults = [], activeFileIndices = [], toggleFileActive }) {
+function ToolTray({ refreshControllerRef, data, filteredData, setFilteredData, showOutliers, setShowOutliers, isToolTrayOpen, toggleToolTray, selectedEntry, setSelectedEntry, filters, toggleFilters, dataResults = [], activeFileIndices = [], toggleFileActive, showIndividualView, toggleView, isCombining = false, onFeatureRecalculated, onTypeChanging, statisticsExport, relationshipExport, appliedFilters, featureFilters }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const controlsId = useId();
   const { selectedNodes } = useNode();
-
-  const createRipple = (e) => {
-    const target = e.currentTarget;
-    const rect = target.getBoundingClientRect();
-    const circle = document.createElement("span");
-    const diameter = Math.max(rect.width, rect.height);
-    const radius = diameter / 2;
-    circle.style.width = circle.style.height = `${diameter}px`;
-    circle.style.left = `${e.clientX - rect.left - radius}px`;
-    circle.style.top = `${e.clientY - rect.top - radius}px`;
-    circle.classList.add(ToolTrayStyles.ripple);
-    const ripple = target.getElementsByClassName(ToolTrayStyles.ripple)[0];
-    if (ripple) {
-      ripple.remove();
-    }
-    target.appendChild(circle);
-    setTimeout(() => {
-      circle.remove();
-    }, 600);
-  };
-
-  const getOriginalFeatureName = (name) => {
-    const idx = name.indexOf(" (");
-    return idx !== -1 ? name.substring(0, idx) : name;
-  };
-
-  const lookupFileName = () => {
-    console.log("lookupFileName: selectedEntry =", selectedEntry);
-    if (!selectedEntry) return undefined;
-    if (selectedEntry.fileName) {
-      console.log(
-        "lookupFileName: using fileName from selectedEntry =",
-        selectedEntry.fileName
-      );
-      return selectedEntry.fileName;
-    }
-    const regex = /^(.*)\s+\(([^)]+)\)$/;
-    const match = selectedEntry.featureName.match(regex);
-    if (!match) {
-      console.warn("lookupFileName: pattern not matched, returning undefined");
-      return undefined;
-    }
-    const originalName = match[1].trim();
-    const fileLabel = match[2].trim();
-    console.log("lookupFileName: originalName =", originalName, "| fileLabel =", fileLabel);
-    const allEntries = getEntrySet(data);
-    console.log("lookupFileName: allEntries =", allEntries);
-    const found = allEntries.find(
-      (entry) =>
-        getOriginalFeatureName(entry.featureName) === originalName &&
-        entry.fileName === fileLabel &&
-        entry.type === selectedEntry.type
-    );
-    if (!found) {
-      console.error("lookupFileName: No matching entry found for", selectedEntry);
-      return undefined;
-    }
-    console.log("lookupFileName: Found matching entry, fileName =", found.fileName);
-    return found.fileName;
-  };
+  const selectedSourceName = selectedEntry?.nodeName || dataResults.find(source =>
+    String(source.nodeId) === String(selectedEntry?.nodeId) && source.fileName === selectedEntry?.fileName
+  )?.nodeName;
+  const hasDatasetFilters = (Array.isArray(filters) ? filters.length > 0 : Object.values(filters || {}).some(value => value?.length));
 
   const toggleFeatureType = async () => {
-    if (!selectedEntry) return;
+    if (!selectedEntry || isLoading || isCombining || hasDatasetFilters || selectedEntry.pooled) return;
     setIsLoading(true);
+    onTypeChanging?.(true);
     try {
-      const newType =
-        selectedEntry.type === "categorical" ? "continuous" : "categorical";
-      const fileName = lookupFileName();
-      if (!fileName) {
-        console.error("toggleFeatureType: No valid fileName found. Abort.");
-        setIsLoading(false);
-        return;
-      }
-      let nodeForFeature = selectedEntry.nodeId
-        ? selectedNodes.find((n) => n.nodeId === selectedEntry.nodeId)
-        : null;
-      if (!nodeForFeature) {
-        const fallback = dataResults.find((r) => r.fileName === fileName && r.nodeId);
-        if (fallback) {
-          nodeForFeature = selectedNodes.find((n) => n.nodeId === fallback.nodeId);
-          if (fallback.nodeId) {
-            setSelectedEntry((prev) => ({ ...prev, nodeId: fallback.nodeId }));
-          }
-        }
-      }
-      if (!nodeForFeature || !nodeForFeature.serviceUrl) {
-        console.error(
-          "toggleFeatureType: No matching node with serviceUrl found for selected feature."
-        );
-        setIsLoading(false);
-        return;
-      }
-      updateNodeAxiosBaseURL(nodeForFeature.serviceUrl);
-
-      const normalizedFeatureName = getOriginalFeatureName(selectedEntry.featureName);
-      console.log("toggleFeatureType: calling recalculateFeature with", {
-        fileName,
-        featureName: selectedEntry.featureName,
-        newType,
-      });
-      const recalcData = await recalculateFeature(
-        fileName,
-        selectedEntry.featureName,
-        newType
-      );
-      console.log("toggleFeatureType: recalcData =", recalcData);
-
-      // If the response contains a failure message, do not update state.
-      if (
-        recalcData.message &&
-        recalcData.message.toLowerCase().includes("cannot be converted")
-      ) {
-        toast.error("Feature conversion failed: " + recalcData.message);
-        setIsLoading(false);
-        return;
-      }
-      // Also, if the expected target array is empty, treat that as a failure.
-      const targetArray =
-        newType === "categorical"
-          ? "categoricalFeatures"
-          : newType === "continuous"
-            ? "continuousFeatures"
-            : "dateFeatures";
-      if (!recalcData[targetArray] || recalcData[targetArray].length === 0) {
-        toast.error("Feature conversion failed: No features returned for conversion.");
-        setIsLoading(false);
-        return;
-      }
-
-      let finalType = "continuous";
-      if (
-        recalcData.dateFeatures?.some(
-          (f) => getOriginalFeatureName(f.featureName) === normalizedFeatureName
-        )
-      ) {
-        finalType = "date";
-      } else if (
-        recalcData.categoricalFeatures?.some(
-          (f) => getOriginalFeatureName(f.featureName) === normalizedFeatureName
-        )
-      ) {
-        finalType = "categorical";
-      }
-      console.log("toggleFeatureType: finalType decided as =>", finalType);
-
-      const newData = { ...data };
-      ["dateFeatures", "categoricalFeatures", "continuousFeatures"].forEach(
-        (arrayName) => {
-          newData[arrayName] =
-            newData[arrayName]?.filter(
-              (item) => item.featureName !== selectedEntry.featureName
-            ) || [];
-        }
-      );
-
-      const newTargetArray = `${finalType}Features`;
-      if (recalcData[newTargetArray]) {
-        const newFeatures = recalcData[newTargetArray].map((f) => ({
-          ...f,
-          fileName: fileName,
-          originalName: normalizedFeatureName,
-          featureName: `${normalizedFeatureName} (${fileName})`,
-        }));
-        console.log(
-          "toggleFeatureType: adding features to newData[" + newTargetArray + "]:",
-          newFeatures
-        );
-        newData[newTargetArray] = [...(newData[newTargetArray] || []), ...newFeatures];
-      }
-      if (recalcData.chiSquareTest) {
-        console.log(
-          "toggleFeatureType: updating chiSquareTest from recalcData =>",
-          recalcData.chiSquareTest
-        );
-        newData.chiSquareTest = recalcData.chiSquareTest;
-      }
-      console.log("toggleFeatureType: setting new data in state =>", newData);
-      setData(newData);
-      setFilteredData(newData);
-      const updatedType = finalType === "date" ? "continuous" : finalType;
-      setSelectedEntry({
-        ...selectedEntry,
-        type: updatedType,
-        featureName: `${normalizedFeatureName} (${fileName})`,
-      });
+      const change = await requestFeatureTypeChange({entry: selectedEntry, statistics: data, sources: dataResults, nodes: selectedNodes, signal: refreshControllerRef?.current?.signal});
+      if (!onFeatureRecalculated) throw new Error("Feature type updates are unavailable in this view.");
+      onFeatureRecalculated(change);
+      setSelectedEntry(current => current?.featureName === selectedEntry.featureName
+        ? {...current, nodeId: change.nodeId, fileName: change.fileName, originalName: change.featureName, type: change.type}
+        : current);
     } catch (error) {
-      console.error("Feature recalculation failed:", error);
       toast.error("Feature recalculation failed: " + error.message);
     } finally {
       setIsLoading(false);
+      onTypeChanging?.(false);
     }
   };
-
-  const groupedFiles = dataResults.reduce((acc, file) => {
-    const key = file.nodeId;
-    if (!acc[key]) {
-      acc[key] = {
-        nodeName: file.nodeName || `Node ${file.nodeId}`,
-        files: [],
-      };
-    }
-    acc[key].files.push(file);
-    return acc;
-  }, {});
-
   const entrySet = useMemo(() => getEntrySet(data), [data]);
 
   // Filter entries based on the search term
@@ -329,35 +164,40 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
   }, [allDisplayedChecked, data, displayedFeatures, setFilteredData]);
 
   return (
-    <div className={`${ToolTrayStyles.container} ${isToolTrayOpen ? ToolTrayStyles.open : ToolTrayStyles.closed}`}>
-      <div
+    <aside aria-label="Discovery controls" className={`${ToolTrayStyles.container} ${isToolTrayOpen ? ToolTrayStyles.open : ToolTrayStyles.closed}`}>
+      <button type="button"
         className={ToolTrayStyles.toggleButton}
         onClick={toggleToolTray}
-        role="button"
-        tabIndex={0}
+        aria-expanded={isToolTrayOpen}
+        aria-controls={controlsId}
         aria-label={isToolTrayOpen ? 'Close tool tray' : 'Open tool tray'}
       >
         {isToolTrayOpen ? <MdChevronLeft /> : <MdChevronRight />}
-      </div>
+      </button>
+
+      <div id={controlsId} className={ToolTrayStyles.scrollContent} role="region" aria-label="Sidebar content" tabIndex={0} inert={isToolTrayOpen ? undefined : ""} aria-hidden={!isToolTrayOpen}>
 
       <div className={ToolTrayStyles.topSection}>
         {selectedEntry && selectedEntry.featureName ? (
           <>
-            <h3>{selectedEntry.featureName}</h3>
+            <h3 title={selectedEntry.featureName}>{selectedEntry.originalName || selectedEntry.featureName}<FilterIndicator description={featureFilters?.[selectedEntry.featureName] || sourceFilter(appliedFilters, selectedEntry)} /></h3>
+            {selectedEntry.fileName && <small className={ToolTrayStyles.selectedSource} title={`${selectedSourceName ? `${selectedSourceName} / ` : ""}${selectedEntry.fileName}`}>{selectedSourceName ? `${selectedSourceName} / ` : ""}{selectedEntry.fileName}</small>}
             <button
               className={`${ToolTrayStyles.toggleFeatureTypeButton} ${isLoading ? ToolTrayStyles.loading : ""
                 }`}
               onClick={toggleFeatureType}
               type="button"
-              disabled={isLoading}
+              disabled={isLoading || isCombining || hasDatasetFilters || selectedEntry.pooled}
+              title={selectedEntry.pooled ? "Select an individual dataset column to change its type" : hasDatasetFilters ? "Clear dataset filters before changing variable types" : `${selectedEntry.type === "categorical" ? "Categorical" : "Continuous"} · switch to ${selectedEntry.type === "categorical" ? "continuous" : "categorical"}`}
               aria-label="Toggle the selected feature's type between categorical and continuous"
+              aria-busy={isLoading}
             >
               {isLoading ? (
-                <div className={ToolTrayStyles.spinner}></div>
+                <div className={ToolTrayStyles.spinner} role="progressbar" aria-label="Recalculating feature statistics"></div>
               ) : (
                 <>
-                  <span className={ToolTrayStyles.entryType}>
-                    {(selectedEntry?.type || "").toUpperCase()}
+                  <span className={ToolTrayStyles.entryType} aria-label={selectedEntry.type === "categorical" ? "Categorical" : "Continuous"}>
+                    {selectedEntry.type === "categorical" ? "Categorical" : "Continuous"}
                   </span>
                   <MdSync className={ToolTrayStyles.iconSpin} aria-hidden="true" />
                 </>
@@ -365,49 +205,18 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
             </button>
           </>
         ) : (
-          <h3>No entry selected</h3>
+          <h3 className={ToolTrayStyles.emptySelection}>No entry selected</h3>
         )}
       </div>
 
       {/* Multi-file selector */}
       {dataResults.length > 1 && (
-        <div className={ToolTrayStyles.multiFileSelector}>
-          {Object.values(groupedFiles).map((group, groupIndex) => (
-            <div key={groupIndex} className={ToolTrayStyles.nodeGroup}>
-              <h4 className={ToolTrayStyles.nodeGroupTitle}>{group.nodeName}</h4>
-              <div className={ToolTrayStyles.filesRow}>
-                {group.files.map((file, fileIndex) => {
-                  const idx = dataResults.findIndex(
-                    (r) => r.nodeId === file.nodeId && r.fileName === file.fileName
-                  );
-                  const isActive = activeFileIndices[idx];
-                  return (
-                    <label
-                      key={fileIndex}
-                      className={`${ToolTrayStyles.fileToggle} ${isActive ? ToolTrayStyles.fileToggleActive : ""
-                        }`}
-                      title={file.fileName}
-                      onClick={createRipple}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isActive}
-                        onChange={() => toggleFileActive(idx)}
-                      />
-                      <span className={ToolTrayStyles.fileNameEllipsis}>
-                        {file.fileName}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
+        <DatasetSelector sources={dataResults} activeIndices={activeFileIndices} onToggle={toggleFileActive} appliedFilters={appliedFilters} />
       )}
 
       {/* Feature toggles */}
-      <div className={ToolTrayStyles.featuresList}>
+      <div className={ToolTrayStyles.featureControls}>
+      <section className={ToolTrayStyles.featuresList} aria-label="Features" tabIndex={0}>
         <ul>
           {displayedFeatures.map((entry) => (
             <FeatureToggle
@@ -415,10 +224,11 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
               entry={entry}
               checked={isFeatureChecked(entry)}
               onToggle={toggleFeature}
+              filterDescription={sourceFilter(appliedFilters, entry)}
             />
           ))}
         </ul>
-      </div>
+      </section>
 
       {/* Search and Toggle All at the bottom */}
       <div className={ToolTrayStyles.searchContainer}>
@@ -433,37 +243,37 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
           {allDisplayedChecked ? "Hide All" : "Show All"}
         </button>
       </div>
+      </div>
+
+      <div className={ToolTrayStyles.actionStack} role="group" aria-label="Discovery tools">
+      {/* Existing switch between statistics and association metrics */}
+      <div className={ToolTrayStyles.buttonContainer}>
+        <button onClick={toggleView}>{showIndividualView ? "Display aggregate metrics" : "Display individual metrics"}</button>
+      </div>
 
       {/* Outliers switch */}
       <div className={ToolTrayStyles.buttonContainer}>
-        <label htmlFor="toggleOutliers" className={ToolTrayStyles.outliersLabel}>
+        <label htmlFor="toggleOutliers" className={ToolTrayStyles.outliersLabel} title={showOutliers ? "Hide outliers" : "Show outliers"}>
           <Switch
             checked={showOutliers}
             onChange={setShowOutliers}
             id="toggleOutliers"
             aria-label="Toggle outliers"
-            height={20}
-            width={40}
-            handleDiameter={16}
+            height={16}
+            width={32}
+            handleDiameter={12}
             offColor="#888"
             onColor="#9ABDDC"
             className={ToolTrayStyles.outliersSwitch}
           />
-          {showOutliers ? "Outliers shown" : "Outliers hidden"}
+          Outliers: {showOutliers ? "shown" : "hidden"}
         </label>
-      </div>
-
-      {/* Switch between Individual vs Aggregate view */}
-      <div className={ToolTrayStyles.buttonContainer}>
-        <button onClick={toggleView}>
-          {showIndividualView ? "Display aggregate metrics" : "Display individual metrics"}
-        </button>
       </div>
 
       {/* Filters */}
       <div className={ToolTrayStyles.buttonContainer}>
-        <button onClick={toggleFilters}>
-          {filters.length ? "Filters added" : "Set filters"}
+        <button onClick={toggleFilters} disabled={isCombining}>
+          {(Array.isArray(filters) ? filters.length > 0 : Object.values(filters || {}).some(value => value?.length)) ? "Filters added" : "Set filters"}
         </button>
       </div>
 
@@ -485,7 +295,7 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
 
       {/* Data exporter */}
       <div className={ToolTrayStyles.buttonContainer}>
-        <DataExporter data={data} filteredData={filteredData} />
+        <DataExporter data={data} filteredData={filteredData} statisticsExport={statisticsExport} relationshipExport={relationshipExport} busy={isCombining} />
       </div>
 
       {/* Element exporter */}
@@ -495,9 +305,12 @@ function ToolTray({ data, filteredData, setFilteredData, setData, showOutliers, 
           activeFileIndices={activeFileIndices}
           combinedData={data}
           filteredData={filteredData}
+          busy={isCombining}
         />
       </div>
-    </div>
+      </div>
+      </div>
+    </aside>
   );
 }
 

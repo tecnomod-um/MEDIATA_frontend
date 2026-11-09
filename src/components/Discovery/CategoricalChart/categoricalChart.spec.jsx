@@ -51,6 +51,10 @@ const BASE_FEATURE = {
 };
 
 describe("<CategoricalChart />", () => {
+  it('marks a filtered categorical chart', () => {
+    render(<CategoricalChart feature={BASE_FEATURE} filterDescription="cluster (= 1)" />);
+    expect(JSON.parse(screen.getByTestId('mock-bar').getAttribute('data-options')).plugins.title.text).toBe('FeatureX *');
+  });
   it("renders the chart bar", () => {
     render(<CategoricalChart feature={BASE_FEATURE} />);
     expect(screen.getByTestId("mock-bar")).toBeInTheDocument();

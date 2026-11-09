@@ -46,6 +46,11 @@ describe('<DateChart />', () => {
 
   const dateDataKey = 'TestKey';
 
+  it('marks a filtered date chart', () => {
+    render(<DateChart dateData={baseDateData} dateDataKey={dateDataKey} showOutliers filterDescription="cluster (= 1)" />);
+    expect(JSON.parse(screen.getByTestId('mock-line').textContent).options.plugins.title.text).toBe('TestKey * Distribution Over Time');
+  });
+
   afterEach(() => {
     vi.clearAllMocks();
   });

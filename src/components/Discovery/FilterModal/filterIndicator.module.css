@@ -1,0 +1,1 @@
+.indicator { display: inline-block; margin-inline: calc(var(--space-1) / 2); color: inherit; font-size: var(--font-size-xs); font-weight: 700; line-height: 1; vertical-align: super; cursor: help; flex: 0 0 auto; }

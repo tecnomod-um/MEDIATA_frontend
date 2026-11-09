@@ -10,6 +10,10 @@
   transition: height 0.5s ease-in-out;
 }
 
+.matchColumns { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-3); color: var(--text-color-secondary); font-size: var(--font-size-sm); cursor: pointer; }
+.matchColumns input { accent-color: var(--button-color); }
+.matchCount { display: block; margin-top: var(--space-1); color: var(--text-color-secondary); font-weight: normal; }
+
 .modalContent {
   transition: height 0.5s ease-in-out;
   overflow: hidden;

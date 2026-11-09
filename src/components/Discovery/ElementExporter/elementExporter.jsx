@@ -21,11 +21,14 @@ const stripFileSuffix = (featureName) => {
 };
 
 // Component for exporting dataset metadata and save in the backend. Feeds alignment.
-function ElementExporter({ dataResults = [], activeFileIndices = [], combinedData, filteredData }) {
+function ElementExporter({ dataResults = [], activeFileIndices = [], combinedData, filteredData, busy = false }) {
   const navigate = useNavigate();
   const { selectedNodes } = useNode();
 
-  const generateCSVForFile = (fileName) => {
+  const generateCSVForFile = (source) => {
+    const belongsToSource = feature => feature.fileName === source.fileName && (feature.nodeId != null
+      ? String(feature.nodeId) === String(source.nodeId)
+      : dataResults.filter(item => item.fileName === source.fileName).length === 1);
     const isFeatureVisible = (feature, featureType) => {
       if (filteredData && filteredData[`${featureType}Features`]) {
         return filteredData[`${featureType}Features`].some(
@@ -37,37 +40,37 @@ function ElementExporter({ dataResults = [], activeFileIndices = [], combinedDat
   
     const categoricalFeatures = (combinedData.categoricalFeatures || []).filter(
       (feature) =>
-        feature.fileName === fileName &&
+        belongsToSource(feature) &&
         isFeatureVisible(feature, "categorical")
     );
   
     const continuousFeatures = (combinedData.continuousFeatures || []).filter(
       (feature) =>
-        feature.fileName === fileName &&
+        belongsToSource(feature) &&
         isFeatureVisible(feature, "continuous")
     );
   
     const dateFeatures = (combinedData.dateFeatures || []).filter(
       (feature) =>
-        feature.fileName === fileName &&
+        belongsToSource(feature) &&
         isFeatureVisible(feature, "date")
     );
   
     const omittedFeatures = (combinedData.omittedFeatures || []).filter(
       (feature) =>
-        feature.fileName === fileName &&
+        belongsToSource(feature) &&
         !feature.reason?.startsWith("Suppressed for privacy:") &&
         isFeatureVisible(feature, "omitted")
     );
   
     const rows = [
       ...categoricalFeatures.map((feature) => {
-        const trimmedName = stripFileSuffix(feature.featureName);
+        const trimmedName = feature.originalName || stripFileSuffix(feature.featureName);
         return [trimmedName, ...Object.keys(feature.categoryCounts)];
       }),
   
       ...continuousFeatures.map((feature) => {
-        const trimmedName = stripFileSuffix(feature.featureName);
+        const trimmedName = feature.originalName || stripFileSuffix(feature.featureName);
         const isInteger =
           Number.isInteger(feature.min) && Number.isInteger(feature.max);
         const dataType = isInteger ? "integer" : "double";
@@ -75,7 +78,7 @@ function ElementExporter({ dataResults = [], activeFileIndices = [], combinedDat
       }),
   
       ...dateFeatures.map((feature) => {
-        const trimmedName = stripFileSuffix(feature.featureName);
+        const trimmedName = feature.originalName || stripFileSuffix(feature.featureName);
         return [
           trimmedName,
           "date",
@@ -85,7 +88,7 @@ function ElementExporter({ dataResults = [], activeFileIndices = [], combinedDat
       }),
   
       ...omittedFeatures.map((feature) => {
-        const trimmedName = stripFileSuffix(feature.featureName);
+        const trimmedName = feature.originalName || stripFileSuffix(feature.featureName);
         return [trimmedName, "Natural Language"];
       }),
     ];
@@ -104,7 +107,7 @@ function ElementExporter({ dataResults = [], activeFileIndices = [], combinedDat
         if (!activeFileIndices[idx]) return;
 
         const fileName = fileData.fileName;
-        const csvString = generateCSVForFile(fileName);
+        const csvString = generateCSVForFile(fileData);
         const originalName = fileName || `File_${idx + 1}.csv`;
         const dotIndex = originalName.lastIndexOf(".");
         let base = originalName;
@@ -112,7 +115,7 @@ function ElementExporter({ dataResults = [], activeFileIndices = [], combinedDat
         const newName = `${base}.csv`;
         const savedElement = `${base}_elements.csv`;
         const nodeForFile = selectedNodes.find(
-          (node) => node.nodeId === fileData.nodeId
+          (node) => String(node.nodeId) === String(fileData.nodeId)
         );
         if (nodeForFile && nodeForFile.serviceUrl)
           updateNodeAxiosBaseURL(nodeForFile.serviceUrl);
@@ -122,7 +125,7 @@ function ElementExporter({ dataResults = [], activeFileIndices = [], combinedDat
         }
 
         try {
-          await saveDatasetElements(newName, csvString);
+          await saveDatasetElements(newName, csvString, nodeForFile.serviceUrl);
           toast.success(`${newName} saved on server.`);
 
           uploadedElementFiles.push({ nodeId: fileData.nodeId, fileName: savedElement, });
@@ -155,10 +158,10 @@ function ElementExporter({ dataResults = [], activeFileIndices = [], combinedDat
 
   return (
     <div className={ElementExporterStyles.exportContainer}>
-      <button className={ElementExporterStyles.exportButton} onClick={handleUploadButtonClick}>
+      <button className={ElementExporterStyles.exportButton} onClick={handleUploadButtonClick} disabled={busy}>
         Upload Elements
       </button>
-      <button onClick={handleSmallButtonClick} className={ElementExporterStyles.smallGreenButton}>
+      <button onClick={handleSmallButtonClick} className={ElementExporterStyles.smallGreenButton} aria-label="Upload elements and open alignment" title="Upload elements and open alignment" disabled={busy}>
         <ArrowForwardIcon sx={{ fontSize: 16 }} />
       </button>
     </div>

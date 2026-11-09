@@ -11,7 +11,18 @@ import { ToastContainer, toast } from "react-toastify";
 import { getNodeDatasets, processSelectedDatasets, getProcessSelectedDatasetsStatus, getProcessSelectedDatasetsResult, cancelProcessSelectedDatasetsJob } from "../../util/petitionHandler";
 import { updateNodeAxiosBaseURL } from "../../util/nodeAxiosSetup";
 
+import TableMergeControl from "../../components/Discovery/StatisticsDisplay/tableMergeControl";
+import ColumnMappingsDialog from "../../components/Discovery/StatisticsDisplay/columnMappingsDialog";
+import { combineMappedTableData, tableExportFeatures, filterSummary } from "../../components/Discovery/CombinedStatistics/statisticsTableData";
+import { createColumnMappings, activeColumnMappings, validateColumnMappings } from "../../components/Discovery/CombinedStatistics/columnMappings";
+import { filterDiscoveryDatasets } from "../../components/Discovery/CombinedStatistics/filterDiscoveryDatasets";
+import { fileFilterConditions } from "../../components/Discovery/FilterModal/filterFeatures";
+import { buildAppliedFilters, tableFilterDescriptions, combinedFilter } from "../../components/Discovery/FilterModal/appliedFilters";
+import useRelationshipStatistics from "../../components/Discovery/CombinedStatistics/useRelationshipStatistics";
+import LinearProgress from "@mui/material/LinearProgress";
 import { useNode } from "../../context/nodeContext";
+import { collectDiscoveryStatistics, updateSourceFeature } from "../../components/Discovery/discoveryStatistics";
+import { reconcileFeatureVisibility } from "../../components/Discovery/featureTypeChanges";
 
 // Discovery page for data profiling and statistics visualization
 function Discovery() {
@@ -19,9 +30,18 @@ function Discovery() {
   const [activeFileIndices, setActiveFileIndices] = useState([]);
   const [dataStatistics, setDataStatistics] = useState(null);
   const [filteredDataStatistics, setFilteredDataStatistics] = useState(null);
-  const [showIndividualView, toggleShownView] = useState(true);
+  const [showIndividualView, setShowIndividualView] = useState(true);
+  const toggleView = useCallback(() => setShowIndividualView(previous => !previous), []);
+  const [combineTables, setCombineTables] = useState(false);
+  const [customMappings, setCustomMappings] = useState(null);
+  const [mappingDialogOpen, setMappingDialogOpen] = useState(false);
+  const [filterLogic, setFilterLogic] = useState({ operators: {}, operator: "AND", matchColumns: true });
+  const [isCombining, setIsCombining] = useState(false);
+  const baselineResultsRef = useRef([]);
+  const previousStatisticsRef = useRef(null);
+  const hiddenFeaturesRef = useRef(new Set());
   const [showOutliers, setShowOutliers] = useState(false);
-  const [isToolTrayOpen, setIsToolTrayOpen] = useState(true);
+  const [isToolTrayOpen, setIsToolTrayOpen] = useState(() => window.innerWidth > 768);
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [isFiltersOpen, setIsFiltersopen] = useState(false);
   const [filters, setFilters] = useState([]);
@@ -36,6 +56,7 @@ function Discovery() {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   const mountedRef = useRef(true);
+  const refreshControllerRef = useRef(null);
   const activeJobsRef = useRef(new Map());
   const canceledByNavigationRef = useRef(false);
 
@@ -43,14 +64,14 @@ function Discovery() {
     while (mountedRef.current) {
       try {
         updateNodeAxiosBaseURL(node.serviceUrl);
-        const status = await getProcessSelectedDatasetsStatus(jobId);
+        const status = await getProcessSelectedDatasetsStatus(jobId, node.serviceUrl);
   
         if (typeof status?.percent === "number") onProgress(status.percent);
   
         const state = String(status?.state || "").toUpperCase();
   
         if (state === "DONE") {
-          const results = await getProcessSelectedDatasetsResult(jobId);
+          const results = await getProcessSelectedDatasetsResult(jobId, node.serviceUrl);
           activeJobsRef.current.delete(jobId);
           return results || [];
         }
@@ -99,7 +120,7 @@ function Discovery() {
           if (meta?.node?.serviceUrl) {
             updateNodeAxiosBaseURL(meta.node.serviceUrl);
           }
-          await cancelProcessSelectedDatasetsJob(jobId);
+          await cancelProcessSelectedDatasetsJob(jobId, meta?.node?.serviceUrl);
         } catch (e) {
           // Ignore cancel failures
         }
@@ -111,10 +132,12 @@ function Discovery() {
 
   useEffect(() => {
     mountedRef.current = true;
+    refreshControllerRef.current = new AbortController();
     canceledByNavigationRef.current = false;
   
     return () => {
       mountedRef.current = false;
+      refreshControllerRef.current?.abort();
       cancelAllDiscoveryJobs();
     };
   }, [cancelAllDiscoveryJobs]);
@@ -135,7 +158,7 @@ function Discovery() {
               const filesForNode = nodeMapping[node.nodeId] || [];
               if (filesForNode.length === 0) return;
               updateNodeAxiosBaseURL(node.serviceUrl);
-              const result = await processSelectedDatasets(filesForNode);
+              const result = await processSelectedDatasets(filesForNode, node.serviceUrl);
 
               if (result.mode === "sync") {
                 const arr = result.results || [];
@@ -172,6 +195,7 @@ function Discovery() {
           if (allResults.length === 0) {
             toast.error("No parsed files returned from backend.");
           }
+          baselineResultsRef.current = allResults;
           setDataResults(allResults);
           setActiveFileIndices(allResults.map(() => true));
         } catch (error) {
@@ -189,85 +213,19 @@ function Discovery() {
     }
   }, [location.state, selectedNodes, dataResults.length, hasProcessedMappingState, pollDiscoveryJob]);
 
-  const combineSelectedData = useCallback((dataResultsArray, activeIndices) => {
-    const combined = {
-      continuousFeatures: [],
-      categoricalFeatures: [],
-      dateFeatures: [],
-      chiSquareTest: [],
-      covariances: {},
-      pearsonCorrelations: {},
-      spearmanCorrelations: {},
-      omittedFeatures: [],
-    };
-
-    dataResultsArray.forEach((res, idx) => {
-      if (!activeIndices[idx]) return;
-      const fileLabel = res.fileName || `File #${idx + 1}`;
-
-      res.continuousFeatures?.forEach((item) => {
-        const newItem = { ...item };
-        newItem.originalName = item.featureName;
-        newItem.featureName = `${item.featureName} (${fileLabel})`;
-        newItem.fileName = res.fileName || fileLabel;
-        combined.continuousFeatures.push(newItem);
-      });
-
-      res.categoricalFeatures?.forEach((item) => {
-        const newItem = { ...item };
-        newItem.originalName = item.featureName;
-        newItem.featureName = `${item.featureName} (${fileLabel})`;
-        newItem.fileName = res.fileName || fileLabel;
-        combined.categoricalFeatures.push(newItem);
-      });
-
-      res.dateFeatures?.forEach((item) => {
-        const newItem = { ...item };
-        newItem.originalName = item.featureName;
-        newItem.featureName = `${item.featureName} (${fileLabel})`;
-        newItem.fileName = res.fileName || fileLabel;
-        combined.dateFeatures.push(newItem);
-      });
-
-      if (res.chiSquareTest)
-        combined.chiSquareTest = combined.chiSquareTest.concat(res.chiSquareTest);
-      if (res.covariances) {
-        Object.keys(res.covariances).forEach((k) => {
-          combined.covariances[k] = {
-            ...(combined.covariances[k] || {}),
-            ...res.covariances[k],
-          };
-        });
-      }
-      if (res.pearsonCorrelations) {
-        Object.keys(res.pearsonCorrelations).forEach((k) => {
-          combined.pearsonCorrelations[k] = {
-            ...(combined.pearsonCorrelations[k] || {}),
-            ...res.pearsonCorrelations[k],
-          };
-        });
-      }
-      if (res.spearmanCorrelations) {
-        Object.keys(res.spearmanCorrelations).forEach((k) => {
-          combined.spearmanCorrelations[k] = {
-            ...(combined.spearmanCorrelations[k] || {}),
-            ...res.spearmanCorrelations[k],
-          };
-        });
-      }
-      if (res.omittedFeatures) {
-        combined.omittedFeatures = combined.omittedFeatures.concat(res.omittedFeatures);
-      }
-    });
-
-    return combined;
-  }, []);
+  const combineSelectedData = collectDiscoveryStatistics;
 
   useEffect(() => {
     if (dataResults.length) {
       const combined = combineSelectedData(dataResults, activeFileIndices);
+      const previous = previousStatisticsRef.current;
       setDataStatistics(combined);
-      setFilteredDataStatistics(combined);
+      setFilteredDataStatistics(visible => {
+        const result = reconcileFeatureVisibility(previous, visible, combined, hiddenFeaturesRef.current);
+        hiddenFeaturesRef.current = result.hidden;
+        return result.statistics;
+      });
+      previousStatisticsRef.current = combined;
     }
   }, [dataResults, activeFileIndices, combineSelectedData]);
 
@@ -292,7 +250,7 @@ function Discovery() {
           const results = await Promise.all(
             selectedNodes.map(async (node) => {
               updateNodeAxiosBaseURL(node.serviceUrl);
-              const data = await getNodeDatasets();
+              const data = await getNodeDatasets(node.serviceUrl);
               return { nodeId: node.nodeId, nodeName: node.name, files: data || [] };
             })
           );
@@ -306,11 +264,14 @@ function Discovery() {
   }, [selectedNodes]);
 
   useEffect(() => {
+    let desktop = window.innerWidth > 768;
     const handleResize = () => {
       const shouldOpen = window.innerWidth > 768;
-      setIsToolTrayOpen((open) => open === shouldOpen ? open : shouldOpen);
+      if (shouldOpen !== desktop) {
+        desktop = shouldOpen;
+        setIsToolTrayOpen(shouldOpen);
+      }
     };
-    handleResize();
     window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("resize", handleResize);
@@ -329,19 +290,91 @@ function Discovery() {
   }, [location.state]);
 
   const handleFilesOpened = useCallback((allResults) => {
+    previousStatisticsRef.current = null;
+    hiddenFeaturesRef.current = new Set();
+    setSelectedEntry(null);
+    baselineResultsRef.current = allResults;
+    setFilters([]);
+    setFilterLogic({ operators: {}, operator: "AND", matchColumns: true });
+    setCustomMappings(null);
     setDataResults(allResults);
-    setActiveFileIndices(allResults.map((_, idx) => idx === 0));
+    setActiveFileIndices(allResults.map(() => true));
   }, []);
 
+  const selectFeature = useCallback((entry) => {
+    const feature = ["continuousFeatures", "categoricalFeatures", "dateFeatures"]
+      .flatMap(key => filteredDataStatistics?.[key] || [])
+      .find(item => item.featureName === entry?.featureName);
+    setSelectedEntry(feature ? { ...entry, nodeId: feature.nodeId, fileName: feature.fileName, originalName: feature.originalName } : entry);
+  }, [filteredDataStatistics]);
+
+  const updateFeatureType = ({ nodeId, fileName, featureName, response }) => {
+    const update = source => updateSourceFeature(source, { nodeId, fileName, featureName, response });
+    baselineResultsRef.current = baselineResultsRef.current.map(update);
+    setDataResults(previous => previous.map(update));
+  };
+
+  const filterStatistics = useMemo(() => combineSelectedData(
+    baselineResultsRef.current.length ? baselineResultsRef.current : dataResults,
+    dataResults.map(() => true)
+  ), [dataResults, combineSelectedData]);
+  const columnMappings = useMemo(() => customMappings ?? createColumnMappings(baselineResultsRef.current), [customMappings, dataResults]);
+  const appliedFilters = useMemo(() => buildAppliedFilters(filterStatistics, filters, filterLogic, dataResults, columnMappings), [filterStatistics, filters, filterLogic, dataResults, columnMappings]);
+  const activeMappings = useMemo(() => activeColumnMappings(columnMappings, dataResults, activeFileIndices), [columnMappings, dataResults, activeFileIndices]);
+  const combinedTablesActive = combineTables && activeMappings.length > 0;
+  const tableStatistics = useMemo(() => !combinedTablesActive || !filteredDataStatistics ? filteredDataStatistics
+    : combineMappedTableData(filteredDataStatistics, dataResults, activeFileIndices, columnMappings),
+  [combinedTablesActive, filteredDataStatistics, dataResults, activeFileIndices, columnMappings]);
+  const relationships = useRelationshipStatistics(combinedTablesActive ? tableStatistics : filteredDataStatistics,
+    dataResults, combinedTablesActive, !showIndividualView);
+  const relationshipStatistics = relationships.statistics;
+  const statisticsBusy = isCombining || relationships.pending;
+  const relationshipFilters = useMemo(() => tableFilterDescriptions(combinedTablesActive ? tableStatistics : filteredDataStatistics, appliedFilters), [combinedTablesActive, tableStatistics, filteredDataStatistics, appliedFilters]);
+  const featureFilters = useMemo(() => tableFilterDescriptions(tableStatistics, appliedFilters), [tableStatistics, appliedFilters]);
+  const statisticsExport = useMemo(() => combinedTablesActive && tableStatistics ? {
+    features: tableExportFeatures(tableStatistics).map(feature => ({...feature,
+      cohort: combinedFilter(appliedFilters, feature.contributions.map(part => part.source)) || "All records"})),
+    cohort: filterSummary(filters, filterLogic),
+  } : undefined, [combinedTablesActive, tableStatistics, filters, filterLogic, appliedFilters]);
+  useEffect(() => {
+    if (selectedEntry?.pooled && !["continuousFeatures", "categoricalFeatures", "dateFeatures"].some(key => tableStatistics?.[key]?.some(f => f.pooled && f.featureName === selectedEntry.featureName))) setSelectedEntry(null);
+  }, [tableStatistics, selectedEntry]);
+  useEffect(() => {
+    if (selectedEntry && !selectedEntry.pooled && !["continuousFeatures", "categoricalFeatures", "dateFeatures"]
+      .some(key => dataStatistics?.[key]?.some(feature => feature.featureName === selectedEntry.featureName))) setSelectedEntry(null);
+  }, [dataStatistics, selectedEntry]);
+
+  const applyColumnMappings = async next => {
+    const invalid = validateColumnMappings(next, baselineResultsRef.current);
+    if (invalid) throw new Error(invalid);
+    setIsCombining(true);
+    try {
+      // A changed correspondence also changes the scope of linked filters. Refresh all
+      // sites before committing either mappings or results so the cohort stays consistent.
+      if (filterLogic.matchColumns && Object.values(filters || {}).some(conditions => conditions?.length)) {
+        const updated = await filterDiscoveryDatasets(dataResults, selectedNodes, source => {
+          const conditions = fileFilterConditions(filterStatistics, filters, filterLogic.operators, source, dataResults.length, true, next);
+          return Object.keys(conditions).length ? { conditions, operator: filterLogic.operator } : null;
+        }, {signal: refreshControllerRef.current?.signal});
+        setDataResults(updated);
+      }
+      setCustomMappings(next);
+      setCombineTables(next.length > 0);
+    } finally { setIsCombining(false); }
+  };
+  const tableActions = name => dataResults.length > 1 ? <TableMergeControl tableName={name}
+    combined={combinedTablesActive} onChange={setCombineTables} onEditMappings={() => setMappingDialogOpen(true)}
+    mappingCount={columnMappings.length} disabled={statisticsBusy} /> : null;
+
   const closeFilters = useCallback(() => setIsFiltersopen(false), []);
-  const toggleView = useCallback(() => toggleShownView((shown) => !shown), []);
   const toggleFilters = useCallback(() => setIsFiltersopen((open) => !open), []);
 
   return (
     <div className={DiscoveryStyles.dropContainer}>
       <FilterModal
+        refreshControllerRef={refreshControllerRef}
         isOpen={isFiltersOpen}
-        dataStatistics={dataStatistics}
+        dataStatistics={filterStatistics}
         filters={filters}
         setFilters={setFilters}
         setFilteredDataStatistics={setFilteredDataStatistics}
@@ -351,7 +384,13 @@ function Discovery() {
         setDataResults={setDataResults}
         combineSelectedData={combineSelectedData}
         setDataStatistics={setDataStatistics}
+        filterLogic={filterLogic}
+        setFilterLogic={setFilterLogic}
+        onFilteringChange={setIsCombining}
+        columnMappings={columnMappings}
       />
+      {mappingDialogOpen && <ColumnMappingsDialog open mappings={columnMappings} sources={baselineResultsRef.current}
+        appliedFilters={appliedFilters} onClose={() => setMappingDialogOpen(false)} onApply={applyColumnMappings} />}
       {!filteredDataStatistics && (
         <FileExplorer
           nodes={selectedNodes}
@@ -374,6 +413,7 @@ function Discovery() {
         unmountOnExit
       >
         <ToolTray
+          refreshControllerRef={refreshControllerRef}
           data={dataStatistics}
           filteredData={filteredDataStatistics}
           setFilteredData={setFilteredDataStatistics}
@@ -384,10 +424,17 @@ function Discovery() {
           toggleToolTray={toggleToolTray}
           selectedEntry={selectedEntry}
           setSelectedEntry={setSelectedEntry}
-          showIndividualView={showIndividualView}
-          toggleView={toggleView}
           filters={filters}
           toggleFilters={toggleFilters}
+          showIndividualView={showIndividualView}
+          toggleView={toggleView}
+          isCombining={statisticsBusy}
+          statisticsExport={statisticsExport}
+          relationshipExport={showIndividualView ? undefined : { data: relationshipStatistics, featureFilters: relationshipFilters, appliedFilters }}
+          appliedFilters={appliedFilters}
+          featureFilters={featureFilters}
+          onFeatureRecalculated={updateFeatureType}
+          onTypeChanging={setIsCombining}
           dataResults={dataResults}
           activeFileIndices={activeFileIndices}
           toggleFileActive={toggleFileActive}
@@ -404,7 +451,14 @@ function Discovery() {
         timeout={300}
         unmountOnExit
       >
-        <div className={DiscoveryStyles.statisticsContainer}>
+        <div className={DiscoveryStyles.statisticsContainer} aria-busy={statisticsBusy}>
+          {statisticsBusy && <div className={DiscoveryStyles.calculationStatus} role="status">
+            <span>{relationships.pending ? "Calculating relationships…" : "Refreshing statistics…"}</span>
+            <LinearProgress aria-label={relationships.pending ? "Calculating relationships" : "Refreshing statistics"} />
+          </div>}
+          {relationships.error && <div className={DiscoveryStyles.calculationStatus} role="alert">
+            <span>{relationships.error}</span><button onClick={relationships.retry}>Retry calculation</button>
+          </div>}
           <TransitionGroup>
             {showIndividualView ? (
               <CSSTransition
@@ -420,8 +474,14 @@ function Discovery() {
                 <div>
                   <StatisticsDisplay
                     data={filteredDataStatistics}
+                    tableData={tableStatistics}
+                    combinedTables={combinedTablesActive}
+                    featureFilters={featureFilters}
+                    appliedFilters={appliedFilters}
+                    numericalTableActions={tableActions("Numerical")}
+                    categoricalTableActions={tableActions("Categorical")}
                     showOutliers={showOutliers}
-                    setSelectedEntry={setSelectedEntry}
+                    setSelectedEntry={selectFeature}
                     selectedEntry={selectedEntry}
                   />
                 </div>
@@ -439,11 +499,8 @@ function Discovery() {
               >
                 <div>
                   <AggregateDisplay
-                    covariances={filteredDataStatistics?.covariances}
-                    pearsonCorrelations={filteredDataStatistics?.pearsonCorrelations}
-                    spearmanCorrelations={filteredDataStatistics?.spearmanCorrelations}
-                    chiSquareTest={filteredDataStatistics?.chiSquareTest}
-                    omittedFeatures={filteredDataStatistics?.omittedFeatures}
+                    {...relationshipStatistics}
+                    featureFilters={relationshipFilters}
                   />
                 </div>
               </CSSTransition>

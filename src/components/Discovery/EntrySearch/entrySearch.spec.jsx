@@ -19,6 +19,10 @@ vi.mock('../EntryTable/entryTable', () => ({
 }));
 
 describe('<EntrySearch />', () => {
+  it('places table actions inside the existing search row', () => {
+    render(<EntrySearch resultData={{ Name: ['Age'] }} type="continuous" onRowSelect={vi.fn()} actions={<button>Table options</button>} />);
+    expect(screen.getByRole('button', { name: 'Table options' }).parentElement.parentElement).toBe(screen.getByRole('searchbox').parentElement);
+  });
   const resultData = {
     col1: ['apple', 'banana', 'cherry'],
     col2: ['x', 'yellow', 'red'],

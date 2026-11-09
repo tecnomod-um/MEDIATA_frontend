@@ -41,6 +41,9 @@
     display: block;
 }
 
+.filteredName { display: flex; align-items: center; min-width: 0; }
+.filteredName > .resSpan { flex: 1; min-width: 0; }
+
 .resTable .resTr .resTd {
     border-top: 1px solid #dee2e6;
 }

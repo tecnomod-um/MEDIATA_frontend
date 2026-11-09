@@ -1,59 +1,46 @@
-
 .exportContainer {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    width: 100%;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
 }
 
-.exportButton,
-.smallGreenButton {
-    flex-shrink: 0;
+.exportContainer .exportButton,
+.exportContainer .smallGreenButton {
+  box-sizing: border-box;
+  height: 34px;
+  min-height: 34px;
+  border: none;
+  color: var(--text-color-on-darkbg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  transition: background-color 0.3s;
 }
 
-.exportButton {
-    background-color: #444;
-    color: var(--text-color-on-darkbg);
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px 0 0 5px;
-    cursor: pointer;
-    flex-grow: 1;
-    text-align: center;
-    font-size: var(--font-size-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    max-width: 80%;
-    transition: background-color 0.3s ease;
-    box-sizing: border-box;
+.exportContainer .exportButton {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--space-1) 0 0 var(--space-1);
+  background-color: var(--tooltray-button-bg);
 }
 
-.smallGreenButton {
-    background-color: var(--button-success) !important;
-    color: var(--text-color-on-darkbg);
-    padding: 10px 20px;
-    border: none;
-    border-radius: 0 5px 5px 0;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-base);
-    transition: background-color 0.3s ease;
-    box-sizing: border-box;
-    max-width: 10%;
-    background-color: var(--button-success-hover);
+.exportContainer .smallGreenButton {
+  flex: 0 0 34px;
+  width: 34px;
+  padding: 0;
+  border-radius: 0 var(--space-1) var(--space-1) 0;
+  background-color: var(--button-success);
 }
 
-
-.exportButton {
-    padding: 10px 20px !important;
-    border-radius: 5px 0 0 5px !important;
-    flex-grow: 1 !important;
+.exportContainer .exportButton:hover {
+  background-color: var(--tooltray-button-hover);
 }
 
-.smallGreenButton {
-    padding: 10px 20px !important;
-    border-radius: 0 5px 5px 0 !important;
+.exportContainer .smallGreenButton:hover {
+  background-color: var(--button-success-hover);
 }

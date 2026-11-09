@@ -20,6 +20,10 @@
   text-overflow: ellipsis;
 }
 
+.inputContainer { position: relative; height: 38px; flex: 0 0 38px; }
+.inputWithActions { padding-right: 125px; }
+.tableActions { position: absolute; right: 4px; top: 4px; height: 30px; display: flex; align-items: center; }
+
 .input::placeholder {
   white-space: nowrap;
   overflow: hidden;

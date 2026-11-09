@@ -1,10 +1,46 @@
 import React from "react";
-import { render, screen, waitFor, act } from "@testing-library/react";
+import { render, screen, waitFor, act, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import Discovery from "./discovery";
 import { vi } from "vitest";
 
+// Exercise page interactions with the shared calculator; the hook tests cover the worker lifecycle.
+vi.mock("../../components/Discovery/CombinedStatistics/useRelationshipStatistics", async () => {
+  const {combineMappedRelationships} = await import("../../components/Discovery/CombinedStatistics/pairedStatistics");
+  const {visibleRelationships} = await import("../../components/Discovery/discoveryStatistics");
+  return {default: (table, sources, combined, enabled) => ({
+    statistics: enabled && table ? combined ? combineMappedRelationships(table, sources) : visibleRelationships(table) : {},
+    pending:false, error:null, retry:vi.fn(),
+  })};
+});
+
 let mockFileExplorerProps;
+let mockAggregateProps;
+let mockTrayProps;
+
+test('keeps an opened mobile sidebar open during a keyboard or same-breakpoint resize', async () => {
+  const originalWidth = window.innerWidth;
+  Object.defineProperty(window, 'innerWidth', {writable:true, configurable:true, value:390});
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  const view = render(<Discovery />);
+  await screen.findByTestId('FileExplorer');
+  act(() => mockFileExplorerProps.onFilesOpened([PROCESSED_ITEM]));
+  await screen.findByTestId('tray');
+  expect(mockTrayProps.isToolTrayOpen).toBe(false);
+  act(() => mockTrayProps.toggleToolTray());
+  expect(mockTrayProps.isToolTrayOpen).toBe(true);
+  act(() => window.dispatchEvent(new Event('resize')));
+  expect(mockTrayProps.isToolTrayOpen).toBe(true);
+  act(() => {
+    window.innerWidth = 1024;
+    window.dispatchEvent(new Event('resize'));
+    window.innerWidth = 600;
+    window.dispatchEvent(new Event('resize'));
+  });
+  expect(mockTrayProps.isToolTrayOpen).toBe(false);
+  view.unmount();
+  window.innerWidth = originalWidth;
+});
 
 const mockToastError = vi.hoisted(() => vi.fn());
 const mockToastSuccess = vi.hoisted(() => vi.fn());
@@ -60,7 +96,7 @@ vi.mock("../../components/Alignment/MappingsResult/mappingsResult", () => ({
 
 vi.mock("react-transition-group", () => ({
   __esModule: true,
-  CSSTransition: ({ in: inProp, children }) => (inProp ? <>{children}</> : null),
+  CSSTransition: ({ in: inProp = true, children }) => (inProp ? <>{children}</> : null),
   TransitionGroup: ({ children }) => <>{children}</>,
 }));
 
@@ -78,17 +114,17 @@ vi.mock("react-toastify", () => ({
 
 vi.mock("../../components/Discovery/ToolTray/toolTray", () => ({
   __esModule: true,
-  default: () => <div data-testid="tray">ToolTray</div>,
+  default: props => { mockTrayProps = props; return <div data-testid="tray"><button onClick={props.toggleView}>Display aggregate metrics</button></div>; },
 }));
 
 vi.mock("../../components/Discovery/StatisticsDisplay/statisticsDisplay", () => ({
   __esModule: true,
-  default: () => <div data-testid="stats">StatsDisplay</div>,
+  default: ({ tableData, numericalTableActions }) => <div data-testid="stats" data-result={JSON.stringify(tableData)}>{numericalTableActions}StatsDisplay</div>,
 }));
 
 vi.mock("../../components/Discovery/AggregatesDisplay/aggregateDisplay", () => ({
   __esModule: true,
-  default: () => <div data-testid="aggregate">AggregateDisplay</div>,
+  default: props => { mockAggregateProps = props; return <div data-testid="aggregate">AggregateDisplay</div>; },
 }));
 
 vi.mock("../../components/Discovery/FilterModal/filterModal", () => ({
@@ -185,6 +221,42 @@ test("opening a file (sync) shows processed view and hides explorer", async () =
   });
 
   await expectProcessedView();
+});
+
+test("combines table rows in place while retaining the existing aggregate metrics control", async () => {
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  render(<Discovery />);
+  await waitFor(() => expect(mockFileExplorerProps).toBeDefined());
+  const first = {
+    ...PROCESSED_ITEM, nodeId: 1, nodeName: 'Alpha',
+    covariances: { Age: { Age: 2 } },
+    relationshipSummaryVersion: 1,
+    numericPairSummaries: [{ featureX: 'Age', featureY: 'Age', count: 10, meanX: 50, meanY: 50, m2X: 0, m2Y: 0, crossMoment: 0 }],
+    continuousFeatures: [{ featureName: 'Age', mean: 50, count: 10, stdDev: 0, min: 50, max: 50, missingValuesCount: 0 }],
+  };
+  await act(async () => mockFileExplorerProps.onFilesOpened([first, { ...first, nodeId: 2, nodeName: 'Beta', covariances: { Age: { Age: 8 } } }]));
+  expect(screen.queryByRole('combobox', { name: 'Statistics view' })).not.toBeInTheDocument();
+  expect(screen.getByTestId('stats')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Numerical table options: separate rows' }));
+  fireEvent.click(screen.getByRole('menuitem', { name: 'Combined rows' }));
+  const table = JSON.parse(screen.getByTestId('stats').getAttribute('data-result'));
+  expect(table.continuousFeatures).toHaveLength(1);
+  expect(table.continuousFeatures[0]).toMatchObject({ featureName: 'Age', count: 20, mean: 50, pooled: true });
+  fireEvent.click(screen.getByRole('button', { name: 'Numerical table options: combined rows' }));
+  fireEvent.click(screen.getByRole('menuitem', { name: 'Separate rows' }));
+  expect(JSON.parse(screen.getByTestId('stats').getAttribute('data-result')).continuousFeatures).toHaveLength(2);
+  fireEvent.click(screen.getByRole('button', { name: 'Numerical table options: separate rows' }));
+  fireEvent.click(screen.getByRole('menuitem', { name: 'Combined rows' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Display aggregate metrics' }));
+  expect(screen.getByTestId('aggregate')).toBeInTheDocument();
+  expect(mockAggregateProps.covariances.Age.Age).toBe(0);
+  expect(mockAggregateProps.pearsonCorrelations.Age.Age).toBeNull();
+  expect(mockAggregateProps.relationshipDetails.covariance.Age.Age.count).toBe(20);
+  expect(mockAggregateProps.datasets).toBeUndefined();
+  expect(mockTrayProps.relationshipExport.data.covariances).toBe(mockAggregateProps.covariances);
+  fireEvent.click(screen.getByRole('button', { name: 'Display aggregate metrics' }));
+  expect(screen.getByTestId('stats')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Numerical table options: combined rows' })).toBeInTheDocument();
 });
 
 test("opening a file (async) polls and then shows processed view", async () => {
@@ -592,4 +664,41 @@ test("handles location.state with no files for a node", async () => {
       "No parsed files returned from backend."
     )
   );
+});
+
+test("type changes update saved mappings, relationships, exports and source metadata without restoring hidden features", async () => {
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  render(<Discovery />);
+  await screen.findByTestId('FileExplorer');
+  const feature = (featureName, mean) => ({featureName, count:12, missingValuesCount:0, mean, stdDev:0, min:mean, max:mean});
+  const makeSource = (nodeId, nodeName, mean) => ({...PROCESSED_ITEM, nodeId, nodeName,
+    relationshipSummaryVersion:1,
+    continuousFeatures:[feature('Age',mean),feature('Score',2)],
+    numericPairSummaries:[{featureX:'Age',featureY:'Age',count:12,meanX:mean,meanY:mean,m2X:0,m2Y:0,crossMoment:0}],
+  });
+  const alpha=makeSource(1,'Alpha',10), beta=makeSource(2,'Beta',20);
+  act(() => mockFileExplorerProps.onFilesOpened([alpha,beta]));
+  await screen.findByTestId('tray');
+  act(() => mockTrayProps.setFilteredData(current => ({...current,continuousFeatures:current.continuousFeatures.filter(feature => !(feature.nodeId===1 && feature.originalName==='Score'))})));
+  fireEvent.click(screen.getByRole('button',{name:'Numerical table options: separate rows'}));
+  fireEvent.click(screen.getByRole('menuitem',{name:'Combine features',exact:false}));
+  fireEvent.click(screen.getByRole('button',{name:'Apply combinations'}));
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  expect(JSON.parse(screen.getByTestId('stats').getAttribute('data-result')).continuousFeatures.find(feature=>feature.featureName==='Age')).toMatchObject({count:24,mean:15});
+  const response={...alpha,featureTypeSummaryVersion:1,featureTypes:{Age:'categorical'},
+    continuousFeatures:[feature('Score',2)],categoricalFeatures:[{featureName:'Age',count:12,missingValuesCount:0,categoryCounts:{'10':12}}],numericPairSummaries:[],covariances:{}};
+  act(() => mockTrayProps.onFeatureRecalculated({nodeId:1,fileName:alpha.fileName,featureName:'Age',response}));
+  await waitFor(() => expect(mockTrayProps.data.categoricalFeatures).toHaveLength(1));
+  expect(mockTrayProps.dataResults[0].featureTypes).toEqual({Age:'categorical'});
+  expect(mockTrayProps.data.continuousFeatures.some(feature=>feature.nodeId===1 && feature.originalName==='Age')).toBe(false);
+  expect(mockTrayProps.filteredData.continuousFeatures.some(feature=>feature.nodeId===1 && feature.originalName==='Score')).toBe(false);
+  const pooled=JSON.parse(screen.getByTestId('stats').getAttribute('data-result')).continuousFeatures.find(feature=>feature.featureName==='Age');
+  expect(pooled.count).toBeNull();
+  expect(pooled.status).toContain('Different variable types');
+  fireEvent.click(screen.getByRole('button',{name:'Display aggregate metrics'}));
+  await waitFor(() => expect(mockAggregateProps.covariances.Age.Age).toBeNull());
+  expect(mockTrayProps.relationshipExport.data.covariances.Age.Age).toBeNull();
+  act(() => mockTrayProps.toggleFileActive(0));
+  act(() => mockTrayProps.toggleFileActive(0));
+  expect(mockTrayProps.filteredData.continuousFeatures.some(feature=>feature.nodeId===1 && feature.originalName==='Score')).toBe(false);
 });

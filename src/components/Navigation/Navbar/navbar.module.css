@@ -72,7 +72,7 @@
   background-color: var(--background-nav-background-color-hover-light);
 }
 
-input[type=checkbox] {
+.checkboxToggle {
   display: none;
 }
 

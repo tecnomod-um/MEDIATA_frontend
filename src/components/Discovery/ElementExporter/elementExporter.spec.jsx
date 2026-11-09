@@ -41,7 +41,7 @@ vi.mock('../../../util/nodeAxiosSetup', () => ({
 vi.mock('../../../context/nodeContext', () => ({
   __esModule: true,
   useNode: () => ({
-    selectedNodes: [{ nodeId: 'n1', serviceUrl: 'http://node1' }],
+    selectedNodes: [{ nodeId: 'n1', serviceUrl: 'http://node1' }, {nodeId: 'n2', serviceUrl: 'http://node2'}],
   }),
 }));
 
@@ -94,6 +94,25 @@ describe('<ElementExporter />', () => {
     vi.clearAllMocks();
   });
 
+  it('keeps converted schemas and destinations separate for same-named files at different sites', async () => {
+    mockSaveDatasetElements.mockResolvedValue({});
+    const sources=[{nodeId:'n1',fileName:'same.csv'},{nodeId:'n2',fileName:'same.csv'}];
+    const data={continuousFeatures:[{nodeId:'n1',fileName:'same.csv',featureName:'Age (same.csv · Alpha)',originalName:'Age',min:1,max:2}],
+      categoricalFeatures:[{nodeId:'n2',fileName:'same.csv',featureName:'Age (same.csv · Beta)',originalName:'Age',categoryCounts:{adult:12}}],dateFeatures:[]};
+    render(<ElementExporter dataResults={sources} activeFileIndices={[true,true]} combinedData={data} filteredData={data} />);
+    fireEvent.click(screen.getByText('Upload Elements'));
+    await waitFor(() => expect(mockSaveDatasetElements).toHaveBeenCalledTimes(2));
+    expect(mockSaveDatasetElements.mock.calls).toEqual(expect.arrayContaining([
+      ['same.csv','Age,integer,min:1,max:2','http://node1'],['same.csv','Age,adult','http://node2'],
+    ]));
+  });
+
+  it('prevents schema uploads while a statistics refresh is pending', () => {
+    render(<ElementExporter busy dataResults={dataResults} activeFileIndices={[true]} combinedData={combinedData} filteredData={filteredData} />);
+    expect(screen.getByText('Upload Elements')).toBeDisabled();
+    expect(screen.getByRole('button',{name:'Upload elements and open alignment'})).toBeDisabled();
+  });
+
   it('uploads CSV on "Upload Elements" click and shows success toast', async () => {
     mockSaveDatasetElements.mockResolvedValue({});
 
@@ -120,7 +139,7 @@ describe('<ElementExporter />', () => {
     ].join('\n');
 
     await waitFor(() => {
-      expect(saveDatasetElements).toHaveBeenCalledWith('file.csv', expectedCSV);
+      expect(saveDatasetElements).toHaveBeenCalledWith('file.csv', expectedCSV, 'http://node1');
     });
 
     await waitFor(() => {

@@ -30,6 +30,11 @@ const FEATURE = {
 };
 
 describe('<ContinuousChart />', () => {
+  it('marks a filtered chart without changing its feature identity', () => {
+    render(<ContinuousChart feature={FEATURE} showOutliers filterDescription="cluster (= 1)" />);
+    expect(capturedBarProps.current.options.plugins.title.text).toBe('ValueDist *');
+    expect(screen.getByRole('button', { name: 'Chart for ValueDist' })).toHaveAttribute('title', 'Filtered records: cluster (= 1)');
+  });
   it('renders the chart bar', () => {
     render(<ContinuousChart feature={FEATURE} showOutliers={true} />);
     expect(screen.getByTestId('mock-bar')).toBeInTheDocument();

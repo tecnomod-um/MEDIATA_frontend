@@ -1,5 +1,20 @@
 import axiosInstance from "./axiosSetup";
+import { waitForDiscoveryJob } from "./waitForDiscoveryJob";
 import nodeAxiosInstance, { getResolvedNodeBaseURL, updateNodeAxiosBaseURL } from "./nodeAxiosSetup";
+// Reject withheld releases before any Discovery state or export can use them.
+const releasedAnalytics = data => {
+  const blocked = (Array.isArray(data) ? data : [data]).find(item => /^Statistics withheld by disclosure controls\./.test(item?.message || ""));
+  if (blocked) { const error = new Error(blocked.message); error.code = "DISCLOSURE_BLOCKED"; throw error; }
+  const failed = (Array.isArray(data) ? data : [data]).find(item => /^(Error processing statistics\.|Thread interrupted)|^This field cannot be converted/.test(item?.message || ""));
+  if (failed) { const error = new Error(failed.message); error.code = "ANALYTICS_FAILED"; throw error; }
+  const unguarded = (Array.isArray(data) ? data : [data]).some(item => item && typeof item === "object" && ("continuousFeatures" in item || "numericPairSummaries" in item)
+    && item.disclosurePolicyVersion !== 1);
+  if (unguarded) { const error = new Error("The selected node requires the Discovery disclosure-controls update before releasing statistics."); error.code = "DISCLOSURE_UPDATE_REQUIRED"; throw error; }
+  const oldConventions = (Array.isArray(data) ? data : [data]).some(item => item && typeof item === "object"
+    && ("continuousFeatures" in item || "numericPairSummaries" in item) && item.statisticsConventionVersion !== 1);
+  if (oldConventions) { const error = new Error("The selected node requires the updated statistical conventions before its results can be displayed or pooled."); error.code = "STATISTICS_UPDATE_REQUIRED"; throw error; }
+  return data;
+};
 // API request handlers for all backend and node petitions
 
 const SNOMED_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -386,28 +401,7 @@ export const uploadFile = async (file, onUploadProgress) => {
   }
 };
 
-// Recalcs a feature of the current shown data file
-export const recalculateFeature = async (fileName, featureName, featureType) => {
-  // Build URL query parameters
-  const params = new URLSearchParams();
-  params.append("fileName", fileName);
-  params.append("featureName", featureName);
-  params.append("featureType", featureType);
-
-  try {
-    // Send a POST with a null body; the parameters are appended to the URL.
-    const response = await nodeAxiosInstance.post(
-      `/taniwha/api/data/reprocessList`,
-      null,
-      { params }
-    );
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const filterMultipleFiles = async (payload) => {
+export const filterMultipleFiles = async (payload, serviceUrl, {signal} = {}) => {
   // payload = { multipleFileFilters: [ {fileName, filters}, ... ] }
   try {
     // We send JSON directly, not FormData
@@ -415,13 +409,24 @@ export const filterMultipleFiles = async (payload) => {
       `/taniwha/api/data/filterByNameList`,
       payload,
       {
+        ...(serviceUrl ? { baseURL: getResolvedNodeBaseURL(serviceUrl) } : {}),
+        ...(signal ? {signal} : {}),
         headers: {
           "Content-Type": "application/json",
         },
       }
     );
+    if (response.status === 202) {
+      const id = response.data?.jobId;
+      if (typeof id !== "string" || !id.trim()) throw new Error("Invalid statistics job identifier.");
+      return waitForDiscoveryJob({
+        status: () => getProcessSelectedDatasetsStatus(id, serviceUrl),
+        result: () => getProcessSelectedDatasetsResult(id, serviceUrl),
+        cancel: () => cancelProcessSelectedDatasetsJob(id, serviceUrl), signal,
+      });
+    }
     // Expect an array of AnalyticsResponseDTO
-    return response.data;
+    return releasedAnalytics(response.data);
   } catch (error) {
     throw error;
   }
@@ -476,9 +481,9 @@ export const getParseConfigsResult = async (jobId) => {
   return { status: response.status, data: response.data };
 };
 
-export const getNodeDatasets = async () => {
+export const getNodeDatasets = async (serviceUrl) => {
   try {
-    const response = await nodeAxiosInstance.get(`/taniwha/api/files/datasets`);
+    const response = await nodeAxiosInstance.get(`/taniwha/api/files/datasets`, ...(serviceUrl ? [{ baseURL: getResolvedNodeBaseURL(serviceUrl) }] : []));
     return response.data;
   } catch (error) {
     console.error("Error occurred while fetching datasets:", error);
@@ -486,10 +491,11 @@ export const getNodeDatasets = async () => {
   }
 };
 
-export const processSelectedDatasets = async (fileNames) => {
+export const processSelectedDatasets = async (fileNames, serviceUrl) => {
   const response = await nodeAxiosInstance.post(
     `/taniwha/api/data/processList`,
-    { fileNames }
+    { fileNames },
+    ...(serviceUrl ? [{ baseURL: getResolvedNodeBaseURL(serviceUrl) }] : [])
   );
 
   // If backend decided it's huge -> 202 with {jobId, progress:true}
@@ -498,7 +504,7 @@ export const processSelectedDatasets = async (fileNames) => {
   }
 
   // Normal -> 200 with List<AnalyticsResponseDTO>
-  return { mode: "sync", results: response.data };
+  return { mode: "sync", results: releasedAnalytics(response.data) };
 };
 
 export const extractDatasetElements = async (fileNames) => {
@@ -509,23 +515,26 @@ export const extractDatasetElements = async (fileNames) => {
   return response.data;
 };
 
-export const getProcessSelectedDatasetsStatus = async (jobId) => {
+export const getProcessSelectedDatasetsStatus = async (jobId, serviceUrl) => {
   const response = await nodeAxiosInstance.get(
-    `/taniwha/api/data/processList/status/${encodeURIComponent(jobId)}`
+    `/taniwha/api/data/processList/status/${encodeURIComponent(jobId)}`,
+    ...(serviceUrl ? [{ baseURL: getResolvedNodeBaseURL(serviceUrl) }] : [])
   );
   return response.data;
 };
 
-export async function getProcessSelectedDatasetsResult(jobId) {
+export async function getProcessSelectedDatasetsResult(jobId, serviceUrl) {
   const response = await nodeAxiosInstance.get(
-    `/taniwha/api/data/processList/result/${jobId}`
+    `/taniwha/api/data/processList/result/${encodeURIComponent(jobId)}`,
+    ...(serviceUrl ? [{ baseURL: getResolvedNodeBaseURL(serviceUrl) }] : [])
   );
-  return response.data;
+  return releasedAnalytics(response.data);
 }
 
-export const cancelProcessSelectedDatasetsJob = async (jobId) => {
+export const cancelProcessSelectedDatasetsJob = async (jobId, serviceUrl) => {
   const response = await nodeAxiosInstance.post(
-    `/taniwha/api/data/processList/cancel/${encodeURIComponent(jobId)}`
+    `/taniwha/api/data/processList/cancel/${encodeURIComponent(jobId)}`,
+    ...(serviceUrl ? [null, { baseURL: getResolvedNodeBaseURL(serviceUrl) }] : [])
   );
   return response.data;
 };
@@ -598,10 +607,11 @@ export const getNodeElements = async () => {
   }
 };
 
-export const saveDatasetElements = async (fileName, csvData) => {
+export const saveDatasetElements = async (fileName, csvData, serviceUrl) => {
   try {
     const response = await nodeAxiosInstance.post(`/taniwha/api/files/save_dataset_elements`, csvData,
       {
+        ...(serviceUrl ? { baseURL: getResolvedNodeBaseURL(serviceUrl) } : {}),
         params: { fileName },
         headers: {
           "Content-Type": "text/plain",

@@ -59,8 +59,8 @@ describe('jsonToCSV', () => {
     expect(lines[2]).toBe('Los Angeles,LA');
   });
 
-  it('throws if given an empty array', () => {
-    expect(() => jsonToCSV([])).toThrow();
+  it('returns an empty CSV when all features are hidden', () => {
+    expect(jsonToCSV([])).toBe('');
   });
 
   it('converts null and undefined to strings', () => {

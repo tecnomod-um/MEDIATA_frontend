@@ -3,6 +3,26 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { vi } from "vitest";
 import StatisticsDisplay from "./statisticsDisplay";
+import { combineMappedTableData } from "../CombinedStatistics/statisticsTableData";
+import { createColumnMappings } from "../CombinedStatistics/columnMappings";
+
+it("feeds combined summaries into the existing two tables while keeping individual charts", () => {
+  const sources = [1, 2].map(nodeId => ({ nodeId, fileName: 'patients.csv', continuousFeatures: [{ featureName: 'Age', count: 10 * nodeId, mean: 20 * nodeId, stdDev: 0, min: 20 * nodeId, max: 20 * nodeId, missingValuesCount: 0 }] }));
+  const data = { continuousFeatures: sources.map(source => ({ ...source.continuousFeatures[0], nodeId: source.nodeId, fileName: source.fileName, originalName: 'Age', featureName: `Age (${source.nodeId})`, qrt1: 20, median: 20, qrt3: 20 })), categoricalFeatures: [], dateFeatures: [] };
+  const tableData = combineMappedTableData(data, sources, [true, true], createColumnMappings(sources));
+  const select = vi.fn();
+  render(<StatisticsDisplay data={data} tableData={tableData} combinedTables numericalTableActions={<button>Table options</button>} setSelectedEntry={select} />);
+  const tables = screen.getAllByRole('table');
+  expect(tables).toHaveLength(2);
+  const numeric = JSON.parse(tables[0].getAttribute('data-result'));
+  expect(numeric.Name).toEqual(['Age']);
+  expect(numeric.Count).toEqual(['30']);
+  expect(numeric.Mean).toEqual(['33.33']);
+  expect(numeric.Median).toEqual(['N/A']);
+  expect(numeric.Datasets).toEqual(['2/2']);
+  expect(screen.getAllByRole('figure')).toHaveLength(2);
+  expect(screen.getByLabelText('Overview Continuous chart for Age (1)')).toBeInTheDocument();
+});
 
 vi.mock("../ContinuousChart/continuousChart", () => ({
   __esModule: true,
@@ -419,7 +439,7 @@ describe("<StatisticsDisplay />", () => {
 
     const searches = screen.getAllByRole("table");
     const contResult = JSON.parse(searches[0].getAttribute("data-result"));
-    expect(contResult["Missing Entries"]).toEqual(["25 (25.00%)"]);
+    expect(contResult["Missing Entries"]).toEqual(["25 (20.00%)"]);
   });
 
   test("formats missing entries as 0 (0%) when no missing values", () => {

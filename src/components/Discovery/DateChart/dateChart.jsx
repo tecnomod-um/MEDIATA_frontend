@@ -7,7 +7,7 @@ import { Chart as ChartJS, registerables } from "chart.js";
 ChartJS.register(...registerables);
 
 // Display for the continuous features' histogram that are a datetype
-function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick, isSelected }) {
+function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick, isSelected, filterDescription }) {
   const chartRef = useRef(null);
 
   const sortedEntries = useMemo(() =>
@@ -86,7 +86,7 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
     },
     plugins: {
       legend: { display: false },
-      title: { display: true, text: `${dateDataKey} Distribution Over Time` },
+      title: { display: true, text: `${dateDataKey}${filterDescription ? " *" : ""} Distribution Over Time` },
     },
     elements: {
       line: {
@@ -96,7 +96,7 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
         radius: 0,
       },
     },
-  }), [dateDataKey]);
+  }), [dateDataKey, filterDescription]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -121,6 +121,7 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
       className={`${DateChartStyles.chartContainer} ${isSelected ? DateChartStyles.selected : ""
         }`}
       onClick={onClick}
+      title={filterDescription ? `Filtered records: ${filterDescription}` : undefined}
       style={{ maxWidth: "100%" }}
       onDoubleClick={onDoubleClick}
     >

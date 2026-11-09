@@ -1,5 +1,6 @@
 // Utility JSON related functions
 export const jsonToCSV = (jsonArray) => {
+  if (!jsonArray.length) return "";
   const csvRows = [];
 
   const headers = Object.keys(jsonArray[0]);

@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import AggregateDisplayStyles from "./aggregateDisplay.module.css";
+import FilterIndicator from "../FilterModal/filterIndicator";
+import { relationshipConventions } from "../discoveryStatistics";
 
 // Display for all aggregate statistics
-const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearmanCorrelations = {}, chiSquareTest = [], omittedFeatures = [] }) => {
+const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearmanCorrelations = {}, chiSquareTest = [], omittedFeatures = [], featureFilters = {}, relationshipDetails }) => {
 
   const [activeTab, setActiveTab] = useState("covariance");
   const [topHeight, setTopHeight] = useState(300);
@@ -55,12 +57,12 @@ const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearman
   function isStatsEmpty(stats) {
     if (!stats || Object.keys(stats).length === 0) return true;
     return Object.keys(stats).every((rowKey) =>
-      Object.values(stats[rowKey]).every((val) => val === undefined)
+      Object.values(stats[rowKey]).every((val) => !Number.isFinite(val))
     );
   }
 
   function renderMatrix(stats) {
-    if (!stats || isStatsEmpty(stats)) {
+    if (!stats || isStatsEmpty(stats) && !Object.keys(relationshipDetails?.[activeTab] || {}).length) {
       return (
         <div className={AggregateDisplayStyles.noData}>
           No aggregate data available
@@ -69,13 +71,13 @@ const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearman
     }
     const keys = Object.keys(stats).sort();
     return (
-      <table ref={matrixRef} className={AggregateDisplayStyles.matrix}>
+      <table ref={matrixRef} className={AggregateDisplayStyles.matrix} aria-label={`${activeTab} relationships`}>
         <thead>
           <tr>
             <th className={AggregateDisplayStyles.matrixCorner}></th>
             {keys.map((key) => (
               <th key={key} className={AggregateDisplayStyles.matrixHeader}>
-                {key}
+                {key}<FilterIndicator description={featureFilters[key]} />
               </th>
             ))}
           </tr>
@@ -83,19 +85,21 @@ const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearman
         <tbody>
           {keys.map((rowKey) => (
             <tr key={rowKey}>
-              <td className={AggregateDisplayStyles.matrixHeader}>{rowKey}</td>
+              <td className={AggregateDisplayStyles.matrixHeader}>{rowKey}<FilterIndicator description={featureFilters[rowKey]} /></td>
               {keys.map((columnKey) => {
+                const detail = relationshipDetails?.[activeTab]?.[rowKey]?.[columnKey];
                 const value =
-                  stats[rowKey] && stats[rowKey][columnKey] !== undefined
+                  Number.isFinite(stats[rowKey]?.[columnKey])
                     ? stats[rowKey][columnKey]
                     : null;
                 return (
                   <td
+                    title={detail ? [detail.reason, detail.count != null ? `${detail.count} paired observations` : null, detail.datasets?.join("; ")].filter(Boolean).join(" · ") : undefined}
                     key={columnKey}
                     className={`${AggregateDisplayStyles.matrixCell} ${rowKey === columnKey ? AggregateDisplayStyles.diagonal : ""
                       }`}
                   >
-                    {value !== null ? value.toFixed(2) : "N/A"}
+                    {value !== null ? (Math.abs(value) < .005 ? 0 : value).toFixed(2) : "N/A"}
                   </td>
                 );
               })}
@@ -107,9 +111,9 @@ const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearman
   }
 
   const tabContent = {
-    covariance: renderMatrix(covariances),
-    pearson: renderMatrix(pearsonCorrelations),
-    spearman: renderMatrix(spearmanCorrelations),
+    covariance: () => renderMatrix(covariances),
+    pearson: () => renderMatrix(pearsonCorrelations),
+    spearman: () => renderMatrix(spearmanCorrelations),
   };
 
   function renderChiSquaredResults() {
@@ -123,9 +127,9 @@ const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearman
     return (
       <div className={AggregateDisplayStyles.chiSquaredResultsContainer}>
         {chiSquareTest.map((test, i) => (
-          <div key={i}>
+          <div key={i} title={[relationshipConventions.chiSquarePValue, test.reason, test.count != null ? `${test.count} paired observations` : null, test.datasets?.join("; ")].filter(Boolean).join(" · ")}>
             <strong>{`${test.category1} vs ${test.category2}: `}</strong>
-            {typeof test.pvalue === "number" ? test.pvalue.toFixed(4) : "N/A"}
+            {Number.isFinite(test.pvalue) ? test.pvalue === 0 ? "< 1e-308" : test.pvalue < .0001 ? test.pvalue.toExponential(2) : test.pvalue.toFixed(4) : "N/A"}
           </div>
         ))}
       </div>
@@ -147,7 +151,7 @@ const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearman
             <strong>{feature.featureName}: </strong>
             {feature.reason}
             {!feature.reason?.startsWith("Suppressed for privacy:") &&
-              ` (Missing: ${feature.percentMissing.toFixed(2)}%)`}
+              Number.isFinite(feature.percentMissing) && ` (Missing: ${feature.percentMissing.toFixed(2)}%)`}
           </div>
         ))}
       </div>
@@ -159,7 +163,7 @@ const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearman
     isStatsEmpty(pearsonCorrelations) &&
     isStatsEmpty(spearmanCorrelations);
 
-  if (isEmpty) {
+  if (isEmpty && !chiSquareTest.length && !omittedFeatures.length && !relationshipDetails) {
     return (
       <div className={AggregateDisplayStyles.statsContainer}>
         <div className={AggregateDisplayStyles.noData}>
@@ -178,6 +182,8 @@ const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearman
       >
         <div className={AggregateDisplayStyles.statsBlock}>
           <select
+            aria-label="Relationship statistic"
+            title={relationshipConventions[{covariance:"covariances", pearson:"pearsonCorrelations", spearman:"spearmanCorrelations"}[activeTab]]}
             ref={selectRef}
             className={`${AggregateDisplayStyles.statsTitle} ${AggregateDisplayStyles.selectPosition}`}
             value={activeTab}
@@ -189,7 +195,7 @@ const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearman
               </option>
             ))}
           </select>
-          {tabContent[activeTab]}
+          {tabContent[activeTab]()}
         </div>
       </div>
 

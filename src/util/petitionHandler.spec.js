@@ -28,6 +28,45 @@ vi.mock('./nodeAxiosSetup', () => {
 });
 
 describe('petitionHandler', () => {
+  it('refuses legacy statistical conventions before displaying, filtering or pooling results', async () => {
+    const data=[{fileName:'legacy.csv',disclosurePolicyVersion:1,continuousFeatures:[]}];
+    nodeAxiosInstance.post.mockResolvedValue({status:200,data});
+    await expect(petitionHandler.filterMultipleFiles({multipleFileFilters:[]})).rejects.toMatchObject({code:'STATISTICS_UPDATE_REQUIRED'});
+    await expect(petitionHandler.processSelectedDatasets(['legacy.csv'])).rejects.toMatchObject({code:'STATISTICS_UPDATE_REQUIRED'});
+    data[0].statisticsConventionVersion=1;
+    await expect(petitionHandler.filterMultipleFiles({multipleFileFilters:[]})).resolves.toEqual(data);
+  });
+  it('polls asynchronous typed refreshes at the same explicitly selected node', async () => {
+    const service='https://node.example';
+    nodeAxiosInstance.post.mockResolvedValueOnce({status:202,data:{jobId:'refresh'}});
+    nodeAxiosInstance.get.mockResolvedValueOnce({data:{state:'DONE'}}).mockResolvedValueOnce({data:[{fileName:'large.csv',disclosurePolicyVersion:1,statisticsConventionVersion:1,continuousFeatures:[]}]});
+    const result=await petitionHandler.filterMultipleFiles({multipleFileFilters:[]},service);
+    expect(result[0].fileName).toBe('large.csv');
+    expect(nodeAxiosInstance.get).toHaveBeenNthCalledWith(1,'/taniwha/api/data/processList/status/refresh',{baseURL:service});
+    expect(nodeAxiosInstance.get).toHaveBeenNthCalledWith(2,'/taniwha/api/data/processList/result/refresh',{baseURL:service});
+  });
+  it('rejects a malformed asynchronous refresh response', async () => {
+    nodeAxiosInstance.post.mockResolvedValueOnce({status:202,data:{}});
+    await expect(petitionHandler.filterMultipleFiles({multipleFileFilters:[]})).rejects.toThrow('job identifier');
+  });
+  it('rejects withheld or unguarded statistics before they can enter the tables or exports', async () => {
+    const blocked = { fileName: 'cohort.csv', message: 'Statistics withheld by disclosure controls. The query history or dataset requires review.', continuousFeatures: [] };
+    nodeAxiosInstance.post.mockResolvedValue({ status: 200, data: [blocked] });
+    await expect(petitionHandler.processSelectedDatasets(['cohort.csv'])).rejects.toMatchObject({ code: 'DISCLOSURE_BLOCKED' });
+    await expect(petitionHandler.filterMultipleFiles({ multipleFileFilters: [] })).rejects.toMatchObject({ code: 'DISCLOSURE_BLOCKED' });
+    nodeAxiosInstance.get.mockResolvedValue({ data: [blocked] });
+    await expect(petitionHandler.getProcessSelectedDatasetsResult('job')).rejects.toMatchObject({ code: 'DISCLOSURE_BLOCKED' });
+    nodeAxiosInstance.post.mockResolvedValue({ status: 200, data: [{ fileName: 'old.csv', continuousFeatures: [] }] });
+    await expect(petitionHandler.processSelectedDatasets(['old.csv'])).rejects.toMatchObject({ code: 'DISCLOSURE_UPDATE_REQUIRED' });
+  });
+  it('reports rejected numerical conversion as a calculation error rather than an outdated node', async () => {
+    nodeAxiosInstance.post.mockResolvedValue({data: [{
+      message: 'This field cannot be converted to continuous without an explicit numerical mapping.',
+      continuousFeatures: [], disclosurePolicyVersion: 0,
+    }]});
+    await expect(petitionHandler.filterMultipleFiles({multipleFileFilters:[{fileName:'cohort.csv',featureTypes:{Label:'continuous'}}]}))
+      .rejects.toMatchObject({code: 'ANALYTICS_FAILED', message: expect.stringContaining('explicit numerical mapping')});
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
@@ -358,7 +397,7 @@ describe('petitionHandler', () => {
     });
   });
 
-  describe('uploadFile, recalculateFeature, filterMultipleFiles', () => {
+  describe('uploadFile, filterMultipleFiles', () => {
     it('uploadFile sends FormData and returns data', async () => {
       const fakeFile = new Blob(['x']);
       nodeAxiosInstance.post.mockResolvedValue({ data: { f: 5 } });
@@ -373,25 +412,6 @@ describe('petitionHandler', () => {
         })
       );
       expect(out).toEqual({ f: 5 });
-    });
-
-    it('recalculateFeature appends params', async () => {
-      nodeAxiosInstance.post.mockResolvedValue({ data: 'ok' });
-      const out = await petitionHandler.recalculateFeature(
-        'file', 'feat', 'type'
-      );
-      expect(nodeAxiosInstance.post).toHaveBeenCalledWith(
-        '/taniwha/api/data/reprocessList',
-        null,
-        {
-          params: new URLSearchParams({
-            fileName: 'file',
-            featureName: 'feat',
-            featureType: 'type'
-          })
-        }
-      );
-      expect(out).toBe('ok');
     });
 
     it('filterMultipleFiles posts JSON', async () => {
@@ -543,6 +563,14 @@ describe('petitionHandler', () => {
           '/taniwha/api/data/processList/result/job123'
         );
       });
+    });
+
+    it('binds schema uploads to their explicit site even when other requests change the shared default', async () => {
+      nodeAxiosInstance.post.mockResolvedValue({data:'ok'});
+      getResolvedNodeBaseURL.mockReturnValueOnce('http://orchestrator/nodes/proxy/alpha');
+      await petitionHandler.saveDatasetElements('same.csv','Age,integer','http://alpha');
+      expect(nodeAxiosInstance.post).toHaveBeenCalledWith('/taniwha/api/files/save_dataset_elements','Age,integer',
+        expect.objectContaining({baseURL:'http://orchestrator/nodes/proxy/alpha',params:{fileName:'same.csv'}}));
     });
 
     it('saveDatasetElements returns data', async () => {
@@ -1041,4 +1069,16 @@ describe('petitionHandler', () => {
     });
   });
 
+});
+
+it('binds concurrent discovery polling requests to their explicit node destinations', async () => {
+  vi.clearAllMocks();
+  getResolvedNodeBaseURL.mockImplementation(serviceUrl => serviceUrl);
+  nodeAxiosInstance.get.mockResolvedValue({data:{state:'DONE'}});
+  await Promise.all([
+    petitionHandler.getProcessSelectedDatasetsStatus('same-job', 'http://alpha'),
+    petitionHandler.getProcessSelectedDatasetsResult('same-job', 'http://beta'),
+  ]);
+  expect(nodeAxiosInstance.get).toHaveBeenCalledWith('/taniwha/api/data/processList/status/same-job', {baseURL:'http://alpha'});
+  expect(nodeAxiosInstance.get).toHaveBeenCalledWith('/taniwha/api/data/processList/result/same-job', {baseURL:'http://beta'});
 });

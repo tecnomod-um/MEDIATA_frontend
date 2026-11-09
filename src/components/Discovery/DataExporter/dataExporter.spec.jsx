@@ -4,13 +4,13 @@ import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 import DataExporter from './dataExporter';
 
-const { mockJsonToCSV } = vi.hoisted(() => ({
-  mockJsonToCSV: vi.fn(() => 'csv-content'),
+const { mockStatisticsObjectsCsv } = vi.hoisted(() => ({
+  mockStatisticsObjectsCsv: vi.fn(() => 'csv-content'),
 }));
 
-vi.mock('../../../util/parser', () => ({
-  __esModule: true,
-  jsonToCSV: mockJsonToCSV,
+vi.mock('../../../util/statisticsCsv', async importOriginal => ({
+  ...await importOriginal(),
+  statisticsObjectsCsv: mockStatisticsObjectsCsv,
 }));
 
 describe('<DataExporter />', () => {
@@ -64,7 +64,7 @@ describe('<DataExporter />', () => {
   let origAppendChild;
 
   beforeEach(() => {
-    mockJsonToCSV.mockClear();
+    mockStatisticsObjectsCsv.mockClear();
     linkMocks = [];
 
     origCreateElement = document.createElement.bind(document);
@@ -98,6 +98,30 @@ describe('<DataExporter />', () => {
     vi.restoreAllMocks();
   });
 
+  it('uses the existing export button for the current combined table rows', () => {
+    render(<DataExporter data={sampleData} statisticsExport={{ features: [], cohort: 'cluster = 1' }} />);
+    fireEvent.click(screen.getByRole('button', { name: /export statistics/i }));
+    expect(linkMocks).toHaveLength(1);
+    expect(linkMocks[0].download).toBe('combined_statistics.csv');
+    expect(mockStatisticsObjectsCsv).not.toHaveBeenCalled();
+  });
+
+  it('exports relationships instead of pooled features when the aggregate view is active', () => {
+    render(<DataExporter data={sampleData} statisticsExport={{ features: [] }} relationshipExport={{
+      data: { covariances: { Age: { Score: 2 }, Score: { Age: 2 } } },
+    }} />);
+    fireEvent.click(screen.getByRole('button', { name: /export statistics/i }));
+    expect(linkMocks).toHaveLength(1);
+    expect(linkMocks[0].download).toBe('relationship_statistics.csv');
+    expect(mockStatisticsObjectsCsv).not.toHaveBeenCalled();
+  });
+
+  it('exports the visible feature set instead of restoring hidden features', () => {
+    render(<DataExporter data={sampleData} filteredData={{ ...sampleData, continuousFeatures: [] }} />);
+    fireEvent.click(screen.getByRole('button', { name: /export statistics/i }));
+    expect(mockStatisticsObjectsCsv.mock.calls[0][0].some(feature => feature.Name === 'len')).toBe(false);
+  });
+
   it('renders a button and downloads two CSVs on click', () => {
     render(<DataExporter data={sampleData} filteredData={[]} />);
 
@@ -107,7 +131,7 @@ describe('<DataExporter />', () => {
 
     fireEvent.click(btn);
 
-    expect(mockJsonToCSV).toHaveBeenCalledTimes(2);
+    expect(mockStatisticsObjectsCsv).toHaveBeenCalledTimes(2);
     expect(linkMocks).toHaveLength(2);
     expect(linkMocks[0].download).toBe('continuous_data.csv');
     expect(linkMocks[1].download).toBe('categorical_data.csv');
@@ -138,9 +162,9 @@ describe('<DataExporter />', () => {
     fireEvent.click(screen.getByRole('button', { name: /export/i }));
 
     // Both date CSV calls were made
-    expect(mockJsonToCSV).toHaveBeenCalledTimes(2);
+    expect(mockStatisticsObjectsCsv).toHaveBeenCalledTimes(2);
     // The continuous/date row should have non-N/A values
-    const dateRow = mockJsonToCSV.mock.calls[0][0].find(
+    const dateRow = mockStatisticsObjectsCsv.mock.calls[0][0].find(
       (r) => r.Name === 'eventDate'
     );
     expect(dateRow.Mean).toBe('1710000000');
@@ -170,7 +194,7 @@ describe('<DataExporter />', () => {
     render(<DataExporter data={dataWithNullCat} filteredData={[]} />);
     fireEvent.click(screen.getByRole('button', { name: /export/i }));
 
-    const catRow = mockJsonToCSV.mock.calls[1][0][0];
+    const catRow = mockStatisticsObjectsCsv.mock.calls[1][0][0];
     expect(catRow.Mode).toBe('N/A');
     expect(catRow['Mode Frequency']).toBe('N/A');
     expect(catRow['Mode %']).toBe('N/A');

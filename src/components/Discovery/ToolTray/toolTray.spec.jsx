@@ -1,10 +1,10 @@
 import React from 'react';
-import { render, fireEvent, screen, waitFor } from '@testing-library/react';
+import { render, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 import { toast } from 'react-toastify';
-import { recalculateFeature } from '../../../util/petitionHandler';
-import { updateNodeAxiosBaseURL } from '../../../util/nodeAxiosSetup';
+import { requestFeatureTypeChange } from '../featureTypeChanges';
+
 import ToolTray from './toolTray';
 
 vi.mock('react-switch', () => ({
@@ -54,16 +54,7 @@ vi.mock('../CompareFilesModal/compareFilesModal', () => ({
     ) : null,
 }));
 
-vi.mock('../../../util/petitionHandler', () => ({
-  __esModule: true,
-  recalculateFeature: vi.fn(),
-}));
-
-vi.mock('../../../util/nodeAxiosSetup', () => ({
-  __esModule: true,
-  updateNodeAxiosBaseURL: vi.fn(),
-}));
-
+vi.mock('../featureTypeChanges', () => ({ requestFeatureTypeChange: vi.fn() }));
 vi.mock('../../../context/nodeContext', () => ({
   __esModule: true,
   useNode: () => ({
@@ -106,6 +97,8 @@ function getDefaultProps() {
     toggleToolTray: vi.fn(),
     selectedEntry: data.categoricalFeatures[0],
     setSelectedEntry: vi.fn(),
+    onFeatureRecalculated: vi.fn(),
+    onTypeChanging: vi.fn(),
     showIndividualView: false,
     toggleView: vi.fn(),
     filters: [],
@@ -120,6 +113,14 @@ function getDefaultProps() {
 }
 
 describe('<ToolTray/>', () => {
+  it('marks filtered datasets and feature cohorts while keeping checkbox names stable', () => {
+    const props = getDefaultProps();
+    props.data.categoricalFeatures[0].nodeId = 1;
+    props.appliedFilters = new Map([[JSON.stringify(['1', 'fileA.csv']), 'cluster (= 1)']]);
+    render(<ToolTray {...props} />);
+    expect(screen.getByRole('checkbox', { name: 'fileA.csv' })).toHaveAttribute('aria-description', 'Filtered records: cluster (= 1)');
+    expect(screen.getAllByRole('img', { name: 'Filtered records: cluster (= 1)' }).length).toBeGreaterThan(1);
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
@@ -133,7 +134,7 @@ describe('<ToolTray/>', () => {
     render(<ToolTray {...getDefaultProps()} />);
 
     expect(screen.getByTestId('chevron-left')).toBeInTheDocument();
-    expect(screen.getByTitle('Fruit')).toBeInTheDocument();
+    expect(within(screen.getByRole('region', {name: 'Features'})).getByTitle('Fruit')).toBeInTheDocument();
     expect(screen.getByTitle('Price')).toBeInTheDocument();
     expect(screen.getByTestId('data-exporter')).toBeInTheDocument();
     expect(screen.getByTestId('element-exporter')).toBeInTheDocument();
@@ -145,7 +146,7 @@ describe('<ToolTray/>', () => {
     const search = screen.getByPlaceholderText(/search features/i);
     fireEvent.change(search, { target: { value: 'fruit' } });
 
-    expect(screen.getByTitle('Fruit')).toBeInTheDocument();
+    expect(within(screen.getByRole('region', {name: 'Features'})).getByTitle('Fruit')).toBeInTheDocument();
     expect(screen.queryByTitle('Price')).not.toBeInTheDocument();
   });
 
@@ -199,7 +200,7 @@ describe('<ToolTray/>', () => {
       const props = { ...getDefaultProps(), isToolTrayOpen: false };
       render(<ToolTray {...props} />);
 
-      expect(screen.getByTestId('chevron-right')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Open tool tray' }).querySelector('[data-testid="chevron-right"]')).toBeInTheDocument();
     });
 
     it('shows "No entry selected" when selectedEntry is null', () => {
@@ -209,17 +210,13 @@ describe('<ToolTray/>', () => {
       expect(screen.getByText(/no entry selected/i)).toBeInTheDocument();
     });
 
-    it('calls toggleView when you click the view toggle button', () => {
+    it('retains the original aggregate metrics control without adding a combined view button', () => {
       const props = getDefaultProps();
       render(<ToolTray {...props} />);
 
-      fireEvent.click(
-        screen.getByRole('button', {
-          name: /display individual metrics/i,
-        })
-      );
-
+      fireEvent.click(screen.getByRole('button', { name: /display individual metrics/i }));
       expect(props.toggleView).toHaveBeenCalled();
+      expect(screen.queryByRole('button', { name: /combined statistics/i })).not.toBeInTheDocument();
     });
 
     it('calls toggleFilters when you click the filters button', () => {
@@ -265,185 +262,41 @@ describe('<ToolTray/>', () => {
       fireEvent.change(search, { target: { value: 'Date' } });
 
       expect(screen.getByTitle('DateFeature')).toBeInTheDocument();
-      expect(screen.queryByTitle('Fruit')).not.toBeInTheDocument();
+      expect(within(screen.getByRole('region', {name: 'Features'})).queryByTitle('Fruit')).not.toBeInTheDocument();
     });
 
-    it('calls recalculateFeature and updateNodeAxiosBaseURL on successful toggleFeatureType', async () => {
-      recalculateFeature.mockResolvedValue({
-        continuousFeatures: [{ featureName: 'Fruit', fileName: 'fileA.csv' }],
-      });
-
+    it('commits one full source response and brackets the request with the shared busy state', async () => {
+      const change = {nodeId: 1, fileName: 'fileA.csv', featureName: 'Fruit', type: 'continuous', response: {featureTypeSummaryVersion: 1}};
+      requestFeatureTypeChange.mockResolvedValue(change);
       const props = getDefaultProps();
       render(<ToolTray {...props} />);
-
-      const btn = screen.getByRole('button', {
-        name: /toggle the selected feature's type between categorical and continuous/i,
-      });
-
-      fireEvent.click(btn);
-
-      await waitFor(() =>
-        expect(updateNodeAxiosBaseURL).toHaveBeenCalledWith('http://fake')
-      );
-
-      expect(recalculateFeature).toHaveBeenCalledWith(
-        'fileA.csv',
-        'Fruit',
-        'continuous'
-      );
+      fireEvent.click(screen.getByRole('button', {name: /toggle the selected feature's type/i}));
+      await waitFor(() => expect(props.onFeatureRecalculated).toHaveBeenCalledWith(change));
+      expect(props.onTypeChanging.mock.calls).toEqual([[true], [false]]);
+      expect(props.setData).not.toHaveBeenCalled();
+      expect(props.setFilteredData).not.toHaveBeenCalled();
+      const update = props.setSelectedEntry.mock.calls[0][0];
+      expect(update(props.selectedEntry)).toMatchObject({type: 'continuous', nodeId: 1});
+      const newerSelection = {featureName: 'Price', type: 'continuous'};
+      expect(update(newerSelection)).toBe(newerSelection);
     });
 
-    describe('toggleFeatureType error handling', () => {
-      it('toasts an error when recalc response has "cannot be converted"', async () => {
-        recalculateFeature.mockResolvedValue({
-          message: 'Cannot be converted to categorical',
-        });
-
-        const props = getDefaultProps();
-        render(<ToolTray {...props} />);
-
-        const btn = screen.getByRole('button', {
-          name: /toggle the selected feature's type between categorical and continuous/i,
-        });
-
-        fireEvent.click(btn);
-
-        await waitFor(() =>
-          expect(toast.error).toHaveBeenCalledWith(
-            expect.stringContaining('Feature conversion failed')
-          )
-        );
-      });
-
-      it('toasts an error when recalc returns no features', async () => {
-        recalculateFeature.mockResolvedValue({});
-
-        const props = getDefaultProps();
-        render(<ToolTray {...props} />);
-
-        const btn = screen.getByRole('button', {
-          name: /toggle the selected feature's type between categorical and continuous/i,
-        });
-
-        fireEvent.click(btn);
-
-        await waitFor(() =>
-          expect(toast.error).toHaveBeenCalledWith(
-            expect.stringContaining('No features returned')
-          )
-        );
-      });
-
-      it('toasts error when toggleFeatureType throws exception', async () => {
-        recalculateFeature.mockRejectedValue(new Error('Network error'));
-
-        const props = getDefaultProps();
-        render(<ToolTray {...props} />);
-
-        const btn = screen.getByRole('button', {
-          name: /toggle the selected feature's type between categorical and continuous/i,
-        });
-
-        fireEvent.click(btn);
-
-        await waitFor(() =>
-          expect(toast.error).toHaveBeenCalledWith(
-            expect.stringContaining('Feature recalculation failed')
-          )
-        );
-      });
-
-      it('handles missing fileName in lookupFileName', async () => {
-        const props = getDefaultProps();
-        props.selectedEntry = { featureName: 'Unknown', type: 'categorical' };
-
-        render(<ToolTray {...props} />);
-
-        const btn = screen.getByRole('button', {
-          name: /toggle the selected feature's type between categorical and continuous/i,
-        });
-
-        fireEvent.click(btn);
-
-        await waitFor(() => {
-          expect(recalculateFeature).not.toHaveBeenCalled();
-        });
-      });
-
-      it('handles missing node with serviceUrl', async () => {
-        recalculateFeature.mockResolvedValue({
-          continuousFeatures: [{ featureName: 'Fruit', fileName: 'fileC.csv' }],
-        });
-
-        const props = getDefaultProps();
-        props.selectedEntry = {
-          featureName: 'Fruit',
-          type: 'categorical',
-          fileName: 'fileC.csv',
-        };
-        props.dataResults = [
-          { nodeId: 99, nodeName: 'Unknown', fileName: 'fileC.csv' },
-        ];
-
-        render(<ToolTray {...props} />);
-
-        const btn = screen.getByRole('button', {
-          name: /toggle the selected feature's type between categorical and continuous/i,
-        });
-
-        fireEvent.click(btn);
-
-        await waitFor(() => {
-          expect(recalculateFeature).not.toHaveBeenCalled();
-        });
-      });
-
-      it('updates selectedEntry nodeId from dataResults fallback', async () => {
-        recalculateFeature.mockResolvedValue({
-          continuousFeatures: [{ featureName: 'Fruit', fileName: 'fileA.csv' }],
-        });
-
-        const props = getDefaultProps();
-        props.selectedEntry = {
-          featureName: 'Fruit',
-          type: 'categorical',
-          fileName: 'fileA.csv',
-        };
-
-        render(<ToolTray {...props} />);
-
-        const btn = screen.getByRole('button', {
-          name: /toggle the selected feature's type between categorical and continuous/i,
-        });
-
-        fireEvent.click(btn);
-
-        await waitFor(() => {
-          expect(props.setSelectedEntry).toHaveBeenCalled();
-        });
-      });
-
-      it('handles conversion with chiSquareTest data', async () => {
-        recalculateFeature.mockResolvedValue({
-          continuousFeatures: [{ featureName: 'Fruit', fileName: 'fileA.csv' }],
-          chiSquareTest: { test: 'data' },
-        });
-
-        const props = getDefaultProps();
-        render(<ToolTray {...props} />);
-
-        const btn = screen.getByRole('button', {
-          name: /toggle the selected feature's type between categorical and continuous/i,
-        });
-
-        fireEvent.click(btn);
-
-        await waitFor(() => {
-          expect(recalculateFeature).toHaveBeenCalled();
-        });
-      });
+    it('retains prior statistics and restores the busy state on a refused or failed type change', async () => {
+      requestFeatureTypeChange.mockRejectedValue(new Error('Statistics withheld'));
+      const props = getDefaultProps();
+      render(<ToolTray {...props} />);
+      fireEvent.click(screen.getByRole('button', {name: /toggle the selected feature\x27s type/i}));
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Statistics withheld')));
+      expect(props.onFeatureRecalculated).not.toHaveBeenCalled();
+      expect(props.setFilteredData).not.toHaveBeenCalled();
+      expect(props.onTypeChanging).toHaveBeenLastCalledWith(false);
     });
 
+    it.each([{isCombining: true}, {selectedEntry: {featureName: 'Fruit', pooled: true}}])('blocks type changes for a pooled selection or pending refresh', extra => {
+      render(<ToolTray {...getDefaultProps()} {...extra} />);
+      expect(screen.getByRole('button', {name: /toggle the selected feature\x27s type/i})).toBeDisabled();
+      expect(requestFeatureTypeChange).not.toHaveBeenCalled();
+    });
     it('toggles individual feature on/off', () => {
       const props = getDefaultProps();
       render(<ToolTray {...props} />);
@@ -498,11 +351,11 @@ describe('<ToolTray/>', () => {
       expect(screen.queryByTestId('compare-modal')).not.toBeInTheDocument();
     });
 
-    it('creates ripple effect on file toggle click', () => {
+    it('toggles the file when its full label is clicked', () => {
       const props = getDefaultProps();
       render(<ToolTray {...props} />);
 
-      const fileLabel = screen.getByText('fileA.csv').closest('label');
+      const fileLabel = screen.getByRole('checkbox', { name: 'fileA.csv' }).closest('label');
       fireEvent.click(fileLabel);
 
       expect(props.toggleFileActive).toHaveBeenCalled();
@@ -553,7 +406,7 @@ describe('<ToolTray/>', () => {
       ).toBeInTheDocument();
     });
 
-    it('shows "Display aggregate metrics" when in individual view', () => {
+    it('retains the existing aggregate metrics button label', () => {
       const props = getDefaultProps();
       props.showIndividualView = true;
 
@@ -598,23 +451,9 @@ describe('<ToolTray/>', () => {
       expect(result.categoricalFeatures.some((f) => f.featureName === 'Fruit')).toBe(true);
     });
 
-    it('toggleFeatureType sets finalType to "date" when recalc returns dateFeatures', async () => {
-      // The feature starts as categorical → newType = "continuous" → targetArray = "continuousFeatures"
-      // Must provide both continuousFeatures (to pass validation) and dateFeatures (to set finalType = "date")
-      recalculateFeature.mockResolvedValue({
-        continuousFeatures: [{ featureName: 'Fruit (fileA.csv)', fileName: 'fileA.csv' }],
-        dateFeatures: [{ featureName: 'Fruit (fileA.csv)', fileName: 'fileA.csv' }],
-      });
-
-      const props = getDefaultProps();
-      render(<ToolTray {...props} />);
-
-      const btn = screen.getByRole('button', {
-        name: /toggle the selected feature's type between categorical and continuous/i,
-      });
-      fireEvent.click(btn);
-
-      await waitFor(() => expect(recalculateFeature).toHaveBeenCalled());
-      await waitFor(() => expect(props.setData).toHaveBeenCalled());
-    });
+});
+// A type recalculation reads the unfiltered file, so it must not mix cohorts.
+it('requires clearing cohort filters before recalculating a variable type', () => {
+  render(<ToolTray {...getDefaultProps()} filters={{ Age: [{ type: 'equal', value: 25 }] }} />);
+  expect(screen.getByRole('button', { name: "Toggle the selected feature's type between categorical and continuous" })).toBeDisabled();
 });

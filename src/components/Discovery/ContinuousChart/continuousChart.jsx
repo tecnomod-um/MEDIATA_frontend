@@ -7,7 +7,7 @@ ChartJS.register(...registerables);
 
 // Display for the continuous features' histogram
 const ContinuousChart = React.memo(
-  ({ feature, showOutliers, onClick, onDoubleClick, isSelected, inOverview }) => {
+  ({ feature, showOutliers, onClick, onDoubleClick, isSelected, inOverview, filterDescription }) => {
     const chartRef = useRef(null);
     const histogram = feature.histogram;
     const binRanges = useMemo(() => feature.binRanges || [], [feature.binRanges]);
@@ -62,7 +62,7 @@ const ContinuousChart = React.memo(
         },
         plugins: {
           legend: { display: false },
-          title: { display: true, text: feature.featureName },
+          title: { display: true, text: `${feature.featureName}${filterDescription ? " *" : ""}` },
           tooltip: {
             callbacks: {
               title: (tooltipItems) => {
@@ -74,7 +74,7 @@ const ContinuousChart = React.memo(
           },
         },
       }),
-      [feature.featureName, binRanges]
+      [feature.featureName, binRanges, filterDescription]
     );
 
     useEffect(() => {
@@ -98,6 +98,7 @@ const ContinuousChart = React.memo(
         role="button"
         tabIndex={0}
         aria-label={`Chart for ${feature.featureName}`}
+        title={filterDescription ? `Filtered records: ${filterDescription}` : undefined}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();

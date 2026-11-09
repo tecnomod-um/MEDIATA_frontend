@@ -23,6 +23,38 @@ const OMIT = [
 afterEach(cleanup);
 
 describe('AggregateDisplay', () => {
+  test('shows small p-values without rounding them to zero and normalizes display-only negative zero', () => {
+    render(<AggregateDisplay covariances={{ X: { X: 1, Y: -1e-15 }, Y: { X: -1e-15, Y: 2 } }}
+      chiSquareTest={[{ category1: 'A', category2: 'B', pvalue: 4.26e-12 }]} />);
+    expect(screen.getByText('4.26e-12')).toBeInTheDocument();
+    expect(screen.queryByText('-0.00')).not.toBeInTheDocument();
+  });
+  test('uses pooled cell counts and suppression reasons as tooltips within the original matrix', () => {
+    render(<AggregateDisplay covariances={{ Age: { Age: 4, FIM: null }, FIM: { Age: null, FIM: 9 } }}
+      relationshipDetails={{ covariance: { Age: { Age: { count: 24, datasets: ['Alpha', 'Beta'] }, FIM: { reason: 'Paired statistics suppressed' } } } }} />);
+    expect(screen.getByTitle('24 paired observations · Alpha; Beta')).toHaveTextContent('4.00');
+    expect(screen.getByTitle('Paired statistics suppressed')).toHaveTextContent('N/A');
+    expect(screen.getAllByRole('combobox')).toHaveLength(1);
+  });
+  test('shows categorical tests and suppressed features even without numeric relationships', () => {
+    render(<AggregateDisplay chiSquareTest={CHI} omittedFeatures={OMIT} />);
+    expect(screen.getByText(/0\.0090/)).toBeInTheDocument();
+    expect(screen.getByText(/Too many missing/)).toBeInTheDocument();
+  });
+
+  test('keeps the original metric picker without extra controls or explanatory text', () => {
+    render(<AggregateDisplay covariances={COV} featureFilters={{ age: 'cluster (= 1)' }} />);
+    expect(screen.queryByText(/Relationships are calculated within/)).not.toBeInTheDocument();
+    expect(screen.getAllByRole('combobox')).toHaveLength(1);
+    expect(screen.queryByRole('combobox', { name: 'Dataset for relationships' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('img', { name: 'Filtered records: cluster (= 1)' })).toHaveLength(2);
+  });
+
+  test('does not crash or render non-finite relationship values as statistics', () => {
+    render(<AggregateDisplay covariances={{ age: { weight: null }, weight: { age: .5, weight: Infinity } }} />);
+    expect(screen.getAllByText('N/A').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Infinity')).not.toBeInTheDocument();
+  });
   test('renders “No aggregated data …” when everything is empty', () => {
     render(<AggregateDisplay />);
     expect(

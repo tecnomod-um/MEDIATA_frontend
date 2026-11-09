@@ -115,7 +115,7 @@ vi.mock('../../../util/nodeAxiosSetup', () => ({
 vi.mock('../../../context/nodeContext', () => ({
   __esModule: true,
   useNode: () => ({
-    selectedNodes: [{ nodeId: 'n1', serviceUrl: 'http://node' }],
+    selectedNodes: [{ nodeId: 'n1', serviceUrl: 'http://node' }, { nodeId: 'n2', serviceUrl: 'http://node2' }],
   }),
 }));
 
@@ -194,8 +194,7 @@ describe('<FilterModal />', () => {
     fireEvent.click(screen.getByRole('button', { name: /apply filters/i }));
 
     await waitFor(() => {
-      expect(mockUpdateNodeAxiosBaseURL).toHaveBeenCalledWith('http://node');
-      expect(mockFilterMultipleFiles).toHaveBeenCalled();
+      expect(mockFilterMultipleFiles).toHaveBeenCalledWith(expect.any(Object), 'http://node');
       expect(mockCloseModal).toHaveBeenCalled();
     });
   });
@@ -424,4 +423,74 @@ describe('<FilterModal />', () => {
     fireEvent.click(globalBtn);
     expect(globalBtn).toHaveTextContent('OR');
   });
+});
+
+it('filters the correct site when filenames are identical and sends the original column name', async () => {
+  vi.clearAllMocks();
+  const betaLabel = 'Age (patients.csv · Beta)';
+  const stats = { continuousFeatures: [
+    {featureName:'Age (patients.csv · Alpha)', originalName:'Age', fileName:'patients.csv', nodeId:'n1'},
+    {featureName:betaLabel, originalName:'Age', fileName:'patients.csv', nodeId:'n2'},
+  ], categoricalFeatures:[], dateFeatures:[] };
+  mockFilterMultipleFiles.mockImplementation(async (_, url) => [{fileName:'patients.csv', marker:url}]);
+  render(<FilterModal {...commonProps} dataStatistics={stats} dataResults={[
+    {fileName:'patients.csv',nodeId:'n1'}, {fileName:'patients.csv',nodeId:'n2'},
+  ]} activeFileIndices={[true,true]} />);
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Apply to matching columns in other datasets' }));
+  fireEvent.change(screen.getAllByTestId('mock-select')[0], {target:{value:betaLabel}});
+  fireEvent.change(screen.getByLabelText('Value'), {target:{value:'25'}});
+  fireEvent.click(screen.getByRole('button', {name:/add filter/i}));
+  fireEvent.click(screen.getByRole('button', {name:/apply filters/i}));
+  await waitFor(() => expect(mockSetDataResults).toHaveBeenCalled());
+  const updated = mockSetDataResults.mock.calls.at(-1)[0];
+  expect(updated.map(r=>r.marker)).toEqual(['http://node','http://node2']);
+  const betaCall = mockFilterMultipleFiles.mock.calls.find(call=>call[1]==='http://node2');
+  expect(Object.keys(betaCall[0].multipleFileFilters[0].filters.conditions)).toEqual(['Age']);
+  expect(mockFilterMultipleFiles.mock.calls.find(call=>call[1]==='http://node')[0].multipleFileFilters[0].filters).toBeNull();
+});
+
+it('copies a normal cluster filter to matching columns at every loaded site, including a hidden dataset', async () => {
+  vi.clearAllMocks();
+  const sources = [{ nodeId: 'n1', fileName: 'patients.csv' }, { nodeId: 'n2', fileName: 'patients.csv' }];
+  const stats = { continuousFeatures: sources.map((source, index) => ({ ...source, originalName: 'cluster', featureName: `cluster (${index})` })) };
+  mockFilterMultipleFiles.mockImplementation(async () => [{ fileName: 'patients.csv' }]);
+  render(<FilterModal {...commonProps} dataStatistics={stats} dataResults={sources} activeFileIndices={[true, false]} />);
+  expect(screen.queryByRole('option', { name: /all datasets/i })).not.toBeInTheDocument();
+  fireEvent.change(screen.getAllByTestId('mock-select')[0], { target: { value: 'cluster (0)' } });
+  fireEvent.change(screen.getByLabelText('Value'), { target: { value: '1' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Add Filter' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Apply Filters' }));
+  await waitFor(() => expect(mockCloseModal).toHaveBeenCalled());
+  expect(mockFilterMultipleFiles).toHaveBeenCalledTimes(2);
+  for (const [payload] of mockFilterMultipleFiles.mock.calls) {
+    expect(payload.multipleFileFilters[0].filters.conditions.cluster.conditions).toEqual([{ type: 'equal', value: '1', filterType: 'continuous' }]);
+  }
+});
+
+it('restores applied criteria and logical operators without mutating them when editing', async () => {
+  vi.clearAllMocks();
+  mockFilterMultipleFiles.mockResolvedValue([{ fileName: 'file.csv' }]);
+  const filters = { Amount: [{ type: 'less', value: '10' }, { type: 'greater', value: '20' }] };
+  const logic = { operator: 'OR', operators: { Amount: ['OR'] } };
+  const setFilterLogic = vi.fn();
+  render(<FilterModal {...commonProps} filters={filters} filterLogic={logic} setFilterLogic={setFilterLogic} />);
+  expect(screen.getByText('10')).toBeInTheDocument();
+  expect(screen.getByText('20')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'OR' }));
+  expect(logic.operators.Amount).toEqual(['OR']);
+  fireEvent.click(screen.getByRole('button', { name: 'Apply Filters' }));
+  await waitFor(() => expect(setFilterLogic).toHaveBeenCalledWith({ operator: 'OR', operators: { Amount: ['AND'] }, matchColumns: true }));
+  expect(filters.Amount).toHaveLength(2);
+});
+
+it('resets the prior cohort when all restored criteria are removed', async () => {
+  vi.clearAllMocks();
+  mockFilterMultipleFiles.mockResolvedValue([{ fileName: 'file.csv' }]);
+  const filters = { Amount: [{ type: 'equal', value: '10' }] };
+  render(<FilterModal {...commonProps} filters={filters} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Remove criterion 1 for Amount' }));
+  expect(filters.Amount).toHaveLength(1);
+  fireEvent.click(screen.getByRole('button', { name: 'Reset Previous Filters' }));
+  await waitFor(() => expect(mockFilterMultipleFiles).toHaveBeenCalledWith({ multipleFileFilters: [{ fileName: 'file.csv', filters: null }] }, 'http://node'));
+  expect(mockSetFilters).toHaveBeenCalledWith([]);
 });

@@ -19,7 +19,7 @@ const getCSSVariable = (varName, fallback = '') => {
 
 // Display for the categorical features' histogram
 const CategoricalChart = React.memo(
-  ({ feature, onClick, onDoubleClick, isSelected, inOverview }) => {
+  ({ feature, onClick, onDoubleClick, isSelected, inOverview, filterDescription }) => {
     const chartRef = useRef(null);
     const stats = useMemo(() => feature.categoryCounts || {}, [feature.categoryCounts]);
 
@@ -93,8 +93,8 @@ const CategoricalChart = React.memo(
             display: true,
             text:
               omittedCount > 0
-                ? `${feature.featureName} (${omittedCount} categories grouped)`
-                : feature.featureName,
+                ? `${feature.featureName}${filterDescription ? " *" : ""} (${omittedCount} categories grouped)`
+                : `${feature.featureName}${filterDescription ? " *" : ""}`,
           },
           tooltip: {
             callbacks: {
@@ -110,7 +110,7 @@ const CategoricalChart = React.memo(
           y: { ticks: { autoSkip: false } },
         },
       }),
-      [feature.featureName, inOverview, omittedCount, omittedTotal]
+      [feature.featureName, inOverview, omittedCount, omittedTotal, filterDescription]
     );
 
     useEffect(() => {
@@ -143,6 +143,7 @@ const CategoricalChart = React.memo(
         role="button"
         tabIndex={0}
         aria-label={`Chart for ${feature.featureName}`}
+        title={filterDescription ? `Filtered records: ${filterDescription}` : undefined}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();

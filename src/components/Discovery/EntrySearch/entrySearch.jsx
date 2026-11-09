@@ -3,7 +3,7 @@ import EntryTable from "../EntryTable/entryTable";
 import EntrySearchStyles from "./entrySearch.module.css";
 
 // Search wrapper for the feature entries table
-function EntrySearch({ resultData, onRowSelect, selectedEntry, type }) {
+function EntrySearch({ resultData, onRowSelect, selectedEntry, type, actions, rowTitles, rowFilters }) {
   const [searchTerm, setSearchTerm] = useState("");
 
   const handleChange = useCallback((e) => {
@@ -32,7 +32,7 @@ function EntrySearch({ resultData, onRowSelect, selectedEntry, type }) {
     <div className={EntrySearchStyles.search}>
       <div className={EntrySearchStyles.inputContainer}>
         <input
-          className={EntrySearchStyles.input}
+          className={`${EntrySearchStyles.input} ${actions ? EntrySearchStyles.inputWithActions : ""}`}
           type="search"
           placeholder={
             resultData && Object.keys(resultData).length > 0
@@ -44,6 +44,7 @@ function EntrySearch({ resultData, onRowSelect, selectedEntry, type }) {
           aria-describedby="entry-search-count"
           role="searchbox"
         />
+        {actions && <div className={EntrySearchStyles.tableActions}>{actions}</div>}
       </div>
       <div className={EntrySearchStyles.dataContainer}>
         <EntryTable
@@ -52,6 +53,8 @@ function EntrySearch({ resultData, onRowSelect, selectedEntry, type }) {
           onRowSelect={onRowSelect}
           selectedEntry={selectedEntry}
           type={type}
+          rowTitles={rowTitles}
+          rowFilters={rowFilters}
         />
         <span
           className={EntrySearchStyles.resultCount}
@@ -74,6 +77,9 @@ export default React.memo(EntrySearch, (previous, next) =>
   previous.resultData === next.resultData &&
   previous.onRowSelect === next.onRowSelect &&
   previous.type === next.type &&
+  previous.actions === next.actions &&
+  previous.rowTitles === next.rowTitles &&
+  previous.rowFilters === next.rowFilters &&
   selectedFeatureForType(previous.selectedEntry, previous.type) ===
     selectedFeatureForType(next.selectedEntry, next.type)
 );

@@ -8,8 +8,8 @@ import TooltipPopup from "../../Common/TooltipPopup/tooltipPopup";
 import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
-import { filterMultipleFiles } from "../../../util/petitionHandler";
-import { updateNodeAxiosBaseURL } from "../../../util/nodeAxiosSetup";
+import { filterDiscoveryDatasets } from "../CombinedStatistics/filterDiscoveryDatasets";
+import { filterFeatures, matchingFilterFeatures, fileFilterConditions } from "./filterFeatures";
 import { useNode } from "../../../context/nodeContext";
 
 const initializeFilters = (dataStatistics) => {
@@ -27,10 +27,11 @@ const initializeFilters = (dataStatistics) => {
 };
 
 // Modal that works with the features in dataStatistics. Allows to build a filter query for the backend to repopulate dataResults
-const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, setFilteredDataStatistics, dataResults, activeFileIndices, setDataResults, combineSelectedData, setDataStatistics }) => {
+const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal, filters, setFilters, dataResults, setDataResults, onFiltered, onFilteringChange, filterLogic, setFilterLogic, columnMappings = [] }) => {
   const [filterConditions, setFilterConditions] = useState({});
   const [logicalOperators, setLogicalOperators] = useState({});
   const [globalLogicalOperator, setGlobalLogicalOperator] = useState("AND");
+  const [matchColumns, setMatchColumns] = useState(true);
 
   const [selectedFeature, setSelectedFeature] = useState("");
   const [dateFilterType, setDateFilterType] = useState("equal");
@@ -46,89 +47,35 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
   const [showTooltip, setShowTooltip] = useState(false);
   const { selectedNodes } = useNode();
 
-  // Initialize local filter placeholders whenever dataStatistics changes
+  const availableStatistics = dataStatistics;
+
+  // Reopening the existing dialog restores the applied criteria, including AND/OR choices.
   useEffect(() => {
-    if (dataStatistics) {
-      setFilterConditions(initializeFilters(dataStatistics));
-    }
-  }, [dataStatistics]);
+    if (!isOpen || !availableStatistics) return;
+    const applied = Object.fromEntries(Object.entries(filters || {}).filter(([, value]) => Array.isArray(value))
+      .map(([name, value]) => [name, value.map(condition => ({ ...condition }))]));
+    setFilterConditions({ ...initializeFilters(availableStatistics), ...applied });
+    setLogicalOperators(filterLogic?.operators || Object.fromEntries(Object.entries(applied).map(([name, value]) => [name, new Array(Math.max(0, value.length - 1)).fill("AND")])));
+    setGlobalLogicalOperator(filterLogic?.operator || "AND");
+    setMatchColumns(filterLogic?.matchColumns ?? true);
+  }, [isOpen, availableStatistics, filters, filterLogic]);
 
   const handleApplyFilters = async () => {
     setIsLoading(true);
+    onFilteringChange?.(true);
     try {
-      const multipleFileFilters = dataResults.map((fileResult, idx) => {
-        const basePayload = {
-          fileName: fileResult.fileName,
-          nodeId: fileResult.nodeId
-        };
-        if (!activeFileIndices[idx]) {
-          return { ...basePayload, filters: null };
-        }
-        const fileSpecificConditions = {};
-        for (let feature in filterConditions) {
-          if (
-            feature.endsWith(`(${fileResult.fileName})`) &&
-            filterConditions[feature]?.length > 0
-          ) {
-            fileSpecificConditions[feature] = {
-              conditions: filterConditions[feature],
-              operators: logicalOperators[feature] || [],
-            };
-          }
-        }
-        if (Object.keys(fileSpecificConditions).length === 0) {
-          return { ...basePayload, filters: null };
-        }
-        return {
-          ...basePayload,
-          filters: {
-            conditions: fileSpecificConditions,
-            operator: globalLogicalOperator,
-          },
-        };
-      });
-
-      const groupedByNode = multipleFileFilters.reduce((acc, filterObj) => {
-        const nodeId = filterObj.nodeId || "unknown";
-        if (!acc[nodeId]) acc[nodeId] = [];
-        acc[nodeId].push(filterObj);
-        return acc;
-      }, {});
-
-      // For each node group, update the axios baseURL and call filterMultipleFiles
-      const allPromises = Object.entries(groupedByNode).map(
-        async ([nodeId, filtersForNode]) => {
-          // Lookup the node (using selectedNodes)
-          const node = selectedNodes.find((n) => n.nodeId === nodeId);
-          if (node && node.serviceUrl) {
-            updateNodeAxiosBaseURL(node.serviceUrl);
-          }
-          // Call filtering petition for this node
-          return filterMultipleFiles({ multipleFileFilters: filtersForNode });
-        }
-      );
-
-      // Wait for all responses and flatten them
-      const responses = await Promise.all(allPromises);
-      const newFilteredResults = responses.flat();
-
-      // Now update the dataResults with new responses based on fileName.
-      const updatedResults = dataResults.map((oldItem) => {
-        const newItem = newFilteredResults.find((fr) => fr.fileName === oldItem.fileName);
-        return newItem ? { ...oldItem, ...newItem } : oldItem;
-      });
-
+      const updatedResults = await filterDiscoveryDatasets(dataResults, selectedNodes, source => {
+        const conditions = fileFilterConditions(availableStatistics, filterConditions, logicalOperators, source, dataResults.length, matchColumns, columnMappings);
+        return Object.keys(conditions).length ? { conditions, operator: globalLogicalOperator } : null;
+      }, ...(refreshControllerRef?.current ? [{signal: refreshControllerRef.current.signal}] : []));
 
       setDataResults(updatedResults);
-      const combined = combineSelectedData(updatedResults, activeFileIndices);
-      setDataStatistics(combined);
-      setFilteredDataStatistics(combined);
+      onFiltered?.();
 
       // If at least one file was filtered, update filters state.
-      const hasFilters = multipleFileFilters.some(
-        (file) => file.filters && Object.keys(file.filters.conditions).length > 0
-      );
+      const hasFilters = Object.values(filterConditions).some(criteria => criteria?.length);
       setFilters(hasFilters ? filterConditions : []);
+      setFilterLogic?.({ operators: hasFilters ? logicalOperators : {}, operator: hasFilters ? globalLogicalOperator : "AND", matchColumns });
       resetForm();
       closeModal();
     } catch (error) {
@@ -136,6 +83,7 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
       toast.error("Error applying filters: " + error.message);
     } finally {
       setIsLoading(false);
+      onFilteringChange?.(false);
     }
   };
 
@@ -148,7 +96,7 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
     let newCondition = null;
     let createdCategorical = false;
     if (
-      dataStatistics?.categoricalFeatures?.some(
+      availableStatistics?.categoricalFeatures?.some(
         (f) => f.featureName === selectedFeature
       )
     ) {
@@ -161,7 +109,7 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
       setSelectedCategories([]);
       createdCategorical = newConditions.length > 0;
     } else if (
-      dataStatistics?.continuousFeatures?.some(
+      availableStatistics?.continuousFeatures?.some(
         (f) => f.featureName === selectedFeature
       )
     ) {
@@ -174,7 +122,7 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
         filterType: "continuous",
       };
     } else if (
-      dataStatistics?.dateFeatures?.some(
+      availableStatistics?.dateFeatures?.some(
         (f) => f.featureName === selectedFeature
       )
     ) {
@@ -199,6 +147,11 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
   };
 
   const addConditionsToFeature = (featureName, newConds) => {
+    const entries = filterFeatures(availableStatistics);
+    const entry = entries.find(feature => feature.featureName === featureName);
+    // Matching columns share one criteria group, including its AND/OR operators.
+    const existing = matchColumns && matchingFilterFeatures(availableStatistics, entry, columnMappings).find(other => filterConditions[other.featureName]?.length);
+    if (existing) featureName = existing.featureName;
     const newFilterConditions = { ...filterConditions };
     const newLogicalOperators = { ...logicalOperators };
 
@@ -228,20 +181,21 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
   };
 
   const getCategoryOptions = (featureName) => {
-    const feature = dataStatistics?.categoricalFeatures?.find(
+    const feature = availableStatistics?.categoricalFeatures?.find(
       (f) => f.featureName === featureName
     );
     if (!feature) return [];
     const usedCategories = filterConditions[featureName]
       ? filterConditions[featureName].map((c) => c.value)
       : [];
-    return Object.keys(feature.categoryCounts)
+    const members = matchColumns ? matchingFilterFeatures(availableStatistics, feature, columnMappings) : [feature];
+    return [...new Set(members.flatMap(member => Object.keys(member.categoryCounts || {})))]
       .filter((cat) => !usedCategories.includes(cat))
       .map((cat) => ({ value: cat, label: cat }));
   };
   const getGridTemplate = (feature, cType, dType) => {
     if (
-      dataStatistics?.categoricalFeatures?.some(
+      availableStatistics?.categoricalFeatures?.some(
         (f) => f.featureName === feature
       )
     ) {
@@ -253,7 +207,7 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
   };
 
   const formatSingleCriteria = (condition, featureName) => {
-    const isDateFeature = dataStatistics?.dateFeatures?.some(
+    const isDateFeature = availableStatistics?.dateFeatures?.some(
       (f) => f.featureName === featureName
     );
     const { type, value } = condition;
@@ -331,7 +285,7 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
   };
 
   const toggleLogicalOperator = (featureName, index) => {
-    const newOps = { ...logicalOperators };
+    const newOps = { ...logicalOperators, [featureName]: [...logicalOperators[featureName]] };
     newOps[featureName][index] =
       newOps[featureName][index] === "AND" ? "OR" : "AND";
     setLogicalOperators(newOps);
@@ -340,12 +294,12 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
   const handleDeleteFilter = (feature, index) => {
     const newConds = { ...filterConditions };
     const newOps = { ...logicalOperators };
-    newConds[feature].splice(index, 1);
+    newConds[feature] = newConds[feature].filter((_, i) => i !== index);
     if (newConds[feature].length === 0) {
       delete newConds[feature];
       delete newOps[feature];
     } else {
-      newOps[feature].splice(index, 1);
+      newOps[feature] = (newOps[feature] || []).filter((_, i) => i !== Math.max(0, index - 1));
     }
     setFilterConditions(newConds);
     setLogicalOperators(newOps);
@@ -367,6 +321,7 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
         <button
           className={FilterModalStyles.deleteButton}
           onClick={() => handleDeleteFilter(featureName, i)}
+          aria-label={`Remove criterion ${i + 1} for ${featureName}`}
           disabled={isLoading}
         >
           <IoMdClose />
@@ -404,13 +359,13 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
   const isAddFilterDisabled = () => {
     if (!selectedFeature) return true;
     if (
-      dataStatistics?.categoricalFeatures?.some(
+      availableStatistics?.categoricalFeatures?.some(
         (f) => f.featureName === selectedFeature
       )
     )
       return selectedCategories.length === 0;
     if (
-      dataStatistics?.continuousFeatures?.some(
+      availableStatistics?.continuousFeatures?.some(
         (f) => f.featureName === selectedFeature
       )
     ) {
@@ -418,7 +373,7 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
       return !minValue;
     }
     if (
-      dataStatistics?.dateFeatures?.some(
+      availableStatistics?.dateFeatures?.some(
         (f) => f.featureName === selectedFeature
       )
     ) {
@@ -436,7 +391,7 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
     );
   };
 
-  if (!dataStatistics) return null;
+  if (!availableStatistics) return null;
 
   return (
     <OverlayWrapper isOpen={isOpen} closeModal={closeModal}>
@@ -462,15 +417,21 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
           <div className={FilterModalStyles.featureSelection}>
             <Select
             classNamePrefix="react-select"
-              options={getOptions(dataStatistics)}
+              options={getOptions(availableStatistics)}
               onChange={(option) => setSelectedFeature(option.value)}
-              value={getOptions(dataStatistics).find(
+              value={getOptions(availableStatistics).find(
                 (o) => o.value === selectedFeature
               )}
               isDisabled={isLoading}
               aria-label="Select feature to filter"
               inputId="feature-select"
             />
+            {dataResults.length > 1 && (
+              <label className={FilterModalStyles.matchColumns} title="Copies criteria using saved feature combinations, or matching names and types when no combination exists. Includes loaded datasets currently hidden.">
+                <input type="checkbox" checked={matchColumns} onChange={event => setMatchColumns(event.target.checked)} disabled={isLoading} />
+                Apply to matching columns in other datasets
+              </label>
+            )}
             {hasAtLeastTwoFilters() && (
               <div className={FilterModalStyles.globalLogicalOperatorContainer}>
                 <label>Combine all filters with</label>
@@ -501,7 +462,7 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
                 ),
               }}
             >
-              {dataStatistics?.categoricalFeatures?.some(
+              {availableStatistics?.categoricalFeatures?.some(
                 (f) => f.featureName === selectedFeature
               ) && (
                   <div>
@@ -521,7 +482,7 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
                   </div>
                 )}
 
-              {dataStatistics?.continuousFeatures?.some(
+              {availableStatistics?.continuousFeatures?.some(
                 (f) => f.featureName === selectedFeature
               ) && (
                   <>
@@ -583,7 +544,7 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
                     )}
                   </>
                 )}
-              {dataStatistics?.dateFeatures?.some(
+              {availableStatistics?.dateFeatures?.some(
                 (f) => f.featureName === selectedFeature
               ) && (
                   <>
@@ -696,6 +657,11 @@ const FilterModal = ({ isOpen, dataStatistics, closeModal, filters, setFilters, 
                     >
                       <div className={FilterModalStyles.filterSummaryTitle}>
                         <strong>{feat}</strong>
+                        {matchColumns && (() => {
+                          const feature = filterFeatures(availableStatistics).find(item => item.featureName === feat);
+                          const count = feature ? matchingFilterFeatures(availableStatistics, feature, columnMappings).length : 0;
+                          return count > 1 ? <small className={FilterModalStyles.matchCount}>{count} matching columns</small> : null;
+                        })()}
                       </div>
                       <div className={FilterModalStyles.criteriaRow}>
                         {formatCriteria(
