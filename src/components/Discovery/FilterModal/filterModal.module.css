@@ -1,9 +1,10 @@
 .filterModal {
   padding: 0;
   background-color: var(--background-color-card);
+  color: var(--text-color-primary);
   border-radius: var(--space-2);
   margin: 0 auto;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--box-shadow-md);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -16,7 +17,15 @@
 .modalHeader, .buttonRow { flex-shrink: 0; }
 .dialogFrame { width: min(64rem, 80vw); min-width: 0; }
 
-.featureSelection .matchColumns {
+.filterModal, .filterModal *, .selectPortal, .selectPortal * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+:global(body.dark-mode) .filterModal,
+:global(body.dark-mode) .selectPortal { color-scheme: dark; }
+
+.featureSelection .filterOption {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -27,9 +36,11 @@
   border-radius: var(--space-1);
   color: var(--text-color-secondary);
   font-size: var(--font-size-sm);
-  cursor: pointer;
+  text-align: left;
 }
-.matchColumns > :last-child { flex-shrink: 0; }
+.matchColumns { cursor: pointer; }
+.filterOption > :last-child { flex-shrink: 0; }
+.filterOption .logicalOperatorButton { margin: 0; padding: var(--space-1) var(--space-2); font-size: inherit; }
 .matchCount { display: block; margin-top: var(--space-1); color: inherit; opacity: .75; font-size: var(--font-size-xs); font-weight: normal; }
 
 .modalContent {
@@ -78,7 +89,7 @@
 }
 
 .closeBtn:hover {
-  background-color: rgba(0, 0, 0, 0.25);
+  background-color: var(--background-nav-background-color-hover);
 }
 
 .formRow {
@@ -170,6 +181,8 @@
 }
 
 .select {
+  background: var(--background-color-card);
+  color: var(--text-color-primary);
   width: 100%;
   padding: var(--space-2);
   height: 38px;
@@ -179,6 +192,8 @@
 
 .input,
 .datePicker {
+  background: var(--background-color-card);
+  color: var(--text-color-primary);
   width: 100%;
   padding: var(--space-2);
   height: 38px;
@@ -315,7 +330,7 @@
   border: none;
   cursor: pointer;
   font-size: var(--font-size-md);
-  color: var(--button-delete);
+  color: var(--error-color);
   margin-left: 5px;
 }
 
@@ -381,7 +396,7 @@
 }
 
 .logicalOperatorButton {
-  background-color: var(--text-color-secondary);
+  background-color: var(--button-color);
   color: var(--text-color-on-darkbg);
   border: none;
   margin-right: 2px;
@@ -393,7 +408,7 @@
 }
 
 .logicalOperatorButton:hover {
-  background-color: #4e555b;
+  background-color: var(--button-color-hover);
 }
 
 .filterSummaryTitle {
@@ -434,15 +449,6 @@
   transform: translateY(0);
   height: auto;
   transition: opacity 0.5s, transform 0.5s, height 0.5s;
-}
-
-.globalLogicalOperatorContainer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 10px;
-  width: 100%;
-  padding: 10px 0;
 }
 
 .spinner {
@@ -518,4 +524,37 @@
 
 :global(.react-select__multi-value__remove) {
   color: var(--text-color-secondary) !important;
+}
+
+.filterModal :global(.react-select__multi-value__remove:hover) {
+  background: var(--error-bg);
+  color: var(--error-color) !important;
+}
+
+.filterModal :global(.react-datepicker) {
+  background: var(--background-color-card);
+  color: var(--text-color-primary);
+  border-color: var(--border-color);
+}
+
+.filterModal :global(.react-datepicker__header) {
+  background: var(--background-color-tertiary);
+  border-color: var(--border-color);
+}
+
+.filterModal :global(.react-datepicker__current-month),
+.filterModal :global(.react-datepicker__day-name),
+.filterModal :global(.react-datepicker__day) { color: var(--text-color-primary); }
+
+.filterModal :global(.react-datepicker__day:hover) { background: var(--background-color-5); }
+.filterModal :global(.react-datepicker__day--keyboard-selected) { background: var(--table-row-selected-bg); }
+.filterModal :global(.react-datepicker__day--selected) {
+  background: var(--button-color);
+  color: var(--text-color-on-darkbg);
+}
+.filterModal :global(.react-datepicker__day--disabled),
+.filterModal :global(.react-datepicker__day--outside-month) { color: var(--text-color-muted); }
+.filterModal :global(.react-datepicker__triangle) {
+  fill: var(--background-color-tertiary) !important;
+  stroke: var(--border-color) !important;
 }

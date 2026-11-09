@@ -1,5 +1,5 @@
 import React, { useId, useState } from "react";
-import Select from "react-select";
+import FilterSelect from "./filterSelect";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { matchingFilterFeatures } from "./filterFeatures";
@@ -51,7 +51,7 @@ export default function FilterCriteriaEditor({selectedFeature, showHeading, avai
     <div className={`${styles.filterCriteria} ${categorical ? styles.categoricalCriteria : between ? styles.rangeCriteria : styles.valueCriteria}`}>
       {categorical ? <div>
         <label htmlFor={`${inputId}-categories`}>Choose categories:</label>
-        <Select inputId={`${inputId}-categories`} aria-label={`Categories for ${selectedFeature}`} isMulti classNamePrefix="react-select"
+        <FilterSelect inputId={`${inputId}-categories`} aria-label={`Categories for ${selectedFeature}`} isMulti classNamePrefix="react-select"
           options={categoryOptions} value={categoryOptions.filter(option => selectedCategories.includes(option.value))}
           onChange={options => setSelectedCategories((options || []).map(option => option.value))} isDisabled={isLoading} />
       </div> : <>
