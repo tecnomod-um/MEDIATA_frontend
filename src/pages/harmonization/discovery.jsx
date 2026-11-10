@@ -13,11 +13,11 @@ import { updateNodeAxiosBaseURL } from "../../util/nodeAxiosSetup";
 
 import TableMergeControl from "../../components/Discovery/StatisticsDisplay/tableMergeControl";
 import ColumnMappingsDialog from "../../components/Discovery/StatisticsDisplay/columnMappingsDialog";
-import { combineMappedTableData, tableExportFeatures, filterSummary } from "../../components/Discovery/CombinedStatistics/statisticsTableData";
-import { createColumnMappings, activeColumnMappings, validateColumnMappings } from "../../components/Discovery/CombinedStatistics/columnMappings";
+import { combineMappedTableData } from "../../components/Discovery/CombinedStatistics/statisticsTableData";
+import { createColumnMappings, activeColumnMappings, validateColumnMappings, reconcileMappingTypes } from "../../components/Discovery/CombinedStatistics/columnMappings";
 import { filterDiscoveryDatasets } from "../../components/Discovery/CombinedStatistics/filterDiscoveryDatasets";
 import { fileFilterConditions } from "../../components/Discovery/FilterModal/filterFeatures";
-import { buildAppliedFilters, tableFilterDescriptions, combinedFilter } from "../../components/Discovery/FilterModal/appliedFilters";
+import { buildAppliedFilters, tableFilterDescriptions } from "../../components/Discovery/FilterModal/appliedFilters";
 import useRelationshipStatistics from "../../components/Discovery/CombinedStatistics/useRelationshipStatistics";
 import LinearProgress from "@mui/material/LinearProgress";
 import { useNode } from "../../context/nodeContext";
@@ -36,6 +36,7 @@ function Discovery() {
   const [combineTables, setCombineTables] = useState(false);
   const [customMappings, setCustomMappings] = useState(null);
   const [mappingDialogOpen, setMappingDialogOpen] = useState(false);
+  const [exportRelationships, setExportRelationships] = useState(false);
   const [filterLogic, setFilterLogic] = useState({ operators: {}, operator: "AND", matchColumns: true });
   const [isCombining, setIsCombining] = useState(false);
   const baselineResultsRef = useRef([]);
@@ -306,6 +307,7 @@ function Discovery() {
   const updateFeatureTypes = changes => {
     const update = source => changes.reduce((current, change) => updateSourceFeature(current, change), source);
     baselineResultsRef.current = baselineResultsRef.current.map(update);
+    setCustomMappings(previous => previous && reconcileMappingTypes(previous, baselineResultsRef.current));
     setDataResults(previous => previous.map(update));
   };
 
@@ -321,16 +323,13 @@ function Discovery() {
     : combineMappedTableData(filteredDataStatistics, dataResults, activeFileIndices, columnMappings),
   [combinedTablesActive, filteredDataStatistics, dataResults, activeFileIndices, columnMappings]);
   const relationships = useRelationshipStatistics(combinedTablesActive ? tableStatistics : filteredDataStatistics,
-    dataResults, combinedTablesActive, !showIndividualView);
+    dataResults, combinedTablesActive, !showIndividualView || exportRelationships);
   const relationshipStatistics = relationships.statistics;
   const statisticsBusy = isCombining || relationships.pending;
   const relationshipFilters = useMemo(() => tableFilterDescriptions(combinedTablesActive ? tableStatistics : filteredDataStatistics, appliedFilters), [combinedTablesActive, tableStatistics, filteredDataStatistics, appliedFilters]);
   const featureFilters = useMemo(() => tableFilterDescriptions(tableStatistics, appliedFilters), [tableStatistics, appliedFilters]);
-  const statisticsExport = useMemo(() => combinedTablesActive && tableStatistics ? {
-    features: tableExportFeatures(tableStatistics).map(feature => ({...feature,
-      cohort: combinedFilter(appliedFilters, feature.contributions.map(part => part.source)) || "All records"})),
-    cohort: filterSummary(filters, filterLogic),
-  } : undefined, [combinedTablesActive, tableStatistics, filters, filterLogic, appliedFilters]);
+  const statisticsExport = useMemo(() => ({ data: tableStatistics, sourceData: filteredDataStatistics, appliedFilters }),
+    [tableStatistics, filteredDataStatistics, appliedFilters]);
   const selectFeature = useCallback((entry, event) => {
     const feature = selectableFeatures(entry.pooled ? tableStatistics : filteredDataStatistics)
       .find(feature => feature.featureName === entry.featureName);
@@ -392,7 +391,7 @@ function Discovery() {
         selectedEntries={selectedSourceFeatures}
       />
       {mappingDialogOpen && <ColumnMappingsDialog open mappings={columnMappings} sources={baselineResultsRef.current}
-        appliedFilters={appliedFilters} onClose={() => setMappingDialogOpen(false)} onApply={applyColumnMappings} />}
+        appliedFilters={appliedFilters} selectedFeatures={selectedSourceFeatures} onClose={() => setMappingDialogOpen(false)} onApply={applyColumnMappings} />}
       {!filteredDataStatistics && (
         <FileExplorer
           nodes={selectedNodes}
@@ -432,7 +431,8 @@ function Discovery() {
           toggleView={toggleView}
           isCombining={statisticsBusy}
           statisticsExport={statisticsExport}
-          relationshipExport={showIndividualView ? undefined : { data: relationshipStatistics, featureFilters: relationshipFilters, appliedFilters }}
+          onExportRelationshipsChange={setExportRelationships}
+          relationshipExport={{ data: relationshipStatistics, pending: relationships.pending, error: relationships.error, active: !showIndividualView }}
           appliedFilters={appliedFilters}
           featureFilters={featureFilters}
           onFeatureRecalculated={updateFeatureTypes}

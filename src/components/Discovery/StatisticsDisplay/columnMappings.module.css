@@ -26,10 +26,9 @@
 .matrix :global(.MuiTableHead-root) :global(.MuiTableCell-root) { background: var(--background-color-5); vertical-align: middle; position: sticky; top: 0; z-index: 1; padding-block: var(--space-2); }
 .headingLabel { display: inline-flex; gap: var(--space-1); align-items: center; font-size: var(--font-size-sm); font-weight: 600; white-space: nowrap; }
 .headingLabel svg { font-size: var(--font-size-base); color: var(--text-color-muted); }
-.sourceHeading { display: flex; align-items: baseline; gap: var(--space-1); min-width: 0; line-height: 1.5; }
+.sourceHeading { display: flex; flex-direction: column; align-items: flex-start; gap: 0; min-width: 0; line-height: 1.5; }
 .sourceHeading strong { font-size: var(--font-size-sm); font-weight: 600; white-space: nowrap; }
 .sourceHeading > span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--font-size-xs); color: var(--text-color-muted); }
-.sourceHeading > span::before { content: "·"; margin-right: var(--space-1); }
 .matrix .outputCell, .matrix :global(.MuiTableHead-root) .outputHeading { position: sticky; left: 0; background: var(--background-color-secondary); border-right: 1px solid var(--border-color); box-shadow: var(--space-1) 0 var(--space-2) calc(var(--space-1) * -1) var(--border-color); z-index: 2; }
 .matrix .actionCell, .matrix :global(.MuiTableHead-root) .actionHeading { position: sticky; right: 0; background: var(--background-color-secondary); border-left: 1px solid var(--border-color); box-shadow: calc(var(--space-1) * -1) 0 var(--space-2) calc(var(--space-1) * -1) var(--border-color); z-index: 2; }
 .matrix :global(.MuiTableHead-root) .outputHeading, .matrix :global(.MuiTableHead-root) .actionHeading { top: 0; z-index: 4; }

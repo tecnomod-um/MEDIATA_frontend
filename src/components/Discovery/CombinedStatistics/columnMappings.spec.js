@@ -1,7 +1,6 @@
 import { expect, it } from "vitest";
-import { createColumnMappings, validateColumnMappings, activeColumnMappings, changeMappingType } from "./columnMappings";
+import { createColumnMappings, validateColumnMappings, activeColumnMappings, changeMappingType, reconcileMappingTypes } from "./columnMappings";
 import { combineMappedTableData, tableExportFeatures } from "./statisticsTableData";
-import { combinedStatisticsCsv } from "./combinedStatistics";
 
 const numeric = (featureName, count, mean) => ({ featureName, count, mean, min: mean, max: mean, stdDev: 0, missingValuesCount: 0 });
 const sources = [
@@ -11,6 +10,18 @@ const sources = [
 const mapping = { id: "age", label: "Pooled age", type: "continuous", members: [{ nodeId: 1, fileName: "patients.csv", column: "Age" }, { nodeId: 2, fileName: "patients.csv", column: "PatientAge" }] };
 const data = { continuousFeatures: sources.flatMap(source => source.continuousFeatures.map(feature => ({ ...feature, nodeId: source.nodeId, nodeName: source.nodeName, fileName: source.fileName, originalName: feature.featureName, featureName: `${feature.featureName} (${source.nodeName})` }))), categoricalFeatures: [], dateFeatures: [] };
 
+it("preserves aliases while reconciling complete type changes and leaves mixed-type combinations explicit", () => {
+  const converted = sources.map((source, index) => ({ ...source,
+    continuousFeatures: source.continuousFeatures.filter(feature => feature.featureName !== (index ? "PatientAge" : "Age")),
+    categoricalFeatures: [{ featureName: index ? "PatientAge" : "Age", categoryCounts: { A: 12 } }],
+  }));
+  expect(reconcileMappingTypes([mapping], [converted[0], sources[1]])[0]).toEqual(mapping);
+  const updated = reconcileMappingTypes([mapping], converted)[0];
+  expect(updated).toEqual({ ...mapping, type: "categorical" });
+  expect(validateColumnMappings([updated], converted)).toBeNull();
+  expect(mapping.type).toBe("continuous");
+});
+
 it("pools explicitly mapped aliases and retains an unmapped same-name column", () => {
   expect(validateColumnMappings([mapping], sources)).toBeNull();
   const table = combineMappedTableData(data, sources, [true, true], [mapping]);
@@ -18,7 +29,7 @@ it("pools explicitly mapped aliases and retains an unmapped same-name column", (
   expect(table.continuousFeatures[0]).toMatchObject({ featureName: "Age (Beta)", mean: 200 });
   expect(table.continuousFeatures[1]).toMatchObject({ featureName: "Pooled age", count: 40, mean: 65 });
   expect(table.continuousFeatures[1].combinedSummary.contributions.map(c => c.columnName)).toEqual(["Age", "PatientAge"]);
-  expect(combinedStatisticsCsv(tableExportFeatures(table))).toContain("Beta / patients.csv / PatientAge");
+  expect(tableExportFeatures(table).at(-1).contributions[1]).toMatchObject({ columnName: "PatientAge", source: { nodeName: "Beta", fileName: "patients.csv" } });
 });
 
 it("keeps mapped suppressed sites in the cohort and blocks incomplete pooled results", () => {

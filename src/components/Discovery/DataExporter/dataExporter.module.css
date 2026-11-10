@@ -1,0 +1,29 @@
+.dialog:global(.MuiDialog-paper) { width: min(36rem, calc(100vw - var(--space-6))); margin: var(--space-3); background: var(--background-color-card); color: var(--text-color-primary); border: 1px solid var(--border-color); border-radius: var(--space-2); }
+.dialog :global(.MuiTypography-root), .dialog :global(.MuiButton-root) { font-family: inherit; }
+.title:global(.MuiDialogTitle-root) { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-color); font-size: var(--font-size-lg); font-weight: 600; }
+.title :global(.MuiIconButton-root) { color: var(--text-color-secondary); }
+.content:global(.MuiDialogContent-root) { padding: var(--space-4); scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); }
+.description { margin: 0 0 var(--space-4); color: var(--text-color-secondary); font-size: var(--font-size-sm); line-height: 1.5; }
+.settings { display: grid; grid-template-columns: 1fr 1.1fr; gap: var(--space-4); }
+.settings fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.settings legend, .format { font-size: var(--font-size-sm); font-weight: 600; }
+.settings legend { margin-bottom: var(--space-2); }
+.settings fieldset label { display: flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-2); font-size: var(--font-size-sm); }
+.settings fieldset label > span { margin-left: auto; color: var(--text-color-muted); font-size: var(--font-size-xs); }
+.dialog input { accent-color: var(--background-nav-tool-background-color-active); flex-shrink: 0; }
+.format { display: flex; flex-direction: column; align-items: stretch; gap: var(--space-2); }
+.format select { width: 100%; padding: var(--space-2); border: 1px solid var(--border-color-input); border-radius: var(--space-1); color: var(--text-color-primary); background: var(--background-color-card); font: inherit; font-weight: normal; }
+.dialog small { display: block; color: var(--text-color-muted); font-size: var(--font-size-xs); font-weight: normal; line-height: 1.5; }
+.options { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-4); }
+.options label { display: flex; align-items: flex-start; gap: var(--space-2); font-size: var(--font-size-sm); cursor: pointer; }
+.options input { margin-top: 3px; }
+.actions:global(.MuiDialogActions-root) { gap: var(--space-2); padding: var(--space-3) var(--space-4); border-top: 1px solid var(--border-color); }
+.actions > span { margin-right: auto; color: var(--text-color-muted); font-size: var(--font-size-xs); }
+.actions :global(.MuiButton-root) { text-transform: none; color: var(--text-color-primary); }
+.actions :global(.MuiButton-contained) { background: var(--button-color); color: var(--text-color-on-darkbg); }
+.actions :global(.Mui-disabled) { opacity: .5; }
+.progress { display: flex; align-items: center; gap: var(--space-2); margin: var(--space-3) 0 0; font-size: var(--font-size-sm); color: var(--text-color-secondary); }
+.spinner { width: var(--spinner-size-sm); height: var(--spinner-size-sm); border: var(--spinner-border-width-sm) solid var(--spinner-border-base-secondary); border-top-color: var(--spinner-border-top-secondary); border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+:global(body.dark-mode) .dialog { color-scheme: dark; }
+@media (max-width: 480px) { .settings { grid-template-columns: 1fr; gap: var(--space-3); } .actions:global(.MuiDialogActions-root) { flex-wrap: wrap; } .actions > span { flex-basis: 100%; } }
