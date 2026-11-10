@@ -16,26 +16,27 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Alert from "@mui/material/Alert";
-import { MdAdd, MdClose, MdDeleteOutline, MdLink, MdInfoOutline } from "react-icons/md";
+import { MdAdd, MdClose, MdDeleteOutline, MdLink } from "react-icons/md";
 import { memberKey, sourceColumns, validateColumnMappings, changeMappingType } from "../CombinedStatistics/columnMappings";
 import { sourceKey, sourceLabel } from "../CombinedStatistics/combinedStatistics";
 import styles from "./columnMappings.module.css";
 import FilterIndicator from "../FilterModal/filterIndicator";
 import { sourceFilter, combinedFilter } from "../FilterModal/appliedFilters";
+import { selectedMappings } from "../CombinedStatistics/selectedMappings";
 
 const typeLabels = { continuous: "Numerical", categorical: "Categorical", date: "Date" };
-const cloneMappings = mappings => mappings.map(group => ({ ...group, members: group.members.map(member => ({ ...member })) }));
+const noSelection = [];
 
-export default function ColumnMappingsDialog({ open, mappings, sources, onClose, onApply, appliedFilters }) {
-  const [draft, setDraft] = useState(() => cloneMappings(mappings));
+export default function ColumnMappingsDialog({ open, mappings, sources, onClose, onApply, appliedFilters, selectedFeatures = noSelection }) {
+  const [draft, setDraft] = useState(() => selectedMappings(mappings, sources, selectedFeatures));
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const titleId = useId(), descriptionId = useId();
   useEffect(() => {
     if (!open) return;
-    setDraft(cloneMappings(mappings));
+    setDraft(selectedMappings(mappings, sources, selectedFeatures));
     setError("");
-  }, [open, mappings]);
+  }, [open, mappings, sources, selectedFeatures]);
 
   const updateGroup = (id, update) => {
     setDraft(previous => previous.map(group => group.id === id ? { ...group, ...update } : group));
@@ -78,9 +79,9 @@ export default function ColumnMappingsDialog({ open, mappings, sources, onClose,
             <col className={styles.actionColumn} />
           </colgroup>
           <TableHead><TableRow>
-            <TableCell className={styles.outputHeading}><span className={styles.headingLabel}><MdLink aria-hidden="true" />Combined feature</span></TableCell>
-            <TableCell><span className={styles.headingLabel} title="Selects compatible source features. Changing type clears incompatible selections; it does not convert source data.">Type <MdInfoOutline aria-hidden="true" /></span></TableCell>
-            {sources.map(source => <TableCell key={sourceKey(source)} title={sourceLabel(source)}><div className={styles.sourceHeading}><strong>{source.nodeName || source.nodeId}</strong><span>{source.fileName}</span><FilterIndicator description={sourceFilter(appliedFilters, source)} /></div></TableCell>)}
+            <TableCell className={styles.outputHeading}><span className={styles.headingLabel}>Combined name</span></TableCell>
+            <TableCell><span className={styles.headingLabel}>Type</span></TableCell>
+            {sources.map(source => <TableCell key={sourceKey(source)} title={sourceLabel(source)}><div className={styles.sourceHeading}><strong>{source.nodeName || source.nodeId}<FilterIndicator description={sourceFilter(appliedFilters, source)} /></strong><span>{source.fileName}</span></div></TableCell>)}
             <TableCell className={styles.actionHeading}><span className={styles.srOnly}>Remove combination</span></TableCell>
           </TableRow></TableHead>
           <TableBody>{draft.map((group, index) => {
@@ -129,7 +130,7 @@ export default function ColumnMappingsDialog({ open, mappings, sources, onClose,
         onClick={addCombination}>Add combination</Button>}
     </DialogContent>
     <DialogActions className={styles.dialogActions}>
-      <span>{draft.length} combinations · {sources.length} files{appliedFilters?.size > 0 && <span className={styles.filterLegend}> · <FilterIndicator description="One or more source cohorts have active filters" /> Filtered records</span>}</span>
+      <span>{selectedFeatures.length > 0 && `${selectedFeatures.length} selected features · `}{draft.length} combinations · {sources.length} datasets{appliedFilters?.size > 0 && <span className={styles.filterLegend}> · <FilterIndicator description="One or more source cohorts have active filters" /> Filtered records</span>}</span>
       <Button onClick={onClose} disabled={saving}>Cancel</Button>
       <Button variant="contained" disableElevation onClick={save} disabled={saving}>{saving ? "Applying…" : "Apply combinations"}</Button>
     </DialogActions>

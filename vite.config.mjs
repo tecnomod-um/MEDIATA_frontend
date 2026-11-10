@@ -5,6 +5,7 @@ import svgr from "vite-plugin-svgr";
 export default defineConfig({
   base: process.env.VITE_BASE_PATH || "/mediata/",
   plugins: [react(), svgr()],
+  server: { watch: { ignored: ["**/coverage/**"] } },
   build: {
     chunkSizeWarningLimit: 1200,
     rolldownOptions: {

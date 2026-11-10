@@ -24,6 +24,18 @@ export function changeMappingType(group, type, sources) {
   }) };
 }
 
+// Preserve custom names and correspondences when all available members change interpretation.
+export function reconcileMappingTypes(groups, sources) {
+  return groups.map(group => {
+    const types = new Set(group.members.flatMap(member => {
+      const source = sources.find(source => sourceKey(source) === sourceKey(member));
+      const type = source && sourceColumns(source).find(feature => feature.column === member.column)?.type;
+      return type ? [type] : [];
+    }));
+    return types.size === 1 ? { ...group, type: [...types][0] } : group;
+  });
+}
+
 export function createColumnMappings(sources) {
   const groups = new Map();
   sources.forEach(source => sourceColumns(source).forEach(feature => {

@@ -1,4 +1,3 @@
-import { statisticsCsvRows } from "../../../util/statisticsCsv.js";
 import { frequencyQuantile } from "./frequencyQuantile.js";
 // Pool only the summaries already released by each node. No patient rows are transferred.
 export const sourceKey = (source) => JSON.stringify([String(source.nodeId ?? ""), source.fileName]);
@@ -114,15 +113,4 @@ export function buildCombinedStatistics(results, activeIndices) {
     return { ...base, categories: [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([value, frequency]) => ({ value, count: frequency, percent: 100 * frequency / count })) };
   });
   return { sources, features };
-}
-
-// Quoting every field also keeps dataset labels and category text safe in CSV consumers.
-export function combinedStatisticsCsv(features, cohort = "Current per-dataset filters") {
-  const rows = [["Feature", "Type", "Datasets included", "Datasets selected", "Non-missing count", "Missing count", "Missing %", "Mean", "Population SD", "Min", "Max", "Median", "Q1", "Q3", "Category", "Category count", "Category % (non-missing)", "Status", "Cohort", "Contributing datasets", "Methods"]];
-  features.forEach(f => {
-    const base = [f.featureName, f.type || "", f.includedSources, f.totalSources, f.unavailable ? "" : f.count, f.unavailable ? "" : f.missing, f.unavailable ? "" : f.percentMissing];
-    const categories = f.categories?.length ? f.categories : [null];
-    categories.forEach(c => rows.push([...base, f.mean ?? "", f.stdDev ?? "", f.min ?? "", f.max ?? "", f.median ?? "", f.q1 ?? "", f.q3 ?? "", c?.value ?? "", c?.count ?? "", c?.percent ?? "", f.unavailable || "Complete", f.cohort ?? cohort, (f.contributions || []).filter(c => c.feature).map(c => `${sourceLabel(c.source)}${c.columnName ? ` / ${c.columnName}` : ""}`).join("; "), summaryConventions[f.type] || ""]));
-  });
-  return statisticsCsvRows(rows);
 }

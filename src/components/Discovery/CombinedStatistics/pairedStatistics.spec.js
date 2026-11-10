@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { poolBivariateMoments, rankCorrelationFromCounts, chiSquareFromCounts, chiSquareSurvival, combineMappedRelationships } from "./pairedStatistics";
-import { collectDiscoveryStatistics, relationshipStatisticsCsv } from "../discoveryStatistics";
+import { collectDiscoveryStatistics, relationshipStatisticsRows } from "../discoveryStatistics";
+import { statisticsCsvRows } from "../../../util/statisticsCsv";
 import { sourceKey } from "./combinedStatistics";
 import { combineMappedTableData } from "./statisticsTableData";
 import { createColumnMappings } from "./columnMappings";
@@ -31,7 +32,7 @@ describe('pooled paired relationships', () => {
     const sources=[site(1,repeated([[1,3],[2,5]])),site(2,repeated([[3,7],[4,9]]))];
     const result=combined(sources,createColumnMappings(sources).filter(mapping=>mapping.label==='X'));
     const applied=new Map([[sourceKey(sources[0]),'Cluster (= 0)'],[sourceKey(sources[1]),'Cluster (= 1)']]);
-    const csv=relationshipStatisticsCsv(result,{},applied);
+    const csv=statisticsCsvRows(relationshipStatisticsRows(result,{},applied));
     const row=csv.split('\r\n').find(row=>row.startsWith('"covariances","X","Y (data.csv · Site 2)"'));
     expect(row).toContain('Site 2 / data.csv: Cluster (= 1)');
     expect(row).toContain('"12"');

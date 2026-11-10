@@ -1,204 +1,118 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { vi } from 'vitest';
-import DataExporter from './dataExporter';
+import React from "react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, afterEach, expect, it, vi } from "vitest";
+import DataExporter from "./dataExporter";
+import { reportFixture } from "./reportTestFixtures";
 
-const { mockStatisticsObjectsCsv } = vi.hoisted(() => ({
-  mockStatisticsObjectsCsv: vi.fn(() => 'csv-content'),
-}));
-
-vi.mock('../../../util/statisticsCsv', async importOriginal => ({
-  ...await importOriginal(),
-  statisticsObjectsCsv: mockStatisticsObjectsCsv,
-}));
-
-describe('<DataExporter />', () => {
-  const sampleData = {
-    continuousFeatures: [
-      {
-        featureName: 'len',
-        count: 2,
-        mean: 1.5,
-        stdDev: 0.7,
-        min: 1,
-        qrt1: 1.25,
-        median: 1.5,
-        qrt3: 1.75,
-        max: 2,
-        missingValuesCount: 0,
-      },
-    ],
-    dateFeatures: [
-      {
-        featureName: 'd',
-        count: 2,
-        mean: null,
-        stdDev: null,
-        earliestDate: '2020-01-01',
-        q1: null,
-        median: null,
-        q3: null,
-        latestDate: '2020-12-31',
-        missingValuesCount: 0,
-      },
-    ],
-    categoricalFeatures: [
-      {
-        featureName: 'col',
-        count: 3,
-        mode: 'A',
-        modeFrequency: 2,
-        modeFrequencyPercentage: 66.67,
-        secondMode: 'B',
-        secondModeFrequency: 1,
-        secondModePercentage: 33.33,
-        missingValuesCount: 0,
-        categoryCounts: { A: 2, B: 1 },
-      },
-    ],
-  };
-
-  let linkMocks;
-  let origCreateElement;
-  let origAppendChild;
-
-  beforeEach(() => {
-    mockStatisticsObjectsCsv.mockClear();
-    linkMocks = [];
-
-    origCreateElement = document.createElement.bind(document);
-    vi.spyOn(document, 'createElement').mockImplementation((tag) => {
-      if (tag === 'a') {
-        const link = {
-          href: '',
-          download: '',
-          style: {},
-          click: vi.fn(),
-        };
-        linkMocks.push(link);
-        return link;
-      }
-      return origCreateElement(tag);
-    });
-
-    origAppendChild = document.body.appendChild.bind(document.body);
-    vi.spyOn(document.body, 'appendChild').mockImplementation((node) => {
-      if (node instanceof Element) {
-        return origAppendChild(node);
-      }
-      return node;
-    });
-
-    vi.spyOn(document.body, 'removeChild').mockImplementation((node) => node);
-    vi.spyOn(global.URL, 'createObjectURL').mockImplementation(() => 'blob:url');
+let workers, download, createUrl;
+beforeEach(() => {
+  workers = [];
+  vi.stubGlobal("Worker", class {
+    constructor() { this.postMessage = vi.fn(); this.terminate = vi.fn(); workers.push(this); }
   });
+  createUrl = vi.fn(() => "blob:statistics");
+  vi.stubGlobal("URL", class extends URL { static createObjectURL = createUrl; static revokeObjectURL = vi.fn(); });
+  download = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+});
+afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
+function setup(props = {}) {
+  const fixture = reportFixture();
+  const onRelationshipsChange = vi.fn();
+  const view = render(<DataExporter statisticsExport={fixture} onRelationshipsChange={onRelationshipsChange} {...props} />);
+  fireEvent.click(screen.getByRole("button", { name: "Export statistics", exact: true }));
+  return { ...fixture, ...view, onRelationshipsChange };
+}
 
-  it('uses the existing export button for the current combined table rows', () => {
-    render(<DataExporter data={sampleData} statisticsExport={{ features: [], cohort: 'cluster = 1' }} />);
-    fireEvent.click(screen.getByRole('button', { name: /export statistics/i }));
-    expect(linkMocks).toHaveLength(1);
-    expect(linkMocks[0].download).toBe('combined_statistics.csv');
-    expect(mockStatisticsObjectsCsv).not.toHaveBeenCalled();
-  });
+it("opens the existing export control with selected features preselected, without downloading until requested", () => {
+  const fixture = reportFixture();
+  const { onRelationshipsChange } = setup({ selectedEntries: [fixture.sourceData.continuousFeatures[0]] });
+  expect(screen.getByRole("dialog", { name: "Export statistics" })).toBeInTheDocument();
+  expect(screen.getByRole("radio", { name: /Selected features/ })).toBeChecked();
+  expect(screen.getByRole("checkbox", { name: /Include per-dataset breakdown/ })).toBeChecked();
+  expect(screen.getByRole("combobox", { name: "Export format" })).toHaveValue("xlsx");
+  expect(onRelationshipsChange).toHaveBeenCalledWith(false);
+  expect(download).not.toHaveBeenCalled();
+});
 
-  it('exports relationships instead of pooled features when the aggregate view is active', () => {
-    render(<DataExporter data={sampleData} statisticsExport={{ features: [] }} relationshipExport={{
-      data: { covariances: { Age: { Score: 2 }, Score: { Age: 2 } } },
-    }} />);
-    fireEvent.click(screen.getByRole('button', { name: /export statistics/i }));
-    expect(linkMocks).toHaveLength(1);
-    expect(linkMocks[0].download).toBe('relationship_statistics.csv');
-    expect(mockStatisticsObjectsCsv).not.toHaveBeenCalled();
-  });
+it("exports all visible features by default when nothing is selected, with one asynchronous download", async () => {
+  const { onRelationshipsChange } = setup();
+  expect(screen.getByRole("radio", { name: /All visible features/ })).toBeChecked();
+  expect(screen.getByRole("radio", { name: /Selected features/ })).toBeDisabled();
+  fireEvent.change(screen.getByRole("combobox", { name: "Export format" }), { target: { value: "csv" } });
+  fireEvent.click(screen.getByRole("button", { name: "Download", exact: true }));
+  expect(workers).toHaveLength(1);
+  expect(workers[0].postMessage.mock.calls[0][0]).toMatchObject({ format: "csv", selectedOnly: false, includeBreakdown: true });
+  expect(screen.getByRole("status")).toHaveTextContent("Preparing statistics");
+  expect(screen.getByRole("combobox", { name: "Export format" })).toBeDisabled();
+  act(() => workers[0].onmessage({ data: { status: "Creating CSV tables…" } }));
+  expect(screen.getByRole("status")).toHaveTextContent("Creating CSV tables");
+  act(() => workers[0].onmessage({ data: { blob: new Blob(["report"]) } }));
+  expect(download).toHaveBeenCalledTimes(1);
+  expect(createUrl).toHaveBeenCalledTimes(1);
+  expect(workers[0].terminate).toHaveBeenCalled();
+  expect(onRelationshipsChange).toHaveBeenLastCalledWith(false);
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+});
 
-  it('exports the visible feature set instead of restoring hidden features', () => {
-    render(<DataExporter data={sampleData} filteredData={{ ...sampleData, continuousFeatures: [] }} />);
-    fireEvent.click(screen.getByRole('button', { name: /export statistics/i }));
-    expect(mockStatisticsObjectsCsv.mock.calls[0][0].some(feature => feature.Name === 'len')).toBe(false);
-  });
+it("waits for requested relationship calculations and lets summaries be exported independently", () => {
+  setup({ relationshipExport: { pending: true, data: {} } });
+  fireEvent.click(screen.getByRole("checkbox", { name: /Include relationships/ }));
+  expect(screen.getByRole("status")).toHaveTextContent("Calculating relationships");
+  expect(screen.getByRole("button", { name: "Download", exact: true })).toBeDisabled();
+  fireEvent.click(screen.getByRole("checkbox", { name: /Include relationships/ }));
+  expect(screen.getByRole("button", { name: "Download", exact: true })).toBeEnabled();
+});
 
-  it('renders a button and downloads two CSVs on click', () => {
-    render(<DataExporter data={sampleData} filteredData={[]} />);
+it("defaults to relationships in the aggregate view and shows failures without silently omitting them", () => {
+  setup({ relationshipExport: { active: true, error: "Node summaries are unavailable" } });
+  expect(screen.getByRole("checkbox", { name: /Include relationships/ })).toBeChecked();
+  expect(screen.getByRole("alert")).toHaveTextContent("Node summaries are unavailable");
+  expect(screen.getByRole("button", { name: "Download", exact: true })).toBeDisabled();
+});
 
-    const btn = screen.getByRole('button', {
-      name: /export statistics data to csv files/i,
-    });
+it("cancels worker generation and ignores a stale completion rather than downloading a cancelled report", async () => {
+  setup();
+  fireEvent.click(screen.getByRole("button", { name: "Download", exact: true }));
+  fireEvent.click(screen.getByRole("button", { name: "Cancel export", exact: true }));
+  act(() => workers[0].onmessage({ data: { blob: new Blob(["cancelled"]) } }));
+  expect(download).not.toHaveBeenCalled();
+  expect(workers[0].terminate).toHaveBeenCalled();
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+});
 
-    fireEvent.click(btn);
+it("keeps the dialog open with retry available if report generation fails", () => {
+  setup();
+  fireEvent.click(screen.getByRole("button", { name: "Download", exact: true }));
+  act(() => workers[0].onmessage({ data: { error: "Workbook generation failed" } }));
+  expect(screen.getByRole("alert")).toHaveTextContent("Workbook generation failed");
+  expect(screen.getByRole("button", { name: "Download", exact: true })).toBeEnabled();
+  fireEvent.click(screen.getByRole("button", { name: "Download", exact: true }));
+  expect(workers).toHaveLength(2);
+});
 
-    expect(mockStatisticsObjectsCsv).toHaveBeenCalledTimes(2);
-    expect(linkMocks).toHaveLength(2);
-    expect(linkMocks[0].download).toBe('continuous_data.csv');
-    expect(linkMocks[1].download).toBe('categorical_data.csv');
-    expect(linkMocks[0].click).toHaveBeenCalled();
-    expect(linkMocks[1].click).toHaveBeenCalled();
-  });
+it("cleans up an in-progress worker when the exporter unmounts", () => {
+  const view = setup();
+  fireEvent.click(screen.getByRole("button", { name: "Download", exact: true }));
+  view.unmount();
+  expect(workers[0].terminate).toHaveBeenCalled();
+});
 
-  it('includes mean and stdDev in CSV when dateFeature has them', () => {
-    const dataWithDateValues = {
-      ...sampleData,
-      dateFeatures: [
-        {
-          featureName: 'eventDate',
-          count: 5,
-          mean: 1710000000,     // truthy → .toString() branch
-          stdDev: 2.3456,       // truthy → .toFixed(2) branch
-          earliestDate: '2022-01-01',
-          q1: '2022-03-01',
-          median: '2022-06-01',
-          q3: '2022-09-01',
-          latestDate: '2022-12-31',
-          missingValuesCount: 1,
-        },
-      ],
-    };
+it("recovers from an unreadable worker response without leaving the export busy", () => {
+  setup();
+  fireEvent.click(screen.getByRole("button", { name: "Download", exact: true }));
+  act(() => workers[0].onmessageerror());
+  expect(screen.getByRole("alert")).toHaveTextContent("The report could not be created");
+  expect(screen.getByRole("button", { name: "Download", exact: true })).toBeEnabled();
+  expect(workers[0].terminate).toHaveBeenCalled();
+});
 
-    render(<DataExporter data={dataWithDateValues} filteredData={[]} />);
-    fireEvent.click(screen.getByRole('button', { name: /export/i }));
-
-    // Both date CSV calls were made
-    expect(mockStatisticsObjectsCsv).toHaveBeenCalledTimes(2);
-    // The continuous/date row should have non-N/A values
-    const dateRow = mockStatisticsObjectsCsv.mock.calls[0][0].find(
-      (r) => r.Name === 'eventDate'
-    );
-    expect(dateRow.Mean).toBe('1710000000');
-    expect(dateRow['Std. Dev.']).toBe('2.35');
-  });
-
-  it('uses "N/A" for null categorical fields', () => {
-    const dataWithNullCat = {
-      continuousFeatures: [],
-      dateFeatures: [],
-      categoricalFeatures: [
-        {
-          featureName: 'status',
-          count: 10,
-          mode: null,               // → "N/A"
-          modeFrequency: null,      // → "N/A"
-          modeFrequencyPercentage: null, // → "N/A"
-          secondMode: null,         // → "N/A"
-          secondModeFrequency: null, // → "N/A"
-          secondModePercentage: null, // → "N/A"
-          missingValuesCount: 2,
-          categoryCounts: {},
-        },
-      ],
-    };
-
-    render(<DataExporter data={dataWithNullCat} filteredData={[]} />);
-    fireEvent.click(screen.getByRole('button', { name: /export/i }));
-
-    const catRow = mockStatisticsObjectsCsv.mock.calls[1][0][0];
-    expect(catRow.Mode).toBe('N/A');
-    expect(catRow['Mode Frequency']).toBe('N/A');
-    expect(catRow['Mode %']).toBe('N/A');
-    expect(catRow['2nd Mode']).toBe('N/A');
-    expect(catRow['2nd Mode Frequency']).toBe('N/A');
-    expect(catRow['2nd Mode %']).toBe('N/A');
-  });});
+it("removes the temporary download link and allows retry when the browser rejects a download", () => {
+  setup();
+  download.mockImplementationOnce(() => { throw new Error("Download rejected"); });
+  fireEvent.click(screen.getByRole("button", { name: "Download", exact: true }));
+  act(() => workers[0].onmessage({ data: { blob: new Blob(["report"]) } }));
+  expect(screen.getByRole("alert")).toHaveTextContent("could not be downloaded");
+  expect(document.querySelector("a[download]")).toBeNull();
+  expect(screen.getByRole("button", { name: "Download", exact: true })).toBeEnabled();
+});

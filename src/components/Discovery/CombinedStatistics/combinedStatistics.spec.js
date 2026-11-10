@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildCombinedStatistics, combinedStatisticsCsv, poolMoments } from "./combinedStatistics";
+import { buildCombinedStatistics, poolMoments } from "./combinedStatistics";
 
 const summary = (name, values, missing = 0) => {
   const mean = values.reduce((n, v) => n + v, 0) / values.length;
@@ -17,11 +17,6 @@ describe("combined cohort statistics", () => {
   });
   it("does not overflow the weighted mean of a single large finite constant", () => {
     expect(poolMoments([{count:12,mean:1e307,stdDev:0}])).toMatchObject({mean:1e307,stdDev:0,count:12});
-  });
-  it("exports each feature's actual source cohort instead of an unrelated global filter", () => {
-    const csv = combinedStatisticsCsv([{featureName:'Age',type:'continuous',count:12,cohort:'All records'}], 'Cluster (= 1) at another dataset');
-    expect(csv).toContain('"All records"');
-    expect(csv).not.toContain('Cluster (= 1)');
   });
   it("calculates exact numerical quantiles only from complete disclosure-approved frequencies", () => {
     const a = summary('Age', [...Array(6).fill(1), ...Array(6).fill(2)]);
@@ -81,11 +76,5 @@ describe("combined cohort statistics", () => {
     const row = buildCombinedStatistics([source(1, [{ ...summary("Age", [1, 2]), median: 1.5, qrt1: 1, qrt3: 2 }]), source(2, [summary("Age", [9])])], [true, true]).features[0];
     expect(row.median).toBeUndefined();
     expect(row.q1).toBeUndefined();
-  });
-  it("exports unavailable results without invented counts and escapes spreadsheet formulas", () => {
-    const csv = combinedStatisticsCsv([{ featureName: '=HYPERLINK("x")', type: "continuous", includedSources: 1, totalSources: 2, unavailable: "Suppressed" }]);
-    expect(csv).toContain("'=HYPERLINK");
-    expect(csv).toContain('"Suppressed"');
-    expect(csv).not.toContain('"NaN"');
   });
 });

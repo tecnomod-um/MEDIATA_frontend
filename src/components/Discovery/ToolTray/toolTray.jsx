@@ -70,7 +70,7 @@ const FeatureToggle = React.memo(function FeatureToggle({ entry, checked, onTogg
 });
 
 // Sidebar holding all the discovery view controls
-function ToolTray({ refreshControllerRef, data, filteredData, setFilteredData, showOutliers, setShowOutliers, isToolTrayOpen, toggleToolTray, selectedEntries = [], selectedSourceFeatures = selectedEntries, filters, toggleFilters, dataResults = [], activeFileIndices = [], toggleFileActive, showIndividualView, toggleView, isCombining = false, onFeatureRecalculated, onTypeChanging, statisticsExport, relationshipExport, appliedFilters, featureFilters }) {
+function ToolTray({ refreshControllerRef, data, filteredData, setFilteredData, showOutliers, setShowOutliers, isToolTrayOpen, toggleToolTray, selectedEntries = [], selectedSourceFeatures = selectedEntries, filters, toggleFilters, dataResults = [], activeFileIndices = [], toggleFileActive, showIndividualView, toggleView, isCombining = false, onFeatureRecalculated, onTypeChanging, statisticsExport, relationshipExport, onExportRelationshipsChange, appliedFilters, featureFilters }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -313,7 +313,7 @@ function ToolTray({ refreshControllerRef, data, filteredData, setFilteredData, s
 
       {/* Data exporter */}
       <div className={ToolTrayStyles.buttonContainer}>
-        <DataExporter data={data} filteredData={filteredData} statisticsExport={statisticsExport} relationshipExport={relationshipExport} busy={isCombining} />
+        <DataExporter statisticsExport={statisticsExport} relationshipExport={relationshipExport} selectedEntries={selectedEntries} onRelationshipsChange={onExportRelationshipsChange} busy={isCombining} />
       </div>
 
       {/* Element exporter */}

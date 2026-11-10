@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { combineMappedTableData, tableExportFeatures, filterSummary } from "./statisticsTableData";
+import { combineMappedTableData, tableExportFeatures } from "./statisticsTableData";
 import { createColumnMappings, activeColumnMappings } from "./columnMappings";
 
 const feature = (name, count, mean) => ({ featureName: name, count, mean, stdDev: 0, min: mean, max: mean, missingValuesCount: 0 });
@@ -59,5 +59,4 @@ it("exports the displayed combined and individual rows with filter provenance", 
   const rows = tableExportFeatures(table);
   expect(rows.find(row => row.featureName === "Age")).toMatchObject({ count: 40, mean: 65, includedSources: 2 });
   expect(rows.find(row => row.featureName === "Score (Beta)")).toMatchObject({ count: 30, mean: 3, includedSources: 1 });
-  expect(filterSummary({ "cluster (Alpha)": [{ type: "equal", value: "1" }] }, { matchColumns: true })).toBe("cluster (Alpha) [matching columns]: (equal 1)");
 });

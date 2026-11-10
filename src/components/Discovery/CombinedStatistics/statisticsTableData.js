@@ -3,7 +3,7 @@ import { activeColumnMappings, memberKey } from "./columnMappings.js";
 
 
 // Adapt released pooled summaries to the same shape used by the existing tables.
-// Charts retain the individual distributions; numerical histograms/quantiles cannot be pooled exactly.
+// Charts retain individual distributions; pooled quantiles need complete approved frequencies.
 export function combineMappedTableData(data, results, activeIndices, mappings) {
   const visible = new Set(Object.values(arrays).flatMap(key => (data[key] || []).map(feature => memberKey({ ...feature, column: feature.originalName || feature.featureName }))));
   const groups = activeColumnMappings(mappings, results, activeIndices).filter(group => group.members.some(member => visible.has(memberKey(member))));
@@ -68,11 +68,4 @@ export function tableExportFeatures(data) {
       categories: type === "categorical" ? Object.entries(feature.categoryCounts || {}).map(([value, n]) => ({ value, count: n, percent: 100 * n / count })) : undefined,
     };
   }));
-}
-
-export function filterSummary(filters, logic) {
-  return Object.entries(filters).filter(([, conditions]) => conditions?.length).map(([name, conditions]) => {
-    const criteria = conditions.map((condition, index) => `${index ? ` ${logic?.operators?.[name]?.[index - 1] || "AND"} ` : ""}${condition.type} ${Array.isArray(condition.value) ? condition.value.join(" to ") : condition.value}`).join("");
-    return `${name}${logic?.matchColumns ? " [matching columns]" : ""}: (${criteria})`;
-  }).join(` ${logic?.operator || "AND"} `) || "All records";
 }
