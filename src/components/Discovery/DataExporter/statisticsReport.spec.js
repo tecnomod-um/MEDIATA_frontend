@@ -49,6 +49,16 @@ it("keeps zero-valued categories, counts, dates and quartiles without treating t
   expect(sheetRecords(sheets, "Feature summaries").find(row => row.Feature === "VisitDate")).toMatchObject({ Type: "date", Q1: "2020-01-01", Mean: "2020-01-02" });
 });
 
+it("exports pooled categorical cardinality and the second most frequent category alongside complete frequencies", () => {
+  const fixture = reportFixture();
+  const rows = sheetRecords(buildStatisticsReport(fixture), "Feature summaries");
+  const group = rows.find(row => row.Feature === "Group" && row.Scope === "Pooled");
+  expect(group).toMatchObject({ Cardinality: 2, Mode: "0", "Mode count": 30,
+    "2nd Mode": "B", "2nd Mode count": 30, "2nd Mode %": 50 });
+  expect(group.Kurtosis).toBeNull();
+  expect(group["Sample SD"]).toBeNull();
+});
+
 it("exports both combined and per-dataset relationships once, restricted to the chosen pairs", () => {
   const fixture = reportFixture();
   const selectedEntries = fixture.data.continuousFeatures;
@@ -110,4 +120,23 @@ it("writes a real multi-sheet workbook with numeric precision, literal strings, 
   expect(xml).not.toContain("<f>");
   expect(xml).toContain('state="frozen"');
   expect(strFromU8(files["xl/workbook.xml"])).toContain("Report details");
+});
+
+it("exports numerical CI bounds, skewness and every tied mode as numbers without reusing category summaries", async () => {
+  const fixture = reportFixture();
+  const feature = fixture.data.continuousFeatures[0];
+  Object.assign(feature.combinedSummary, { meanCiLower: 12.123456789, meanCiUpper: 20.987654321,
+    skewness: -0.1231518341349694, kurtosis: -2.000988630746416, sampleStdDev: 1.8237562766229864,
+    modes: [0, 4], modeFrequency: 12, modeStatus: "Available" });
+  const sheets = buildStatisticsReport({ ...fixture, selectedOnly: true, selectedEntries: [feature], includeBreakdown: false });
+  const row = sheetRecords(sheets, "Feature summaries")[0];
+  expect(row).toMatchObject({ "Mean 95% CI lower": 12.123456789, "Mean 95% CI upper": 20.987654321,
+    Skewness: -0.1231518341349694, Kurtosis: -2.000988630746416, "Sample SD": 1.8237562766229864,
+    Mode: 0, "Mode count": 12, "Mode status": "Available" });
+  expect(sheetRecords(sheets, "Numerical modes").map(row => row.Mode)).toEqual([0, 4]);
+  const csv = unzipSync(await bytes(await writeStatisticsReport(sheets, "csv")));
+  expect(strFromU8(csv["feature_summaries.csv"])).toContain("12.123456789");
+  expect(strFromU8(csv["numerical_modes.csv"])).toContain('"0"');
+  const xlsx = unzipSync(await bytes(await writeStatisticsReport(sheets, "xlsx")));
+  expect(strFromU8(xlsx["xl/worksheets/sheet1.xml"])).toContain("-0.1231518341349694");
 });

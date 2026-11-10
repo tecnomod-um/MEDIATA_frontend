@@ -42,6 +42,22 @@ it("keeps three same-named files and feature distributions attached to their own
   }
 });
 
+it("displays additional numerical summaries in the existing table without assigning them to dates or categories", () => {
+  const data = { continuousFeatures: [{ featureName: 'X', count: 24, missingValuesCount: 0, mean: 2.25, stdDev: 1.78,
+    meanCiLower: 1.4798952644523076, meanCiUpper: 3.0201047355476924, skewness: -0.1231518341349694,
+    kurtosis: -2.000988630746416, sampleStdDev: 1.8237562766229864,
+    modes: [0, 4], modeFrequency: 6, modeStatus: 'Available', histogram: [], binRanges: [] }],
+    categoricalFeatures: [], dateFeatures: [{ featureName: 'Date', count: 24, missingValuesCount: 0, dateHistogram: {} }] };
+  render(<StatisticsDisplay data={data} onSelectFeature={vi.fn()} />);
+  const result = JSON.parse(screen.getAllByRole('table')[0].getAttribute('data-result'));
+  expect(result['95% CI (mean)']).toEqual(['1.48 – 3.02', 'N/A']);
+  expect(result.Skewness).toEqual(['-0.123', 'N/A']);
+  expect(result.Kurtosis).toEqual(['-2.001', 'N/A']);
+  expect(result['Sample SD']).toEqual(['1.82', 'N/A']);
+  expect(result.Mode).toEqual(['0, 4', 'N/A']);
+  expect(result['Mode count']).toEqual(['6', 'N/A']);
+});
+
 vi.mock("../ContinuousChart/continuousChart", () => ({
   __esModule: true,
   default: (props) => {

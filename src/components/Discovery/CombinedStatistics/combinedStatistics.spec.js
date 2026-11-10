@@ -65,12 +65,23 @@ describe("combined cohort statistics", () => {
     const row = buildCombinedStatistics([categorical(1, { Female: 2, Male: 1 }, 3), categorical(2, JSON.parse('{"Female":1,"Male":4,"__proto__":1}'), 6)], [true, true]).features[0];
     expect(row).toMatchObject({ count: 9, missing: 2 });
     expect(row.categories[0]).toMatchObject({ value: "Male", count: 5 });
+    expect(row.cardinality).toBe(3);
     expect(row.categories.find(c => c.value === "__proto__").count).toBe(1);
   });
   it("reconstructs exact date summaries from date frequencies", () => {
     const date = (id, histogram, count) => ({ ...source(id, []), dateFeatures: [{ featureName: "Date", dateHistogram: histogram, count, missingValuesCount: 0 }] });
     const row = buildCombinedStatistics([date(1, { "2020-01-01": 2 }, 2), date(2, { "2020-01-05": 2 }, 2)], [true, true]).features[0];
     expect(row).toMatchObject({ mean: "2020-01-03", stdDev: 2, median: "2020-01-03", min: "2020-01-01", max: "2020-01-05" });
+  });
+  it("excludes zero-count labels from observed categorical cardinality and date extrema", () => {
+    const category = { nodeId: 1, fileName: 'a.csv', categoricalFeatures: [{ featureName: 'Group', count: 12,
+      missingValuesCount: 0, categoryCounts: { NeverObserved: 0, A: 6, B: 6 } }] };
+    const row = buildCombinedStatistics([category], [true]).features[0];
+    expect(row.cardinality).toBe(2);
+    expect(row.categories.map(cell => cell.value)).toEqual(['A', 'B']);
+    const dates = { nodeId: 1, fileName: 'a.csv', dateFeatures: [{ featureName: 'Date', count: 6, missingValuesCount: 0,
+      dateHistogram: { '1900-01-01': 0, '2020-01-01': 6 } }] };
+    expect(buildCombinedStatistics([dates], [true]).features[0]).toMatchObject({ min: '2020-01-01', max: '2020-01-01' });
   });
   it("never averages numerical medians, quartiles or locally binned histograms", () => {
     const row = buildCombinedStatistics([source(1, [{ ...summary("Age", [1, 2]), median: 1.5, qrt1: 1, qrt3: 2 }]), source(2, [summary("Age", [9])])], [true, true]).features[0];

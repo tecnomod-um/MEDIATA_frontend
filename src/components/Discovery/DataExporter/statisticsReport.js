@@ -3,6 +3,7 @@ import { featureArrays, sourceKey, summaryConventions } from "../CombinedStatist
 import { selectionKey, sourceFeatureSelection } from "../featureSelection";
 import { combinedFilter, sourceFilter } from "../FilterModal/appliedFilters";
 import { relationshipStatisticsRows, relationshipConventions } from "../discoveryStatistics";
+import { numericalMethods } from "../CombinedStatistics/numericalSummary";
 
 export function exportFeatures(data, sourceData, selectedEntries = [], selectedOnly = false) {
   const features = Object.entries(featureArrays).flatMap(([type, key]) => (data?.[key] || []).map(feature => ({ ...feature, type })));
@@ -31,7 +32,7 @@ export function buildStatisticsReport({ data, sourceData, selectedEntries = [], 
   selectedOnly = false, includeBreakdown = true, includeRelationships = false, createdAt = new Date().toISOString() }) {
   const features = exportFeatures(data, sourceData, selectedEntries, selectedOnly);
   if (!features.length) throw new Error("There are no features in this export scope.");
-  const summaries = [], frequencies = [], histograms = [], contributions = [], locals = new Map();
+  const summaries = [], frequencies = [], modes = [], histograms = [], contributions = [], locals = new Map();
   const writeFeature = feature => {
     const summary = tableExportFeatures({ [featureArrays[feature.type]]: [feature] })[0];
     const parts = summary.contributions || [];
@@ -43,13 +44,24 @@ export function buildStatisticsReport({ data, sourceData, selectedEntries = [], 
       : sourceFilter(appliedFilters, feature) || "All records";
     const unavailable = summary.unavailable;
     const value = field => unavailable ? null : finite(summary[field]);
-    const categories = unavailable ? [] : [...(summary.categories || [])].sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
+    const categories = unavailable ? [] : summary.categories || [];
     const status = unavailable || (pooled && summary.type === "continuous" && summary.q1 == null
       ? "Available; pooled quartiles unavailable" : "Available");
+    const numerical = summary.type === "continuous";
+    const modalValues = unavailable ? [] : summary.modes || [];
+    const modeCount = numerical ? value("modeFrequency") : categories[0]?.count ?? null;
     summaries.push([name, summary.type, scope, ...identity, value("count"), value("missing"), value("percentMissing"),
       value("mean"), value("stdDev"), value("min"), value("q1"), value("median"), value("q3"), value("max"),
-      categories[0]?.value ?? null, categories[0]?.count ?? null, categories[0]?.percent ?? null,
+      numerical ? modalValues[0] ?? null : categories[0]?.value ?? null, modeCount,
+      numerical ? modeCount == null ? null : 100 * modeCount / summary.count : categories[0]?.percent ?? null,
+      numerical ? unavailable || summary.modeStatus || "Unavailable" : null,
+      numerical ? value("skewness") : null, numerical ? value("kurtosis") : null, numerical ? value("sampleStdDev") : null,
+      numerical ? value("meanCiLower") : null, numerical ? value("meanCiUpper") : null,
+      !unavailable && summary.type === "categorical" ? categories.length : null,
+      categories[1]?.value ?? null, categories[1]?.count ?? null, categories[1]?.percent ?? null,
       status, cohort, summary.includedSources, summary.totalSources, summaryConventions[summary.type]]);
+    if (numerical) modalValues.forEach(mode => modes.push([name, scope, ...identity, mode, modeCount,
+      modeCount == null ? null : 100 * modeCount / summary.count, cohort]));
     categories.forEach(category => frequencies.push([name, scope, ...identity, category.value, category.count, category.percent, cohort]));
     if (!pooled && !unavailable) {
       if (feature.type === "date") Object.entries(feature.dateHistogram || {}).sort(([a], [b]) => a.localeCompare(b))
@@ -75,10 +87,13 @@ export function buildStatisticsReport({ data, sourceData, selectedEntries = [], 
   for (const [key, local] of locals) if (!existing.has(key)) writeFeature(local);
   const sheets = [
     { name: "Feature summaries", rows: [["Feature", "Type", "Scope", "Site", "Dataset", "Node ID", "Non-missing count", "Missing count", "Missing %",
-      "Mean", "Population SD", "Min", "Q1", "Median", "Q3", "Max", "Mode", "Mode count", "Mode %", "Status", "Cohort",
+      "Mean", "Population SD", "Min", "Q1", "Median", "Q3", "Max", "Mode", "Mode count", "Mode %", "Mode status",
+      "Skewness", "Kurtosis", "Sample SD", "Mean 95% CI lower", "Mean 95% CI upper", "Cardinality",
+      "2nd Mode", "2nd Mode count", "2nd Mode %", "Status", "Cohort",
       "Datasets included", "Datasets expected", "Methods"], ...summaries] },
   ];
   if (frequencies.length) sheets.push({ name: "Category frequencies", rows: [["Feature", "Scope", "Site", "Dataset", "Node ID", "Category", "Count", "Percent %", "Cohort"], ...frequencies] });
+  if (modes.length) sheets.push({ name: "Numerical modes", rows: [["Feature", "Scope", "Site", "Dataset", "Node ID", "Mode", "Count", "Percent %", "Cohort"], ...modes] });
   if (histograms.length) sheets.push({ name: "Source distributions", rows: [["Feature", "Site", "Dataset", "Node ID", "Type", "Bin or date", "Count", "Status", "Cohort"], ...histograms] });
   let relationshipCount = 0;
   if (includeRelationships) {
@@ -106,9 +121,11 @@ export function buildStatisticsReport({ data, sourceData, selectedEntries = [], 
     ["Precision", "Values retain the precision supplied by the nodes; spreadsheet display formatting does not round stored values."],
     ["Continuous features", summaryConventions.continuous], ["Dates", summaryConventions.date],
     ["Categorical features", summaryConventions.categorical],
-    ["Mode ties", "Consult the full category frequencies for all categories sharing the highest count."],
+    ["Mode ties", "The summary shows the first mode. Numerical modes and Category frequencies retain all released ties; numerical modes are ordered by value."],
+    ...Object.entries(numericalMethods),
     ["Distributions", "Source bins and date frequencies are preserved as released by the nodes. Independently binned histograms are never added into a fabricated pooled histogram."],
     ["Pooled quartiles", "Computed only from complete disclosure-approved value frequencies. Local quartiles are never averaged."],
+    ["Percentile labels", "Q1 = 25%; median = 50%; Q3 = 75%. Numerical quantiles use linear interpolation (R7), matching the default pandas describe percentiles."],
     ...includeRelationships ? Object.entries(relationshipConventions) : [],
   ] });
   return sheets;

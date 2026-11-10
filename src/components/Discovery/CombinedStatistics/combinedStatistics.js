@@ -1,4 +1,5 @@
 import { frequencyQuantile } from "./frequencyQuantile.js";
+import { meanConfidenceInterval, adjustedSkewness, adjustedKurtosis, sampleStandardDeviation, poolNumericalModes } from "./numericalSummary.js";
 // Pool only the summaries already released by each node. No patient rows are transferred.
 export const sourceKey = (source) => JSON.stringify([String(source.nodeId ?? ""), source.fileName]);
 export const sourceLabel = (source) => `${source.nodeName || source.nodeId || "Node"} / ${source.fileName}`;
@@ -11,31 +12,52 @@ export function sourceFileLabel(source, results, index = results.indexOf(source)
 }
 export const featureArrays = { continuous: "continuousFeatures", categorical: "categoricalFeatures", date: "dateFeatures" };
 export const summaryConventions = {
-  continuous: "Population SD (n); linear quantiles (R7); non-missing observations",
+  continuous: "Population SD (n) and sample SD (n−1); 95% Student t CI for the mean (sample SD, n−1 df); adjusted Fisher–Pearson skewness (G1) and Fisher excess kurtosis (G2); exact numerical modes; linear quantiles (R7); non-missing observations",
   date: "Population SD in days (n); linear quantiles (R7), displayed as whole dates; non-missing observations",
   categorical: "Category percentages use non-missing observations; missingness is reported separately",
 };
 const validCount = (n) => Number.isSafeInteger(n) && n >= 0;
 const finite = (n) => typeof n === "number" && Number.isFinite(n);
 
+export function categoryFrequencies(counts, total) {
+  return [...counts].filter(([, count]) => count > 0)
+    .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
+    .map(([value, count]) => ({ value, count, percent: 100 * count / total }));
+}
+
 // Chan's parallel variance formula; the node reports population standard deviations.
 export function poolMoments(parts) {
-  let count = 0, mean = 0, m2 = 0;
+  let count = 0, mean = 0, m2 = 0, m3 = 0, m4 = 0, hasThirdMoments = true, hasFourthMoments = true;
   for (const part of parts) {
     if (!validCount(part.count) || !finite(part.mean) || !finite(part.stdDev) || part.stdDev < 0) return null;
     if (!part.count) continue;
+    const partM3 = part.stdDev === 0 ? 0 : part.sumCubedDeviations;
+    const partM4 = part.stdDev === 0 ? 0 : part.sumFourthDeviations;
+    hasThirdMoments &&= finite(partM3);
+    hasFourthMoments &&= finite(partM4) && finite(partM3);
     if (!count) {
       count = part.count; mean = part.mean; m2 = part.count * part.stdDev ** 2;
+      m3 = partM3;
+      m4 = partM4;
       continue;
     }
     const nextCount = count + part.count;
     if (!Number.isSafeInteger(nextCount)) return null;
     const delta = part.mean - mean;
-    m2 += part.count * part.stdDev ** 2 + delta ** 2 * (count * (part.count / nextCount));
-    mean += delta * (part.count / nextCount);
+    // Pébay's parallel moments, updated from highest to lowest order.
+    const a = count / nextCount, b = part.count / nextCount, weight = count * b;
+    const partM2 = part.count * part.stdDev ** 2;
+    m4 += partM4 + delta ** 4 * weight * (a * a - a * b + b * b)
+      + 6 * delta ** 2 * (a * a * partM2 + b * b * m2) + 4 * delta * (a * partM3 - b * m3);
+    m3 += partM3 + delta ** 3 * weight * ((count - part.count) / nextCount)
+      + 3 * delta * (a * partM2 - b * m2);
+    m2 += partM2 + delta ** 2 * weight;
+    mean += delta * b;
     count = nextCount;
   }
-  return count && finite(m2) && finite(mean) ? { count, mean, stdDev: Math.sqrt(Math.max(0, m2 / count)) } : null;
+  return count && finite(m2) && finite(mean) ? { count, mean, stdDev: Math.sqrt(Math.max(0, m2 / count)),
+    sumCubedDeviations: hasThirdMoments && finite(m3) ? m3 : null,
+    sumFourthDeviations: hasFourthMoments && finite(m4) ? m4 : null } : null;
 }
 
 const dayNumber = value => /^\d{4}-\d{2}-\d{2}$/.test(value) ? Date.parse(`${value}T00:00:00Z`) / 86400000 : NaN;
@@ -97,6 +119,11 @@ export function buildCombinedStatistics(results, activeIndices) {
       const entries = [...counts].sort((a, b) => a[0] - b[0]);
       const percentile = p => frequencyQuantile(entries, count, p);
       return { ...base, ...moments, min: Math.min(...parts.map(f => f.min)), max: Math.max(...parts.map(f => f.max)),
+        ...meanConfidenceInterval(count, moments.mean, moments.stdDev),
+        skewness: adjustedSkewness(count, moments.stdDev, moments.sumCubedDeviations),
+        kurtosis: adjustedKurtosis(count, moments.stdDev, moments.sumFourthDeviations),
+        sampleStdDev: sampleStandardDeviation(count, moments.stdDev),
+        ...poolNumericalModes(parts, entries),
         ...(complete ? { q1: percentile(.25), median: percentile(.5), q3: percentile(.75) } : {}) };
     }
     const field = type === "date" ? "dateHistogram" : "categoryCounts";
@@ -104,13 +131,13 @@ export function buildCombinedStatistics(results, activeIndices) {
     for (const part of parts) {
       const entries = Object.entries(part[field] || {});
       if (entries.some(([, n]) => !validCount(n)) || entries.reduce((n, entry) => n + entry[1], 0) !== part.count) return { ...base, unavailable: "Incomplete distribution in the returned summaries" };
-      entries.forEach(([value, n]) => counts.set(value, (counts.get(value) || 0) + n));
+      entries.filter(([, n]) => n > 0).forEach(([value, n]) => counts.set(value, (counts.get(value) || 0) + n));
     }
     if (type === "date") {
       const summary = dateSummary(Object.fromEntries(counts));
       return summary ? { ...base, ...summary } : { ...base, unavailable: "Incomplete date distribution" };
     }
-    return { ...base, categories: [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([value, frequency]) => ({ value, count: frequency, percent: 100 * frequency / count })) };
+    return { ...base, cardinality: counts.size, categories: categoryFrequencies(counts, count) };
   });
   return { sources, features };
 }

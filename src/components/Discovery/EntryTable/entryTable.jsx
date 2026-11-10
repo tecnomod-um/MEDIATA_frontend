@@ -3,6 +3,7 @@ import React, { useState, useCallback, useEffect, useLayoutEffect, useRef, useMe
 import EntryTableStyles from "./entryTable.module.css";
 import FilterIndicator from "../FilterModal/filterIndicator";
 import useFeatureSelectionGesture from "../useFeatureSelectionGesture";
+import { numericalMethods } from "../CombinedStatistics/numericalSummary";
 
 const statisticDescriptions = {
   Count: "Non-missing observations. Rows are counted; patients are not deduplicated across datasets.",
@@ -13,7 +14,15 @@ const statisticDescriptions = {
   "3rd Qrt.": "75th percentile with linear interpolation (R7). Exact pooled percentiles require complete approved value frequencies.",
   "Mode %": "Mode frequency divided by non-missing count. Missing observations are reported separately.",
   "2nd Mode %": "Second mode frequency divided by non-missing count.",
+  "95% CI (mean)": numericalMethods.confidence,
+  Skewness: numericalMethods.skewness,
+  Mode: "Numerical rows: " + numericalMethods.mode + " Categorical rows: most frequent category.",
+  "Mode count": "Number of non-missing observations equal to each listed numerical mode.",
+  "Sample SD": numericalMethods.deviation,
+  Kurtosis: numericalMethods.kurtosis,
+  Cardinality: "Number of distinct observed categories. Missing values are excluded; pooled cardinality counts the union of categories across datasets.",
 };
+const statisticWidths = { "95% CI (mean)": 180, Skewness: 120, Kurtosis: 120, Cardinality: 120 };
 
 function getTableHeaders(filteredLists) {
   if (!filteredLists) return [];
@@ -132,7 +141,7 @@ function EntryTable({ filteredLists, minCellWidth, maxRows = 1000, onRowSelect, 
   const columns = useMemo(() => createHeaders(getTableHeaders(filteredLists)), [filteredLists]);
   const tableElement = useRef(null);
   const tbodyElement = useRef(null);
-  const gridTemplateColumns = columns.map(() => "minmax(100px, 1fr)").join(" ");
+  const gridTemplateColumns = columns.map(({ text }) => `minmax(${statisticWidths[text] ?? 100}px, 1fr)`).join(" ");
 
   function createHeaders(headers) {
     if (headers.length === 0) {
