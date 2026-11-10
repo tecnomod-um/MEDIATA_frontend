@@ -130,11 +130,17 @@ const StatisticsDisplay = React.memo(
         Count: [],
         Mean: [],
         "Std. Dev.": [],
+        "Sample SD": [],
         Min: [],
         "1st Qrt.": [],
         Median: [],
         "3rd Qrt.": [],
         Max: [],
+        "95% CI (mean)": [],
+        Skewness: [],
+        Kurtosis: [],
+        Mode: [],
+        "Mode count": [],
         "Missing Entries": [],
       };
       if (combinedTables) table.Datasets = [];
@@ -143,11 +149,18 @@ const StatisticsDisplay = React.memo(
         table["Count"].push(feature.count?.toString() ?? "N/A");
         table["Mean"].push(feature.mean?.toFixed(2) ?? "N/A");
         table["Std. Dev."].push(feature.stdDev?.toFixed(2) ?? "N/A");
+        table["Sample SD"].push(feature.sampleStdDev?.toFixed(2) ?? "N/A");
         table["Min"].push(feature.min?.toString() ?? "N/A");
         table["1st Qrt."].push(feature.qrt1?.toFixed(2) ?? "N/A");
         table["Median"].push(feature.median?.toFixed(2) ?? "N/A");
         table["3rd Qrt."].push(feature.qrt3?.toFixed(2) ?? "N/A");
         table["Max"].push(feature.max?.toString() ?? "N/A");
+        table["95% CI (mean)"].push(feature.meanCiLower != null && feature.meanCiUpper != null
+          ? `${feature.meanCiLower.toFixed(2)} – ${feature.meanCiUpper.toFixed(2)}` : "N/A");
+        table.Skewness.push(feature.skewness?.toFixed(3) ?? "N/A");
+        table.Kurtosis.push(feature.kurtosis?.toFixed(3) ?? "N/A");
+        table.Mode.push(feature.modes?.length ? feature.modes.join(", ") : feature.modeStatus === "No repeated value" ? "No repeat" : "N/A");
+        table["Mode count"].push(feature.modeFrequency?.toString() ?? "N/A");
         table["Missing Entries"].push(
           formatMissingEntries(feature.count, feature.missingValuesCount)
         );
@@ -161,11 +174,13 @@ const StatisticsDisplay = React.memo(
           table["Std. Dev."].push(
             dateStat.stdDev?.toFixed(2) ?? "N/A"
           );
+          table["Sample SD"].push("N/A");
           table["Min"].push(dateStat.earliestDate || "N/A");
           table["1st Qrt."].push(dateStat.q1 || "N/A");
           table["Median"].push(dateStat.median || "N/A");
           table["3rd Qrt."].push(dateStat.q3 || "N/A");
           table["Max"].push(dateStat.latestDate || "N/A");
+          for (const key of ["95% CI (mean)", "Skewness", "Kurtosis", "Mode", "Mode count"]) table[key].push("N/A");
           table["Missing Entries"].push(
             formatMissingEntries(dateStat.count, dateStat.missingValuesCount)
           );
@@ -182,6 +197,7 @@ const StatisticsDisplay = React.memo(
         "Total Count": tableData.categoricalFeatures.map((f) =>
           f.count?.toString() ?? "N/A"
         ),
+        Cardinality: tableData.categoricalFeatures.map(f => f.cardinality?.toString() ?? "N/A"),
         Mode: tableData.categoricalFeatures.map((f) => f.mode ?? "N/A"),
         "Mode Frequency": tableData.categoricalFeatures.map((f) =>
           f.modeFrequency?.toString() ?? "N/A"

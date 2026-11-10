@@ -1,4 +1,4 @@
-import { buildCombinedStatistics, sourceKey, featureArrays as arrays } from "./combinedStatistics.js";
+import { buildCombinedStatistics, categoryFrequencies, sourceKey, featureArrays as arrays } from "./combinedStatistics.js";
 import { activeColumnMappings, memberKey } from "./columnMappings.js";
 
 
@@ -34,6 +34,9 @@ export function combineMappedTableData(data, results, activeIndices, mappings) {
       count: summary.unavailable ? null : summary.count,
       missingValuesCount: summary.unavailable ? null : summary.missing,
       mean: summary.mean, stdDev: summary.stdDev, min: summary.min, max: summary.max,
+      meanCiLower: summary.meanCiLower, meanCiUpper: summary.meanCiUpper, skewness: summary.skewness,
+      kurtosis: summary.kurtosis, sampleStdDev: summary.sampleStdDev, cardinality: summary.cardinality,
+      modes: summary.modes, modeFrequency: summary.modeFrequency, modeStatus: summary.modeStatus,
       qrt1: summary.q1, qrt3: summary.q3, median: summary.median,
       q1: summary.q1, q3: summary.q3, earliestDate: summary.min, latestDate: summary.max,
       datasetCount: `${summary.includedSources}/${summary.totalSources}`,
@@ -65,7 +68,7 @@ export function tableExportFeatures(data) {
       q1: type === "date" ? feature.q1 : feature.qrt1,
       q3: type === "date" ? feature.q3 : feature.qrt3,
       includedSources: 1, totalSources: 1, contributions: [{ source: feature, feature }],
-      categories: type === "categorical" ? Object.entries(feature.categoryCounts || {}).map(([value, n]) => ({ value, count: n, percent: 100 * n / count })) : undefined,
+      categories: type === "categorical" ? categoryFrequencies(Object.entries(feature.categoryCounts || {}), count) : undefined,
     };
   }));
 }

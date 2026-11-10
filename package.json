@@ -17,6 +17,7 @@
     "@react-three/drei": "^9.0.0",
     "@react-three/fiber": "^8.0.0",
     "@stdlib/math-base-special-gammainc": "0.3.1",
+    "@stdlib/stats-base-dists-t-quantile": "0.2.3",
     "@testing-library/user-event": "^14.5.2",
     "axios": "^1.20.0",
     "chart.js": "^4.4.1",
