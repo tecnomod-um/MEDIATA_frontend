@@ -1,8 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { poolBivariateMoments, rankCorrelationFromCounts, chiSquareFromCounts, chiSquareSurvival, combineMappedRelationships } from "./pairedStatistics";
-import { collectDiscoveryStatistics, relationshipStatisticsRows } from "../discoveryStatistics";
-import { statisticsCsvRows } from "../../../util/statisticsCsv";
-import { sourceKey } from "./combinedStatistics";
+import { collectDiscoveryStatistics, relationshipStatistics } from "../discoveryStatistics";
 import { combineMappedTableData } from "./statisticsTableData";
 import { createColumnMappings } from "./columnMappings";
 
@@ -28,16 +26,12 @@ const combined = (sources, mappings = createColumnMappings(sources)) => {
 };
 
 describe('pooled paired relationships', () => {
-  it('exports only the datasets and filters that contributed to a particular pair', () => {
+  it('reports only the dataset that contributes to a mixed combined and local pair', () => {
     const sources=[site(1,repeated([[1,3],[2,5]])),site(2,repeated([[3,7],[4,9]]))];
     const result=combined(sources,createColumnMappings(sources).filter(mapping=>mapping.label==='X'));
-    const applied=new Map([[sourceKey(sources[0]),'Cluster (= 0)'],[sourceKey(sources[1]),'Cluster (= 1)']]);
-    const csv=statisticsCsvRows(relationshipStatisticsRows(result,{},applied));
-    const row=csv.split('\r\n').find(row=>row.startsWith('"covariances","X","Y (data.csv · Site 2)"'));
-    expect(row).toContain('Site 2 / data.csv: Cluster (= 1)');
-    expect(row).toContain('"12"');
-    expect(row).not.toContain('Site 1');
-    expect(row).not.toContain('Cluster (= 0)');
+    const row=[...relationshipStatistics(result)].find(row=>row.kind==='covariances' && row.left==='X' && row.right==='Y (data.csv · Site 2)');
+    expect(row.detail.count).toBe(12);
+    expect(row.detail.contributingSources).toEqual([{ nodeId: 2, nodeName: 'Site 2', fileName: 'data.csv' }]);
   });
   it('includes between-site co-variation and unequal complete-case counts', () => {
     const a = [[1, 10], [2, 8], [3, 7]], b = [[50, -1], [52, 0], [54, 3], [56, 8]];

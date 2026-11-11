@@ -11,11 +11,6 @@ export function sourceFileLabel(source, results, index = results.indexOf(source)
   return `${source.fileName || `File #${index + 1}`}${duplicate ? ` · ${siteName}${duplicateSiteName ? ` · ${source.nodeId}` : ""}` : ""}`;
 }
 export const featureArrays = { continuous: "continuousFeatures", categorical: "categoricalFeatures", date: "dateFeatures" };
-export const summaryConventions = {
-  continuous: "Population SD (n) and sample SD (n−1); 95% Student t CI for the mean (sample SD, n−1 df); adjusted Fisher–Pearson skewness (G1) and Fisher excess kurtosis (G2); exact numerical modes; linear quantiles (R7); non-missing observations",
-  date: "Population SD in days (n); linear quantiles (R7), displayed as whole dates; non-missing observations",
-  categorical: "Category percentages use non-missing observations; missingness is reported separately",
-};
 const validCount = (n) => Number.isSafeInteger(n) && n >= 0;
 const finite = (n) => typeof n === "number" && Number.isFinite(n);
 
@@ -60,8 +55,13 @@ export function poolMoments(parts) {
     sumFourthDeviations: hasFourthMoments && finite(m4) ? m4 : null } : null;
 }
 
-const dayNumber = value => /^\d{4}-\d{2}-\d{2}$/.test(value) ? Date.parse(`${value}T00:00:00Z`) / 86400000 : NaN;
 const dateString = value => new Date(Math.trunc(value) * 86400000).toISOString().slice(0, 10);
+
+function dayNumber(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return NaN;
+  const day = Date.parse(`${value}T00:00:00Z`) / 86400000;
+  return Number.isInteger(day) && dateString(day) === value ? day : NaN;
+}
 
 function dateSummary(histogram) {
   const entries = Object.entries(histogram).map(([day, count]) => [dayNumber(day), count]).sort((a, b) => a[0] - b[0]);
@@ -70,9 +70,11 @@ function dateSummary(histogram) {
   if (!count || !Number.isSafeInteger(count)) return null;
   const moments = poolMoments(entries.map(([day, frequency]) => ({ count: frequency, mean: day, stdDev: 0 })));
   if (!moments) return null;
+  // Match the node's whole-day truncation without rounding an exact mean into the previous day.
+  const totalDays = entries.reduce((sum, [day, frequency]) => sum + BigInt(day) * BigInt(frequency), 0n);
   const percentile = p => dateString(frequencyQuantile(entries, count, p));
   return {
-    count, mean: dateString(moments.mean), stdDev: moments.stdDev,
+    count, mean: dateString(Number(totalDays / BigInt(count))), stdDev: moments.stdDev,
     min: dateString(entries[0][0]), max: dateString(entries.at(-1)[0]),
     q1: percentile(.25), median: percentile(.5), q3: percentile(.75),
   };

@@ -6,6 +6,7 @@ import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Alert from "@mui/material/Alert";
+import LinearProgress from "@mui/material/LinearProgress";
 import { MdClose } from "react-icons/md";
 import { exportFeatures } from "./statisticsReport";
 import useStatisticsExport from "./useStatisticsExport";
@@ -30,6 +31,7 @@ export default function DataExporter({ statisticsExport, relationshipExport, sel
   };
   const close = () => { job.cancel(); setOpen(false); onRelationshipsChange?.(false); };
   const loadingRelationships = includeRelationships && relationshipExport?.pending;
+  const progressLabel = job.status || (loadingRelationships ? "Calculating relationships…" : "");
   const relationshipError = includeRelationships && relationshipExport?.error;
   const download = () => job.start({ ...statisticsExport, selectedEntries, selectedOnly, format,
     includeBreakdown: hasPooled && includeBreakdown, includeRelationships, relationships: relationshipExport?.data }, close);
@@ -43,7 +45,6 @@ export default function DataExporter({ statisticsExport, relationshipExport, sel
         <IconButton size="small" aria-label="Close export statistics" onClick={close}><MdClose /></IconButton>
       </DialogTitle>
       <DialogContent className={styles.content}>
-        <p className={styles.description}>Download the current statistics, with their sources, filters and calculation methods.</p>
         <div className={styles.settings}>
           <fieldset disabled={Boolean(job.status)}><legend>Features</legend>
             <label><input type="radio" name="export-scope" checked={selectedOnly} disabled={!selected.length}
@@ -66,14 +67,15 @@ export default function DataExporter({ statisticsExport, relationshipExport, sel
             <span>Include relationships<small>Covariance, correlations and chi-square results for the exported features.</small></span></label>
         </div>
         {(job.error || relationshipError) && <Alert severity="error">{job.error || relationshipError} {relationshipError && "You can retry or export without relationships."}</Alert>}
-        {(job.status || loadingRelationships) && <p className={styles.progress} role="status"><span className={styles.spinner} />{job.status || "Calculating relationships…"}</p>}
       </DialogContent>
       <DialogActions className={styles.actions}>
         <span>{scoped.length} {scoped.length === 1 ? "feature" : "features"}{hasPooled ? " · combined statistics" : " · individual datasets"}</span>
         <Button onClick={close}>{job.status ? "Cancel export" : "Cancel"}</Button>
-        <Button variant="contained" disableElevation onClick={download}
-          disabled={busy || Boolean(job.status || loadingRelationships || relationshipError) || !scoped.length}>
-          {job.status ? "Exporting…" : "Download"}
+        <Button variant="contained" disableElevation onClick={download} className={styles.download}
+          aria-label="Download" aria-busy={Boolean(progressLabel)}
+          disabled={busy || Boolean(progressLabel || relationshipError) || !scoped.length}>
+          <span className={progressLabel ? styles.hiddenLabel : undefined}>Download</span>
+          {progressLabel && <LinearProgress className={styles.downloadProgress} aria-label={progressLabel} />}
         </Button>
       </DialogActions>
     </Dialog>

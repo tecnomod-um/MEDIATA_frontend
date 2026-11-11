@@ -43,10 +43,12 @@ it("exports all visible features by default when nothing is selected, with one a
   fireEvent.click(screen.getByRole("button", { name: "Download", exact: true }));
   expect(workers).toHaveLength(1);
   expect(workers[0].postMessage.mock.calls[0][0]).toMatchObject({ format: "csv", selectedOnly: false, includeBreakdown: true });
-  expect(screen.getByRole("status")).toHaveTextContent("Preparing statistics");
+  const downloadButton = screen.getByRole("button", { name: "Download", exact: true });
+  expect(downloadButton).toHaveAttribute("aria-busy", "true");
+  expect(downloadButton).toContainElement(screen.getByRole("progressbar", { name: "Preparing statistics…" }));
   expect(screen.getByRole("combobox", { name: "Export format" })).toBeDisabled();
   act(() => workers[0].onmessage({ data: { status: "Creating CSV tables…" } }));
-  expect(screen.getByRole("status")).toHaveTextContent("Creating CSV tables");
+  expect(downloadButton).toContainElement(screen.getByRole("progressbar", { name: "Creating CSV tables…" }));
   act(() => workers[0].onmessage({ data: { blob: new Blob(["report"]) } }));
   expect(download).toHaveBeenCalledTimes(1);
   expect(createUrl).toHaveBeenCalledTimes(1);
@@ -58,10 +60,12 @@ it("exports all visible features by default when nothing is selected, with one a
 it("waits for requested relationship calculations and lets summaries be exported independently", () => {
   setup({ relationshipExport: { pending: true, data: {} } });
   fireEvent.click(screen.getByRole("checkbox", { name: /Include relationships/ }));
-  expect(screen.getByRole("status")).toHaveTextContent("Calculating relationships");
-  expect(screen.getByRole("button", { name: "Download", exact: true })).toBeDisabled();
+  const downloadButton = screen.getByRole("button", { name: "Download", exact: true });
+  expect(downloadButton).toContainElement(screen.getByRole("progressbar", { name: "Calculating relationships…" }));
+  expect(downloadButton).toBeDisabled();
   fireEvent.click(screen.getByRole("checkbox", { name: /Include relationships/ }));
-  expect(screen.getByRole("button", { name: "Download", exact: true })).toBeEnabled();
+  expect(downloadButton).toBeEnabled();
+  expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
 });
 
 it("defaults to relationships in the aggregate view and shows failures without silently omitting them", () => {

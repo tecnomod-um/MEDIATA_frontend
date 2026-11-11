@@ -130,7 +130,7 @@ const StatisticsDisplay = React.memo(
         Count: [],
         Mean: [],
         "Std. Dev.": [],
-        "Sample SD": [],
+        "Std. Dev. (sample)": [],
         Min: [],
         "1st Qrt.": [],
         Median: [],
@@ -149,7 +149,7 @@ const StatisticsDisplay = React.memo(
         table["Count"].push(feature.count?.toString() ?? "N/A");
         table["Mean"].push(feature.mean?.toFixed(2) ?? "N/A");
         table["Std. Dev."].push(feature.stdDev?.toFixed(2) ?? "N/A");
-        table["Sample SD"].push(feature.sampleStdDev?.toFixed(2) ?? "N/A");
+        table["Std. Dev. (sample)"].push(feature.sampleStdDev?.toFixed(2) ?? "N/A");
         table["Min"].push(feature.min?.toString() ?? "N/A");
         table["1st Qrt."].push(feature.qrt1?.toFixed(2) ?? "N/A");
         table["Median"].push(feature.median?.toFixed(2) ?? "N/A");
@@ -174,7 +174,7 @@ const StatisticsDisplay = React.memo(
           table["Std. Dev."].push(
             dateStat.stdDev?.toFixed(2) ?? "N/A"
           );
-          table["Sample SD"].push("N/A");
+          table["Std. Dev. (sample)"].push("N/A");
           table["Min"].push(dateStat.earliestDate || "N/A");
           table["1st Qrt."].push(dateStat.q1 || "N/A");
           table["Median"].push(dateStat.median || "N/A");

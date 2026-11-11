@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { collectDiscoveryStatistics, visibleRelationships, updateSourceFeature, relationshipStatisticsRows } from "./discoveryStatistics";
-import { statisticsCsvRows } from "../../util/statisticsCsv";
+import { collectDiscoveryStatistics, visibleRelationships, updateSourceFeature, relationshipStatistics } from "./discoveryStatistics";
 
 const site = (nodeId, nodeName, value) => ({
   nodeId, nodeName, fileName: "patients.csv",
@@ -56,12 +55,14 @@ describe("shared discovery statistics", () => {
     expect(updated[1]).toBe(sources[1]);
   });
 
-  it("exports the same local relationships once per pair, with current cohort and source identities", () => {
+  it("lists each local relationship once per pair, with its source identity", () => {
     const data = collectDiscoveryStatistics([site(1, "Alpha", 2), site(2, "Beta", 8)], [true, true]);
-    const csv = statisticsCsvRows(relationshipStatisticsRows(visibleRelationships(data), { "Age (patients.csv · Alpha)": "cluster (= 1)" }));
-    expect(csv.split("\r\n")).toHaveLength(7); // Header + two sites × three statistics.
-    expect(csv).toContain('"covariances","Age (patients.csv · Alpha)","Score (patients.csv · Alpha)","2","cluster (= 1)"');
-    expect(csv).toContain('"covariances","Age (patients.csv · Beta)","Score (patients.csv · Beta)","8","All records"');
-    expect(csv).not.toContain('"Age (patients.csv · Alpha)","Score (patients.csv · Beta)"');
+    const rows = [...relationshipStatistics(visibleRelationships(data))];
+    expect(rows).toHaveLength(6);
+    expect(rows.filter(row => row.kind === "covariances").map(({ left, right, value, detail }) =>
+      [left, right, value, detail.contributingSources[0].nodeName])).toEqual([
+      ["Age (patients.csv · Alpha)", "Score (patients.csv · Alpha)", 2, "Alpha"],
+      ["Age (patients.csv · Beta)", "Score (patients.csv · Beta)", 8, "Beta"],
+    ]);
   });
 });

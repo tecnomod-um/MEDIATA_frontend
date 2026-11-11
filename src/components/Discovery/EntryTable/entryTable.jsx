@@ -18,7 +18,7 @@ const statisticDescriptions = {
   Skewness: numericalMethods.skewness,
   Mode: "Numerical rows: " + numericalMethods.mode + " Categorical rows: most frequent category.",
   "Mode count": "Number of non-missing observations equal to each listed numerical mode.",
-  "Sample SD": numericalMethods.deviation,
+  "Std. Dev. (sample)": numericalMethods.deviation,
   Kurtosis: numericalMethods.kurtosis,
   Cardinality: "Number of distinct observed categories. Missing values are excluded; pooled cardinality counts the union of categories across datasets.",
 };

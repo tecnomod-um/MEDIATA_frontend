@@ -53,7 +53,7 @@ it("displays additional numerical summaries in the existing table without assign
   expect(result['95% CI (mean)']).toEqual(['1.48 – 3.02', 'N/A']);
   expect(result.Skewness).toEqual(['-0.123', 'N/A']);
   expect(result.Kurtosis).toEqual(['-2.001', 'N/A']);
-  expect(result['Sample SD']).toEqual(['1.82', 'N/A']);
+  expect(result['Std. Dev. (sample)']).toEqual(['1.82', 'N/A']);
   expect(result.Mode).toEqual(['0, 4', 'N/A']);
   expect(result['Mode count']).toEqual(['6', 'N/A']);
 });

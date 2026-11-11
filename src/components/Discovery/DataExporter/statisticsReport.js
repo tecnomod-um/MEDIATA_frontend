@@ -1,9 +1,9 @@
 import { tableExportFeatures } from "../CombinedStatistics/statisticsTableData";
-import { featureArrays, sourceKey, summaryConventions } from "../CombinedStatistics/combinedStatistics";
+import { featureArrays, sourceKey } from "../CombinedStatistics/combinedStatistics";
+import { sampleStandardDeviation } from "../CombinedStatistics/numericalSummary";
 import { selectionKey, sourceFeatureSelection } from "../featureSelection";
-import { combinedFilter, sourceFilter } from "../FilterModal/appliedFilters";
-import { relationshipStatisticsRows, relationshipConventions } from "../discoveryStatistics";
-import { numericalMethods } from "../CombinedStatistics/numericalSummary";
+import { sourceFilter } from "../FilterModal/appliedFilters";
+import { relationshipStatistics } from "../discoveryStatistics";
 
 export function exportFeatures(data, sourceData, selectedEntries = [], selectedOnly = false) {
   const features = Object.entries(featureArrays).flatMap(([type, key]) => (data?.[key] || []).map(feature => ({ ...feature, type })));
@@ -16,117 +16,159 @@ export function exportFeatures(data, sourceData, selectedEntries = [], selectedO
     : members.some(member => selectionKey(member) === selectionKey(feature))));
 }
 
-const sourceIdentity = source => [source?.nodeName || source?.nodeId || "", source?.fileName || "", String(source?.nodeId ?? "")];
-const featureKey = feature => JSON.stringify([sourceKey(feature), feature.originalName || feature.featureName]);
+const sourceColumn = feature => feature.originalName || feature.featureName;
+const siteKey = source => String(source.nodeId ?? source.nodeName ?? "");
 const finite = value => typeof value === "number" && !Number.isFinite(value) ? null : value ?? null;
+const sourceParts = feature => feature.combinedSummary?.contributions || [];
 
-function localFeature(source, column) {
-  for (const [type, key] of Object.entries(featureArrays)) {
-    const feature = (source[key] || []).find(feature => feature.featureName === column);
-    if (feature) return { ...feature, ...Object.fromEntries(["nodeId", "nodeName", "fileName"].map(key => [key, source[key]])), type, originalName: column };
+function exportSiteLabels(sources) {
+  const names = new Map(sources.map(source => [siteKey(source), source.nodeName || "Unnamed site"]));
+  const reserved = new Set(names.values());
+  const used = new Set();
+  for (const [key, name] of names) {
+    let label = name;
+    if (used.has(name)) {
+      let suffix = 2;
+      do { label = `${name} (${suffix++})`; } while (reserved.has(label) || used.has(label));
+    }
+    names.set(key, label);
+    used.add(label);
   }
-  return null;
+  return names;
+}
+
+const identityHeaders = ["Feature", "Site", "Dataset"];
+const countHeaders = ["Non-missing count", "Missing count", "Missing %"];
+const quartileHeaders = ["Min", "Q1 (25%)", "Median (50%)", "Q3 (75%)", "Max"];
+
+const summaryTables = {
+  continuous: {
+    name: "Continuous statistics",
+    headers: ["Mean", "Std. Dev. (sample)", ...quartileHeaders, "Mode", "Mode count", "Mode %",
+      "Skewness", "Excess kurtosis", "Mean 95% CI lower", "Mean 95% CI upper"],
+  },
+  categorical: {
+    name: "Categorical statistics",
+    headers: ["Distinct categories", "Mode", "Mode count", "Mode %", "2nd mode", "2nd mode count", "2nd mode %"],
+  },
+  date: {
+    name: "Date statistics",
+    headers: ["Mean date", "Std. Dev. (days, population)", ...quartileHeaders],
+  },
+};
+
+function summaryRow(summary, type, pooled) {
+  const value = field => summary.unavailable ? null : finite(summary[field]);
+  const quantiles = ["min", "q1", "median", "q3", "max"].map(value);
+  const counts = ["count", "missing", "percentMissing"].map(value);
+  if (type === "categorical") {
+    const categories = summary.unavailable ? [] : summary.categories || [];
+    const mode = category => [category?.value ?? null, category?.count ?? null, finite(category?.percent)];
+    return { values: [...counts, summary.unavailable ? null : categories.length, ...mode(categories[0]), ...mode(categories[1])],
+      note: summary.unavailable };
+  }
+  if (type === "date") return { values: [...counts, value("mean"), value("stdDev"), ...quantiles], note: summary.unavailable };
+
+  const modes = summary.unavailable ? [] : (summary.modes || []).filter(Number.isFinite);
+  const modeCount = value("modeFrequency");
+  const sampleSd = value("sampleStdDev") ?? sampleStandardDeviation(value("count"), value("stdDev"));
+  const note = summary.unavailable || [
+    pooled && summary.q1 == null ? "Pooled quartiles unavailable" : "",
+    !modes.length && summary.modeStatus && summary.modeStatus !== "Available" ? `Mode: ${summary.modeStatus}` : "",
+  ].filter(Boolean).join(". ");
+  return {
+    values: [...counts, value("mean"), sampleSd, ...quantiles, modes.length > 1 ? modes.join(", ") : modes[0] ?? null,
+      modeCount, modeCount != null && summary.count > 0 ? 100 * modeCount / summary.count : null,
+      ...["skewness", "kurtosis", "meanCiLower", "meanCiUpper"].map(value)],
+    note,
+  };
+}
+
+function table(name, headers, entries) {
+  const hasNotes = entries.some(entry => entry.note);
+  return { name, rows: [
+    hasNotes ? [...headers, "Notes"] : headers,
+    ...entries.map(({ row, note }) => hasNotes ? [...row, note || null] : row),
+  ] };
+}
+
+const relationshipNames = {
+  covariances: "Covariance",
+  pearsonCorrelations: "Pearson correlation",
+  spearmanCorrelations: "Spearman correlation",
+  chiSquarePValue: "Chi-square p-value",
+};
+
+function relationshipsTable(data, sourceLabel) {
+  const entries = [];
+  const seen = new Set();
+  for (const [statistics, included] of data) {
+    if (!statistics) continue;
+    const byName = new Map(included.map(feature => [feature.featureName, feature]));
+    for (const { kind, left, right, value, detail } of relationshipStatistics(statistics)) {
+      const x = byName.get(left), y = byName.get(right);
+      if (!x || !y) continue;
+      const key = JSON.stringify([kind, ...[selectionKey(x), selectionKey(y)].sort()]);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const label = feature => feature.pooled ? `${sourceColumn(feature)} (combined)` : sourceColumn(feature);
+      const sources = detail?.contributingSources || [];
+      entries.push({
+        row: [relationshipNames[kind], label(x), label(y), finite(value), finite(detail?.count), sources.map(sourceLabel).join("; "),
+          finite(detail?.statistic), finite(detail?.degreesOfFreedom)],
+        note: detail?.reason,
+      });
+    }
+  }
+  if (!entries.length) return null;
+  const headers = ["Statistic", "Feature 1", "Feature 2", "Value", "Paired count", "Datasets"];
+  if (entries.some(({ row }) => row[0] === relationshipNames.chiSquarePValue)) headers.push("Chi-square statistic", "Degrees of freedom");
+  else entries.forEach(entry => { entry.row = entry.row.slice(0, headers.length); });
+  return table("Relationships", headers, entries);
 }
 
 export function buildStatisticsReport({ data, sourceData, selectedEntries = [], appliedFilters, relationships,
-  selectedOnly = false, includeBreakdown = true, includeRelationships = false, createdAt = new Date().toISOString() }) {
+  selectedOnly = false, includeBreakdown = true, includeRelationships = false }) {
   const features = exportFeatures(data, sourceData, selectedEntries, selectedOnly);
   if (!features.length) throw new Error("There are no features in this export scope.");
-  const summaries = [], frequencies = [], modes = [], histograms = [], contributions = [], locals = new Map();
-  const writeFeature = feature => {
+  const hasCombined = features.some(feature => feature.pooled);
+  const memberKeys = hasCombined && includeBreakdown
+    ? new Set(sourceFeatureSelection(features, sourceData).map(selectionKey)) : new Set();
+  const local = exportFeatures(sourceData).filter(feature => memberKeys.has(selectionKey(feature)));
+  const visibleKeys = new Set(features.map(selectionKey));
+  const exported = [...features, ...local.filter(feature => !visibleKeys.has(selectionKey(feature)))];
+  const sources = new Map(exported.flatMap(feature => feature.pooled ? sourceParts(feature).map(part => part.source) : [feature])
+    .map(source => [sourceKey(source), source]));
+  const labels = exportSiteLabels([...sources.values()]);
+  const site = source => labels.get(siteKey(source)) || source.nodeName || "Unnamed site";
+  const sourceLabel = source => `${site(source)} / ${source.fileName}`;
+  const featureRows = [];
+  const summaries = { continuous: [], categorical: [], date: [] };
+
+  for (const feature of exported) {
+    const name = sourceColumn(feature);
+    const [siteName, dataset] = feature.pooled ? [null, "Combined"] : [site(feature), feature.fileName];
     const summary = tableExportFeatures({ [featureArrays[feature.type]]: [feature] })[0];
-    const parts = summary.contributions || [];
-    const pooled = Boolean(feature.pooled);
-    const scope = pooled ? "Pooled" : "Dataset";
-    const identity = pooled ? ["", "", ""] : sourceIdentity(feature);
-    const name = pooled ? feature.featureName : feature.originalName || feature.featureName;
-    const cohort = pooled ? combinedFilter(appliedFilters, parts.map(part => part.source)) || "All records"
-      : sourceFilter(appliedFilters, feature) || "All records";
-    const unavailable = summary.unavailable;
-    const value = field => unavailable ? null : finite(summary[field]);
-    const categories = unavailable ? [] : summary.categories || [];
-    const status = unavailable || (pooled && summary.type === "continuous" && summary.q1 == null
-      ? "Available; pooled quartiles unavailable" : "Available");
-    const numerical = summary.type === "continuous";
-    const modalValues = unavailable ? [] : summary.modes || [];
-    const modeCount = numerical ? value("modeFrequency") : categories[0]?.count ?? null;
-    summaries.push([name, summary.type, scope, ...identity, value("count"), value("missing"), value("percentMissing"),
-      value("mean"), value("stdDev"), value("min"), value("q1"), value("median"), value("q3"), value("max"),
-      numerical ? modalValues[0] ?? null : categories[0]?.value ?? null, modeCount,
-      numerical ? modeCount == null ? null : 100 * modeCount / summary.count : categories[0]?.percent ?? null,
-      numerical ? unavailable || summary.modeStatus || "Unavailable" : null,
-      numerical ? value("skewness") : null, numerical ? value("kurtosis") : null, numerical ? value("sampleStdDev") : null,
-      numerical ? value("meanCiLower") : null, numerical ? value("meanCiUpper") : null,
-      !unavailable && summary.type === "categorical" ? categories.length : null,
-      categories[1]?.value ?? null, categories[1]?.count ?? null, categories[1]?.percent ?? null,
-      status, cohort, summary.includedSources, summary.totalSources, summaryConventions[summary.type]]);
-    if (numerical) modalValues.forEach(mode => modes.push([name, scope, ...identity, mode, modeCount,
-      modeCount == null ? null : 100 * modeCount / summary.count, cohort]));
-    categories.forEach(category => frequencies.push([name, scope, ...identity, category.value, category.count, category.percent, cohort]));
-    if (!pooled && !unavailable) {
-      if (feature.type === "date") Object.entries(feature.dateHistogram || {}).sort(([a], [b]) => a.localeCompare(b))
-        .forEach(([day, count]) => histograms.push([name, ...identity, "Date", day, count, "Available", cohort]));
-      else if (Array.isArray(feature.histogram)) {
-        if (!feature.histogram.length) histograms.push([name, ...identity, "Numerical", null, null, "Histogram unavailable", cohort]);
-        else feature.histogram.forEach((count, index) => histograms.push([name, ...identity, "Numerical", feature.binRanges?.[index] ?? null,
-          finite(count), feature.histogramStatus === "COARSENED" ? "Coarsened bins" : "Available", cohort]));
-      }
-    }
-    parts.forEach(part => {
-      const column = part.columnName || part.feature?.originalName || part.feature?.featureName || feature.originalName || feature.featureName;
-      contributions.push([name, scope, ...sourceIdentity(part.source), column, part.feature?.count ?? null,
-        part.feature?.missingValuesCount ?? null, sourceFilter(appliedFilters, part.source) || "All records", part.status || (part.feature ? "Included" : "Unavailable")]);
-      if (pooled && includeBreakdown && part.feature) {
-        const local = localFeature(part.source, column);
-        if (local) locals.set(featureKey(local), local);
-      }
-    });
-  };
-  features.forEach(writeFeature);
-  const existing = new Set(features.filter(feature => !feature.pooled).map(featureKey));
-  for (const [key, local] of locals) if (!existing.has(key)) writeFeature(local);
-  const sheets = [
-    { name: "Feature summaries", rows: [["Feature", "Type", "Scope", "Site", "Dataset", "Node ID", "Non-missing count", "Missing count", "Missing %",
-      "Mean", "Population SD", "Min", "Q1", "Median", "Q3", "Max", "Mode", "Mode count", "Mode %", "Mode status",
-      "Skewness", "Kurtosis", "Sample SD", "Mean 95% CI lower", "Mean 95% CI upper", "Cardinality",
-      "2nd Mode", "2nd Mode count", "2nd Mode %", "Status", "Cohort",
-      "Datasets included", "Datasets expected", "Methods"], ...summaries] },
-  ];
-  if (frequencies.length) sheets.push({ name: "Category frequencies", rows: [["Feature", "Scope", "Site", "Dataset", "Node ID", "Category", "Count", "Percent %", "Cohort"], ...frequencies] });
-  if (modes.length) sheets.push({ name: "Numerical modes", rows: [["Feature", "Scope", "Site", "Dataset", "Node ID", "Mode", "Count", "Percent %", "Cohort"], ...modes] });
-  if (histograms.length) sheets.push({ name: "Source distributions", rows: [["Feature", "Site", "Dataset", "Node ID", "Type", "Bin or date", "Count", "Status", "Cohort"], ...histograms] });
-  let relationshipCount = 0;
+    const { values, note } = summaryRow(summary, feature.type, feature.pooled);
+    const mapping = feature.pooled ? sourceParts(feature).map(part =>
+      `${sourceLabel(part.source)}: ${part.columnName || part.feature?.featureName || name}`).join("; ") : null;
+    featureRows.push([name, feature.type, siteName, dataset, ...(hasCombined ? [mapping] : [])]);
+    summaries[feature.type].push({ row: [name, siteName, dataset, ...values], note });
+  }
+
+  const sheets = [{ name: "Features", rows: [["Feature", "Type", "Site", "Dataset", ...(hasCombined ? ["Merged from"] : [])], ...featureRows] }];
+  for (const [type, { name, headers }] of Object.entries(summaryTables)) {
+    if (summaries[type].length) sheets.push(table(name, [...identityHeaders, ...countHeaders, ...headers], summaries[type]));
+  }
   if (includeRelationships) {
     if (!relationships) throw new Error("Relationship statistics are not ready yet.");
-    const names = new Set(features.map(feature => feature.featureName));
-    const rows = relationshipStatisticsRows(relationships, {}, appliedFilters);
-    const selectedRows = rows.slice(1).filter(row => names.has(row[1]) && names.has(row[2]));
-    if (includeBreakdown && features.some(feature => feature.pooled)) {
-      const localNames = new Set(sourceFeatureSelection(features, sourceData).map(feature => feature.featureName));
-      selectedRows.push(...relationshipStatisticsRows(sourceData, {}, appliedFilters).slice(1).filter(row => localNames.has(row[1]) && localNames.has(row[2])));
-    }
-    const unique = [...new Map(selectedRows.map(row => [JSON.stringify(row.slice(0, 3)), row])).values()];
-    relationshipCount = unique.length;
-    if (relationshipCount) sheets.push({ name: "Relationships", rows: [rows[0], ...unique] });
+    const sheet = relationshipsTable([[relationships, features], [sourceData, local]], sourceLabel);
+    if (sheet) sheets.push(sheet);
   }
-  sheets.push({ name: "Sources and filters", rows: [["Feature", "Scope", "Site", "Dataset", "Node ID", "Source feature", "Non-missing count", "Missing count", "Cohort", "Status"], ...contributions] });
-  sheets.push({ name: "Report details", rows: [["Topic", "Details"],
-    ["Created (UTC)", createdAt], ["Feature scope", selectedOnly ? "Selected features" : "All visible features"],
-    ["View", features.some(feature => feature.pooled) ? "Combined feature statistics" : "Individual dataset statistics"],
-    ["Dataset breakdown", includeBreakdown ? "Included for pooled features" : "Not included"],
-    ["Relationships", includeRelationships ? `${relationshipCount} results; unavailable results retain their status. Only pairs of different exported features are included.` : "Not requested"],
-    ["Observations", "Counts refer to dataset records. Patients are not deduplicated across datasets or visits."],
-    ["Missing values", "Excluded separately for each feature. Relationship statistics use paired non-missing observations."],
-    ["Unavailable results", "Blank cells are unavailable, not zero. Status explains withheld summaries or unavailable pooled quartiles."],
-    ["Precision", "Values retain the precision supplied by the nodes; spreadsheet display formatting does not round stored values."],
-    ["Continuous features", summaryConventions.continuous], ["Dates", summaryConventions.date],
-    ["Categorical features", summaryConventions.categorical],
-    ["Mode ties", "The summary shows the first mode. Numerical modes and Category frequencies retain all released ties; numerical modes are ordered by value."],
-    ...Object.entries(numericalMethods),
-    ["Distributions", "Source bins and date frequencies are preserved as released by the nodes. Independently binned histograms are never added into a fabricated pooled histogram."],
-    ["Pooled quartiles", "Computed only from complete disclosure-approved value frequencies. Local quartiles are never averaged."],
-    ["Percentile labels", "Q1 = 25%; median = 50%; Q3 = 75%. Numerical quantiles use linear interpolation (R7), matching the default pandas describe percentiles."],
-    ...includeRelationships ? Object.entries(relationshipConventions) : [],
-  ] });
+  const filters = [...sources.values()].flatMap(source => {
+    const filter = sourceFilter(appliedFilters, source);
+    return filter ? [[site(source), source.fileName, filter]] : [];
+  });
+  if (filters.length) sheets.push({ name: "Filters", rows: [["Site", "Dataset", "Filter"], ...filters] });
   return sheets;
 }

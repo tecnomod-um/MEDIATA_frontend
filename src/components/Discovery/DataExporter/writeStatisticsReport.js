@@ -7,7 +7,7 @@ const headerStyle = { fontWeight: "bold", backgroundColor: "#0b2a33", textColor:
 export function workbookSheets(sheets) {
   return sheets.map(sheet => ({
     sheet: sheet.name,
-    stickyRowsCount: 1, stickyColumnsCount: sheet.name === "Report details" ? 1 : 3,
+    stickyRowsCount: 1, stickyColumnsCount: 1,
     showGridLines: false,
     columns: sheet.rows[0].map((header, column) => ({ width: Math.min(46, Math.max(15, String(header).length + 2,
       ...sheet.rows.slice(1, 100).map(row => Math.min(40, String(row[column] ?? "").length + 2)))) })),

@@ -3,7 +3,7 @@
 .title:global(.MuiDialogTitle-root) { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-color); font-size: var(--font-size-lg); font-weight: 600; }
 .title :global(.MuiIconButton-root) { color: var(--text-color-secondary); }
 .content:global(.MuiDialogContent-root) { padding: var(--space-4); scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); }
-.description { margin: 0 0 var(--space-4); color: var(--text-color-secondary); font-size: var(--font-size-sm); line-height: 1.5; }
+.title:global(.MuiDialogTitle-root) + .content:global(.MuiDialogContent-root) { padding-top: var(--space-4); }
 .settings { display: grid; grid-template-columns: 1fr 1.1fr; gap: var(--space-4); }
 .settings fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .settings legend, .format { font-size: var(--font-size-sm); font-weight: 600; }
@@ -22,8 +22,20 @@
 .actions :global(.MuiButton-root) { text-transform: none; color: var(--text-color-primary); }
 .actions :global(.MuiButton-contained) { background: var(--button-color); color: var(--text-color-on-darkbg); }
 .actions :global(.Mui-disabled) { opacity: .5; }
-.progress { display: flex; align-items: center; gap: var(--space-2); margin: var(--space-3) 0 0; font-size: var(--font-size-sm); color: var(--text-color-secondary); }
-.spinner { width: var(--spinner-size-sm); height: var(--spinner-size-sm); border: var(--spinner-border-width-sm) solid var(--spinner-border-base-secondary); border-top-color: var(--spinner-border-top-secondary); border-radius: 50%; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+.download:global(.MuiButton-root) { position: relative; flex-shrink: 0; }
+.hiddenLabel { visibility: hidden; }
+.downloadProgress:global(.MuiLinearProgress-root) {
+  position: absolute;
+  inset-inline: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .25);
+}
+.downloadProgress :global(.MuiLinearProgress-bar) {
+  border-radius: inherit;
+  background: var(--text-color-on-darkbg);
+}
 :global(body.dark-mode) .dialog { color-scheme: dark; }
 @media (max-width: 480px) { .settings { grid-template-columns: 1fr; gap: var(--space-3); } .actions:global(.MuiDialogActions-root) { flex-wrap: wrap; } .actions > span { flex-basis: 100%; } }

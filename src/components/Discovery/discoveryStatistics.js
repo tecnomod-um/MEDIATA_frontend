@@ -1,6 +1,5 @@
 import { sourceKey, sourceLabel, sourceFileLabel } from "./CombinedStatistics/combinedStatistics.js";
 import { columnArrays } from "./CombinedStatistics/columnMappings.js";
-import { combinedFilter } from "./FilterModal/appliedFilters.js";
 
 export const relationshipArrays = ["covariances", "pearsonCorrelations", "spearmanCorrelations"];
 const relationshipType = {covariances:"covariance", pearsonCorrelations:"pearson", spearmanCorrelations:"spearman"};
@@ -86,30 +85,18 @@ export function updateSourceFeature(source, change) {
   return {...change.response, nodeId: source.nodeId, nodeName: source.nodeName, fileName: source.fileName};
 }
 
-export function relationshipStatisticsRows(data, featureFilters = {}, appliedFilters) {
-  const rows = [["Statistic", "Feature 1", "Feature 2", "Value", "Cohort", "Paired count", "Contributing datasets", "Status", "Chi-square statistic", "Degrees of freedom", "Methods", "Scope", "Node IDs", "Dataset files"]];
-  const identity = detail => [detail?.pooled || detail?.contributingSources?.length > 1 ? "Pooled" : detail?.reason && !detail?.contributingSources?.length ? "Unavailable" : "Dataset",
-    (detail?.contributingSources || []).map(source => source.nodeId).join("; "),
-    (detail?.contributingSources || []).map(source => source.fileName).join("; ")];
-  for (const key of relationshipArrays) {
-    for (const [row, values] of Object.entries(data[key] || {})) {
-      for (const [column, value] of Object.entries(values)) {
-        if (row === column) continue;
-        if (row.localeCompare(column) > 0 && Object.hasOwn(data[key]?.[column] || {}, row)) continue; // Each symmetric pair appears once.
-        const type = key === "covariances" ? "covariance" : key === "pearsonCorrelations" ? "pearson" : "spearman";
-        const detail = data.relationshipDetails?.[type]?.[row]?.[column];
-        const cohort = appliedFilters && detail?.contributingSources
-          ? combinedFilter(appliedFilters, detail.contributingSources) || "All records" : featureFilters[row] || "All records";
-        rows.push([key, row, column, Number.isFinite(value) ? value : "", cohort, detail?.count,
-          detail?.datasets?.join("; "), detail?.reason || (detail?.pooled ? "Combined" : "Individual dataset"), "", "", relationshipConventions[key], ...identity(detail)]);
+export function* relationshipStatistics(data) {
+  for (const kind of relationshipArrays) {
+    for (const [left, values] of Object.entries(data[kind] || {})) {
+      for (const [right, value] of Object.entries(values)) {
+        if (left === right) continue;
+        if (left.localeCompare(right) > 0 && Object.hasOwn(data[kind]?.[right] || {}, left)) continue;
+        const detail = data.relationshipDetails?.[relationshipType[kind]]?.[left]?.[right];
+        yield { kind, left, right, value, detail };
       }
     }
   }
   for (const test of data.chiSquareTest || []) {
-    rows.push(["chiSquarePValue", test.category1, test.category2,
-      Number.isFinite(test.pvalue) ? test.pvalue : "", appliedFilters && test.contributingSources
-        ? combinedFilter(appliedFilters, test.contributingSources) || "All records" : featureFilters[test.category1] || "All records", test.count,
-      test.datasets?.join("; "), test.reason || (test.pooled ? "Combined" : "Individual dataset"), test.statistic, test.degreesOfFreedom, relationshipConventions.chiSquarePValue, ...identity(test)]);
+    yield { kind: "chiSquarePValue", left: test.category1, right: test.category2, value: test.pvalue, detail: test };
   }
-  return rows;
 }

@@ -73,6 +73,32 @@ describe("combined cohort statistics", () => {
     const row = buildCombinedStatistics([date(1, { "2020-01-01": 2 }, 2), date(2, { "2020-01-05": 2 }, 2)], [true, true]).features[0];
     expect(row).toMatchObject({ mean: "2020-01-03", stdDev: 2, median: "2020-01-03", min: "2020-01-01", max: "2020-01-05" });
   });
+  it("keeps an exact whole-day mean and matches the raw date deviation across unequal sites", () => {
+    const counts = [13, 19, 18, 8, 14, 16, 7, 7];
+    const dates = counts.map((count, index) => [`2024-10-${String(4 + index).padStart(2, "0")}`, count]);
+    const sites = [dates.slice(0, 4), dates.slice(4)].map((entries, index) => ({
+      ...source(index, []),
+      dateFeatures: [{ featureName: "Date", count: entries.reduce((sum, [, count]) => sum + count, 0),
+        missingValuesCount: index, dateHistogram: Object.fromEntries(entries) }],
+    }));
+    const rawDays = counts.flatMap((count, index) => Array(count).fill(4 + index));
+    const direct = summary("Date", rawDays);
+    const row = buildCombinedStatistics(sites, [true, true]).features[0];
+    expect(row).toMatchObject({ count: direct.count, missing: 1, mean: "2024-10-07",
+      q1: "2024-10-05", median: "2024-10-07", q3: "2024-10-09" });
+    expect(row.stdDev).toBeCloseTo(direct.stdDev, 10);
+  });
+  it.each([
+    [{ "2024-02-30": 6 }, "Incomplete date distribution"],
+    [{ "2024-03-01": 5 }, "Incomplete distribution in the returned summaries"],
+  ])("withholds pooled dates for invalid or incomplete source frequencies", (histogram, reason) => {
+    const site = (id, dateHistogram) => ({ ...source(id, []), dateFeatures: [
+      { featureName: "Date", count: 6, missingValuesCount: 0, dateHistogram },
+    ] });
+    const row = buildCombinedStatistics([site(1, { "2024-02-29": 6 }), site(2, histogram)], [true, true]).features[0];
+    expect(row.unavailable).toBe(reason);
+    expect(row.mean).toBeUndefined();
+  });
   it("excludes zero-count labels from observed categorical cardinality and date extrema", () => {
     const category = { nodeId: 1, fileName: 'a.csv', categoricalFeatures: [{ featureName: 'Group', count: 12,
       missingValuesCount: 0, categoryCounts: { NeverObserved: 0, A: 6, B: 6 } }] };
