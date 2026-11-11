@@ -29,7 +29,7 @@ vi.mock('./nodeAxiosSetup', () => {
 
 describe('petitionHandler', () => {
   it('refuses legacy statistical conventions before displaying, filtering or pooling results', async () => {
-    const data=[{fileName:'legacy.csv',disclosurePolicyVersion:1,continuousFeatures:[]}];
+    const data=[{fileName:'legacy.csv',disclosurePolicyVersion:2,continuousFeatures:[]}];
     nodeAxiosInstance.post.mockResolvedValue({status:200,data});
     await expect(petitionHandler.filterMultipleFiles({multipleFileFilters:[]})).rejects.toMatchObject({code:'STATISTICS_UPDATE_REQUIRED'});
     await expect(petitionHandler.processSelectedDatasets(['legacy.csv'])).rejects.toMatchObject({code:'STATISTICS_UPDATE_REQUIRED'});
@@ -39,7 +39,7 @@ describe('petitionHandler', () => {
   it('polls asynchronous typed refreshes at the same explicitly selected node', async () => {
     const service='https://node.example';
     nodeAxiosInstance.post.mockResolvedValueOnce({status:202,data:{jobId:'refresh'}});
-    nodeAxiosInstance.get.mockResolvedValueOnce({data:{state:'DONE'}}).mockResolvedValueOnce({data:[{fileName:'large.csv',disclosurePolicyVersion:1,statisticsConventionVersion:1,continuousFeatures:[]}]});
+    nodeAxiosInstance.get.mockResolvedValueOnce({data:{state:'DONE'}}).mockResolvedValueOnce({data:[{fileName:'large.csv',disclosurePolicyVersion:2,statisticsConventionVersion:1,continuousFeatures:[]}]});
     const result=await petitionHandler.filterMultipleFiles({multipleFileFilters:[]},service);
     expect(result[0].fileName).toBe('large.csv');
     expect(nodeAxiosInstance.get).toHaveBeenNthCalledWith(1,'/taniwha/api/data/processList/status/refresh',{baseURL:service});
@@ -62,7 +62,7 @@ describe('petitionHandler', () => {
   it('reports rejected numerical conversion as a calculation error rather than an outdated node', async () => {
     nodeAxiosInstance.post.mockResolvedValue({data: [{
       message: 'This field cannot be converted to continuous without an explicit numerical mapping.',
-      continuousFeatures: [], disclosurePolicyVersion: 0,
+      continuousFeatures: [], disclosurePolicyVersion: 1,
     }]});
     await expect(petitionHandler.filterMultipleFiles({multipleFileFilters:[{fileName:'cohort.csv',featureTypes:{Label:'continuous'}}]}))
       .rejects.toMatchObject({code: 'ANALYTICS_FAILED', message: expect.stringContaining('explicit numerical mapping')});
