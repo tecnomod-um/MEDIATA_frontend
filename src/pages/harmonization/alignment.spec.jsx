@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Alignment from './alignment';
 import { useNode } from '../../context/nodeContext';
@@ -18,6 +18,7 @@ import { useLocation } from 'react-router-dom';
 import { updateNodeAxiosBaseURL } from '../../util/nodeAxiosSetup';
 import { generateDistinctColors } from '../../util/colors';
 import { vi } from "vitest";
+import { toast } from 'react-toastify';
 
 const capturedMappingsResultProps = vi.hoisted(() => ({ current: {} }));
 const capturedColumnMappingProps = vi.hoisted(() => ({ current: {} }));
@@ -123,7 +124,7 @@ vi.mock('./alignment.module.css', () => ({
 
 vi.mock('../../components/Common/FileExplorer/fileExplorer', () => ({
   __esModule: true,
-  default: ({ nodes, category, isOpen, preSelectedFiles, autoProcess, onFilesOpened }) => (
+  default: ({ nodes, category, isOpen, preSelectedFiles, autoProcess, onFilesSelected }) => (
     <div
       data-testid="FileExplorer"
       data-nodes={JSON.stringify(nodes)}
@@ -131,7 +132,7 @@ vi.mock('../../components/Common/FileExplorer/fileExplorer', () => ({
       data-is-open={String(isOpen)}
       data-pre-selected-files={JSON.stringify(preSelectedFiles)}
       data-auto-process={String(autoProcess)}
-      onClick={() => onFilesOpened && onFilesOpened([])}
+      onClick={() => onFilesSelected?.({ node1: ["picker.csv"] })}
     />
   ),
 }));
@@ -233,7 +234,7 @@ describe('Alignment Page', () => {
       render(<Alignment />);
     });
     await waitFor(() => {
-      expect(updateNodeAxiosBaseURL).toHaveBeenCalledTimes(nodes.length);
+      expect(getNodeElements.mock.calls).toEqual(nodes.map((node) => [node.serviceUrl]));
     });
 
     await waitFor(() => {
@@ -251,7 +252,7 @@ describe('Alignment Page', () => {
     await act(async () => {
       render(<Alignment />);
     });
-    await waitFor(() => expect(fetchElementFile).toHaveBeenCalledWith('file.csv'));
+    await waitFor(() => expect(fetchElementFile).toHaveBeenCalledWith('file.csv', 'url1'));
     expect(await screen.findByTestId('ColumnSearchList')).toBeInTheDocument();
     expect(await screen.findByTestId('ColumnMapping')).toBeInTheDocument();
     expect(await screen.findByTestId('MappingsResult')).toBeInTheDocument();
@@ -268,7 +269,7 @@ describe('Alignment Page', () => {
     await act(async () => {
       render(<Alignment />);
     });
-    await waitFor(() => expect(fetchElementFile).toHaveBeenCalledWith('multi.csv'));
+    await waitFor(() => expect(fetchElementFile).toHaveBeenCalledWith('multi.csv', 'url1'));
     expect(await screen.findByTestId('ColumnSearchList')).toBeInTheDocument();
   });
 
@@ -306,13 +307,10 @@ describe('Alignment Page', () => {
     getNodeElements.mockResolvedValue(['picker.csv']);
     fetchElementFile.mockResolvedValue('pickerCol,x,y');
 
-    let rerenderFn;
-    await act(async () => {
-      const result = render(<Alignment />);
-      rerenderFn = result.rerender;
-    });
-    expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
-    
+    render(<Alignment />);
+    fireEvent.click(screen.getByTestId('FileExplorer'));
+    await waitFor(() => expect(fetchElementFile).toHaveBeenCalledWith('picker.csv', 'url1'));
+    expect(await screen.findByTestId('ColumnMapping')).toBeInTheDocument();
   });
 
   test('shows success toast when processing succeeds', async () => {
@@ -697,7 +695,7 @@ describe('Alignment Page', () => {
       render(<Alignment />);
 
     });
-    await waitFor(() => expect(updateNodeAxiosBaseURL).toHaveBeenCalledWith(''));
+    await waitFor(() => expect(getNodeElements).toHaveBeenCalledWith(''));
   });
 
   test('handles columns with special characters in values', async () => {
@@ -836,7 +834,7 @@ describe('Alignment Page', () => {
       render(<Alignment />);
     });
 
-    await waitFor(() => expect(fetchElementFile).toHaveBeenCalledWith('quoted.csv'));
+    await waitFor(() => expect(fetchElementFile).toHaveBeenCalledWith('quoted.csv', 'url1'));
     await waitFor(() =>
       expect(capturedMappingsResultProps.current.columnsData?.length).toBeGreaterThan(0)
     );
@@ -1335,28 +1333,11 @@ describe('Alignment Page', () => {
     });
     fetchElementFile.mockRejectedValue(new Error('Fetch failed'));
   
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-  
-    await act(async () => {
-  
-      render(<Alignment />);
-  
-    });
-  
-    await waitFor(() => {
-      expect(fetchElementFile).toHaveBeenCalledWith('bad.csv');
-    });
-  
-    await waitFor(() => {
-      expect(errorSpy).toHaveBeenCalledWith(
-        'Error processing element files:',
-        expect.any(Error)
-      );
-    });
-  
+    render(<Alignment />);
+
+    await waitFor(() => expect(fetchElementFile).toHaveBeenCalledWith('bad.csv', 'url1'));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Fetch failed'));
     expect(screen.getByTestId('FileExplorer')).toBeInTheDocument();
-  
-    errorSpy.mockRestore();
   });
 
   test('parseCSV handles empty lines correctly', async () => {
