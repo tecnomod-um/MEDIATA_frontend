@@ -81,12 +81,13 @@ nodeAxiosInstance.interceptors.request.use(
     const tokensMapping = JSON.parse(localStorage.getItem("jwtNodeTokens") || "{}");
     const token = tokensMapping[config.baseURL];
     const sessionToken = localStorage.getItem("jwtToken");
+    const isValidation = isNodeValidationRequest(config);
 
-    if (isProxyBaseURL(config.baseURL)) {
+    if (isValidation || isProxyBaseURL(config.baseURL)) {
       if (sessionToken) {
         config.headers["Authorization"] = `Bearer ${sessionToken}`;
       }
-      if (token && !isNodeValidationRequest(config)) {
+      if (token && !isValidation) {
         config.headers[NODE_PROXY_HEADER] = `Bearer ${token}`;
       } else {
         delete config.headers[NODE_PROXY_HEADER];

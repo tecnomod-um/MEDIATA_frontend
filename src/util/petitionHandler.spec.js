@@ -371,6 +371,9 @@ describe('petitionHandler', () => {
 
       const tokens = JSON.parse(localStorage.getItem('jwtNodeTokens'));
       expect(tokens[proxyBaseUrl]).toBe('PROXY');
+      expect(nodeAxiosInstance.post).toHaveBeenCalledWith(
+        '/taniwha/node/validate', { kerberosToken: 'kt' }, { baseURL: proxyBaseUrl }
+      );
     });
 
     it('throws error on non-200 status', async () => {

@@ -97,6 +97,18 @@ describe('nodeAxiosSetup', () => {
       expect(config.headers.Authorization).toBe('Bearer node-token');
     });
 
+    it('uses the central session when reconnecting directly to a node with a cached token', () => {
+      const baseURL = 'https://node.example';
+      localStorage.setItem('jwtToken', 'session-token');
+      localStorage.setItem('jwtNodeTokens', JSON.stringify({ [baseURL]: 'old-node-token' }));
+      const config = { baseURL, url: '/taniwha/node/validate', headers: {} };
+
+      requestInterceptor(config);
+
+      expect(config.headers.Authorization).toBe('Bearer session-token');
+      expect(config.headers['X-Node-Authorization']).toBeUndefined();
+    });
+
     it('uses central auth plus X-Node-Authorization for proxied requests', () => {
       localStorage.setItem('jwtToken', 'session-token');
       localStorage.setItem(

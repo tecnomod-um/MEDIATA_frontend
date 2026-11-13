@@ -352,7 +352,8 @@ export const nodeAuth = async (serviceUrl, kerberosToken) => {
   try {
     const response = await nodeAxiosInstance.post(
       `/taniwha/node/validate`,
-      { kerberosToken }
+      { kerberosToken },
+      { baseURL: resolvedBaseUrl }
     );
     if (response.status === 200) {
       if (response.data.jwtNodeToken === "Unauthorized") {
