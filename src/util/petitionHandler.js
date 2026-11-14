@@ -598,9 +598,9 @@ export const getNodeFHIR = async () => {
   }
 };
 
-export const getNodeElements = async () => {
+export const getNodeElements = async (serviceUrl) => {
   try {
-    const response = await nodeAxiosInstance.get(`/taniwha/api/files/dataset_elements`);
+    const response = await nodeAxiosInstance.get(`/taniwha/api/files/dataset_elements`, ...(serviceUrl ? [{ baseURL: getResolvedNodeBaseURL(serviceUrl) }] : []));
     return response.data;
   } catch (error) {
     console.error("Error occurred while fetching datasets:", error);
@@ -626,9 +626,9 @@ export const saveDatasetElements = async (fileName, csvData, serviceUrl) => {
   }
 };
 
-export const fetchElementFile = async (fileName) => {
+export const fetchElementFile = async (fileName, serviceUrl) => {
   try {
-    const response = await nodeAxiosInstance.get(`/taniwha/api/files/dataset_elements/${encodeURIComponent(fileName)}`);
+    const response = await nodeAxiosInstance.get(`/taniwha/api/files/dataset_elements/${encodeURIComponent(fileName)}`, ...(serviceUrl ? [{ baseURL: getResolvedNodeBaseURL(serviceUrl) }] : []));
     return response.data;
   } catch (error) {
     console.error(`Error fetching element file: ${fileName}`, error);

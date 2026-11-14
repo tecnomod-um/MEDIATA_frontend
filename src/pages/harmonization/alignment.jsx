@@ -207,8 +207,7 @@ function Alignment() {
       try {
         const nodeFilesArray = await Promise.all(
           selectedNodes.map(async (node) => {
-            updateNodeAxiosBaseURL(node.serviceUrl);
-            const files = await getNodeElements();
+            const files = await getNodeElements(node.serviceUrl);
             return {
               nodeId: node.nodeId,
               nodeName: node.name,
@@ -446,50 +445,27 @@ function Alignment() {
       setProcessingStatus("processing");
 
       try {
-        let mergedCols = [...columnsData];
-
-        const allSelectedFiles = [];
-        selectedNodes.forEach((node) => {
-          const filesForNode = selectedFilenamesMapping[node.nodeId] || [];
-          filesForNode.forEach((f) => allSelectedFiles.push(f));
-        });
-
-        const fileColors = generateDistinctColors(allSelectedFiles.length);
-        let colorIndex = 0;
-
-        await Promise.all(
-          selectedNodes.map(async (node) => {
-            const filesForNode = selectedFilenamesMapping[node.nodeId] || [];
-            if (filesForNode.length === 0) return;
-            updateNodeAxiosBaseURL(node.serviceUrl);
-
-            const fileTexts = await Promise.all(
-              filesForNode.map(async (filename) => {
-                const text = await fetchElementFile(filename);
-                return { filename, text };
-              })
-            );
-
-            fileTexts.forEach((fileObj) => {
-              const { filename, text } = fileObj;
-              const parsed = parseCSV(text);
-              parsed.forEach((col) => {
-                col.color = fileColors[colorIndex];
-                col.fileName = filename;
-                col.nodeId = node.nodeId;
-              });
-              colorIndex++;
-              mergedCols = mergeColumnsData(mergedCols, parsed);
-              initializeMappings(parsed, filename, node.nodeId);
-            });
-          })
+        const selectedFiles = selectedNodes.flatMap((node) =>
+          (selectedFilenamesMapping[node.nodeId] || []).map((fileName) => ({ node, fileName }))
         );
+        const parsedFiles = await Promise.all(selectedFiles.map(async ({ node, fileName }) => {
+          const text = await fetchElementFile(fileName, node.serviceUrl);
+          return { fileName, nodeId: node.nodeId, columns: parseCSV(text) };
+        }));
+
+        const colors = generateDistinctColors(parsedFiles.length);
+        let mergedCols = [...columnsData];
+        parsedFiles.forEach(({ fileName, nodeId, columns }, index) => {
+          const coloredColumns = columns.map((column) => ({ ...column, color: colors[index], fileName, nodeId }));
+          mergedCols = mergeColumnsData(mergedCols, coloredColumns);
+          initializeMappings(coloredColumns, fileName, nodeId);
+        });
 
         setColumnsData(mergedCols);
         setProcessingStatus("idle");
       } catch (error) {
-        console.error("Error processing element files:", error);
         setProcessingStatus("error");
+        throw error;
       }
     },
     [columnsData, selectedNodes, mergeColumnsData, initializeMappings]
@@ -507,7 +483,7 @@ function Alignment() {
       nodeMapping[nodeId].push(fileName);
     }
 
-    handleProcessSelectedElements(nodeMapping);
+    handleProcessSelectedElements(nodeMapping).catch((error) => toast.error(error.message));
   }, [location.state, handleProcessSelectedElements]);
 
   const handleProcessMappings = async (selectedDatasets, currentMappings, cleanOpts) => {
@@ -1186,24 +1162,6 @@ function Alignment() {
     });
   }
 
-  const handleFilesOpened = useCallback(
-    (payload) => {
-      let nodeMapping = {};
-
-      if (Array.isArray(payload)) {
-        payload.forEach(({ nodeId, fileName }) => {
-          if (!nodeMapping[nodeId]) nodeMapping[nodeId] = [];
-          nodeMapping[nodeId].push(fileName);
-        });
-      } else if (payload && typeof payload === "object") {
-        nodeMapping = payload;
-      }
-
-      handleProcessSelectedElements(nodeMapping);
-    },
-    [handleProcessSelectedElements]
-  );
-
   const buildGroupsFromMapping = useCallback(
     (mapping, columnsData) => buildGroupsFromMappingUtil(mapping, columnsData),
     []
@@ -1292,9 +1250,7 @@ function Alignment() {
 
       for (const { nodeId, fileName } of missingRefs) {
         const node = nodeById.get(String(nodeId));
-        updateNodeAxiosBaseURL(node.serviceUrl);
-
-        const text = await fetchElementFile(fileName);
+        const text = await fetchElementFile(fileName, node.serviceUrl);
         const parsed = parseCSV(text);
 
         parsed.forEach((col) => {
@@ -1568,8 +1524,7 @@ function Alignment() {
           category="DATASET_ELEMENTS"
           isOpen={true}
           preSelectedFiles={preSelected}
-          autoProcess={!!location.state?.elementFiles?.length}
-          onFilesOpened={handleFilesOpened}
+          onFilesSelected={handleProcessSelectedElements}
         />
       )}
 
