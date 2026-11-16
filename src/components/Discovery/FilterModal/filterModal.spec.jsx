@@ -195,7 +195,7 @@ describe('<FilterModal />', () => {
     fireEvent.click(screen.getByRole('button', { name: /apply filters/i }));
 
     await waitFor(() => {
-      expect(mockFilterMultipleFiles).toHaveBeenCalledWith(expect.any(Object), 'http://node');
+      expect(mockFilterMultipleFiles).toHaveBeenCalledWith(expect.any(Object), 'http://node', expect.objectContaining({ allowWithheld: true }));
       expect(mockCloseModal).toHaveBeenCalled();
     });
   });
@@ -492,7 +492,7 @@ it('resets the prior cohort when all restored criteria are removed', async () =>
   fireEvent.click(screen.getByRole('button', { name: 'Remove criterion 1 for Amount' }));
   expect(filters.Amount).toHaveLength(1);
   fireEvent.click(screen.getByRole('button', { name: 'Reset Previous Filters' }));
-  await waitFor(() => expect(mockFilterMultipleFiles).toHaveBeenCalledWith({ multipleFileFilters: [{ fileName: 'file.csv', filters: null }] }, 'http://node'));
+  await waitFor(() => expect(mockFilterMultipleFiles).toHaveBeenCalledWith({ multipleFileFilters: [{ fileName: 'file.csv', filters: null }] }, 'http://node', expect.objectContaining({ allowWithheld: true })));
   expect(mockSetFilters).toHaveBeenCalledWith([]);
 });
 

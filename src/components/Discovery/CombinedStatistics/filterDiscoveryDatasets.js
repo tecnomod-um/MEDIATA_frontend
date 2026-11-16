@@ -1,5 +1,6 @@
 import { filterMultipleFiles } from "../../../util/petitionHandler";
 import { sourceKey } from "./combinedStatistics";
+import { sourceColumns } from "./columnMappings";
 
 export async function filterDiscoveryDatasets(results, nodes, getFilters, options) {
   const groups = new Map();
@@ -17,11 +18,29 @@ export async function filterDiscoveryDatasets(results, nodes, getFilters, option
     if (!Array.isArray(response)) throw new Error(`Invalid statistics response from ${node.name || id}`);
     return sources.map(source => {
       const matches = response.filter(item => item.fileName === source.fileName);
+      const identity = { fileName: source.fileName, nodeId: source.nodeId, nodeName: source.nodeName };
+      if (matches.length === 1 && options?.allowWithheld && matches[0].disclosureWithheld) {
+        return {
+          ...identity,
+          message: "Statistics withheld by disclosure controls.",
+          disclosureWithheld: true,
+          featureTypes: source.featureTypes,
+          omittedFeatures: sourceColumns(source).map(({ column, type }) => ({
+            featureName: column, type, reason: "Statistics withheld by disclosure controls",
+          })),
+        };
+      }
       if (matches.length !== 1 || /^(error|failed|thread interrupted|statistics withheld)/i.test(matches[0]?.message || "")) throw new Error(`Statistics unavailable for ${source.fileName} at ${node.name || id}`);
       if (Object.keys(source.featureTypes || {}).length && (matches[0].featureTypeSummaryVersion !== 1
           || JSON.stringify(Object.entries(matches[0].featureTypes || {}).sort()) !== JSON.stringify(Object.entries(source.featureTypes).sort())))
         throw new Error(`The node did not preserve feature types for ${source.fileName}. Update the node before retrying.`);
-      return { ...matches[0], fileName: source.fileName, nodeId: source.nodeId, nodeName: source.nodeName };
+      const release = matches[0];
+      const types = new Map(sourceColumns(source).map(({ column, type }) => [column, type]));
+      return { ...release, ...identity, ...(release.omittedFeatures?.length ? {
+        omittedFeatures: release.omittedFeatures.map(feature => ({
+          ...feature, type: types.get(feature.featureName) ?? null,
+        })),
+      } : {}) };
     });
   }));
   const bySource = new Map(responses.flat().map(source => [sourceKey(source), source]));

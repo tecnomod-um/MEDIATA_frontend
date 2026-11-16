@@ -6,7 +6,13 @@ import { sourceFilter } from "../FilterModal/appliedFilters";
 import { relationshipStatistics } from "../discoveryStatistics";
 
 export function exportFeatures(data, sourceData, selectedEntries = [], selectedOnly = false) {
-  const features = Object.entries(featureArrays).flatMap(([type, key]) => (data?.[key] || []).map(feature => ({ ...feature, type })));
+  const features = [
+    ...Object.entries(featureArrays).flatMap(([type, key]) => (data?.[key] || []).map(feature => ({ ...feature, type }))),
+    ...(data?.omittedFeatures || []).map(({ featureName, originalName, nodeId, nodeName, fileName, type, reason }) => ({
+      featureName, originalName, nodeId, nodeName, fileName, type: type ?? null,
+      unavailable: reason || "Statistics unavailable",
+    })),
+  ];
   if (!selectedOnly) return features;
   const selected = new Set(selectedEntries.map(selectionKey));
   const members = sourceFeatureSelection(selectedEntries, sourceData);
@@ -64,15 +70,15 @@ function summaryRow(summary, type, pooled) {
   if (type === "categorical") {
     const categories = summary.unavailable ? [] : summary.categories || [];
     const mode = category => [category?.value ?? null, category?.count ?? null, finite(category?.percent)];
-    return { values: [...counts, summary.unavailable ? null : categories.length, ...mode(categories[0]), ...mode(categories[1])],
-      note: summary.unavailable };
+    return { values: [...counts, summary.unavailable || !summary.categories ? null : categories.length, ...mode(categories[0]), ...mode(categories[1])],
+      note: summary.unavailable || summary.note };
   }
   if (type === "date") return { values: [...counts, value("mean"), value("stdDev"), ...quantiles], note: summary.unavailable };
 
   const modes = summary.unavailable ? [] : (summary.modes || []).filter(Number.isFinite);
   const modeCount = value("modeFrequency");
   const sampleSd = value("sampleStdDev") ?? sampleStandardDeviation(value("count"), value("stdDev"));
-  const note = summary.unavailable || [
+  const note = summary.unavailable || summary.note || [
     pooled && summary.q1 == null ? "Pooled quartiles unavailable" : "",
     !modes.length && summary.modeStatus && summary.modeStatus !== "Available" ? `Mode: ${summary.modeStatus}` : "",
   ].filter(Boolean).join(". ");
@@ -133,10 +139,17 @@ export function buildStatisticsReport({ data, sourceData, selectedEntries = [], 
   if (!features.length) throw new Error("There are no features in this export scope.");
   const hasCombined = features.some(feature => feature.pooled);
   const memberKeys = hasCombined && includeBreakdown
-    ? new Set(sourceFeatureSelection(features, sourceData).map(selectionKey)) : new Set();
+    ? new Set(features.filter(feature => feature.pooled && !feature.combinedSummary?.approximate).flatMap(feature => sourceParts(feature).map(part =>
+      selectionKey({ ...part.source, originalName: part.columnName || part.feature?.featureName })))) : new Set();
   const local = exportFeatures(sourceData).filter(feature => memberKeys.has(selectionKey(feature)));
+  const estimatedSites = includeBreakdown ? features.filter(feature => feature.pooled && feature.combinedSummary?.approximate)
+    .flatMap(feature => sourceParts(feature).filter(part => part.estimate).map(part => ({
+      nodeId: part.source.nodeId, nodeName: part.source.nodeName, fileName: part.source.fileName,
+      featureName: part.columnName, type: feature.type, combinedSummary: part.estimate,
+    }))) : [];
   const visibleKeys = new Set(features.map(selectionKey));
-  const exported = [...features, ...local.filter(feature => !visibleKeys.has(selectionKey(feature)))];
+  const extra = [...new Map([...local, ...estimatedSites].map(feature => [selectionKey(feature), feature])).values()];
+  const exported = [...features, ...extra.filter(feature => !visibleKeys.has(selectionKey(feature)))];
   const sources = new Map(exported.flatMap(feature => feature.pooled ? sourceParts(feature).map(part => part.source) : [feature])
     .map(source => [sourceKey(source), source]));
   const labels = exportSiteLabels([...sources.values()]);
@@ -148,15 +161,19 @@ export function buildStatisticsReport({ data, sourceData, selectedEntries = [], 
   for (const feature of exported) {
     const name = sourceColumn(feature);
     const [siteName, dataset] = feature.pooled ? [null, "Combined"] : [site(feature), feature.fileName];
-    const summary = tableExportFeatures({ [featureArrays[feature.type]]: [feature] })[0];
-    const { values, note } = summaryRow(summary, feature.type, feature.pooled);
     const mapping = feature.pooled ? sourceParts(feature).map(part =>
       `${sourceLabel(part.source)}: ${part.columnName || part.feature?.featureName || name}`).join("; ") : null;
-    featureRows.push([name, feature.type, siteName, dataset, ...(hasCombined ? [mapping] : [])]);
+    featureRows.push({
+      row: [name, feature.type, siteName, dataset, ...(hasCombined ? [mapping] : [])],
+      note: feature.type == null ? feature.unavailable : null,
+    });
+    if (feature.type == null) continue;
+    const summary = tableExportFeatures({ [featureArrays[feature.type]]: [feature] })[0];
+    const { values, note } = summaryRow(summary, feature.type, feature.pooled);
     summaries[feature.type].push({ row: [name, siteName, dataset, ...values], note });
   }
 
-  const sheets = [{ name: "Features", rows: [["Feature", "Type", "Site", "Dataset", ...(hasCombined ? ["Merged from"] : [])], ...featureRows] }];
+  const sheets = [table("Features", ["Feature", "Type", "Site", "Dataset", ...(hasCombined ? ["Merged from"] : [])], featureRows)];
   for (const [type, { name, headers }] of Object.entries(summaryTables)) {
     if (summaries[type].length) sheets.push(table(name, [...identityHeaders, ...countHeaders, ...headers], summaries[type]));
   }

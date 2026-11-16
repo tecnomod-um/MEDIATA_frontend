@@ -1,5 +1,8 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import { filterDiscoveryDatasets } from "./filterDiscoveryDatasets";
+import { createColumnMappings } from "./columnMappings";
+import { combineMappedTableData } from "./statisticsTableData";
+import { collectDiscoveryStatistics } from "../discoveryStatistics";
 import { filterMultipleFiles } from "../../../util/petitionHandler";
 vi.mock("../../../util/petitionHandler", () => ({ filterMultipleFiles: vi.fn() }));
 beforeEach(() => vi.resetAllMocks());
@@ -42,4 +45,41 @@ it("does not retain old paired aggregates when a refreshed node omits or suppres
   expect(refreshed[0].numericPairSummaries).toEqual([]);
   expect(refreshed[0].relationshipSummaryVersion).toBeUndefined();
   expect(refreshed[0].continuousFeatures).toEqual([]);
+});
+
+
+it("preserves released sites and keeps a withheld site in the pooled scope", async () => {
+  const original = sources.map(source => ({
+    ...source, continuousFeatures: [{ featureName: "Age", count: 20, mean: 60, missingValuesCount: 0 }],
+  }));
+  filterMultipleFiles
+    .mockResolvedValueOnce([{ fileName: "patients.csv", continuousFeatures: [{ featureName: "Age", count: 10, mean: 55 }] }])
+    .mockResolvedValueOnce([{ fileName: "patients.csv", disclosureWithheld: true }]);
+
+  const updated = await filterDiscoveryDatasets(original, nodes, () => null, { allowWithheld: true });
+  expect(updated[0].continuousFeatures[0].mean).toBe(55);
+  expect(updated[1]).toMatchObject({
+    disclosureWithheld: true,
+    omittedFeatures: [{ featureName: "Age", type: "continuous", reason: "Statistics withheld by disclosure controls" }],
+  });
+  expect(updated[1]).not.toHaveProperty("continuousFeatures");
+  const local = collectDiscoveryStatistics(updated, [true, true]);
+  const combined = combineMappedTableData(local, updated, [true, true], createColumnMappings(original));
+  expect(combined.continuousFeatures[0]).toMatchObject({
+    count: null, datasetCount: "1/2", status: "Unavailable for one or more selected datasets",
+  });
+});
+
+it("replaces old figures with exportable omissions if every selected dataset is withheld", async () => {
+  const original = sources.map(source => ({
+    ...source, continuousFeatures: [{ featureName: "Age", count: 20, mean: 60 }],
+  }));
+  filterMultipleFiles.mockResolvedValue([{ fileName: "patients.csv", disclosureWithheld: true }]);
+  const updated = await filterDiscoveryDatasets(original, nodes, () => null, { allowWithheld: true });
+  expect(updated.every(source => source.disclosureWithheld && !source.continuousFeatures)).toBe(true);
+  const local = collectDiscoveryStatistics(updated, [true, true]);
+  const combined = combineMappedTableData(local, updated, [true, true], createColumnMappings(original));
+  expect(combined.continuousFeatures[0]).toMatchObject({
+    count: null, datasetCount: "0/2", status: "Unavailable for one or more selected datasets",
+  });
 });

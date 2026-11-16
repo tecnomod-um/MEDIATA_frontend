@@ -59,6 +59,22 @@ describe('petitionHandler', () => {
     nodeAxiosInstance.post.mockResolvedValue({ status: 200, data: [{ fileName: 'old.csv', continuousFeatures: [] }] });
     await expect(petitionHandler.processSelectedDatasets(['old.csv'])).rejects.toMatchObject({ code: 'DISCLOSURE_UPDATE_REQUIRED' });
   });
+  it('keeps approved filter results and strips statistics from withheld entries', async () => {
+    const message = 'Statistics withheld by disclosure controls.';
+    const approved = { fileName: 'approved.csv', continuousFeatures: [], disclosurePolicyVersion: 2, statisticsConventionVersion: 1 };
+    const blocked = { fileName: 'blocked.csv', message, continuousFeatures: [{ count: 3 }] };
+    const data = [blocked, approved];
+    const expected = [{ fileName: 'blocked.csv', message, disclosureWithheld: true }, approved];
+    const payload = { multipleFileFilters: [] };
+    const options = { allowWithheld: true };
+
+    nodeAxiosInstance.post.mockResolvedValueOnce({ status: 200, data });
+    await expect(petitionHandler.filterMultipleFiles(payload, undefined, options)).resolves.toEqual(expected);
+
+    nodeAxiosInstance.post.mockResolvedValueOnce({ status: 202, data: { jobId: 'filter' } });
+    nodeAxiosInstance.get.mockResolvedValueOnce({ data: { state: 'DONE' } }).mockResolvedValueOnce({ data });
+    await expect(petitionHandler.filterMultipleFiles(payload, undefined, options)).resolves.toEqual(expected);
+  });
   it('reports rejected numerical conversion as a calculation error rather than an outdated node', async () => {
     nodeAxiosInstance.post.mockResolvedValue({data: [{
       message: 'This field cannot be converted to continuous without an explicit numerical mapping.',

@@ -1,14 +1,23 @@
 import { buildCombinedStatistics, categoryFrequencies, sourceKey, featureArrays as arrays } from "./combinedStatistics.js";
 import { activeColumnMappings, memberKey } from "./columnMappings.js";
+import { buildApproximateSummary } from "./approximatePooling.js";
 
 
 // Adapt released pooled summaries to the same shape used by the existing tables.
 // Charts retain individual distributions; pooled quantiles need complete approved frequencies.
-export function combineMappedTableData(data, results, activeIndices, mappings) {
+export function combineMappedTableData(data, results, activeIndices, mappings, approximateReleases) {
   const visible = new Set(Object.values(arrays).flatMap(key => (data[key] || []).map(feature => memberKey({ ...feature, column: feature.originalName || feature.featureName }))));
+  for (const feature of data.omittedFeatures || []) {
+    visible.add(memberKey({ ...feature, column: feature.originalName || feature.featureName }));
+  }
   const groups = activeColumnMappings(mappings, results, activeIndices).filter(group => group.members.some(member => visible.has(memberKey(member))));
   const used = new Set(groups.flatMap(group => group.members.map(memberKey)));
   const tableData = { continuousFeatures: [], categoricalFeatures: [], dateFeatures: [] };
+  if (data.omittedFeatures?.length) {
+    tableData.omittedFeatures = data.omittedFeatures.filter(feature => !used.has(memberKey({
+      ...feature, column: feature.originalName || feature.featureName,
+    })));
+  }
   for (const key of Object.values(arrays)) {
     tableData[key] = (data[key] || []).filter(feature => !used.has(memberKey({ ...feature, column: feature.originalName || feature.featureName })));
   }
@@ -20,8 +29,13 @@ export function combineMappedTableData(data, results, activeIndices, mappings) {
       renamed.omittedFeatures = (source.omittedFeatures || []).filter(feature => feature.featureName === member.column).map(feature => ({ ...feature, featureName: group.label }));
       return renamed;
     });
-    const summary = buildCombinedStatistics(sources, sources.map(() => true)).features.find(feature => feature.featureName === group.label)
-      || { featureName: group.label, type: group.type, includedSources: 0, totalSources: sources.length, unavailable: "No matching records", contributions: [] };
+    const summary = approximateReleases
+      ? { ...buildApproximateSummary(group, approximateReleases), contributions: sources.map((source, index) => ({
+        source,
+        estimate: buildApproximateSummary({ ...group, members: [group.members[index]] }, approximateReleases),
+      })) }
+      : buildCombinedStatistics(sources, sources.map(() => true)).features.find(feature => feature.featureName === group.label)
+        || { featureName: group.label, type: group.type, includedSources: 0, totalSources: sources.length, unavailable: "No matching records", contributions: [] };
     summary.contributions = summary.contributions.map(contribution => {
       const member = group.members.find(member => sourceKey(member) === sourceKey(contribution.source));
       const original = results.find(source => sourceKey(source) === sourceKey(member));
@@ -40,7 +54,7 @@ export function combineMappedTableData(data, results, activeIndices, mappings) {
       qrt1: summary.q1, qrt3: summary.q3, median: summary.median,
       q1: summary.q1, q3: summary.q3, earliestDate: summary.min, latestDate: summary.max,
       datasetCount: `${summary.includedSources}/${summary.totalSources}`,
-      status: summary.unavailable || "Combined",
+      status: summary.unavailable || (summary.approximate ? "Approximate" : "Combined"),
     };
     if (type === "categorical") {
       const categories = summary.categories || [];

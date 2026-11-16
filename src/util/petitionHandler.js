@@ -1,10 +1,22 @@
 import axiosInstance from "./axiosSetup";
 import { waitForDiscoveryJob } from "./waitForDiscoveryJob";
 import nodeAxiosInstance, { getResolvedNodeBaseURL, updateNodeAxiosBaseURL } from "./nodeAxiosSetup";
-// Reject withheld releases before any Discovery state or export can use them.
-const releasedAnalytics = data => {
-  const blocked = (Array.isArray(data) ? data : [data]).find(item => /^Statistics withheld by disclosure controls\./.test(item?.message || ""));
-  if (blocked) { const error = new Error(blocked.message); error.code = "DISCLOSURE_BLOCKED"; throw error; }
+const isWithheld = item => item?.disclosureWithheld === true || /^Statistics withheld by disclosure controls\./.test(item?.message || "");
+const withheldMessage = "Statistics withheld by disclosure controls.";
+
+const releasedAnalytics = (data, allowWithheld = false) => {
+  const entries = Array.isArray(data) ? data : [data];
+  const blocked = entries.find(isWithheld);
+  if (blocked && (!allowWithheld || !Array.isArray(data))) {
+    const error = new Error(blocked.message || withheldMessage);
+    error.code = "DISCLOSURE_BLOCKED";
+    throw error;
+  }
+  if (allowWithheld && blocked) {
+    data = entries.map(item => isWithheld(item)
+      ? { fileName: item.fileName, message: withheldMessage, disclosureWithheld: true }
+      : item);
+  }
   const failed = (Array.isArray(data) ? data : [data]).find(item => /^(Error processing statistics\.|Thread interrupted)|^This field cannot be converted/.test(item?.message || ""));
   if (failed) { const error = new Error(failed.message); error.code = "ANALYTICS_FAILED"; throw error; }
   const unguarded = (Array.isArray(data) ? data : [data]).some(item => item && typeof item === "object" && ("continuousFeatures" in item || "numericPairSummaries" in item)
@@ -402,7 +414,7 @@ export const uploadFile = async (file, onUploadProgress) => {
   }
 };
 
-export const filterMultipleFiles = async (payload, serviceUrl, {signal} = {}) => {
+export const filterMultipleFiles = async (payload, serviceUrl, { signal, allowWithheld = false } = {}) => {
   // payload = { multipleFileFilters: [ {fileName, filters}, ... ] }
   try {
     // We send JSON directly, not FormData
@@ -422,16 +434,22 @@ export const filterMultipleFiles = async (payload, serviceUrl, {signal} = {}) =>
       if (typeof id !== "string" || !id.trim()) throw new Error("Invalid statistics job identifier.");
       return waitForDiscoveryJob({
         status: () => getProcessSelectedDatasetsStatus(id, serviceUrl),
-        result: () => getProcessSelectedDatasetsResult(id, serviceUrl),
+        result: () => getProcessSelectedDatasetsResult(id, serviceUrl, allowWithheld),
         cancel: () => cancelProcessSelectedDatasetsJob(id, serviceUrl), signal,
       });
     }
     // Expect an array of AnalyticsResponseDTO
-    return releasedAnalytics(response.data);
+    return releasedAnalytics(response.data, allowWithheld);
   } catch (error) {
     throw error;
   }
 };
+
+export async function getApproximatePoolingSource(fileName, filters, serviceUrl, signal) {
+  const response = await nodeAxiosInstance.post("/taniwha/api/data/approximatePool", { fileName, filters },
+    { baseURL: getResolvedNodeBaseURL(serviceUrl), signal });
+  return response.data;
+}
 
 // Makes the node save a mock file for the federated model to consume
 export const saveMockFile = async (file) => {
@@ -524,12 +542,12 @@ export const getProcessSelectedDatasetsStatus = async (jobId, serviceUrl) => {
   return response.data;
 };
 
-export async function getProcessSelectedDatasetsResult(jobId, serviceUrl) {
+export async function getProcessSelectedDatasetsResult(jobId, serviceUrl, allowWithheld = false) {
   const response = await nodeAxiosInstance.get(
     `/taniwha/api/data/processList/result/${encodeURIComponent(jobId)}`,
     ...(serviceUrl ? [{ baseURL: getResolvedNodeBaseURL(serviceUrl) }] : [])
   );
-  return releasedAnalytics(response.data);
+  return releasedAnalytics(response.data, allowWithheld);
 }
 
 export const cancelProcessSelectedDatasetsJob = async (jobId, serviceUrl) => {

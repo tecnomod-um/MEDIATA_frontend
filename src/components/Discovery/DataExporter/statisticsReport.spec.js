@@ -92,6 +92,30 @@ it("leaves withheld pooled values blank and keeps a note and merge mapping", () 
   expect(sheetRecords(sheets, "Features")[0]["Merged from"]).toContain("Hospital (2) / patients.csv: Age");
 });
 
+it("downloads withheld site rows as blank figures even when every source is withheld", async () => {
+  const fixture = reportFixture();
+  const feature = fixture.data.continuousFeatures[0];
+  const reason = "Statistics withheld by disclosure controls";
+  const sourceData = {
+    omittedFeatures: fixture.sourceData.continuousFeatures.filter(source => source.originalName === "Age")
+      .map(source => ({ ...source, type: "continuous", reason })),
+  };
+  const data = { continuousFeatures: [{
+    ...feature, combinedSummary: { ...feature.combinedSummary, unavailable: "Withheld by a source" },
+  }] };
+  const report = buildStatisticsReport({ data, sourceData, includeBreakdown: true });
+  const values = sheetRecords(report, "Continuous statistics");
+  expect(values).toHaveLength(3);
+  expect(values.every(row => row.Mean === null && row["Non-missing count"] === null)).toBe(true);
+  expect(values.slice(1).map(row => row.Notes)).toEqual([reason, reason]);
+  const local = buildStatisticsReport({ data: sourceData, sourceData });
+  expect(sheetRecords(local, "Continuous statistics")).toHaveLength(2);
+  const files = unzipSync(await bytes(await writeStatisticsReport(report, "csv")));
+  const csv = strFromU8(files["continuous_statistics.csv"]);
+  expect(csv).toContain(reason);
+  expect(csv).not.toContain("20.123456789123");
+});
+
 it("exports actual source filters for a combined-only selection", () => {
   const fixture = reportFixture();
   const appliedFilters = new Map([[sourceKey(fixture.sources[1]), "Cluster (= 2)"]]);

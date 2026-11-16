@@ -12,7 +12,7 @@ function uncombinedLabels(groups, sources) {
 
 export function sourceColumns(source) {
   return Object.entries(columnArrays).flatMap(([type, key]) => (source[key] || []).map(feature => ({ column: feature.featureName, type })))
-    .concat((source.omittedFeatures || []).map(feature => ({ column: feature.featureName, type: null, unavailable: true })))
+    .concat((source.omittedFeatures || []).map(feature => ({ column: feature.featureName, type: feature.type ?? null, unavailable: true })))
     .filter(feature => typeof feature.column === "string" && feature.column.trim().length > 0);
 }
 

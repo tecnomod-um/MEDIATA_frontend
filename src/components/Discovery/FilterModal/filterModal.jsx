@@ -60,9 +60,15 @@ const FilterModal = ({ refreshControllerRef, isOpen, dataStatistics, closeModal,
       const updatedResults = await filterDiscoveryDatasets(dataResults, selectedNodes, source => {
         const conditions = fileFilterConditions(availableStatistics, filterConditions, logicalOperators, source, dataResults.length, matchColumns, columnMappings);
         return Object.keys(conditions).length ? { conditions, operator: globalLogicalOperator } : null;
-      }, ...(refreshControllerRef?.current ? [{signal: refreshControllerRef.current.signal}] : []));
+      }, { signal: refreshControllerRef?.current?.signal, allowWithheld: true });
 
       setDataResults(updatedResults);
+      const withheld = updatedResults.filter(source => source.disclosureWithheld);
+      if (withheld.length && withheld.length === updatedResults.length) {
+        toast.warn("Statistics were withheld for every selected dataset. You can export the report with those results marked as withheld.");
+      } else if (withheld.length) {
+        toast.warn(`Statistics withheld for ${withheld.map(source => source.nodeName || source.fileName).join(", ")}. Showing the available results.`);
+      }
       onFiltered?.();
 
       // If at least one file was filtered, update filters state.
