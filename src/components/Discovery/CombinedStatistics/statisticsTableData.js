@@ -1,6 +1,7 @@
 import { buildCombinedStatistics, categoryFrequencies, sourceKey, featureArrays as arrays } from "./combinedStatistics.js";
 import { activeColumnMappings, memberKey } from "./columnMappings.js";
-import { buildApproximateSummary } from "./approximatePooling.js";
+import { addProtectedDistribution, buildApproximateSummary } from "./approximatePooling.js";
+import { poolingContributions } from "./poolingContributions.js";
 
 
 // Adapt released pooled summaries to the same shape used by the existing tables.
@@ -21,24 +22,31 @@ export function combineMappedTableData(data, results, activeIndices, mappings, a
   for (const key of Object.values(arrays)) {
     tableData[key] = (data[key] || []).filter(feature => !used.has(memberKey({ ...feature, column: feature.originalName || feature.featureName })));
   }
+  const bySource = new Map(results.map(source => [sourceKey(source), source]));
   for (const group of groups) {
     const sources = group.members.map(member => {
-      const source = results.find(source => sourceKey(source) === sourceKey(member));
+      const source = bySource.get(sourceKey(member));
       const renamed = { ...source };
       for (const key of Object.values(arrays)) renamed[key] = (source[key] || []).filter(feature => feature.featureName === member.column).map(feature => ({ ...feature, featureName: group.label }));
       renamed.omittedFeatures = (source.omittedFeatures || []).filter(feature => feature.featureName === member.column).map(feature => ({ ...feature, featureName: group.label }));
       return renamed;
     });
-    const summary = approximateReleases
-      ? { ...buildApproximateSummary(group, approximateReleases), contributions: sources.map((source, index) => ({
-        source,
-        estimate: buildApproximateSummary({ ...group, members: [group.members[index]] }, approximateReleases),
-      })) }
-      : buildCombinedStatistics(sources, sources.map(() => true)).features.find(feature => feature.featureName === group.label)
-        || { featureName: group.label, type: group.type, includedSources: 0, totalSources: sources.length, unavailable: "No matching records", contributions: [] };
+    const exact = buildCombinedStatistics(sources, sources.map(() => true)).features.find(feature => feature.featureName === group.label)
+      || { featureName: group.label, type: group.type, includedSources: 0, totalSources: sources.length, unavailable: "No matching records", contributions: [] };
+    const parts = approximateReleases ? poolingContributions(group, bySource) : [];
+    const withheld = parts.filter(part => part.withheld);
+    const moments = exact.unavailable && withheld.length && parts.every(part => part.feature || part.empty || part.withheld)
+      ? { ...buildApproximateSummary({ ...group, members: withheld.map(part => part.member) }, approximateReleases,
+          parts.filter(part => part.feature).map(part => part.feature), group.members.length),
+        contributions: parts.map(({ source, feature, empty }) => ({
+          source, feature, type: group.type,
+          status: empty ? "No matching records" : undefined,
+        })) }
+      : exact;
+    const summary = approximateReleases ? addProtectedDistribution(group, parts, approximateReleases, moments) : moments;
     summary.contributions = summary.contributions.map(contribution => {
       const member = group.members.find(member => sourceKey(member) === sourceKey(contribution.source));
-      const original = results.find(source => sourceKey(source) === sourceKey(member));
+      const original = bySource.get(sourceKey(member));
       return { ...contribution, source: original, columnName: member.column,
         feature: contribution.feature ? { ...contribution.feature, featureName: member.column } : undefined };
     });
@@ -50,13 +58,13 @@ export function combineMappedTableData(data, results, activeIndices, mappings, a
       mean: summary.mean, stdDev: summary.stdDev, min: summary.min, max: summary.max,
       meanCiLower: summary.meanCiLower, meanCiUpper: summary.meanCiUpper, skewness: summary.skewness,
       kurtosis: summary.kurtosis, sampleStdDev: summary.sampleStdDev, cardinality: summary.cardinality,
-      modes: summary.modes, modeFrequency: summary.modeFrequency, modeStatus: summary.modeStatus,
+      modes: summary.modes, modeBand: summary.modeBand, modeFrequency: summary.modeFrequency, modeStatus: summary.modeStatus,
       qrt1: summary.q1, qrt3: summary.q3, median: summary.median,
       q1: summary.q1, q3: summary.q3, earliestDate: summary.min, latestDate: summary.max,
       datasetCount: `${summary.includedSources}/${summary.totalSources}`,
       status: summary.unavailable || (summary.approximate
-        ? summary.lowPrecision ? "Approximate (low precision)" : "Approximate"
-        : "Combined"),
+        ? "Estimated"
+        : summary.estimatedQuantiles ? "Combined · estimated distribution" : "Combined"),
     };
     if (type === "categorical") {
       const categories = summary.categories || [];

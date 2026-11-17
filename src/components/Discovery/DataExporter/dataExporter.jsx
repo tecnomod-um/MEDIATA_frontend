@@ -23,19 +23,18 @@ export default function DataExporter({ statisticsExport, relationshipExport, sel
   const selected = useMemo(() => exportFeatures(statisticsExport?.data, statisticsExport?.sourceData, selectedEntries, true), [statisticsExport, selectedEntries]);
   const scoped = selectedOnly ? selected : allFeatures;
   const hasPooled = scoped.some(feature => feature.pooled);
-  const approximate = Boolean(statisticsExport?.approximate);
   const start = () => {
     setSelectedOnly(selected.length > 0);
-    setIncludeBreakdown(!approximate);
-    setIncludeRelationships(!approximate && Boolean(relationshipExport?.active));
-    job.clearError(); setOpen(true); onRelationshipsChange?.(!approximate && Boolean(relationshipExport?.active));
+    setIncludeBreakdown(true);
+    setIncludeRelationships(Boolean(relationshipExport?.active));
+    job.clearError(); setOpen(true); onRelationshipsChange?.(Boolean(relationshipExport?.active));
   };
   const close = () => { job.cancel(); setOpen(false); onRelationshipsChange?.(false); };
-  const loadingRelationships = !approximate && includeRelationships && relationshipExport?.pending;
+  const loadingRelationships = includeRelationships && relationshipExport?.pending;
   const progressLabel = job.status || (loadingRelationships ? "Calculating relationships…" : "");
-  const relationshipError = !approximate && includeRelationships && relationshipExport?.error;
+  const relationshipError = includeRelationships && relationshipExport?.error;
   const download = () => job.start({ ...statisticsExport, selectedEntries, selectedOnly, format,
-    includeBreakdown: hasPooled && includeBreakdown, includeRelationships: !approximate && includeRelationships, relationships: relationshipExport?.data }, close);
+    includeBreakdown: hasPooled && includeBreakdown, includeRelationships, relationships: relationshipExport?.data }, close);
 
   return <>
     <button onClick={start} disabled={busy || !allFeatures.length} aria-label="Export statistics">Export Data</button>
@@ -63,15 +62,15 @@ export default function DataExporter({ statisticsExport, relationshipExport, sel
         </div>
         <div className={styles.options}>
           {hasPooled && <label><input type="checkbox" checked={includeBreakdown} disabled={Boolean(job.status)} onChange={event => setIncludeBreakdown(event.target.checked)} />
-            <span>{approximate ? "Include per-dataset estimates" : "Include per-dataset breakdown"}
-              <small>{approximate ? "Use the same privacy-protected counts for each contributing dataset." : "Keep the pooled results and each contributing dataset together."}</small></span></label>}
-          {!approximate && <label><input type="checkbox" checked={includeRelationships} disabled={Boolean(job.status)} onChange={event => { setIncludeRelationships(event.target.checked); onRelationshipsChange?.(event.target.checked); }} />
-            <span>Include relationships<small>Covariance, correlations and chi-square results for the exported features.</small></span></label>}
+            <span>Include per-dataset breakdown
+              <small>Keep the pooled results and each contributing dataset together.</small></span></label>}
+          <label><input type="checkbox" checked={includeRelationships} disabled={Boolean(job.status)} onChange={event => { setIncludeRelationships(event.target.checked); onRelationshipsChange?.(event.target.checked); }} />
+            <span>Include relationships<small>Covariance, correlations and chi-square results for the exported features.</small></span></label>
         </div>
         {(job.error || relationshipError) && <Alert severity="error">{job.error || relationshipError} {relationshipError && "You can retry or export without relationships."}</Alert>}
       </DialogContent>
       <DialogActions className={styles.actions}>
-        <span>{scoped.length} {scoped.length === 1 ? "feature" : "features"}{approximate ? " · approximate pooled statistics" : hasPooled ? " · combined statistics" : " · individual datasets"}</span>
+        <span>{scoped.length} {scoped.length === 1 ? "feature" : "features"}{hasPooled ? " · combined statistics" : " · individual datasets"}</span>
         <Button onClick={close}>{job.status ? "Cancel export" : "Cancel"}</Button>
         <Button variant="contained" disableElevation onClick={download} className={styles.download}
           aria-label="Download" aria-busy={Boolean(progressLabel)}

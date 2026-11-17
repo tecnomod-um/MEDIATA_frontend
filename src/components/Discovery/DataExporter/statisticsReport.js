@@ -83,7 +83,7 @@ function summaryRow(summary, type, pooled) {
     !modes.length && summary.modeStatus && summary.modeStatus !== "Available" ? `Mode: ${summary.modeStatus}` : "",
   ].filter(Boolean).join(". ");
   return {
-    values: [...counts, value("mean"), sampleSd, ...quantiles, modes.length > 1 ? modes.join(", ") : modes[0] ?? null,
+    values: [...counts, value("mean"), sampleSd, ...quantiles, value("modeBand") ?? (modes.length > 1 ? modes.join(", ") : modes[0] ?? null),
       modeCount, modeCount != null && summary.count > 0 ? 100 * modeCount / summary.count : null,
       ...["skewness", "kurtosis", "meanCiLower", "meanCiUpper"].map(value)],
     note,
@@ -138,17 +138,18 @@ export function buildStatisticsReport({ data, sourceData, selectedEntries = [], 
   const features = exportFeatures(data, sourceData, selectedEntries, selectedOnly);
   if (!features.length) throw new Error("There are no features in this export scope.");
   const hasCombined = features.some(feature => feature.pooled);
-  const memberKeys = hasCombined && includeBreakdown
-    ? new Set(features.filter(feature => feature.pooled && !feature.combinedSummary?.approximate).flatMap(feature => sourceParts(feature).map(part =>
-      selectionKey({ ...part.source, originalName: part.columnName || part.feature?.featureName })))) : new Set();
-  const local = exportFeatures(sourceData).filter(feature => memberKeys.has(selectionKey(feature)));
-  const estimatedSites = includeBreakdown ? features.filter(feature => feature.pooled && feature.combinedSummary?.approximate)
-    .flatMap(feature => sourceParts(feature).filter(part => part.estimate).map(part => ({
-      nodeId: part.source.nodeId, nodeName: part.source.nodeName, fileName: part.source.fileName,
-      featureName: part.columnName, type: feature.type, combinedSummary: part.estimate,
-    }))) : [];
+  const localByKey = new Map(exportFeatures(sourceData).map(feature => [selectionKey(feature), feature]));
+  const breakdown = hasCombined && includeBreakdown ? features.filter(feature => feature.pooled)
+    .flatMap(feature => sourceParts(feature).flatMap(part => {
+      const { nodeId, nodeName, fileName } = part.source;
+      const identity = { nodeId, nodeName, fileName, featureName: part.columnName || part.feature?.featureName, type: feature.type };
+      if (feature.combinedSummary?.approximate && !part.feature) return [];
+      const released = localByKey.get(selectionKey(identity));
+      if (released) return [released];
+      return part.feature ? [{ ...part.feature, ...identity }] : [];
+    })) : [];
   const visibleKeys = new Set(features.map(selectionKey));
-  const extra = [...new Map([...local, ...estimatedSites].map(feature => [selectionKey(feature), feature])).values()];
+  const extra = [...new Map(breakdown.map(feature => [selectionKey(feature), feature])).values()];
   const exported = [...features, ...extra.filter(feature => !visibleKeys.has(selectionKey(feature)))];
   const sources = new Map(exported.flatMap(feature => feature.pooled ? sourceParts(feature).map(part => part.source) : [feature])
     .map(source => [sourceKey(source), source]));
@@ -179,7 +180,8 @@ export function buildStatisticsReport({ data, sourceData, selectedEntries = [], 
   }
   if (includeRelationships) {
     if (!relationships) throw new Error("Relationship statistics are not ready yet.");
-    const sheet = relationshipsTable([[relationships, features], [sourceData, local]], sourceLabel);
+    const sheet = relationshipsTable([[relationships, features],
+      [sourceData, extra.filter(feature => !feature.combinedSummary && !feature.unavailable)]], sourceLabel);
     if (sheet) sheets.push(sheet);
   }
   const filters = [...sources.values()].flatMap(source => {

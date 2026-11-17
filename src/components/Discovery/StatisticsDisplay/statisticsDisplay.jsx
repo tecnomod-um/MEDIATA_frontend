@@ -159,7 +159,7 @@ const StatisticsDisplay = React.memo(
           ? `${feature.meanCiLower.toFixed(2)} – ${feature.meanCiUpper.toFixed(2)}` : "N/A");
         table.Skewness.push(feature.skewness?.toFixed(3) ?? "N/A");
         table.Kurtosis.push(feature.kurtosis?.toFixed(3) ?? "N/A");
-        table.Mode.push(feature.modes?.length ? feature.modes.join(", ") : feature.modeStatus === "No repeated value" ? "No repeat" : "N/A");
+        table.Mode.push(feature.modeBand ?? (feature.modes?.length ? feature.modes.join(", ") : feature.modeStatus === "No repeated value" ? "No repeat" : "N/A"));
         table["Mode count"].push(feature.modeFrequency?.toString() ?? "N/A");
         table["Missing Entries"].push(
           formatMissingEntries(feature.count, feature.missingValuesCount)

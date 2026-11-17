@@ -117,6 +117,7 @@ function releasedParts(pairs, array, indexes) {
   const parts = [];
   for (const pair of pairs) {
     if (pair.source.message?.startsWith("No records match")) continue;
+    if (pair.source.disclosureWithheld) return { reason: "Paired statistics were withheld at a contributing dataset." };
     if (pair.source.relationshipSummaryVersion !== 1) return { reason: "A contributing node must be updated to provide paired aggregate summaries." };
     const part = findSummary(indexes, pair.source, array, pair.x, pair.y);
     if (!part || !validCount(part.count)) return { reason: "Paired statistics are suppressed or unavailable at a contributing dataset. No partial result is shown." };

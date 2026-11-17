@@ -16,7 +16,7 @@ import ColumnMappingsDialog from "../../components/Discovery/StatisticsDisplay/c
 import { combineMappedTableData } from "../../components/Discovery/CombinedStatistics/statisticsTableData";
 import { createColumnMappings, activeColumnMappings, validateColumnMappings, reconcileMappingTypes } from "../../components/Discovery/CombinedStatistics/columnMappings";
 import { filterDiscoveryDatasets } from "../../components/Discovery/CombinedStatistics/filterDiscoveryDatasets";
-import { loadApproximatePooling } from "../../components/Discovery/CombinedStatistics/approximatePooling";
+import { loadApproximatePooling, protectedPoolingMembers } from "../../components/Discovery/CombinedStatistics/approximatePooling";
 import { fileFilterConditions } from "../../components/Discovery/FilterModal/filterFeatures";
 import { buildAppliedFilters, tableFilterDescriptions } from "../../components/Discovery/FilterModal/appliedFilters";
 import useRelationshipStatistics from "../../components/Discovery/CombinedStatistics/useRelationshipStatistics";
@@ -35,7 +35,6 @@ function Discovery() {
   const [showIndividualView, setShowIndividualView] = useState(true);
   const toggleView = useCallback(() => setShowIndividualView(previous => !previous), []);
   const [combineTables, setCombineTables] = useState(false);
-  const [approximate, setApproximate] = useState(false);
   const [approximateResult, setApproximateResult] = useState(null);
   const [customMappings, setCustomMappings] = useState(null);
   const [mappingDialogOpen, setMappingDialogOpen] = useState(false);
@@ -303,7 +302,6 @@ function Discovery() {
     setFilters([]);
     setFilterLogic({ operators: {}, operator: "AND", matchColumns: true });
     setCustomMappings(null);
-    setApproximate(false);
     setDataResults(allResults);
     setActiveFileIndices(allResults.map(() => true));
   }, []);
@@ -323,18 +321,21 @@ function Discovery() {
   const appliedFilters = useMemo(() => buildAppliedFilters(filterStatistics, filters, filterLogic, dataResults, columnMappings), [filterStatistics, filters, filterLogic, dataResults, columnMappings]);
   const activeMappings = useMemo(() => activeColumnMappings(columnMappings, dataResults, activeFileIndices), [columnMappings, dataResults, activeFileIndices]);
   const combinedTablesActive = combineTables && activeMappings.length > 0;
-  const approximateRequest = useMemo(() => approximate && combinedTablesActive && appliedFilters.size
-    ? { groups: activeMappings, filtersFor: source => {
+  const approximateRequest = useMemo(() => {
+    if (!combinedTablesActive || !appliedFilters.size || isCombining) return null;
+    const members = protectedPoolingMembers(activeMappings, dataResults);
+    if (!members.size) return null;
+    return { members, filtersFor: source => {
       const conditions = fileFilterConditions(filterStatistics, filters, filterLogic.operators, source,
         dataResults.length, filterLogic.matchColumns, columnMappings);
       return Object.keys(conditions).length ? { conditions, operator: filterLogic.operator } : null;
-    } } : null,
-  [approximate, combinedTablesActive, appliedFilters, activeMappings, filterStatistics, filters, filterLogic, dataResults.length, columnMappings]);
+    } };
+  }, [combinedTablesActive, appliedFilters, activeMappings, filterStatistics, filters, filterLogic, dataResults, columnMappings, isCombining]);
   useEffect(() => {
     if (!approximateRequest) return;
     const controller = new AbortController();
-    const { groups, filtersFor } = approximateRequest;
-    loadApproximatePooling(groups, selectedNodes, filtersFor, controller.signal).then(releases => {
+    const { members, filtersFor } = approximateRequest;
+    loadApproximatePooling(members, selectedNodes, filtersFor, controller.signal).then(releases => {
       if (!controller.signal.aborted) setApproximateResult({ request: approximateRequest, releases });
     }).catch(() => {
       if (!controller.signal.aborted) setApproximateResult({ request: approximateRequest, releases: new Map() });
@@ -342,21 +343,20 @@ function Discovery() {
     return () => controller.abort();
   }, [approximateRequest, selectedNodes]);
   const approximatePending = Boolean(approximateRequest && approximateResult?.request !== approximateRequest);
-  const approximateReleases = useMemo(() => !approximate ? undefined
-    : approximateRequest && approximateResult?.request === approximateRequest ? approximateResult.releases : new Map(),
-  [approximate, approximateRequest, approximateResult]);
+  const approximateReleases = approximateRequest && approximateResult?.request === approximateRequest
+    ? approximateResult.releases : undefined;
   const tableStatistics = useMemo(() => !combinedTablesActive || !filteredDataStatistics ? filteredDataStatistics
     : combineMappedTableData(filteredDataStatistics, dataResults, activeFileIndices, columnMappings, approximateReleases),
   [combinedTablesActive, filteredDataStatistics, dataResults, activeFileIndices, columnMappings, approximateReleases]);
-  const combinedRelationships = combinedTablesActive && !approximate;
+  const combinedRelationships = combinedTablesActive;
   const relationships = useRelationshipStatistics(combinedRelationships ? tableStatistics : filteredDataStatistics,
-    dataResults, combinedRelationships, !showIndividualView || (exportRelationships && !approximate));
+    dataResults, combinedRelationships, !showIndividualView || exportRelationships);
   const relationshipStatistics = relationships.statistics;
   const statisticsBusy = isCombining || relationships.pending || approximatePending;
   const relationshipFilters = useMemo(() => tableFilterDescriptions(combinedRelationships ? tableStatistics : filteredDataStatistics, appliedFilters), [combinedRelationships, tableStatistics, filteredDataStatistics, appliedFilters]);
   const featureFilters = useMemo(() => tableFilterDescriptions(tableStatistics, appliedFilters), [tableStatistics, appliedFilters]);
-  const statisticsExport = useMemo(() => ({ data: tableStatistics, sourceData: filteredDataStatistics, appliedFilters, approximate }),
-    [tableStatistics, filteredDataStatistics, appliedFilters, approximate]);
+  const statisticsExport = useMemo(() => ({ data: tableStatistics, sourceData: filteredDataStatistics, appliedFilters }),
+    [tableStatistics, filteredDataStatistics, appliedFilters]);
   const selectFeature = useCallback((entry, event) => {
     const feature = selectableFeatures(entry.pooled ? tableStatistics : filteredDataStatistics)
       .find(feature => feature.featureName === entry.featureName);
@@ -386,9 +386,8 @@ function Discovery() {
     } finally { setIsCombining(false); }
   };
   const tableActions = name => dataResults.length > 1 ? <TableMergeControl tableName={name}
-    combined={combinedTablesActive} approximate={approximate}
-    onChange={combined => { setApproximate(false); setCombineTables(combined); }}
-    onApproximate={Boolean(appliedFilters.size && activeMappings.length) ? () => { setApproximate(true); setCombineTables(true); } : undefined}
+    combined={combinedTablesActive}
+    onChange={setCombineTables}
     onEditMappings={() => setMappingDialogOpen(true)}
     mappingCount={columnMappings.length} disabled={statisticsBusy} /> : null;
 

@@ -14,6 +14,13 @@ export const featureArrays = { continuous: "continuousFeatures", categorical: "c
 const validCount = (n) => Number.isSafeInteger(n) && n >= 0;
 const finite = (n) => typeof n === "number" && Number.isFinite(n);
 
+export function completeNumericalFrequencies(part) {
+  const cells = part.valueCounts;
+  return Array.isArray(cells) && cells.length > 0 && cells.length <= 200
+    && cells.every(cell => finite(cell.value) && validCount(cell.count) && cell.count >= 6)
+    && cells.reduce((n, cell) => n + cell.count, 0) === part.count;
+}
+
 export function categoryFrequencies(counts, total) {
   return [...counts].filter(([, count]) => count > 0)
     .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
@@ -114,9 +121,7 @@ export function buildCombinedStatistics(results, activeIndices) {
       if (!moments || parts.some(f => !finite(f.min) || !finite(f.max))) return { ...base, unavailable: "Incomplete numerical summaries" };
       // Local quantiles and independently binned histograms cannot yield exact pooled quantiles.
       const counts = new Map();
-      const complete = parts.every(part => Array.isArray(part.valueCounts) && part.valueCounts.length > 0 && part.valueCounts.length <= 200
-        && part.valueCounts.every(cell => finite(cell.value) && validCount(cell.count) && cell.count >= 6)
-        && part.valueCounts.reduce((n, cell) => n + cell.count, 0) === part.count);
+      const complete = parts.every(completeNumericalFrequencies);
       if (complete) parts.forEach(part => part.valueCounts.forEach(cell => counts.set(cell.value, (counts.get(cell.value) || 0) + cell.count)));
       const entries = [...counts].sort((a, b) => a[0] - b[0]);
       const percentile = p => frequencyQuantile(entries, count, p);

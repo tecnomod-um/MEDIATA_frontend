@@ -138,10 +138,12 @@ const mockGetNodeDatasets = vi.fn();
 const mockProcessSelectedDatasets = vi.fn();
 const mockGetProcessSelectedDatasetsStatus = vi.fn();
 const mockGetProcessSelectedDatasetsResult = vi.fn();
+const mockGetApproximatePoolingSource = vi.fn();
 
 vi.mock("../../util/petitionHandler", () => ({
   __esModule: true,
   getNodeDatasets: (...a) => mockGetNodeDatasets(...a),
+  getApproximatePoolingSource: (...a) => mockGetApproximatePoolingSource(...a),
   processSelectedDatasets: (...a) => mockProcessSelectedDatasets(...a),
   getProcessSelectedDatasetsStatus: (...a) =>
     mockGetProcessSelectedDatasetsStatus(...a),
@@ -259,6 +261,43 @@ test("combines table rows in place while retaining the existing aggregate metric
   fireEvent.click(screen.getByRole('button', { name: 'Display aggregate metrics' }));
   expect(screen.getByTestId('stats')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Numerical table options: combined rows' })).toBeInTheDocument();
+});
+
+test("Merge automatically estimates a withhold after filtering and restores exact rows when filters clear", async () => {
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  mockGetApproximatePoolingSource.mockResolvedValue({ version: 1, group: "1", noiseVariance: 4,
+    features: { Age: { domain: { boundaries: [0, 40, 80] }, counts: [0, 4, 0] } } });
+  const numeric = (featureName, mean) => ({ featureName, mean, count: 100, stdDev: 0, min: mean, max: mean, missingValuesCount: 0,
+    valueCounts: [{ value: mean, count: 100 }] });
+  const first = { ...PROCESSED_ITEM, nodeId: 1, nodeName: "Node-A",
+    continuousFeatures: [numeric("Age", 40), numeric("Group", 1)] };
+  const second = { ...first, fileName: "file2.csv" };
+  render(<Discovery />);
+  await waitFor(() => expect(mockFileExplorerProps).toBeDefined());
+  await act(async () => mockFileExplorerProps.onFilesOpened([first, second]));
+  fireEvent.click(screen.getByRole("button", { name: "Numerical table options: separate rows" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "Combined rows" }));
+  const age = () => mockStatsProps.tableData.continuousFeatures.find(feature => feature.featureName === "Age");
+  expect(age()).toMatchObject({ status: "Combined", mean: 40 });
+  expect(mockGetApproximatePoolingSource).not.toHaveBeenCalled();
+
+  const filter = mockFilterProps.dataStatistics.continuousFeatures.find(feature => feature.originalName === "Group");
+  await act(async () => {
+    mockFilterProps.setFilters({ [filter.featureName]: [{ type: "equal", filterType: "continuous", value: 1 }] });
+    mockFilterProps.setDataResults([first, { ...second, continuousFeatures: [], disclosureWithheld: true,
+      omittedFeatures: [{ featureName: "Age", type: "continuous", reason: "Statistics withheld by disclosure controls" }] }]);
+  });
+  await waitFor(() => expect(age()).toMatchObject({ status: "Estimated", count: 104 }));
+  expect(age().mean).toBeCloseTo((100 * 40 + 4 * 60) / 104);
+  expect(mockGetApproximatePoolingSource).toHaveBeenCalledExactlyOnceWith("file2.csv", {
+    operator: "AND", conditions: { Group: { conditions: [{ type: "equal", filterType: "continuous", value: 1 }], operators: [] } },
+  }, "http://nodeA", expect.any(AbortSignal));
+  await act(async () => {
+    mockFilterProps.setFilters([]);
+    mockFilterProps.setDataResults([first, second]);
+  });
+  expect(age()).toMatchObject({ status: "Combined", count: 200 });
+  expect(mockGetApproximatePoolingSource).toHaveBeenCalledTimes(1);
 });
 
 test("opening a file (async) polls and then shows processed view", async () => {
