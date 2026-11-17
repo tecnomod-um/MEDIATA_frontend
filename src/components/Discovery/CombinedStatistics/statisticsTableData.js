@@ -54,7 +54,9 @@ export function combineMappedTableData(data, results, activeIndices, mappings, a
       qrt1: summary.q1, qrt3: summary.q3, median: summary.median,
       q1: summary.q1, q3: summary.q3, earliestDate: summary.min, latestDate: summary.max,
       datasetCount: `${summary.includedSources}/${summary.totalSources}`,
-      status: summary.unavailable || (summary.approximate ? "Approximate" : "Combined"),
+      status: summary.unavailable || (summary.approximate
+        ? summary.lowPrecision ? "Approximate (low precision)" : "Approximate"
+        : "Combined"),
     };
     if (type === "categorical") {
       const categories = summary.categories || [];
