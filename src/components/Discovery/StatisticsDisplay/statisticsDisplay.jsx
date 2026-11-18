@@ -99,7 +99,9 @@ const StatisticsDisplay = React.memo(
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [previewContent, setPreviewContent] = useState(null);
     const rowTitles = useMemo(() => Object.fromEntries(["continuousFeatures", "categoricalFeatures", "dateFeatures"].flatMap(key => (tableData[key] || [])
-      .filter(feature => feature.pooled).map(feature => [feature.featureName, feature.combinedSummary.contributions.map(contribution => `${sourceLabel(contribution.source)} / ${contribution.columnName || contribution.feature?.featureName || feature.featureName}`).join(" ↔ ")]))), [tableData]);
+      .filter(feature => feature.pooled || feature.estimatedSummary).map(feature => [feature.featureName,
+        [feature.pooled && feature.combinedSummary.contributions.map(contribution => `${sourceLabel(contribution.source)} / ${contribution.columnName || contribution.feature?.featureName || feature.featureName}`).join(" ↔ "),
+          (feature.estimatedSummary || feature.combinedSummary)?.note].filter(Boolean).join("\n")]))), [tableData]);
 
     const formatMissingEntries = useCallback((count, missingValuesCount) => {
       if (count == null || missingValuesCount == null) return "N/A";

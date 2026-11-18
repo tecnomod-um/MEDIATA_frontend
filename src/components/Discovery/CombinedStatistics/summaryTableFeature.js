@@ -13,8 +13,8 @@ export function summaryTableFeature(summary) {
     q1: summary.q1, q3: summary.q3, earliestDate: summary.min, latestDate: summary.max,
     datasetCount: `${summary.includedSources}/${summary.totalSources}`,
     status: summary.unavailable || (summary.approximate
-      ? "Estimated"
-      : summary.estimatedQuantiles ? "Combined · estimated distribution" : "Combined"),
+      ? summary.lowPrecision ? "Low precision" : "Estimated"
+      : summary.estimatedQuantiles ? "Combined · estimated distribution" : summary.estimatedMode ? "Combined · estimated mode" : "Combined"),
   };
   if (summary.type === "categorical") {
     const categories = summary.categories || [];

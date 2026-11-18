@@ -323,7 +323,7 @@ function Discovery() {
   const activeMappings = useMemo(() => activeColumnMappings(columnMappings, dataResults, activeFileIndices), [columnMappings, dataResults, activeFileIndices]);
   const combinedTablesActive = combineTables && activeMappings.length > 0;
   const approximateRequest = useMemo(() => {
-    if (!appliedFilters.size || isCombining) return null;
+    if (isCombining) return null;
     const members = protectedSourceMembers(dataResults, baselineResultsRef.current, activeFileIndices);
     if (combinedTablesActive) for (const [key, member] of protectedPoolingMembers(activeMappings, dataResults)) members.set(key, member);
     if (!members.size) return null;
@@ -394,7 +394,7 @@ function Discovery() {
     combined={combinedTablesActive}
     onChange={setCombineTables}
     onEditMappings={() => setMappingDialogOpen(true)}
-    mappingCount={columnMappings.length} disabled={statisticsBusy} /> : null;
+    mappingCount={columnMappings.length} disabled={isCombining} /> : null;
 
   const closeFilters = useCallback(() => setIsFiltersopen(false), []);
   const toggleFilters = useCallback(() => setIsFiltersopen((open) => !open), []);

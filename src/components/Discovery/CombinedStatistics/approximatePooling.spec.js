@@ -109,9 +109,9 @@ it("fills distribution statistics independently of exact moments and exports the
 it("combines signed contributions before projecting counts or calculating statistics", () => {
   const releases = new Map(keys.map((key, index) => [key, release([[80, 20, 3], [-4, 70, -2], [14, -9, 0]][index])]));
   const summary = buildApproximateSummary(group, releases);
-  expect(summary).toMatchObject({ approximate: true, count: 171, missing: 1, includedSources: 3, median: 5 });
-  expect(summary.mean).toBeCloseTo((90 * 5 + 81 * 15) / 171, 12);
-  expect(summary.min).toBeUndefined();
+  expect(summary).toMatchObject({ approximate: true, count: 169, missing: 3, includedSources: 3, median: 5 });
+  expect(summary.mean).toBeCloseTo((89 * 5 + 80 * 15) / 169, 12);
+  expect(summary).toMatchObject({min:5,estimatedExtrema:true});
   expect(summary.meanCiLower).toBeLessThan(summary.mean);
   expect(summary.meanCiUpper).toBeGreaterThan(summary.mean);
 });
@@ -132,8 +132,8 @@ it("retains public categorical labels, pools other and missing separately, and r
     features: { Value: { domain: { categories: ["East", "West"] }, counts: [[60, 30, 2, 4], [30, 12, -3, -2], [20, 20, 10, 2]][index] } },
   }]));
   expect(buildApproximateSummary(category, releases)).toMatchObject({
-    count: 181, missing: 4, cardinality: 2,
-    categories: [{ value: "East", count: 110 }, { value: "West", count: 62 }],
+    count: 179, missing: 6, cardinality: 2,
+    categories: [{ value: "East", count: 109 }, { value: "West", count: 62 }],
   });
 });
 
@@ -185,11 +185,11 @@ it("adds released and protected category counts with one pooled percentage denom
   const priors = [{ count: 40, missingValuesCount: 2, categoryCounts: { East: 25, West: 15 } }];
   const summary = buildApproximateSummary(category, inputs, priors, 2);
   expect(summary).toMatchObject({ count: 63, missing: 2, totalSources: 2,
-    categories: [{ value: "East", count: 45 }, { value: "West", count: 17 }] });
+    categories: [{ value: "East", count: 45 }, { value: "West", count: 17 }, {value:"North",count:1}] });
   expect(summary.categories[0].percent).toBeCloseTo(100 * 45 / 63);
 });
 
-it("downweights isolated perturbations in sparse numerical profiles and preserves the count", () => {
+it("fits a coherent histogram and flags sparse estimates without ad hoc smoothing", () => {
   const boundaries = Array.from({ length: 25 }, (_, index) => index * 5);
   const cells = Array(25).fill(0);
   cells[10] = 12;
@@ -202,16 +202,16 @@ it("downweights isolated perturbations in sparse numerical profiles and preserve
   const result = buildApproximateSummary({ ...group, members: members.slice(0, 1) }, new Map([[keys[0], input]]));
   const unadjustedMean = (12 * 52.5 + 15 * 57.5 + 13 * 62.5 + 4 * 117.5) / 44;
   expect(result).toMatchObject({ count: 44, lowPrecision: true });
-  expect(result.mean).toBeLessThan(unadjustedMean - 2);
+  expect(result.mean).toBeCloseTo(unadjustedMean,12);
   expect(result.note).toContain("Low precision");
 });
 
-it("keeps category noise out of modes and retains the full count as the percentage denominator", () => {
+it("reports reconstructed category frequencies with the full count denominator", () => {
   const input = { version: 1, group: "A", noiseVariance: 4,
     features: { Value: { domain: { categories: ["East", "West"] }, counts: [40, 1, 3, 0] } } };
   const result = buildApproximateSummary({ ...group, type: "categorical", members: members.slice(0, 1) },
     new Map([[keys[0], input]]));
-  expect(result).toMatchObject({ count: 44, cardinality: 1, categories: [{ value: "East", count: 40 }] });
+  expect(result).toMatchObject({ count: 44, cardinality: 2, categories: [{ value: "East", count: 40 }, {value:"West",count:1}] });
   expect(result.categories[0].percent).toBeCloseTo(100 * 40 / 44);
 });
 
@@ -224,7 +224,7 @@ it("does not rank a combined unlisted bucket as a single observed category", () 
   expect(result.note).toContain("Unlisted category totals are excluded from mode rankings");
 });
 
-it("exports a supported range separately from sample extrema and excludes isolated noise bins", () => {
+it("distinguishes estimated extrema from the statistically supported range", () => {
   const boundaries = Array.from({ length: 25 }, (_, index) => index * 5);
   const counts = Array(25).fill(0);
   counts[10] = 20;
@@ -235,19 +235,19 @@ it("exports a supported range separately from sample extrema and excludes isolat
   const sourceData = collectDiscoveryStatistics(sources, active);
   const input = new Map([[keys[1], release(counts, boundaries)]]);
   const data = combineMappedTableData(sourceData, sources, active, [pair], input);
-  expect(data.continuousFeatures[0]).toMatchObject({ min: undefined, max: undefined,
+  expect(data.continuousFeatures[0]).toMatchObject({ min: 50, max: 117.5,
     supportedMin: 50, supportedMax: 55 });
   const report = buildStatisticsReport({ data, sourceData, includeBreakdown: false });
   const { rows } = report.find(sheet => sheet.name === "Continuous statistics");
-  expect(rows[1][rows[0].indexOf("Min")]).toBeNull();
-  expect(rows[1][rows[0].indexOf("Max")]).toBeNull();
+  expect(rows[1][rows[0].indexOf("Min")]).toBe(50);
+  expect(rows[1][rows[0].indexOf("Max")]).toBe(117.5);
   expect(rows[1][rows[0].indexOf("Supported range lower")]).toBe(50);
   expect(rows[1][rows[0].indexOf("Supported range upper")]).toBe(55);
 });
 
 it("labels weak estimates and exports approved estimates even when exact filtering was withheld", () => {
   const weak = new Map(keys.map(key => [key, release([1, -1, 0])]));
-  expect(buildApproximateSummary(group, weak)).toMatchObject({ count: 0, note: expect.stringContaining("Estimated count only") });
+  expect(buildApproximateSummary(group, weak)).toMatchObject({ count: 0, note: expect.stringContaining("No positive non-missing count") });
   expect(buildApproximateSummary(group, weak).mean).toBeUndefined();
 
   const sources = members.map(member => ({ ...member, disclosureWithheld: true, omittedFeatures: [
@@ -256,7 +256,7 @@ it("labels weak estimates and exports approved estimates even when exact filteri
   const sourceData = collectDiscoveryStatistics(sources, [true, true, true]);
   const releases = new Map(keys.map(key => [key, release([40, 30, 0])]));
   const table = combineMappedTableData(sourceData, sources, [true, true, true], [group], releases);
-  expect(table.continuousFeatures[0]).toMatchObject({ count: 210, status: "Estimated", datasetCount: "3/3" });
+  expect(table.continuousFeatures[0]).toMatchObject({ count: 210, status: "Low precision", datasetCount: "3/3" });
   const sheet = buildStatisticsReport({ data: table, sourceData, includeBreakdown: false }).find(item => item.name === "Continuous statistics");
   expect(sheet.rows).toHaveLength(2);
   expect(sheet.rows[1][sheet.rows[0].indexOf("Mean")]).toBeCloseTo((120 * 5 + 90 * 15) / 210);
@@ -273,6 +273,23 @@ it("validates generic feature variances against the declared release allowance",
   expect(buildApproximateSummary(one,inputs)).toMatchObject({count:300,approximate:true});
   input.rowEpsilon /= 2;
   expect(buildApproximateSummary(one,inputs)).toHaveProperty("unavailable");
+});
+
+it("uses the actual independent noise components for whole-dataset post-processing",()=>{
+  const one={...group,members:members.slice(0,1)};
+  const whole={version:4,group:"all",selectionScope:"dataset",rowEpsilon:Math.log(2),features:{Value:{
+    domain:{boundaries:[0,10,20]},counts:[200,0,0],noiseVariance:8,noiseComponents:[4,4]}}};
+  const releases=new Map([[keys[0],whole]]);
+  expect(buildApproximateSummary(one,releases)).toMatchObject({count:200,mean:5});
+  whole.features.Value.noiseComponents=[4];
+  expect(buildApproximateSummary(one,releases)).toHaveProperty("unavailable");
+});
+
+it("does not confuse an unfiltered dataset with a group whose label happens to be all",()=>{
+  const one={version:4,group:"all",selectionScope:"dataset",rowEpsilon:Math.log(2),features:{Value:{
+    domain:{boundaries:[0,10,20]},counts:[100,0,0],noiseVariance:4}}};
+  const releases=new Map([[keys[0],one],[keys[1],{...one,selectionScope:"group"}]]);
+  expect(buildApproximateSummary({...group,members:members.slice(0,2)},releases)).toHaveProperty("unavailable");
 });
 
 it("pools different discrete supports and preserves exact modes outside the protected support", () => {

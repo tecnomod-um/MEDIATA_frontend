@@ -1,4 +1,5 @@
 import { frequencyQuantile } from "./frequencyQuantile.js";
+import { approvedQuartiles } from "./approvedQuartiles";
 import { meanConfidenceInterval, adjustedSkewness, adjustedKurtosis, sampleStandardDeviation, poolNumericalModes } from "./numericalSummary.js";
 // Pool only the summaries already released by each node. No patient rows are transferred.
 export const sourceKey = (source) => JSON.stringify([String(source.nodeId ?? ""), source.fileName]);
@@ -134,7 +135,8 @@ export function buildCombinedStatistics(results, activeIndices) {
         kurtosis: adjustedKurtosis(count, moments.stdDev, moments.sumFourthDeviations),
         sampleStdDev: sampleStandardDeviation(count, moments.stdDev),
         ...poolNumericalModes(parts, entries),
-        ...(complete ? { q1: percentile(.25), median: percentile(.5), q3: percentile(.75) } : {}) };
+        ...(complete ? { q1: percentile(.25), median: percentile(.5), q3: percentile(.75) }
+          : approvedQuartiles(parts.map(part=>({...part,valueCounts:completeNumericalFrequencies(part)?part.valueCounts:null}))) || {}) };
     }
     const field = type === "date" ? "dateHistogram" : "categoryCounts";
     const counts = new Map();

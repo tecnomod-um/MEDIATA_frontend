@@ -1,8 +1,9 @@
 import { featureArrays, sourceKey } from "./combinedStatistics";
 import { sourceColumns, memberKey } from "./columnMappings";
-import { poolingContributions } from "./poolingContributions";
+import { poolingContributions, needsProtectedMode } from "./poolingContributions";
 import { addProtectedDistribution, buildApproximateSummary } from "./approximatePooling";
 import { summaryTableFeature } from "./summaryTableFeature";
+import { tableExportFeatures } from "./statisticsTableData";
 
 export function protectedSourceMembers(results, baseline, activeIndices) {
   const sources = new Map(results.map(source => [sourceKey(source), source]));
@@ -13,7 +14,7 @@ export function protectedSourceMembers(results, baseline, activeIndices) {
       if (!featureArrays[type]) return [];
       const member = {nodeId:source.nodeId, fileName:source.fileName, column};
       const [part] = poolingContributions({type, members:[member]}, sources);
-      return part.withheld ? [[sourceKey(source), member]] : [];
+      return part.withheld || (type === "continuous" && needsProtectedMode(part.feature)) ? [[sourceKey(source), member]] : [];
     });
   }));
 }
@@ -38,8 +39,18 @@ export function protectedSourceTableData(data, results, baseline, releases, hidd
     const source = sources.get(sourceKey(member));
     summary.contributions = [{source, columnName:column, type}];
     table[featureArrays[type]].push({...entry, ...summaryTableFeature(summary),
-      originalName:column, pooled:false, estimatedSummary:summary, status:"Estimated"});
+      originalName:column, pooled:false, estimatedSummary:summary});
     return [];
+  });
+  table.continuousFeatures = table.continuousFeatures.map(entry => {
+    if (entry.estimatedSummary || !needsProtectedMode(entry)) return entry;
+    const member = {...entry,column:entry.originalName || entry.featureName};
+    const group = {label:entry.featureName,type:"continuous",members:[member]};
+    const summary = tableExportFeatures({continuousFeatures:[entry]})[0];
+    const updated = addProtectedDistribution(group,poolingContributions(group,sources),releases,summary);
+    if (updated === summary) return entry;
+    return {...entry,modes:updated.modes,modeBand:updated.modeBand,modeFrequency:updated.modeFrequency,
+      modeStatus:updated.modeStatus,estimatedSummary:updated,status:"Estimated mode"};
   });
   return table;
 }

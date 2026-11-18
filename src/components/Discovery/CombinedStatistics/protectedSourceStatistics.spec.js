@@ -21,6 +21,22 @@ it("requests one saved release per withheld active dataset, independent of merge
   expect(protectedSourceMembers(baseline,baseline,[true]).size).toBe(0);
 });
 
+it("fills a protected numerical mode while retaining every already exact source statistic",()=>{
+  const raw={...source,continuousFeatures:[{featureName:"Instrument reading",count:12,mean:1,stdDev:Math.sqrt(2/3),
+    min:0,max:2,qrt1:0,median:1,qrt3:2,missingValuesCount:0,modes:[],modeStatus:"Withheld: modal frequency below release threshold"}]};
+  const data=collectDiscoveryStatistics([raw],[true]);
+  const input={version:1,group:"Treatment",noiseVariance:4,features:{"Instrument reading":{
+    domain:{boundaries:[-.5,.5,1.5,2.5],values:[0,1,2]},counts:[4,4,4,0]}}};
+  expect(protectedSourceMembers([raw],[raw],[true]).size).toBe(1);
+  const table=protectedSourceTableData(data,[raw],[raw],new Map([[sourceKey(source),input]]));
+  expect(table.continuousFeatures[0]).toMatchObject({mean:1,count:12,stdDev:Math.sqrt(2/3),qrt1:0,median:1,qrt3:2,
+    modes:[0,1,2],modeFrequency:4,status:"Estimated mode"});
+  const summary=tableExportFeatures(table)[0];
+  expect(summary).toMatchObject({estimatedMode:true,estimatedQuantiles:false,q1:0,median:1,q3:2});
+  expect(summary.note).not.toContain("Quartiles are estimated");
+  expect(raw.continuousFeatures[0].modes).toEqual([]);
+});
+
 it("displays and exports site estimates with their source identity and estimate notes", () => {
   const data = collectDiscoveryStatistics(results,[true]);
   const table = protectedSourceTableData(data,results,baseline,releases);
@@ -67,11 +83,11 @@ it("uses the shared distribution code for site modes and exports supported range
   const data = collectDiscoveryStatistics(results,[true]);
   const table = protectedSourceTableData(data,results,baseline,new Map([[sourceKey(source),input]]));
   expect(table.continuousFeatures[0]).toMatchObject({modes:[0],modeFrequency:180,supportedMin:0,supportedMax:10});
-  expect(table.continuousFeatures[0].min).toBeUndefined();
+  expect(table.continuousFeatures[0].min).toBe(0);
   const sheet = buildStatisticsReport({data:table,sourceData:table}).find(sheet => sheet.name === "Continuous statistics");
   expect(sheet.rows[1][sheet.rows[0].indexOf("Mode")]).toBe(0);
   expect(sheet.rows[1][sheet.rows[0].indexOf("Supported range lower")]).toBe(0);
-  expect(sheet.rows[1][sheet.rows[0].indexOf("Min")]).toBeNull();
+  expect(sheet.rows[1][sheet.rows[0].indexOf("Min")]).toBe(0);
 });
 
 it("includes available site estimates in a merged export without reusing estimates as exact input", () => {

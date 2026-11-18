@@ -5,6 +5,11 @@ export function needsProtectedMoments(part, type) {
   return part.withheld || (type === "date" && part.feature && !numericalDateFeature(part.feature));
 }
 
+export function needsProtectedMode(feature) {
+  return feature?.count > 0 && !feature.modes?.length && typeof feature.modeStatus === "string"
+    && feature.modeStatus !== "No repeated value" && feature.modeStatus !== "Available";
+}
+
 export function poolingContributions(group, sources) {
   return group.members.map(member => {
     const source = sources.get(sourceKey(member));

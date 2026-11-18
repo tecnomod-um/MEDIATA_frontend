@@ -57,7 +57,7 @@ export function alignNumericalHistograms(domains, histograms) {
 function categoricalDomain(domain) {
   if (Array.isArray(domain?.categories) && domain.categories.length > 0 && domain.categories.length <= 128
     && domain.categories.every(label => typeof label === 'string') && new Set(domain.categories).size === domain.categories.length) {
-    return {labels:domain.categories, other:true};
+    return {labels:domain.categories, other:domain.unlistedCategoriesAllowed !== false};
   }
   // Numerical histograms do not preserve lexical category codes (e.g. 01 vs 1).
   return null;
@@ -66,7 +66,8 @@ function categoricalDomain(domain) {
 export function alignCategoricalHistograms(domains, histograms) {
   const definitions = domains.map(categoricalDomain);
   if (definitions.some((definition, index) => !definition
-    || histograms[index].length !== definition.labels.length + (definition.other ? 2 : 1))) return null;
+    || histograms[index].length !== definition.labels.length + 2
+    || (!definition.other && histograms[index][definition.labels.length] !== 0))) return null;
   const labels = [...new Set(definitions.flatMap(definition => definition.labels))].sort();
   let other = 'Other';
   while (labels.includes(other)) other += ' (unlisted)';
