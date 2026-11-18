@@ -58,6 +58,18 @@ it("displays additional numerical summaries in the existing table without assign
   expect(result['Mode count']).toEqual(['6', 'N/A']);
 });
 
+it("labels privacy estimates in individual tables without creating estimated patient charts", () => {
+  const data = {continuousFeatures:[],categoricalFeatures:[],dateFeatures:[]};
+  const tableData = {...data,
+    continuousFeatures:[{featureName:"Reading",count:20,mean:4,status:"Estimated",estimatedSummary:{approximate:true}}],
+    categoricalFeatures:[{featureName:"State",count:20,status:"Estimated",estimatedSummary:{approximate:true}}]};
+  render(<StatisticsDisplay data={data} tableData={tableData} onSelectFeature={vi.fn()} />);
+  for (const table of screen.getAllByRole("table")) {
+    expect(JSON.parse(table.getAttribute("data-result")).Status).toEqual(["Estimated"]);
+  }
+  expect(screen.queryAllByRole("figure")).toHaveLength(0);
+});
+
 vi.mock("../ContinuousChart/continuousChart", () => ({
   __esModule: true,
   default: (props) => {

@@ -62,9 +62,12 @@ export function poolMoments(parts) {
     sumFourthDeviations: hasFourthMoments && finite(m4) ? m4 : null } : null;
 }
 
-const dateString = value => new Date(Math.trunc(value) * 86400000).toISOString().slice(0, 10);
+export function dateString(value) {
+  if (!Number.isFinite(value) || Math.abs(value) > 100_000_000) return null;
+  return new Date(Math.trunc(value) * 86400000).toISOString().slice(0, 10);
+}
 
-function dayNumber(value) {
+export function dayNumber(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return NaN;
   const day = Date.parse(`${value}T00:00:00Z`) / 86400000;
   return Number.isInteger(day) && dateString(day) === value ? day : NaN;

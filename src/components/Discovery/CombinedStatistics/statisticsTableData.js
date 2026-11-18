@@ -1,7 +1,8 @@
 import { buildCombinedStatistics, categoryFrequencies, sourceKey, featureArrays as arrays } from "./combinedStatistics.js";
 import { activeColumnMappings, memberKey } from "./columnMappings.js";
 import { addProtectedDistribution, buildApproximateSummary } from "./approximatePooling.js";
-import { poolingContributions } from "./poolingContributions.js";
+import { summaryTableFeature } from "./summaryTableFeature";
+import { poolingContributions, needsProtectedMoments } from "./poolingContributions.js";
 
 
 // Adapt released pooled summaries to the same shape used by the existing tables.
@@ -34,10 +35,10 @@ export function combineMappedTableData(data, results, activeIndices, mappings, a
     const exact = buildCombinedStatistics(sources, sources.map(() => true)).features.find(feature => feature.featureName === group.label)
       || { featureName: group.label, type: group.type, includedSources: 0, totalSources: sources.length, unavailable: "No matching records", contributions: [] };
     const parts = approximateReleases ? poolingContributions(group, bySource) : [];
-    const withheld = parts.filter(part => part.withheld);
+    const withheld = parts.filter(part => needsProtectedMoments(part, group.type));
     const moments = exact.unavailable && withheld.length && parts.every(part => part.feature || part.empty || part.withheld)
       ? { ...buildApproximateSummary({ ...group, members: withheld.map(part => part.member) }, approximateReleases,
-          parts.filter(part => part.feature).map(part => part.feature), group.members.length),
+          parts.filter(part => part.feature && !needsProtectedMoments(part, group.type)).map(part => part.feature), group.members.length),
         contributions: parts.map(({ source, feature, empty }) => ({
           source, feature, type: group.type,
           status: empty ? "No matching records" : undefined,
@@ -51,32 +52,7 @@ export function combineMappedTableData(data, results, activeIndices, mappings, a
         feature: contribution.feature ? { ...contribution.feature, featureName: member.column } : undefined };
     });
     const type = summary.type || group.type;
-    const feature = {
-      featureName: summary.featureName, pooled: true, mappingId: group.id, combinedSummary: summary,
-      count: summary.unavailable ? null : summary.count,
-      missingValuesCount: summary.unavailable ? null : summary.missing,
-      mean: summary.mean, stdDev: summary.stdDev, min: summary.min, max: summary.max,
-      supportedMin: summary.supportedMin, supportedMax: summary.supportedMax,
-      meanCiLower: summary.meanCiLower, meanCiUpper: summary.meanCiUpper, skewness: summary.skewness,
-      kurtosis: summary.kurtosis, sampleStdDev: summary.sampleStdDev, cardinality: summary.cardinality,
-      modes: summary.modes, modeBand: summary.modeBand, modeFrequency: summary.modeFrequency, modeStatus: summary.modeStatus,
-      qrt1: summary.q1, qrt3: summary.q3, median: summary.median,
-      q1: summary.q1, q3: summary.q3, earliestDate: summary.min, latestDate: summary.max,
-      datasetCount: `${summary.includedSources}/${summary.totalSources}`,
-      status: summary.unavailable || (summary.approximate
-        ? "Estimated"
-        : summary.estimatedQuantiles ? "Combined · estimated distribution" : "Combined"),
-    };
-    if (type === "categorical") {
-      const categories = summary.categories || [];
-      feature.categoryCounts = Object.fromEntries(categories.map(c => [c.value, c.count]));
-      feature.mode = categories[0]?.value;
-      feature.modeFrequency = categories[0]?.count;
-      feature.modeFrequencyPercentage = categories[0]?.percent;
-      feature.secondMode = categories[1]?.value;
-      feature.secondModeFrequency = categories[1]?.count;
-      feature.secondModePercentage = categories[1]?.percent;
-    }
+    const feature = {...summaryTableFeature(summary), pooled:true, mappingId:group.id, combinedSummary:summary};
     tableData[arrays[type]].push(feature);
   }
   return tableData;
@@ -85,6 +61,7 @@ export function combineMappedTableData(data, results, activeIndices, mappings, a
 export function tableExportFeatures(data) {
   return Object.entries(arrays).flatMap(([type, key]) => (data[key] || []).map(feature => {
     if (feature.combinedSummary) return feature.combinedSummary;
+    if (feature.estimatedSummary) return feature.estimatedSummary;
     const count = feature.count, missing = feature.missingValuesCount;
     return {
       ...feature, type, missing, percentMissing: 100 * missing / (count + missing),

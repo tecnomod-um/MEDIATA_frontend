@@ -17,6 +17,7 @@ import { combineMappedTableData } from "../../components/Discovery/CombinedStati
 import { createColumnMappings, activeColumnMappings, validateColumnMappings, reconcileMappingTypes } from "../../components/Discovery/CombinedStatistics/columnMappings";
 import { filterDiscoveryDatasets } from "../../components/Discovery/CombinedStatistics/filterDiscoveryDatasets";
 import { loadApproximatePooling, protectedPoolingMembers } from "../../components/Discovery/CombinedStatistics/approximatePooling";
+import { protectedSourceMembers, protectedSourceTableData } from "../../components/Discovery/CombinedStatistics/protectedSourceStatistics";
 import { fileFilterConditions } from "../../components/Discovery/FilterModal/filterFeatures";
 import { buildAppliedFilters, tableFilterDescriptions } from "../../components/Discovery/FilterModal/appliedFilters";
 import useRelationshipStatistics from "../../components/Discovery/CombinedStatistics/useRelationshipStatistics";
@@ -322,15 +323,16 @@ function Discovery() {
   const activeMappings = useMemo(() => activeColumnMappings(columnMappings, dataResults, activeFileIndices), [columnMappings, dataResults, activeFileIndices]);
   const combinedTablesActive = combineTables && activeMappings.length > 0;
   const approximateRequest = useMemo(() => {
-    if (!combinedTablesActive || !appliedFilters.size || isCombining) return null;
-    const members = protectedPoolingMembers(activeMappings, dataResults);
+    if (!appliedFilters.size || isCombining) return null;
+    const members = protectedSourceMembers(dataResults, baselineResultsRef.current, activeFileIndices);
+    if (combinedTablesActive) for (const [key, member] of protectedPoolingMembers(activeMappings, dataResults)) members.set(key, member);
     if (!members.size) return null;
     return { members, filtersFor: source => {
       const conditions = fileFilterConditions(filterStatistics, filters, filterLogic.operators, source,
         dataResults.length, filterLogic.matchColumns, columnMappings);
       return Object.keys(conditions).length ? { conditions, operator: filterLogic.operator } : null;
     } };
-  }, [combinedTablesActive, appliedFilters, activeMappings, filterStatistics, filters, filterLogic, dataResults, columnMappings, isCombining]);
+  }, [combinedTablesActive, appliedFilters, activeMappings, activeFileIndices, filterStatistics, filters, filterLogic, dataResults, columnMappings, isCombining]);
   useEffect(() => {
     if (!approximateRequest) return;
     const controller = new AbortController();
@@ -345,9 +347,12 @@ function Discovery() {
   const approximatePending = Boolean(approximateRequest && approximateResult?.request !== approximateRequest);
   const approximateReleases = approximateRequest && approximateResult?.request === approximateRequest
     ? approximateResult.releases : undefined;
-  const tableStatistics = useMemo(() => !combinedTablesActive || !filteredDataStatistics ? filteredDataStatistics
-    : combineMappedTableData(filteredDataStatistics, dataResults, activeFileIndices, columnMappings, approximateReleases),
-  [combinedTablesActive, filteredDataStatistics, dataResults, activeFileIndices, columnMappings, approximateReleases]);
+  const sourceTableStatistics = useMemo(() => protectedSourceTableData(filteredDataStatistics, dataResults,
+    baselineResultsRef.current, approximateReleases, hiddenFeaturesRef.current),
+  [filteredDataStatistics, dataResults, approximateReleases]);
+  const tableStatistics = useMemo(() => !combinedTablesActive || !sourceTableStatistics ? sourceTableStatistics
+    : combineMappedTableData(sourceTableStatistics, dataResults, activeFileIndices, columnMappings, approximateReleases),
+  [combinedTablesActive, sourceTableStatistics, dataResults, activeFileIndices, columnMappings, approximateReleases]);
   const combinedRelationships = combinedTablesActive;
   const relationships = useRelationshipStatistics(combinedRelationships ? tableStatistics : filteredDataStatistics,
     dataResults, combinedRelationships, !showIndividualView || exportRelationships);
@@ -355,17 +360,17 @@ function Discovery() {
   const statisticsBusy = isCombining || relationships.pending || approximatePending;
   const relationshipFilters = useMemo(() => tableFilterDescriptions(combinedRelationships ? tableStatistics : filteredDataStatistics, appliedFilters), [combinedRelationships, tableStatistics, filteredDataStatistics, appliedFilters]);
   const featureFilters = useMemo(() => tableFilterDescriptions(tableStatistics, appliedFilters), [tableStatistics, appliedFilters]);
-  const statisticsExport = useMemo(() => ({ data: tableStatistics, sourceData: filteredDataStatistics, appliedFilters }),
-    [tableStatistics, filteredDataStatistics, appliedFilters]);
+  const statisticsExport = useMemo(() => ({ data: tableStatistics, sourceData: sourceTableStatistics, appliedFilters }),
+    [tableStatistics, sourceTableStatistics, appliedFilters]);
   const selectFeature = useCallback((entry, event) => {
-    const feature = selectableFeatures(entry.pooled ? tableStatistics : filteredDataStatistics)
+    const feature = selectableFeatures(entry.pooled ? tableStatistics : sourceTableStatistics)
       .find(feature => feature.featureName === entry.featureName);
     if (feature) dispatchSelection({type:"select", entry:feature, additive:!!(event?.additive || event?.ctrlKey || event?.metaKey)});
-  }, [tableStatistics, filteredDataStatistics]);
+  }, [tableStatistics, sourceTableStatistics]);
   useEffect(() => {
-    dispatchSelection({type:"reconcile", statistics:filteredDataStatistics, tableStatistics});
-  }, [filteredDataStatistics, tableStatistics]);
-  const selectedSourceFeatures = useMemo(() => sourceFeatureSelection(selectedEntries, filteredDataStatistics), [selectedEntries, filteredDataStatistics]);
+    dispatchSelection({type:"reconcile", statistics:sourceTableStatistics, tableStatistics});
+  }, [sourceTableStatistics, tableStatistics]);
+  const selectedSourceFeatures = useMemo(() => sourceFeatureSelection(selectedEntries, sourceTableStatistics), [selectedEntries, sourceTableStatistics]);
 
   const applyColumnMappings = async next => {
     const invalid = validateColumnMappings(next, baselineResultsRef.current);
