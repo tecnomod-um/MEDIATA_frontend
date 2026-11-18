@@ -35,6 +35,18 @@ it("requests only withheld contributions and skips complete groups", async () =>
   expect(getApproximatePoolingSource).toHaveBeenCalledExactlyOnceWith("example.csv", filters, "3", signal);
 });
 
+it("preserves node explanations and propagates cancellation without stale results", async () => {
+  const member = members[0];
+  const nodes = [{...member,serviceUrl:"http://node"}];
+  const selected = new Map([[keys[0],member]]);
+  getApproximatePoolingSource.mockRejectedValue({response:{data:{detail:"The saved grouping feature differs."}}});
+  const responses = await loadApproximatePooling(selected,nodes,()=>({}),new AbortController().signal);
+  expect(buildApproximateSummary({...group,members:[member]},responses).unavailable).toBe("The saved grouping feature differs.");
+  const controller = new AbortController();
+  controller.abort();
+  await expect(loadApproximatePooling(selected,nodes,()=>({}),controller.signal)).rejects.toBeDefined();
+});
+
 it("preserves exact site rows in exports and includes a small protected site in the weighted pool", () => {
   const results = [exact(members[0], 40, 2, 3), exact(members[1], 60, 8, 7), withheld(members[2])];
   const active = results.map(() => true);
@@ -104,11 +116,11 @@ it("combines signed contributions before projecting counts or calculating statis
   expect(summary.meanCiUpper).toBeGreaterThan(summary.mean);
 });
 
-it("never labels a partial or incompatible estimate as pooled", () => {
+it("rejects partial or differently filtered estimates and coarsens incompatible grids", () => {
   const releases = new Map([[keys[0], release([100, 10, 0])], [keys[1], release([0, 100, 0])]]);
   expect(buildApproximateSummary(group, releases).count).toBeUndefined();
   releases.set(keys[2], release([20, 20, 0], [0, 12, 20]));
-  expect(buildApproximateSummary(group, releases)).toHaveProperty("unavailable");
+  expect(buildApproximateSummary(group, releases)).toMatchObject({count:250, mean:10, lowPrecision:true});
   releases.set(keys[2], { ...release([20, 20, 0]), group: "B" });
   expect(buildApproximateSummary(group, releases)).toHaveProperty("unavailable");
 });
@@ -203,6 +215,15 @@ it("keeps category noise out of modes and retains the full count as the percenta
   expect(result.categories[0].percent).toBeCloseTo(100 * 40 / 44);
 });
 
+it("does not rank a combined unlisted bucket as a single observed category", () => {
+  const input = {version:3,group:"A",rowEpsilon:Math.log(2),features:{Value:{
+    domain:{categories:["Other","West"],type:"categorical"},counts:[100,50,300,0],noiseVariance:4}}};
+  const result = buildApproximateSummary({...group,type:"categorical",members:members.slice(0,1)},new Map([[keys[0],input]]));
+  expect(result).toMatchObject({count:450,cardinality:2,categories:[{value:"Other",count:100},{value:"West",count:50}]});
+  expect(result.categories[0].percent).toBeCloseTo(100*100/450);
+  expect(result.note).toContain("Unlisted category totals are excluded from mode rankings");
+});
+
 it("exports a supported range separately from sample extrema and excludes isolated noise bins", () => {
   const boundaries = Array.from({ length: 25 }, (_, index) => index * 5);
   const counts = Array(25).fill(0);
@@ -242,4 +263,62 @@ it("labels weak estimates and exports approved estimates even when exact filteri
   expect(sheet.rows[1][sheet.rows[0].indexOf("Notes")]).toContain("Privacy-protected estimate");
   const breakdown = buildStatisticsReport({ data: table, sourceData }).find(item => item.name === "Continuous statistics");
   expect(breakdown.rows).toHaveLength(2);
+});
+
+it("validates generic feature variances against the declared release allowance", () => {
+  const input = {version:3,group:"A",rowEpsilon:Math.log(1024/911),features:{
+    Value:{domain:{boundaries:[0,10,20],type:"continuous"},counts:[200,100,0],noiseVariance:2*911*1024/(113**2)}}};
+  const one = {...group,members:members.slice(0,1)};
+  const inputs = new Map([[keys[0],input]]);
+  expect(buildApproximateSummary(one,inputs)).toMatchObject({count:300,approximate:true});
+  input.rowEpsilon /= 2;
+  expect(buildApproximateSummary(one,inputs)).toHaveProperty("unavailable");
+});
+
+it("pools different discrete supports and preserves exact modes outside the protected support", () => {
+  const results = [exact(members[0],100,7),exact(members[1],40,10)];
+  delete results[1].continuousFeatures[0].valueCounts;
+  const active = [true,true];
+  const data = collectDiscoveryStatistics(results,active);
+  const input = release([20,20,0],[9.5,10.5,11.5]);
+  input.features.Value.domain.values = [10,11];
+  const table = combineMappedTableData(data,results,active,[{...group,members:members.slice(0,2)}],new Map([[keys[1],input]]));
+  expect(table.continuousFeatures[0]).toMatchObject({modes:[7],modeFrequency:100,mean:55/7});
+});
+
+it("pools protected dates with exact dates in days and exports an estimate note", () => {
+  const day = Date.parse("2026-01-01T00:00:00Z")/86400000;
+  const one = {...group,type:"date",members:members.slice(0,1)};
+  const input = {version:3,group:"A",rowEpsilon:Math.log(2),features:{Value:{
+    domain:{type:"date",boundaries:[day-.5,day+.5,day+1.5],values:[day,day+1]},counts:[50,50,0],noiseVariance:4}}};
+  const exactDate = {count:100,missingValuesCount:0,dateHistogram:{"2026-01-03":100}};
+  const summary = buildApproximateSummary(one,new Map([[keys[0],input]]),[exactDate],2);
+  expect(summary).toMatchObject({type:"date",count:200,mean:"2026-01-02",median:"2026-01-02",q1:"2026-01-01",q3:"2026-01-03"});
+  expect(summary.stdDev).toBeCloseTo(Math.sqrt(.6875));
+  expect(buildApproximateSummary({...one,type:"continuous"},new Map([[keys[0],input]]))).toHaveProperty("unavailable");
+  expect(buildApproximateSummary({...one,type:"categorical"},new Map([[keys[0],input]]))).toHaveProperty("unavailable");
+});
+
+it("does not claim reconstructed raw categories after a numerical type switch", () => {
+  const input = release([100,50,0],[.5,1.5,2.5]);
+  input.features.Value.domain.values = [1,2];
+  const inputs = new Map([[keys[0],input]]);
+  expect(buildApproximateSummary({...group,members:members.slice(0,1)},inputs)).toMatchObject({count:150});
+  expect(buildApproximateSummary({...group,type:"categorical",members:members.slice(0,1)},inputs)).toHaveProperty("unavailable");
+});
+
+it("requests a protected date distribution when rounded local means cannot recover exact moments", () => {
+  const one = {...group,type:"date",members:members.slice(0,1)};
+  const source = {...members[0],dateFeatures:[{featureName:"Value",count:50,missingValuesCount:0,mean:"2026-01-01",stdDev:1}]};
+  expect([...protectedPoolingMembers([one],[source]).keys()]).toEqual([keys[0]]);
+  const day = Date.parse("2026-01-01T00:00:00Z")/86400000;
+  const input = {version:3,group:"A",rowEpsilon:Math.log(2),features:{Value:{
+    domain:{type:"date",boundaries:[day-.5,day+.5,day+1.5],values:[day,day+1]},counts:[25,25,0],noiseVariance:4}}};
+  const data = collectDiscoveryStatistics([source],[true]);
+  // A mapping requires two sites, so exercise the same fallback with both sources.
+  const second = {...source,...members[1]};
+  const combined = combineMappedTableData(collectDiscoveryStatistics([source,second],[true,true]),[source,second],
+    [true,true],[{...one,members:members.slice(0,2)}],new Map([[keys[0],input],[keys[1],input]]));
+  expect(combined.dateFeatures[0]).toMatchObject({count:100,mean:"2026-01-01",status:"Estimated"});
+  expect(data.dateFeatures[0].mean).toBe("2026-01-01");
 });

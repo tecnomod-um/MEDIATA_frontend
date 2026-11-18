@@ -187,7 +187,9 @@ const StatisticsDisplay = React.memo(
           if (combinedTables) table.Datasets.push(dateStat.datasetCount || "1");
         });
       }
-      if (combinedTables) table.Status = [...tableData.continuousFeatures, ...(tableData.dateFeatures || [])].map(feature => feature.status || "Individual dataset");
+      const numerical = [...tableData.continuousFeatures, ...(tableData.dateFeatures || [])];
+      if (combinedTables || numerical.some(feature => feature.estimatedSummary))
+        table.Status = numerical.map(feature => feature.status || "Individual dataset");
       if (tableData.continuousFeatures.some(feature => feature.supportedMin != null)) {
         table["Supported range lower"] = [...tableData.continuousFeatures.map(feature => feature.supportedMin?.toString() ?? "N/A"),
           ...(tableData.dateFeatures || []).map(() => "N/A")];
@@ -224,6 +226,8 @@ const StatisticsDisplay = React.memo(
       };
       if (combinedTables) {
         table.Datasets = tableData.categoricalFeatures.map(feature => feature.datasetCount || "1");
+      }
+      if (combinedTables || tableData.categoricalFeatures.some(feature => feature.estimatedSummary)) {
         table.Status = tableData.categoricalFeatures.map(feature => feature.status || "Individual dataset");
       }
       return table;

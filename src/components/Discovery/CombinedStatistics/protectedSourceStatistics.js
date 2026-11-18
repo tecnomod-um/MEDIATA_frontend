@@ -1,0 +1,45 @@
+import { featureArrays, sourceKey } from "./combinedStatistics";
+import { sourceColumns, memberKey } from "./columnMappings";
+import { poolingContributions } from "./poolingContributions";
+import { addProtectedDistribution, buildApproximateSummary } from "./approximatePooling";
+import { summaryTableFeature } from "./summaryTableFeature";
+
+export function protectedSourceMembers(results, baseline, activeIndices) {
+  const sources = new Map(results.map(source => [sourceKey(source), source]));
+  return new Map(baseline.flatMap(source => {
+    const index = results.findIndex(result => sourceKey(result) === sourceKey(source));
+    if (!activeIndices[index]) return [];
+    return sourceColumns(source).flatMap(({column, type}) => {
+      if (!featureArrays[type]) return [];
+      const member = {nodeId:source.nodeId, fileName:source.fileName, column};
+      const [part] = poolingContributions({type, members:[member]}, sources);
+      return part.withheld ? [[sourceKey(source), member]] : [];
+    });
+  }));
+}
+
+// Source estimates stay separate from exact inputs used for pooling and relationships.
+export function protectedSourceTableData(data, results, baseline, releases, hidden = new Set()) {
+  if (!data || !releases?.size) return data;
+  const sources = new Map(results.map(source => [sourceKey(source), source]));
+  const definitions = new Map(baseline.flatMap(source => sourceColumns(source).map(({column, type}) =>
+    [memberKey({...source, column}), type])));
+  const table = {...data, ...Object.fromEntries(Object.values(featureArrays).map(key => [key, [...(data[key] || [])]]))};
+  table.omittedFeatures = (data.omittedFeatures || []).flatMap(entry => {
+    const column = entry.originalName || entry.featureName;
+    const member = {...entry, column};
+    const type = definitions.get(memberKey(member));
+    if (!featureArrays[type] || hidden.has(memberKey(member))) return [entry];
+    const group = {label:entry.featureName, type, members:[member]};
+    const parts = poolingContributions(group, sources);
+    if (!parts[0].withheld) return [entry];
+    const summary = addProtectedDistribution(group, parts, releases, buildApproximateSummary(group, releases));
+    if (summary.unavailable) return [{...entry, reason:[entry.reason, summary.unavailable].filter(Boolean).join(" ")}];
+    const source = sources.get(sourceKey(member));
+    summary.contributions = [{source, columnName:column, type}];
+    table[featureArrays[type]].push({...entry, ...summaryTableFeature(summary),
+      originalName:column, pooled:false, estimatedSummary:summary, status:"Estimated"});
+    return [];
+  });
+  return table;
+}

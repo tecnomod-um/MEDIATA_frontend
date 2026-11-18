@@ -1,15 +1,15 @@
 import { getApproximatePoolingSource } from "../../../util/petitionHandler";
 import { categoryFrequencies, completeNumericalFrequencies, poolMoments, sourceKey } from "./combinedStatistics";
 import { frequencyQuantile } from "./frequencyQuantile";
-import { poolingContributions } from "./poolingContributions";
+import { poolingContributions, needsProtectedMoments } from "./poolingContributions";
 import { adjustedKurtosis, adjustedSkewness, sampleStandardDeviation } from "./numericalSummary";
 import { approximateMeanInterval } from "./approximateMeanInterval";
 import { simultaneousNoiseRadius } from "./geometricNoise";
+import { numericalDomain, alignNumericalHistograms, alignCategoricalHistograms } from "./protectedHistogramDomains";
+import { numericalDateFeature, formatProtectedDates } from "./protectedDateSummary";
 
 const MAX_WIRE_COUNT = 1_000_000_000;
-const UNIFORM_VARIANCES = [4, 24, 112];
-const FEATURE_VARIANCES = [...UNIFORM_VARIANCES, 20 / 9, 80 / 9];
-const NOTES = "Privacy-protected estimate. Counts include random noise. Numerical values use configured ranges. The mean interval includes binning, privacy noise and sampling uncertainty under independent observations.";
+const NOTES = "Privacy-protected estimate. Counts include random noise. Numerical values use the node's published domains. The mean interval includes binning, privacy noise and sampling uncertainty under independent observations.";
 const COUNT_ONLY = "Estimated count only. The remaining statistics could not be estimated reliably.";
 const MIXED_NOTES = "Privacy-protected pooled estimate.";
 
@@ -19,9 +19,24 @@ function validCounts(cells, length) {
 }
 
 function histogramVariance(source, feature) {
-  if (source?.version === 1 && UNIFORM_VARIANCES.includes(source.noiseVariance)) return source.noiseVariance;
-  if (source?.version === 2 && FEATURE_VARIANCES.includes(feature?.noiseVariance)) return feature.noiseVariance;
-  return null;
+  if (![1, 2, 3].includes(source?.version)) return null;
+  const variance = source.version === 1 ? source.noiseVariance : feature?.noiseVariance;
+  if (!Number.isFinite(variance) || variance <= 0 || variance > MAX_WIRE_COUNT) return null;
+  return variance;
+}
+
+function validRelease(source) {
+  if (source.version === 3) {
+    if (!Number.isFinite(source.rowEpsilon) || source.rowEpsilon <= 0) return false;
+    const charge = Object.values(source.features || {}).reduce((total, histogram) => {
+      const v = histogram?.noiseVariance;
+      if (!Number.isFinite(v) || v <= 0 || v > MAX_WIRE_COUNT) return Infinity;
+      const q = v / (v + 1 + Math.sqrt(2 * v + 1));
+      return total - Math.log(q);
+    }, 0);
+    if (charge > source.rowEpsilon + 1e-9) return false;
+  }
+  return true;
 }
 
 function estimateGroupTotal(source, referenceVariance) {
@@ -30,7 +45,7 @@ function estimateGroupTotal(source, referenceVariance) {
     const length = feature?.domain?.boundaries?.length
       ?? (Array.isArray(feature?.domain?.categories) ? feature.domain.categories.length + 2 : 0);
     const variance = histogramVariance(source, feature);
-    if (variance === null || length < 2 || length > 66 || !validCounts(feature.counts, length)) continue;
+    if (variance === null || length < 2 || length > 130 || !validCounts(feature.counts, length)) continue;
     // Each histogram includes missingness. Combine the noisy group sizes by inverse variance.
     const weight = referenceVariance / variance;
     precision += weight / length;
@@ -75,65 +90,31 @@ function numericalBins(cells, count, binNoise) {
   return weight > 0 ? roundCounts(weights.map(value => value * count / weight), count) : null;
 }
 
-function numericalDomain(domain) {
-  const { boundaries, values } = domain || {};
-  if (!Array.isArray(boundaries) || boundaries.length < 2 || boundaries.length > 65
-    || !boundaries.every((edge, index) => Number.isFinite(edge) && Math.abs(edge) <= 1e9
-      && (!index || edge > boundaries[index - 1]))) return null;
-  if (values != null && (!Array.isArray(values) || values.length !== boundaries.length - 1
-    || !values.every((value, index) => Number.isFinite(value)
-      && value >= boundaries[index] && value <= boundaries[index + 1]))) return null;
-  const labels = values ?? boundaries.slice(1).map((edge, index) => (boundaries[index] + edge) / 2);
-  return { boundaries, values, labels };
-}
-
-function numericCells(domain, target, counts, lowerEdges, upperEdges) {
-  if (JSON.stringify(domain) === JSON.stringify(target)) return { counts: counts.slice(0, -1), fanIn: 1 };
-  // An older release used interval midpoints for a scored scale. Group public scores
-  // into those intervals and keep a conservative bound for cells that combine noise.
-  if (!domain.values || target.values || domain.boundaries[0] !== target.boundaries[0]
-    || domain.boundaries.at(-1) !== target.boundaries.at(-1)) return null;
-  const aligned = target.labels.map(() => 0);
-  const cellsPerBin = target.labels.map(() => 0);
-  domain.values.forEach((value, index) => {
-    const bin = target.boundaries.slice(1, -1).findIndex(edge => edge > value);
-    const destination = bin < 0 ? aligned.length - 1 : bin;
-    aligned[destination] += counts[index];
-    cellsPerBin[destination]++;
-    lowerEdges[destination] = Math.min(lowerEdges[destination], domain.boundaries[index]);
-    upperEdges[destination] = Math.max(upperEdges[destination], domain.boundaries[index + 1]);
-  });
-  return { counts: aligned, fanIn: Math.max(...cellsPerBin) };
-}
-
 function histogramFor(group, sources) {
   const pieces = group.members.map(member => {
     const source = sources.get(sourceKey(member));
     const cell = source?.features?.[member.column];
-    return { source, cell, variance: histogramVariance(source, cell) };
+    return { source, cell, variance: source && validRelease(source) ? histogramVariance(source, cell) : null };
   });
   const first = pieces[0]?.cell;
   if (!first || pieces.some(({ source, cell, variance }) => !cell
     || typeof source.group !== "string" || source.group !== pieces[0].source.group
     || variance === null)) return null;
-  const categories = first.domain?.categories;
-  let labels, boundaries, lowerEdges, upperEdges, aligned, scores;
-  if (group.type === "continuous") {
+  let labels, boundaries, lowerEdges, upperEdges, aligned, scores, otherIndex;
+  if (group.type === "continuous" || group.type === "date") {
     const domains = pieces.map(({ cell }) => numericalDomain(cell.domain));
-    if (domains.some((domain, index) => !domain || !validCounts(pieces[index].cell.counts, domain.boundaries.length))) return null;
-    const target = domains.find(domain => !domain.values) ?? domains[0];
-    ({ labels, boundaries, values: scores } = target);
-    lowerEdges = boundaries.slice(0, -1);
-    upperEdges = boundaries.slice(1);
-    aligned = domains.map((domain, index) => numericCells(domain, target, pieces[index].cell.counts, lowerEdges, upperEdges));
+    if (domains.some((domain, index) => !domain
+      || (group.type === "date") !== (pieces[index].cell.domain.type === "date")
+      || !validCounts(pieces[index].cell.counts, domain.boundaries.length))) return null;
+    const target = alignNumericalHistograms(domains, pieces.map(({cell}) => cell.counts));
+    if (!target) return null;
+    ({labels, boundaries, lowerEdges, upperEdges, aligned, scores} = target);
   } else {
-    if (group.type !== "categorical" || !Array.isArray(categories) || !categories.length || categories.length > 64
-      || !categories.every(label => typeof label === "string" && label !== "Other") || new Set(categories).size !== categories.length) return null;
-    labels = [...categories, "Other"];
-    aligned = pieces.map(({ cell }) => JSON.stringify(cell.domain?.categories) === JSON.stringify(categories)
-      && validCounts(cell.counts, labels.length + 1) ? { counts: cell.counts.slice(0, -1), fanIn: 1 } : null);
+    if (group.type !== "categorical" || pieces.some(({cell}) => !validCounts(cell.counts, cell.counts?.length))) return null;
+    const target = alignCategoricalHistograms(pieces.map(({cell}) => cell.domain), pieces.map(({cell}) => cell.counts));
+    if (!target) return null;
+    ({labels, aligned, otherIndex} = target);
   }
-  if (aligned.some(part => !part)) return null;
   const variances = pieces.flatMap(({ variance }, index) => Array(aligned[index].fanIn).fill(variance));
   const binNoise = Math.sqrt(variances.reduce((sum, variance) => sum + variance, 0));
   const totals = pieces.map(({ source, variance }) => estimateGroupTotal(source, variance));
@@ -142,7 +123,7 @@ function histogramFor(group, sources) {
     sum + pieces[index].variance + total.variance * (1 - 2 / pieces[index].cell.counts.length), 0);
   const missing = pieces.reduce((sum, { cell }) => sum + cell.counts.at(-1), 0);
   return {
-    labels, boundaries, lowerEdges, upperEdges, scores,
+    labels, boundaries, lowerEdges, upperEdges, scores, otherIndex,
     cells: labels.map((_, index) => aligned.reduce((sum, { counts }) => sum + counts[index], 0)),
     count: Math.max(0, Math.round(totals.reduce((sum, total) => sum + total.total, 0) - missing)),
     missing: Math.max(0, missing),
@@ -222,6 +203,13 @@ function supportedRange(parts, histogram) {
 
 function protectedMode(exactEntries, histogram, bins) {
   const { boundaries, scores, binNoise } = histogram;
+  if (scores) {
+    const frequencies = new Map(scores.map((score, index) => [score, bins[index]]));
+    exactEntries.forEach(([value, count]) => frequencies.set(value, (frequencies.get(value) || 0) + count));
+    const [first, second] = [...frequencies].sort((a, b) => b[1] - a[1]);
+    if (!first || first[1] <= 3 * binNoise || (second && first[1] - second[1] <= 3 * binNoise)) return {};
+    return {modes:[first[0]], modeFrequency:first[1]};
+  }
   const counts = [...bins];
   for (const [value, count] of exactEntries) {
     const index = boundaries.slice(1, -1).findIndex(edge => edge > value);
@@ -288,6 +276,7 @@ function combinedCategories(histogram, exact, summary) {
   }
   const radius = simultaneousNoiseRadius(histogram.variances, cells.length);
   if (count) projectedCounts(cells, count).forEach((value, index) => {
+    if (index === histogram.otherIndex) return;
     const label = labels[index];
     if (value > 0 && (counts.has(label) || cells[index] > radius)) counts.set(label, (counts.get(label) || 0) + value);
   });
@@ -295,14 +284,22 @@ function combinedCategories(histogram, exact, summary) {
   if (!categories.length) return { ...summary,
     note: "Estimated count only. The individual category counts are too close to the privacy noise to rank." };
   return { ...summary, categories, cardinality: categories.length,
-    note: `${exact.length ? MIXED_NOTES : "Privacy-protected estimate."} Categories supported only by estimated counts must exceed a simultaneous 97.5% noise bound. The number of supported categories is estimated. Rare categories may be omitted or introduced by noise. Percentages use the full estimated non-missing count; near ties can change rank.` };
+    note: `${exact.length ? MIXED_NOTES : "Privacy-protected estimate."} Categories supported only by estimated counts must exceed a simultaneous 97.5% noise bound. The number of supported categories is estimated. Rare categories may be omitted or introduced by noise. Unlisted category totals are excluded from mode rankings. Percentages use the full estimated non-missing count; near ties can change rank.` };
 }
 
 export function buildApproximateSummary(group, releases, exact = [], totalSources = group.members.length) {
   const histogram = histogramFor(group, releases);
   const identity = { featureName: group.label, type: group.type, approximate: true };
-  if (!histogram) return { ...identity, includedSources: exact.length, totalSources,
-    unavailable: "Statistics unavailable for the selected datasets" };
+  if (!histogram) {
+    const failure = group.members.map(member => releases.get(sourceKey(member))?.unavailable).find(Boolean);
+    const missingFeature = group.members.some(member => {
+      const release = releases.get(sourceKey(member));
+      return release?.features && !Object.hasOwn(release.features, member.column);
+    });
+    return { ...identity, includedSources: exact.length, totalSources,
+      unavailable: failure || (missingFeature ? "The saved protected release does not include this feature."
+        : "Statistics unavailable for the selected datasets or feature interpretation.") };
+  }
   if (exact.some(part => !Number.isSafeInteger(part.count) || part.count < 0
     || !Number.isSafeInteger(part.missingValuesCount) || part.missingValuesCount < 0)) {
     return { ...identity, includedSources: exact.length, totalSources, unavailable: "Incomplete counts in the returned summaries" };
@@ -317,6 +314,11 @@ export function buildApproximateSummary(group, releases, exact = [], totalSource
   if (count <= 3 * histogram.countNoise) {
     return { ...summary, note: COUNT_ONLY };
   }
+  if (group.type === "date") {
+    const parts = exact.map(numericalDateFeature);
+    return parts.some(part => !part) ? {...summary, unavailable:"Incomplete date distribution"}
+      : formatProtectedDates(combinedNumerical(histogram, parts, summary));
+  }
   return group.type === "continuous" ? combinedNumerical(histogram, exact, summary) : combinedCategories(histogram, exact, summary);
 }
 
@@ -325,7 +327,7 @@ export function protectedPoolingMembers(groups, results) {
   return new Map(groups.flatMap(group => {
     const parts = poolingContributions(group, sources);
     return parts.every(part => part.feature || part.empty || part.withheld)
-      ? parts.filter(part => part.withheld || (group.type === "continuous" && needsProtectedDistribution(part)))
+      ? parts.filter(part => needsProtectedMoments(part, group.type) || (group.type === "continuous" && needsProtectedDistribution(part)))
         .map(({ member }) => [sourceKey(member), member]) : [];
   }));
 }
@@ -340,7 +342,8 @@ export async function loadApproximatePooling(members, nodes, filtersFor, signal)
       return [key, await getApproximatePoolingSource(member.fileName, filters, node.serviceUrl, signal)];
     } catch (error) {
       if (signal?.aborted) throw error;
-      return [key, null];
+      const detail = error?.response?.data?.detail;
+      return [key, {unavailable:typeof detail === "string" ? detail : "Protected statistics could not be requested."}];
     }
   }));
   return new Map(responses);

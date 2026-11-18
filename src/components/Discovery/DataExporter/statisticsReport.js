@@ -73,7 +73,7 @@ function summaryRow(summary, type, pooled) {
     return { values: [...counts, summary.unavailable || !summary.categories ? null : categories.length, ...mode(categories[0]), ...mode(categories[1])],
       note: summary.unavailable || summary.note };
   }
-  if (type === "date") return { values: [...counts, value("mean"), value("stdDev"), ...quantiles], note: summary.unavailable };
+  if (type === "date") return { values: [...counts, value("mean"), value("stdDev"), ...quantiles], note: summary.unavailable || summary.note };
 
   const modes = summary.unavailable ? [] : (summary.modes || []).filter(Number.isFinite);
   const modeCount = value("modeFrequency");
@@ -143,9 +143,9 @@ export function buildStatisticsReport({ data, sourceData, selectedEntries = [], 
     .flatMap(feature => sourceParts(feature).flatMap(part => {
       const { nodeId, nodeName, fileName } = part.source;
       const identity = { nodeId, nodeName, fileName, featureName: part.columnName || part.feature?.featureName, type: feature.type };
-      if (feature.combinedSummary?.approximate && !part.feature) return [];
       const released = localByKey.get(selectionKey(identity));
-      if (released) return [released];
+      if (released) return feature.combinedSummary?.approximate && !part.feature && released.unavailable ? [] : [released];
+      if (feature.combinedSummary?.approximate && !part.feature) return [];
       return part.feature ? [{ ...part.feature, ...identity }] : [];
     })) : [];
   const visibleKeys = new Set(features.map(selectionKey));
@@ -158,7 +158,7 @@ export function buildStatisticsReport({ data, sourceData, selectedEntries = [], 
   const sourceLabel = source => `${site(source)} / ${source.fileName}`;
   const featureRows = [];
   const summaries = { continuous: [], categorical: [], date: [] };
-  const includeSupportedRange = exported.some(feature => feature.combinedSummary?.supportedMin != null);
+  const includeSupportedRange = exported.some(feature => (feature.combinedSummary || feature.estimatedSummary)?.supportedMin != null);
 
   for (const feature of exported) {
     const name = sourceColumn(feature);
