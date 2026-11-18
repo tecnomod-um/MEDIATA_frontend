@@ -1,3 +1,5 @@
+import { simultaneousNoiseRadius } from "./geometricNoise";
+
 const NOISE_FAILURE = .025;
 const SAMPLING_FAILURE = .025;
 
@@ -21,12 +23,7 @@ function extremeMean(edges, low, high, minimum, exact) {
 
 export function approximateMeanInterval(cells, { lowerEdges, upperEdges, variances }, exact) {
   // Invert the two-sided geometric tail and use a union bound over sites and bins.
-  const cellsInRelease = cells.length * variances.length;
-  const radius = sum(variances.map(variance => {
-    const divisor = (1 + Math.sqrt(1 + 2 * variance)) / 2;
-    const q = (divisor - 1) / divisor;
-    return Math.ceil(Math.log(NOISE_FAILURE * (1 + q) / (2 * cellsInRelease)) / Math.log(q));
-  }));
+  const radius = simultaneousNoiseRadius(variances, cells.length, NOISE_FAILURE);
   const low = cells.map(cell => Math.max(0, cell - radius));
   const high = cells.map(cell => Math.max(0, cell + radius));
   const countLower = exact.count + sum(low);

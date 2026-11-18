@@ -4,6 +4,7 @@ import { frequencyQuantile } from "./frequencyQuantile";
 import { poolingContributions } from "./poolingContributions";
 import { adjustedKurtosis, adjustedSkewness, sampleStandardDeviation } from "./numericalSummary";
 import { approximateMeanInterval } from "./approximateMeanInterval";
+import { simultaneousNoiseRadius } from "./geometricNoise";
 
 const MAX_WIRE_COUNT = 1_000_000_000;
 const UNIFORM_VARIANCES = [4, 24, 112];
@@ -182,13 +183,13 @@ export function addProtectedDistribution(group, parts, releases, summary) {
   const withheld = selected.filter(part => part.withheld);
   const protectedRange = withheld.length === selected.length ? histogram
     : summary.approximate && histogramFor({ ...group, members: withheld.map(part => part.member) }, releases);
-  const extrema = summary.approximate && protectedRange ? protectedExtrema(parts, protectedRange) : {};
+  const extrema = summary.approximate && protectedRange ? supportedRange(parts, protectedRange) : {};
   const mode = summary.modes?.length ? {} : protectedMode(exactEntries, histogram, bins);
   return { ...summary, q1: summary.q1 ?? quantile(.25), median: summary.median ?? quantile(.5),
     q3: summary.q3 ?? quantile(.75), ...extrema, ...mode, estimatedQuantiles: true,
     note: appendNote(summary, [
       "Quartiles are estimated from protected frequency counts.",
-      Object.keys(extrema).length && "Estimated extrema use released extrema and bins with enough support. They can miss isolated values.",
+      Object.keys(extrema).length && "Supported range combines released extrema with bins whose counts exceed a simultaneous 97.5% noise bound. This range can miss rare values and does not estimate the true sample minimum or maximum.",
       mode.modeBand && "Estimated mode is a value range.",
       mode.modes?.length && "The numerical mode is estimated.",
     ].filter(Boolean).join(" ")) };
@@ -207,15 +208,16 @@ function groupedQuantile(bins, boundaries, rank) {
   return boundaries.at(-1);
 }
 
-function protectedExtrema(parts, histogram) {
+function supportedRange(parts, histogram) {
   const range = parts.filter(({ feature }) => feature?.count > 0).flatMap(({ feature }) => [feature.min, feature.max])
     .filter(Number.isFinite);
+  const radius = simultaneousNoiseRadius(histogram.variances, histogram.cells.length);
   histogram.cells.forEach((count, index) => {
-    if (count <= 3 * histogram.binNoise) return;
+    if (count <= radius) return;
     range.push(histogram.scores?.[index] ?? histogram.lowerEdges[index],
       histogram.scores?.[index] ?? histogram.upperEdges[index]);
   });
-  return range.length ? { min: Math.min(...range), max: Math.max(...range) } : {};
+  return range.length ? { supportedMin: Math.min(...range), supportedMax: Math.max(...range) } : {};
 }
 
 function protectedMode(exactEntries, histogram, bins) {
@@ -264,6 +266,7 @@ function combinedNumerical(histogram, exact, summary) {
     summary.note,
     exact.length && "The mean interval includes binning, privacy noise and sampling uncertainty under independent observations.",
     lowPrecision && "Low precision: the mean interval covers at least half of the configured range.",
+    "Estimated skewness and kurtosis are sensitive to noise in tail counts and should be treated as exploratory.",
   ].filter(Boolean).join(" ");
   return { ...summary, ...moments, ...interval, lowPrecision, note,
     sampleStdDev: sampleStandardDeviation(summary.count, stdDev),
@@ -273,7 +276,7 @@ function combinedNumerical(histogram, exact, summary) {
 }
 
 function combinedCategories(histogram, exact, summary) {
-  const { cells, count, labels, binNoise } = histogram;
+  const { cells, count, labels } = histogram;
   const counts = new Map();
   for (const part of exact) {
     const entries = Object.entries(part.categoryCounts || {});
@@ -283,15 +286,16 @@ function combinedCategories(histogram, exact, summary) {
     }
     entries.filter(([, value]) => value > 0).forEach(([label, value]) => counts.set(label, (counts.get(label) || 0) + value));
   }
+  const radius = simultaneousNoiseRadius(histogram.variances, cells.length);
   if (count) projectedCounts(cells, count).forEach((value, index) => {
     const label = labels[index];
-    if (value > 0 && (counts.has(label) || cells[index] > 2 * binNoise)) counts.set(label, (counts.get(label) || 0) + value);
+    if (value > 0 && (counts.has(label) || cells[index] > radius)) counts.set(label, (counts.get(label) || 0) + value);
   });
   const categories = categoryFrequencies(counts, summary.count);
   if (!categories.length) return { ...summary,
     note: "Estimated count only. The individual category counts are too close to the privacy noise to rank." };
   return { ...summary, categories, cardinality: categories.length,
-    note: `${exact.length ? MIXED_NOTES : "Privacy-protected estimate."} Categories supported only by estimated counts are shown above the noise threshold. Percentages use the full estimated non-missing count; near ties can change rank.` };
+    note: `${exact.length ? MIXED_NOTES : "Privacy-protected estimate."} Categories supported only by estimated counts must exceed a simultaneous 97.5% noise bound. The number of supported categories is estimated. Rare categories may be omitted or introduced by noise. Percentages use the full estimated non-missing count; near ties can change rank.` };
 }
 
 export function buildApproximateSummary(group, releases, exact = [], totalSources = group.members.length) {

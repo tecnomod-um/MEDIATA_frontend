@@ -120,8 +120,8 @@ it("retains public categorical labels, pools other and missing separately, and r
     features: { Value: { domain: { categories: ["East", "West"] }, counts: [[60, 30, 2, 4], [30, 12, -3, -2], [20, 20, 10, 2]][index] } },
   }]));
   expect(buildApproximateSummary(category, releases)).toMatchObject({
-    count: 181, missing: 4, cardinality: 3,
-    categories: [{ value: "East", count: 110 }, { value: "West", count: 62 }, { value: "Other", count: 9 }],
+    count: 181, missing: 4, cardinality: 2,
+    categories: [{ value: "East", count: 110 }, { value: "West", count: 62 }],
   });
 });
 
@@ -201,6 +201,27 @@ it("keeps category noise out of modes and retains the full count as the percenta
     new Map([[keys[0], input]]));
   expect(result).toMatchObject({ count: 44, cardinality: 1, categories: [{ value: "East", count: 40 }] });
   expect(result.categories[0].percent).toBeCloseTo(100 * 40 / 44);
+});
+
+it("exports a supported range separately from sample extrema and excludes isolated noise bins", () => {
+  const boundaries = Array.from({ length: 25 }, (_, index) => index * 5);
+  const counts = Array(25).fill(0);
+  counts[10] = 20;
+  counts[23] = 6;
+  const pair = { ...group, members: members.slice(0, 2) };
+  const sources = [exact(members[0], 100, 50), withheld(members[1])];
+  const active = sources.map(() => true);
+  const sourceData = collectDiscoveryStatistics(sources, active);
+  const input = new Map([[keys[1], release(counts, boundaries)]]);
+  const data = combineMappedTableData(sourceData, sources, active, [pair], input);
+  expect(data.continuousFeatures[0]).toMatchObject({ min: undefined, max: undefined,
+    supportedMin: 50, supportedMax: 55 });
+  const report = buildStatisticsReport({ data, sourceData, includeBreakdown: false });
+  const { rows } = report.find(sheet => sheet.name === "Continuous statistics");
+  expect(rows[1][rows[0].indexOf("Min")]).toBeNull();
+  expect(rows[1][rows[0].indexOf("Max")]).toBeNull();
+  expect(rows[1][rows[0].indexOf("Supported range lower")]).toBe(50);
+  expect(rows[1][rows[0].indexOf("Supported range upper")]).toBe(55);
 });
 
 it("labels weak estimates and exports approved estimates even when exact filtering was withheld", () => {

@@ -158,6 +158,7 @@ export function buildStatisticsReport({ data, sourceData, selectedEntries = [], 
   const sourceLabel = source => `${site(source)} / ${source.fileName}`;
   const featureRows = [];
   const summaries = { continuous: [], categorical: [], date: [] };
+  const includeSupportedRange = exported.some(feature => feature.combinedSummary?.supportedMin != null);
 
   for (const feature of exported) {
     const name = sourceColumn(feature);
@@ -171,12 +172,16 @@ export function buildStatisticsReport({ data, sourceData, selectedEntries = [], 
     if (feature.type == null) continue;
     const summary = tableExportFeatures({ [featureArrays[feature.type]]: [feature] })[0];
     const { values, note } = summaryRow(summary, feature.type, feature.pooled);
-    summaries[feature.type].push({ row: [name, siteName, dataset, ...values], note });
+    const range = feature.type === "continuous" && includeSupportedRange
+      ? [finite(summary.supportedMin), finite(summary.supportedMax)] : [];
+    summaries[feature.type].push({ row: [name, siteName, dataset, ...values, ...range], note });
   }
 
   const sheets = [table("Features", ["Feature", "Type", "Site", "Dataset", ...(hasCombined ? ["Merged from"] : [])], featureRows)];
   for (const [type, { name, headers }] of Object.entries(summaryTables)) {
-    if (summaries[type].length) sheets.push(table(name, [...identityHeaders, ...countHeaders, ...headers], summaries[type]));
+    const range = type === "continuous" && includeSupportedRange
+      ? ["Supported range lower", "Supported range upper"] : [];
+    if (summaries[type].length) sheets.push(table(name, [...identityHeaders, ...countHeaders, ...headers, ...range], summaries[type]));
   }
   if (includeRelationships) {
     if (!relationships) throw new Error("Relationship statistics are not ready yet.");

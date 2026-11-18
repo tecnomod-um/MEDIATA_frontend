@@ -188,6 +188,12 @@ const StatisticsDisplay = React.memo(
         });
       }
       if (combinedTables) table.Status = [...tableData.continuousFeatures, ...(tableData.dateFeatures || [])].map(feature => feature.status || "Individual dataset");
+      if (tableData.continuousFeatures.some(feature => feature.supportedMin != null)) {
+        table["Supported range lower"] = [...tableData.continuousFeatures.map(feature => feature.supportedMin?.toString() ?? "N/A"),
+          ...(tableData.dateFeatures || []).map(() => "N/A")];
+        table["Supported range upper"] = [...tableData.continuousFeatures.map(feature => feature.supportedMax?.toString() ?? "N/A"),
+          ...(tableData.dateFeatures || []).map(() => "N/A")];
+      }
       return table;
     }, [tableData, combinedTables, formatMissingEntries]);
 

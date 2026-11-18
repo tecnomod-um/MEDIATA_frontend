@@ -56,6 +56,7 @@ export function combineMappedTableData(data, results, activeIndices, mappings, a
       count: summary.unavailable ? null : summary.count,
       missingValuesCount: summary.unavailable ? null : summary.missing,
       mean: summary.mean, stdDev: summary.stdDev, min: summary.min, max: summary.max,
+      supportedMin: summary.supportedMin, supportedMax: summary.supportedMax,
       meanCiLower: summary.meanCiLower, meanCiUpper: summary.meanCiUpper, skewness: summary.skewness,
       kurtosis: summary.kurtosis, sampleStdDev: summary.sampleStdDev, cardinality: summary.cardinality,
       modes: summary.modes, modeBand: summary.modeBand, modeFrequency: summary.modeFrequency, modeStatus: summary.modeStatus,
