@@ -2,7 +2,7 @@ import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 import ColumnMappingsDialog from "./columnMappingsDialog";
-import { sourceKey } from "../CombinedStatistics/combinedStatistics";
+import { sourceKey } from "../CombinedStatistics/exact/combinedStatistics";
 
 const sources = [
   { nodeId: 1, nodeName: "Alpha", fileName: "patients.csv", continuousFeatures: [{ featureName: "Age" }], categoricalFeatures: [{ featureName: "Sex" }], dateFeatures: [{ featureName: "VisitDate" }] },

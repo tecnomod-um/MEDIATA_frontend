@@ -1,5 +1,5 @@
 import { columnArrays } from "./CombinedStatistics/columnMappings";
-import { sourceKey } from "./CombinedStatistics/combinedStatistics";
+import { sourceKey } from "./CombinedStatistics/exact/combinedStatistics";
 
 export const selectionKey = entry => entry.pooled ? `pooled:${entry.featureName}`
   : JSON.stringify([sourceKey(entry), entry.originalName || entry.featureName]);

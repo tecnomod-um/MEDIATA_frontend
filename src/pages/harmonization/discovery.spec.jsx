@@ -5,8 +5,8 @@ import Discovery from "./discovery";
 import { vi } from "vitest";
 
 // Exercise page interactions with the shared calculator; the hook tests cover the worker lifecycle.
-vi.mock("../../components/Discovery/CombinedStatistics/useRelationshipStatistics", async () => {
-  const {combineMappedRelationships} = await import("../../components/Discovery/CombinedStatistics/pairedStatistics");
+vi.mock("../../components/Discovery/CombinedStatistics/relationships/useRelationshipStatistics", async () => {
+  const {combineMappedRelationships} = await import("../../components/Discovery/CombinedStatistics/relationships/pairedStatistics");
   const {visibleRelationships} = await import("../../components/Discovery/discoveryStatistics");
   return {default: (table, sources, combined, enabled) => ({
     statistics: enabled && table ? combined ? combineMappedRelationships(table, sources) : visibleRelationships(table) : {},

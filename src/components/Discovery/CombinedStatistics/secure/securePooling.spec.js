@@ -1,10 +1,10 @@
 import {beforeEach,expect,it,vi} from "vitest";
 import {loadSecurePooling,securePoolingGroups} from "./securePooling";
-import axios from "../../../util/axiosSetup";
-import nodeAxios from "../../../util/nodeAxiosSetup";
+import axios from "../../../../util/axiosSetup";
+import nodeAxios from "../../../../util/nodeAxiosSetup";
 
-vi.mock("../../../util/axiosSetup",()=>({default:{post:vi.fn()}}));
-vi.mock("../../../util/nodeAxiosSetup",()=>({default:{post:vi.fn(),delete:vi.fn()},getResolvedNodeBaseURL:value=>value}));
+vi.mock("../../../../util/axiosSetup",()=>({default:{post:vi.fn()}}));
+vi.mock("../../../../util/nodeAxiosSetup",()=>({default:{post:vi.fn(),delete:vi.fn()},getResolvedNodeBaseURL:value=>value}));
 const nodes=[1,2,3].map(nodeId=>({nodeId,serviceUrl:`https://site${nodeId}`}));
 const members=nodes.map(node=>({nodeId:node.nodeId,fileName:"data.csv",column:"Reading"}));
 const group={id:"reading",label:"Reading",type:"continuous",members};

@@ -1,5 +1,5 @@
 import { columnArrays } from "./CombinedStatistics/columnMappings";
-import { sourceKey } from "./CombinedStatistics/combinedStatistics";
+import { sourceKey } from "./CombinedStatistics/exact/combinedStatistics";
 import { filterDiscoveryDatasets } from "./CombinedStatistics/filterDiscoveryDatasets";
 
 // Resolve identities from source metadata, never from a decorated display label.

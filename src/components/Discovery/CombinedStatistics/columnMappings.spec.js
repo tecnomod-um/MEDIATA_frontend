@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 import { createColumnMappings, validateColumnMappings, activeColumnMappings, changeMappingType, reconcileMappingTypes } from "./columnMappings";
-import { combineMappedTableData, tableExportFeatures } from "./statisticsTableData";
+import { combineMappedTableData } from "./statisticsTableData";
+import { tableExportFeatures } from "./summaryTableFeature";
 
 const numeric = (featureName, count, mean) => ({ featureName, count, mean, min: mean, max: mean, stdDev: 0, missingValuesCount: 0 });
 const sources = [

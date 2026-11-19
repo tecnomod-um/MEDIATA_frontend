@@ -1,4 +1,4 @@
-import { sourceKey, sourceLabel, sourceFileLabel } from "./CombinedStatistics/combinedStatistics.js";
+import { sourceKey, sourceLabel, sourceFileLabel } from "./CombinedStatistics/exact/combinedStatistics.js";
 import { columnArrays } from "./CombinedStatistics/columnMappings.js";
 
 export const relationshipArrays = ["covariances", "pearsonCorrelations", "spearmanCorrelations"];

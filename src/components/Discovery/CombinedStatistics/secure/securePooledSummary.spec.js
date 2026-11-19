@@ -1,9 +1,9 @@
 import {expect,it} from "vitest";
 import {securePooledSummary} from "./securePooledSummary";
-import {sourceKey} from "./combinedStatistics";
-import {combineMappedTableData} from "./statisticsTableData";
-import {collectDiscoveryStatistics} from "../discoveryStatistics";
-import {buildStatisticsReport} from "../DataExporter/statisticsReport";
+import {sourceKey} from "../exact/combinedStatistics";
+import {combineMappedTableData} from "../statisticsTableData";
+import {collectDiscoveryStatistics} from "../../discoveryStatistics";
+import {buildStatisticsReport} from "../../DataExporter/statisticsReport";
 
 const members=[1,2,3].map(nodeId=>({nodeId,fileName:"data.csv",column:"Value"}));
 const group={id:"all",label:"Reading",type:"continuous",members};

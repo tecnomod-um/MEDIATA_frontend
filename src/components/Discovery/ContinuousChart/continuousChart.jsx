@@ -5,7 +5,7 @@ import ContinuousChartStyles from "./continuousChart.module.css";
 import ChartOverviewStyles from "../chartOverview.module.css";
 import { Chart as ChartJS, registerables } from "chart.js";
 import { distributionTitle } from "../discoveryStatistics";
-import { sourceLabel } from "../CombinedStatistics/combinedStatistics";
+import { sourceLabel } from "../CombinedStatistics/exact/combinedStatistics";
 
 ChartJS.register(...registerables);
 

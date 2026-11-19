@@ -16,12 +16,13 @@ import ColumnMappingsDialog from "../../components/Discovery/StatisticsDisplay/c
 import { combineMappedTableData } from "../../components/Discovery/CombinedStatistics/statisticsTableData";
 import { createColumnMappings, activeColumnMappings, validateColumnMappings, reconcileMappingTypes } from "../../components/Discovery/CombinedStatistics/columnMappings";
 import { filterDiscoveryDatasets } from "../../components/Discovery/CombinedStatistics/filterDiscoveryDatasets";
-import { loadApproximatePooling, protectedPoolingMembers } from "../../components/Discovery/CombinedStatistics/approximatePooling";
-import { protectedSourceMembers, protectedSourceTableData } from "../../components/Discovery/CombinedStatistics/protectedSourceStatistics";
-import {loadSecurePooling,securePoolingGroups,securePoolingFailure} from "../../components/Discovery/CombinedStatistics/securePooling";
+import { loadApproximatePooling } from "../../components/Discovery/CombinedStatistics/protected/protectedPoolingClient";
+import { protectedPoolingMembers } from "../../components/Discovery/CombinedStatistics/poolingContributions";
+import { protectedSourceMembers, protectedSourceTableData } from "../../components/Discovery/CombinedStatistics/protected/protectedSourceStatistics";
+import {loadSecurePooling,securePoolingGroups,securePoolingFailure} from "../../components/Discovery/CombinedStatistics/secure/securePooling";
 import { fileFilterConditions } from "../../components/Discovery/FilterModal/filterFeatures";
 import { buildAppliedFilters, tableFilterDescriptions } from "../../components/Discovery/FilterModal/appliedFilters";
-import useRelationshipStatistics from "../../components/Discovery/CombinedStatistics/useRelationshipStatistics";
+import useRelationshipStatistics from "../../components/Discovery/CombinedStatistics/relationships/useRelationshipStatistics";
 import LinearProgress from "@mui/material/LinearProgress";
 import { useNode } from "../../context/nodeContext";
 import { collectDiscoveryStatistics, updateSourceFeature } from "../../components/Discovery/discoveryStatistics";

@@ -1,9 +1,10 @@
 import {expect, it} from "vitest";
 import {protectedSourceMembers, protectedSourceTableData} from "./protectedSourceStatistics";
-import {sourceKey} from "./combinedStatistics";
-import {collectDiscoveryStatistics} from "../discoveryStatistics";
-import {combineMappedTableData, tableExportFeatures} from "./statisticsTableData";
-import {buildStatisticsReport} from "../DataExporter/statisticsReport";
+import {sourceKey} from "../exact/combinedStatistics";
+import {collectDiscoveryStatistics} from "../../discoveryStatistics";
+import { combineMappedTableData } from "../statisticsTableData";
+import { tableExportFeatures } from "../summaryTableFeature";
+import {buildStatisticsReport} from "../../DataExporter/statisticsReport";
 
 const source = {nodeId:1,nodeName:"Alpha",fileName:"arbitrary.csv"};
 const baseline = [{...source, continuousFeatures:[{featureName:"Instrument reading"}], categoricalFeatures:[{featureName:"Arm"}]}];

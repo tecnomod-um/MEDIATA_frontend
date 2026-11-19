@@ -5,7 +5,7 @@ import DateChart from "../DateChart/dateChart";
 import EntrySearch from "../EntrySearch/entrySearch";
 import StatisticsDisplayStyles from "./statisticsDisplay.module.css";
 import ChartPreview from "../ChartPreview/chartPreview";
-import { sourceLabel } from "../CombinedStatistics/combinedStatistics";
+import { sourceLabel } from "../CombinedStatistics/exact/combinedStatistics";
 import { sourceFilter } from "../FilterModal/appliedFilters";
 import { isFeatureSelected } from "../featureSelection";
 import { formatCategoryPercent } from "../discoveryStatistics";

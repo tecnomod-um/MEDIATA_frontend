@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { poolBivariateMoments, rankCorrelationFromCounts, chiSquareFromCounts, chiSquareSurvival, combineMappedRelationships } from "./pairedStatistics";
-import { collectDiscoveryStatistics, relationshipStatistics } from "../discoveryStatistics";
-import { combineMappedTableData } from "./statisticsTableData";
-import { createColumnMappings } from "./columnMappings";
+import { collectDiscoveryStatistics, relationshipStatistics } from "../../discoveryStatistics";
+import { combineMappedTableData } from "../statisticsTableData";
+import { createColumnMappings } from "../columnMappings";
 
 const moments = (values, featureX = 'X', featureY = 'Y') => {
   const count = values.length, meanX = values.reduce((s, p) => s + p[0], 0) / count, meanY = values.reduce((s, p) => s + p[1], 0) / count;

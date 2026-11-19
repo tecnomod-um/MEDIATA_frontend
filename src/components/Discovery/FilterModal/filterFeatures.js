@@ -1,4 +1,4 @@
-import { sourceKey } from "../CombinedStatistics/combinedStatistics.js";
+import { sourceKey } from "../CombinedStatistics/exact/combinedStatistics.js";
 
 const featureArrays = ["continuousFeatures", "categoricalFeatures", "dateFeatures"];
 

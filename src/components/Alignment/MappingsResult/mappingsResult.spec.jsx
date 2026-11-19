@@ -3,8 +3,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
-import MappingsExporter from '../MappingsResult/mappingsExporter';
-import MappingsResult from '../MappingsResult/mappingsResult';
+import MappingsExporter from "./mappingsExporter";
+import MappingsResult from "./mappingsResult";
 import { toast } from 'react-toastify';
 
 const {

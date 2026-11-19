@@ -45,7 +45,7 @@ let errorHandler;
 beforeAll(async () => {
   ({ mockResUse, mockReqUse, mockAxios } = axios.__m);
 
-  const mod = await import('../util/axiosSetup');
+  const mod = await import("./axiosSetup");
   axiosInstance = mod.default;
   setupAxiosInterceptors = mod.setupAxiosInterceptors;
 

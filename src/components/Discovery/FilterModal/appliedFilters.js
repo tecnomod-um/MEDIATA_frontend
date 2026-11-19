@@ -1,4 +1,4 @@
-import { sourceKey, sourceLabel } from "../CombinedStatistics/combinedStatistics.js";
+import { sourceKey, sourceLabel } from "../CombinedStatistics/exact/combinedStatistics.js";
 import { fileFilterConditions } from "./filterFeatures.js";
 
 const comparison = { equal: "=", less: "<", greater: ">", between: "between" };

@@ -3,7 +3,7 @@ import React, { useState, useCallback, useEffect, useLayoutEffect, useRef, useMe
 import EntryTableStyles from "./entryTable.module.css";
 import FilterIndicator from "../FilterModal/filterIndicator";
 import useFeatureSelectionGesture from "../useFeatureSelectionGesture";
-import { numericalMethods } from "../CombinedStatistics/numericalSummary";
+import { numericalMethods } from "../CombinedStatistics/exact/numericalSummary";
 
 const statisticDescriptions = {
   Count: "Non-missing observations. Rows are counted; patients are not deduplicated across datasets.",

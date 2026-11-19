@@ -1,10 +1,12 @@
 import { expect, it, vi } from "vitest";
-import { buildApproximateSummary, loadApproximatePooling, protectedPoolingMembers } from "./approximatePooling";
-import { getApproximatePoolingSource } from "../../../util/petitionHandler";
-import { sourceKey } from "./combinedStatistics";
-import { combineMappedTableData } from "./statisticsTableData";
-import { collectDiscoveryStatistics } from "../discoveryStatistics";
-import { buildStatisticsReport } from "../DataExporter/statisticsReport";
+import { buildApproximateSummary } from "./protectedStatistics";
+import { loadApproximatePooling } from "./protectedPoolingClient";
+import { protectedPoolingMembers } from "../poolingContributions";
+import { getApproximatePoolingSource } from "../../../../util/petitionHandler";
+import { sourceKey } from "../exact/combinedStatistics";
+import { combineMappedTableData } from "../statisticsTableData";
+import { collectDiscoveryStatistics } from "../../discoveryStatistics";
+import { buildStatisticsReport } from "../../DataExporter/statisticsReport";
 
 const members = [1, 2, 3].map(nodeId => ({ nodeId, fileName: "example.csv", column: "Value" }));
 const group = { id: "Value", label: "Value", type: "continuous", members };
@@ -20,7 +22,7 @@ const withheld = member => ({ ...member, omittedFeatures: [
   { featureName: member.column, type: "continuous", reason: "Suppressed for privacy: release controls" },
 ] });
 
-vi.mock("../../../util/petitionHandler", () => ({ getApproximatePoolingSource: vi.fn() }));
+vi.mock("../../../../util/petitionHandler", () => ({ getApproximatePoolingSource: vi.fn() }));
 
 it("uses the protected cohort count when a wide noisy histogram would collapse a small group",()=>{
   const input={version:5,group:"A",rowEpsilon:20,cohortCount:{count:4,noiseVariance:.000001,noiseComponents:[.000001]},

@@ -62,7 +62,7 @@ beforeAll(async () => {
   mockReqUse = axios.__m.mockReqUse;
   mockResUse = axios.__m.mockResUse;
 
-  const mod = await import('../util/nodeAxiosSetup');
+  const mod = await import("./nodeAxiosSetup");
   const config = (await import('../config')).default;
   appConfig = config;
   nodeAxiosInstance = mod.default;

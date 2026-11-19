@@ -1,6 +1,6 @@
-import { tableExportFeatures } from "../CombinedStatistics/statisticsTableData";
-import { featureArrays, sourceKey } from "../CombinedStatistics/combinedStatistics";
-import { sampleStandardDeviation } from "../CombinedStatistics/numericalSummary";
+import { tableExportFeatures } from "../CombinedStatistics/summaryTableFeature";
+import { featureArrays, sourceKey } from "../CombinedStatistics/exact/combinedStatistics";
+import { sampleStandardDeviation } from "../CombinedStatistics/exact/numericalSummary";
 import { selectionKey, sourceFeatureSelection } from "../featureSelection";
 import { sourceFilter } from "../FilterModal/appliedFilters";
 import { relationshipStatistics } from "../discoveryStatistics";

@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 import { buildStatisticsReport, exportFeatures } from "./statisticsReport";
 import { writeStatisticsReport } from "./writeStatisticsReport";
 import { reportFixture } from "./reportTestFixtures";
-import { sourceKey } from "../CombinedStatistics/combinedStatistics";
+import { sourceKey } from "../CombinedStatistics/exact/combinedStatistics";
 import { unzipSync, strFromU8 } from "fflate";
 
 const records = sheet => sheet.rows.slice(1).map(row => Object.fromEntries(sheet.rows[0].map((key, index) => [key, row[index]])));

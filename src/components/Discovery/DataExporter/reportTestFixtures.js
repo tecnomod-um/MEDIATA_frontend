@@ -1,7 +1,7 @@
 import { collectDiscoveryStatistics } from "../discoveryStatistics";
 import { createColumnMappings } from "../CombinedStatistics/columnMappings";
 import { combineMappedTableData } from "../CombinedStatistics/statisticsTableData";
-import { combineMappedRelationships } from "../CombinedStatistics/pairedStatistics";
+import { combineMappedRelationships } from "../CombinedStatistics/relationships/pairedStatistics";
 
 export function reportFixture() {
   const sources = [24, 36].map((count, index) => {

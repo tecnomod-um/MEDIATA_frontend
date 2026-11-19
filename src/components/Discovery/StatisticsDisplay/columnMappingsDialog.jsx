@@ -18,7 +18,7 @@ import TableRow from "@mui/material/TableRow";
 import Alert from "@mui/material/Alert";
 import { MdAdd, MdClose, MdDeleteOutline, MdLink } from "react-icons/md";
 import { memberKey, sourceColumns, validateColumnMappings, changeMappingType } from "../CombinedStatistics/columnMappings";
-import { sourceKey, sourceLabel } from "../CombinedStatistics/combinedStatistics";
+import { sourceKey, sourceLabel } from "../CombinedStatistics/exact/combinedStatistics";
 import styles from "./columnMappings.module.css";
 import FilterIndicator from "../FilterModal/filterIndicator";
 import { sourceFilter, combinedFilter } from "../FilterModal/appliedFilters";
