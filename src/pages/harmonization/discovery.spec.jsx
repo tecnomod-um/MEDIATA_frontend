@@ -19,6 +19,12 @@ let mockAggregateProps;
 let mockTrayProps;
 let mockStatsProps;
 let mockFilterProps;
+const mockLoadSecurePooling = vi.hoisted(() => vi.fn());
+
+vi.mock("../../components/Discovery/CombinedStatistics/secure/securePooling", async importOriginal => ({
+  ...await importOriginal(),
+  loadSecurePooling: (...args) => mockLoadSecurePooling(...args),
+}));
 
 test('keeps an opened mobile sidebar open during a keyboard or same-breakpoint resize', async () => {
   const originalWidth = window.innerWidth;
@@ -191,6 +197,8 @@ const mockCancelProcessSelectedDatasetsJob = vi.fn();
 
 beforeEach(() => {
   vi.resetAllMocks();
+  mockLoadSecurePooling.mockRejectedValue(new Error("No secure round configured in this test"));
+  mockSelectedNodes.splice(1);
   mockFileExplorerProps = undefined;
   mockedRouterState.location = { state: undefined };
 });
@@ -298,6 +306,63 @@ test("Merge automatically estimates a withhold after filtering and restores exac
   });
   expect(age()).toMatchObject({ status: "Combined", count: 200 });
   expect(mockGetApproximatePoolingSource).toHaveBeenCalledTimes(1);
+});
+
+test("reuses released site moments across table views and invalidates them when the filter changes", async () => {
+  mockSelectedNodes.push({nodeId:2,name:"Node-B",serviceUrl:"http://nodeB"});
+  mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
+  mockGetApproximatePoolingSource.mockResolvedValue({version:1,group:"1",noiseVariance:4,
+    features:{Age:{domain:{boundaries:[0,40,80]},counts:[0,4,0]}}});
+  mockLoadSecurePooling.mockImplementation(async groups => new Map(groups.map((group,index) => [group.id,{
+    result:{protocol:"pairwise-masked-v1",manifestHash:"query",rowEpsilon:4,features:{
+      [`f${index}`]:{domain:{boundaries:[-.5,40,80.5],values:[0,80],type:"continuous",missingAllowed:false},
+        counts:[90,10,0],noiseVariance:8,noiseComponents:[4,4]},
+    }},wireId:`f${index}`,cohort:JSON.stringify(group.members.map(member=>JSON.stringify([String(member.nodeId),member.fileName])).sort()),
+    groups,features:groups.map((_,i)=>({id:`f${i}`})),
+  }])));
+  const numeric=(featureName,mean)=>({featureName,mean,count:100,stdDev:0,min:mean,max:mean,missingValuesCount:0,
+    sumCubedDeviations:0,sumFourthDeviations:0,valueCounts:[{value:mean,count:100}]});
+  const first={...PROCESSED_ITEM,nodeId:1,nodeName:"Node-A",continuousFeatures:[numeric("Age",40),numeric("Group",1)]};
+  const second={...first,nodeId:2,nodeName:"Node-B",fileName:"file2.csv"};
+  const withheld={...second,continuousFeatures:[],disclosureWithheld:true,
+    omittedFeatures:[{featureName:"Age",type:"continuous",reason:"Statistics withheld by disclosure controls"}]};
+  render(<Discovery />);
+  await waitFor(()=>expect(mockFileExplorerProps).toBeDefined());
+  await act(async()=>mockFileExplorerProps.onFilesOpened([first,second]));
+  const grouping=mockFilterProps.dataStatistics.continuousFeatures.find(feature=>feature.originalName==="Group");
+  const setGroup=async value=>act(async()=>{
+    mockFilterProps.setFilters({[grouping.featureName]:[{type:"equal",filterType:"continuous",value}]});
+    mockFilterProps.setDataResults([first,{...withheld}]);
+  });
+  const merge=()=>{
+    fireEvent.click(screen.getByRole("button",{name:"Numerical table options: separate rows"}));
+    fireEvent.click(screen.getByRole("menuitem",{name:"Combined rows"}));
+  };
+  const separate=()=>{
+    fireEvent.click(screen.getByRole("button",{name:"Numerical table options: combined rows"}));
+    fireEvent.click(screen.getByRole("menuitem",{name:"Separate rows"}));
+  };
+  const pooled=()=>mockStatsProps.tableData.continuousFeatures.find(feature=>feature.featureName==="Age");
+  await setGroup(1);
+  await waitFor(()=>expect(mockStatsProps.tableData.continuousFeatures.some(feature=>feature.estimatedSummary?.count===4)).toBe(true));
+  expect(mockGetApproximatePoolingSource).toHaveBeenCalledTimes(1);
+  merge();
+  await waitFor(()=>expect(pooled()?.combinedSummary.reusedSiteMoments).toBe(true));
+  expect(pooled().mean).toBeCloseTo((100*40+4*60)/104);
+  expect(mockGetApproximatePoolingSource).toHaveBeenCalledTimes(1);
+  await setGroup(2);
+  await waitFor(()=>expect(pooled()?.count).toBe(100));
+  expect(pooled().combinedSummary.reusedSiteMoments).not.toBe(true);
+  expect(pooled().mean).toBe(8);
+  expect(mockGetApproximatePoolingSource).toHaveBeenCalledTimes(1);
+  mockGetApproximatePoolingSource.mockResolvedValue({version:1,group:"2",noiseVariance:4,
+    features:{Age:{domain:{boundaries:[0,40,80]},counts:[4,0,0]}}});
+  separate();
+  await waitFor(()=>expect(mockGetApproximatePoolingSource).toHaveBeenCalledTimes(2));
+  await waitFor(()=>expect(mockStatsProps.tableData.continuousFeatures.some(feature=>feature.estimatedSummary?.mean===20)).toBe(true));
+  merge();
+  await waitFor(()=>expect(pooled()?.combinedSummary.reusedSiteMoments).toBe(true));
+  expect(pooled().mean).toBeCloseTo((100*40+4*20)/104);
 });
 
 test("opening a file (async) polls and then shows processed view", async () => {

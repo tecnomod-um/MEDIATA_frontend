@@ -326,6 +326,8 @@ function Discovery() {
   const appliedFilters = useMemo(() => buildAppliedFilters(filterStatistics, filters, filterLogic, dataResults, columnMappings), [filterStatistics, filters, filterLogic, dataResults, columnMappings]);
   const activeMappings = useMemo(() => activeColumnMappings(columnMappings, dataResults, activeFileIndices), [columnMappings, dataResults, activeFileIndices]);
   const combinedTablesActive = combineTables && activeMappings.length > 0;
+  const protectedContext = useMemo(() => ({dataResults, appliedFilters, selectedNodes}),
+    [dataResults, appliedFilters, selectedNodes]);
   const secureRequest=useMemo(()=>{
     if(!combinedTablesActive || isCombining) return null;
     const groups=securePoolingGroups(activeMappings,dataResults);
@@ -351,8 +353,7 @@ function Discovery() {
   const approximateRequest = useMemo(() => {
     if (isCombining) return null;
     const members = combinedTablesActive ? new Map() : protectedSourceMembers(dataResults, baselineResultsRef.current, activeFileIndices);
-    // A combination entirely inside one node retains its existing approved
-    // path. Cross-node combinations use the masked protocol exclusively.
+    // Cross-node requests stay masked; previously released site summaries can be reused below.
     if (combinedTablesActive) for (const group of activeMappings.filter(group=>new Set(group.members.map(member=>String(member.nodeId))).size===1))
       for (const [key, member] of protectedPoolingMembers([group], dataResults)) members.set(key, member);
     if (!members.size) return null;
@@ -367,14 +368,20 @@ function Discovery() {
     const controller = new AbortController();
     const { members, filtersFor } = approximateRequest;
     loadApproximatePooling(members, selectedNodes, filtersFor, controller.signal).then(releases => {
-      if (!controller.signal.aborted) setApproximateResult({ request: approximateRequest, releases });
+      if (!controller.signal.aborted) setApproximateResult(previous => ({
+        request: approximateRequest, context: protectedContext,
+        releases: new Map([...(previous?.context === protectedContext ? previous.releases : []), ...releases]),
+      }));
     }).catch(() => {
-      if (!controller.signal.aborted) setApproximateResult({ request: approximateRequest, releases: new Map() });
+      if (!controller.signal.aborted) setApproximateResult({ request: approximateRequest, context: protectedContext, releases: new Map() });
     });
     return () => controller.abort();
-  }, [approximateRequest, selectedNodes]);
-  const approximatePending = Boolean(approximateRequest && approximateResult?.request !== approximateRequest);
-  const approximateReleases = approximateRequest && approximateResult?.request === approximateRequest
+  }, [approximateRequest, selectedNodes, protectedContext]);
+  const approximatePending = Boolean(approximateRequest && (approximateResult?.request !== approximateRequest
+    || approximateResult?.context !== protectedContext));
+  // Switching table views can reuse releases, while changed data, filters or nodes invalidate them.
+  const approximateReleases = approximateResult?.context === protectedContext
+    && (!approximateRequest || approximateResult?.request === approximateRequest)
     ? approximateResult.releases : undefined;
   const sourceTableStatistics = useMemo(() => protectedSourceTableData(filteredDataStatistics, dataResults,
     baselineResultsRef.current, approximateReleases, hiddenFeaturesRef.current),

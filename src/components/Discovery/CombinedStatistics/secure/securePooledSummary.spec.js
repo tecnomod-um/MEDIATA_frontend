@@ -32,6 +32,63 @@ it("preserves exact released moments while completing withheld modes from the se
   expect(securePooledSummary(group,exact,{...entry,result:{...result,unavailable:{f0:"Unsupported interpretation"}}}).unavailable).toContain("Unsupported");
 });
 
+it("reuses already released site moments without dropping exact contributions or narrowing uncertainty",()=>{
+  const feature=(count,value)=>({featureName:"Value",count,mean:value,stdDev:0,min:value,max:value,missingValuesCount:0,
+    sumCubedDeviations:0,sumFourthDeviations:0,valueCounts:[{value,count}]});
+  const sources=[{...members[0],continuousFeatures:[feature(60,2)]},
+    {...members[1],continuousFeatures:[feature(30,4)]},
+    {...members[2],omittedFeatures:[{featureName:"Value",type:"continuous",reason:"Suppressed for privacy: release controls"}]}];
+  const data=collectDiscoveryStatistics(sources,[true,true,true]);
+  const releases=new Map([[sourceKey(members[2]),{version:3,group:"selected",rowEpsilon:2*Math.log(2),
+    features:{Value:{domain:{boundaries:[-.5,5,10.5],values:[0,10],type:"continuous",missingAllowed:false},
+      counts:[1,1,0],noiseVariance:4}}}]]);
+  const secure=new Map([[group.id,entry]]);
+  const before=combineMappedTableData(data,sources,[true,true,true],[group],undefined,secure).continuousFeatures[0].combinedSummary;
+  const summary=combineMappedTableData(data,sources,[true,true,true],[group],releases,secure).continuousFeatures[0].combinedSummary;
+  const values=[...Array(60).fill(2),...Array(30).fill(4),0,10];
+  const mean=values.reduce((sum,value)=>sum+value,0)/values.length;
+  const central=power=>values.reduce((sum,value)=>sum+(value-mean)**power,0);
+  expect(summary).toMatchObject({count:92,min:0,max:10,approximate:true,reusedSiteMoments:true});
+  expect(summary.mean).toBeCloseTo(mean,12);
+  expect(summary.sampleStdDev).toBeCloseTo(Math.sqrt(central(2)/91),12);
+  expect(summary.sumCubedDeviations).toBeCloseTo(central(3),9);
+  expect(summary.sumFourthDeviations).toBeCloseTo(central(4),9);
+  expect(summary.meanCiLower).toBeLessThanOrEqual(before.meanCiLower);
+  expect(summary.meanCiUpper).toBeGreaterThanOrEqual(before.meanCiUpper);
+  expect(summary.note).toContain("site-level privacy cost still applies");
+  expect(summary.note).toContain("epsilon per dataset version");
+  expect(summary.contributions[2].feature).toBeUndefined();
+  const table=combineMappedTableData(data,sources,[true,true,true],[group],releases,secure);
+  const sheet=buildStatisticsReport({data:table,sourceData:data,includeBreakdown:false}).find(item=>item.name==="Continuous statistics");
+  expect(sheet.rows[1][sheet.rows[0].indexOf("Mean")]).toBeCloseTo(mean,12);
+  expect(sheet.rows[1][sheet.rows[0].indexOf("Notes")]).toContain("site-level privacy cost");
+  expect(sources[2].continuousFeatures).toBeUndefined();
+});
+
+it("keeps the secure estimate when site releases are incomplete or the secure round failed",()=>{
+  const sources=members.map(member=>({...member,omittedFeatures:[{featureName:"Value",type:"continuous",reason:"Suppressed for privacy: release controls"}]}));
+  const data=collectDiscoveryStatistics(sources,[true,true,true]);
+  const releases=new Map([[sourceKey(members[0]),{version:1,group:"selected",noiseVariance:4,
+    features:{Value:{domain:{boundaries:[0,5,15]},counts:[10,10,0]}}}]]);
+  const table=combineMappedTableData(data,sources,[true,true,true],[group],releases,new Map([[group.id,entry]]));
+  expect(table.continuousFeatures[0]).toMatchObject({count:100,mean:3});
+  expect(table.continuousFeatures[0].combinedSummary.reusedSiteMoments).not.toBe(true);
+  const complete={featureName:"Reading",type:"continuous",count:20,mean:5,min:0,max:10,contributions:exact.contributions};
+  expect(securePooledSummary(group,exact,{unavailable:"Disconnected"},complete).unavailable).toBe("Disconnected");
+  const invalid={...entry,result:{...result,features:{f0:{...histogram([70,30,0]),noiseVariance:0}}}};
+  expect(securePooledSummary(group,exact,invalid,complete).unavailable).toBeTruthy();
+  expect(securePooledSummary(group,exact,entry,{...complete,count:0}).count).toBe(100);
+  expect(securePooledSummary(group,exact,entry,{...complete,mean:undefined}).mean).toBe(3);
+});
+
+it("retains the original distribution when released bounds conflict with secure quartiles",()=>{
+  const released={...exact,unavailable:undefined,count:100,mean:5,stdDev:0,min:5,max:5,missing:0,
+    approximate:true,note:"Already released estimate"};
+  const summary=securePooledSummary(group,exact,entry,released);
+  expect(summary).toMatchObject({count:100,mean:3,min:0,max:10});
+  expect(summary.reusedSiteMoments).not.toBe(true);
+});
+
 it("uses the existing table and CSV report path without treating protected inputs as exact relationships",()=>{
   const sources=members.map(member=>({...member,nodeName:`Site ${member.nodeId}`,disclosureWithheld:true,
     omittedFeatures:[{featureName:"Value",type:"continuous",reason:"Suppressed for privacy: release controls"}]}));

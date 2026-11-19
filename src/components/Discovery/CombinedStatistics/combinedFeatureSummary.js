@@ -56,9 +56,13 @@ export function combineFeatureSummary(group, sources, releases, secureResults) {
     contributions: renamed.map((source) => ({ source, status: "Not available" })),
   };
 
-  // A failed secure round must not fall back to requesting individual node contributions.
+  // Reuse only site releases already supplied by the caller; never request them to replace a secure round.
+  const released =
+    exact.unavailable && group.type === "continuous" && releases?.size
+      ? protectedSummary(group, sources, releases, exact)
+      : undefined;
   const summary = secureResults?.has(group.id)
-    ? securePooledSummary(group, exact, secureResults.get(group.id))
+    ? securePooledSummary(group, exact, secureResults.get(group.id), released)
     : releases
       ? protectedSummary(group, sources, releases, exact)
       : exact;
