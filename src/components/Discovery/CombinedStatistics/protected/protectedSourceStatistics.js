@@ -11,7 +11,6 @@ export function protectedSourceMembers(results, baseline, activeIndices) {
       const index = results.findIndex((result) => sourceKey(result) === sourceKey(source));
       if (!activeIndices[index]) return [];
       return sourceColumns(source).flatMap(({ column, type }) => {
-        if (!featureArrays[type]) return [];
         const member = {
           nodeId: source.nodeId,
           fileName: source.fileName,
@@ -43,7 +42,8 @@ export function protectedSourceTableData(data, results, baseline, releases, hidd
   table.omittedFeatures = (data.omittedFeatures || []).flatMap((entry) => {
     const column = entry.originalName || entry.featureName;
     const member = { ...entry, column };
-    const type = definitions.get(memberKey(member));
+    // Suppressed baseline metadata can omit the type; the released domain still declares it.
+    const type = definitions.get(memberKey(member)) || releases.get(sourceKey(member))?.features?.[column]?.domain?.type;
     if (!featureArrays[type] || hidden.has(memberKey(member))) return [entry];
     const group = { label: entry.featureName, type, members: [member] };
     const parts = poolingContributions(group, sources);

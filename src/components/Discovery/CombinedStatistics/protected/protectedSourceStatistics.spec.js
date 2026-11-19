@@ -22,6 +22,20 @@ it("requests one saved release per withheld active dataset, independent of merge
   expect(protectedSourceMembers(baseline,baseline,[true]).size).toBe(0);
 });
 
+it("requests and exports protected features even when suppression removed their baseline types", () => {
+  const untyped = [{...source, omittedFeatures: results[0].omittedFeatures.map(({type, ...feature}) => feature)}];
+  expect([...protectedSourceMembers(untyped,untyped,[true]).keys()]).toEqual([sourceKey(source)]);
+  expect(protectedSourceMembers(untyped,untyped,[false]).size).toBe(0);
+  const data=collectDiscoveryStatistics(untyped,[true]);
+  const table=protectedSourceTableData(data,untyped,untyped,releases);
+  expect(table.omittedFeatures).toEqual([]);
+  expect(table.continuousFeatures[0]).toMatchObject({count:200,mean:5});
+  expect(table.categoricalFeatures[0]).toMatchObject({count:200,mode:"North",modeFrequency:160});
+  const sheet=buildStatisticsReport({data:table,sourceData:table}).find(sheet=>sheet.name==="Categorical statistics");
+  expect(sheet.rows[1][sheet.rows[0].indexOf("Mode")]).toBe("North");
+  expect(untyped[0].omittedFeatures.every(feature=>feature.type===undefined)).toBe(true);
+});
+
 it("fills a protected numerical mode while retaining every already exact source statistic",()=>{
   const raw={...source,continuousFeatures:[{featureName:"Instrument reading",count:12,mean:1,stdDev:Math.sqrt(2/3),
     min:0,max:2,qrt1:0,median:1,qrt3:2,missingValuesCount:0,modes:[],modeStatus:"Withheld: modal frequency below release threshold"}]};
