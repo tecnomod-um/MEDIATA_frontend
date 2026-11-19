@@ -23,16 +23,10 @@ const nodeRequest = (node, path, body, signal) =>
     .post(`/taniwha/api/data/securePool/${path}`, body, { baseURL: getResolvedNodeBaseURL(node.serviceUrl), signal })
     .then((response) => response.data);
 
-/**
- * Secure multi-node aggregation: relay signed offers and opaque masked vectors.
- * Nodes generate/cache the protected inputs, create masks, verify signatures and
- * finalize the aggregate. The browser never receives their unmasked inputs.
- * Confidentiality assumes a trusted roster and non-colluding contributors;
- * every selected participant must complete the round. Masking does not improve
- * the statistical release's epsilon allowance or make exact endpoints private.
- */
+// Relay signed offers and masked vectors; nodes keep private inputs and calculate the final aggregate.
 export async function loadSecurePooling(groups, nodes, filtersFor, signal) {
   const ids = [...new Set(groups.flatMap((group) => group.members.map((member) => String(member.nodeId))))].sort();
+  // Masking assumes a trusted participant registry and non-colluding nodes.
   const participants = (await axios.post("/nodes/secure-pool/participants", ids, { signal })).data;
   const selected = ids.map((id) => {
     const node = nodes.find((item) => String(item.nodeId) === id);

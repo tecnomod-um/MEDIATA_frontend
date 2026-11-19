@@ -1,9 +1,4 @@
-/**
- * Privacy-protected statistical estimation from released noisy distributions.
- * Noise generation, release caching and privacy accounting belong to the node.
- * These estimators postprocess its output; they do not make exact Discovery
- * outputs differentially private or enforce privacy across dataset versions.
- */
+// Estimate statistics from the node's released noisy counts; the node generates noise and tracks its privacy cost.
 import { categoryFrequencies, completeNumericalFrequencies, poolMoments, sourceKey } from "../exact/combinedStatistics";
 import { frequencyQuantile } from "../exact/frequencyQuantile";
 import { needsProtectedDistribution } from "../poolingContributions";

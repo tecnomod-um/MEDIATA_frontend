@@ -1,9 +1,4 @@
-/**
- * Exact descriptive aggregation of summaries approved for release by the nodes.
- * Combines sufficient statistics and complete approved frequencies only.
- * Suppression/approval is separate from differential privacy; these results do
- * not acquire an epsilon guarantee merely by being combined here.
- */
+// Combine approved exact summaries; these results have no differential-privacy guarantee.
 import { frequencyQuantile } from "./frequencyQuantile.js";
 import { approvedQuartiles } from "./approvedQuartiles";
 import {

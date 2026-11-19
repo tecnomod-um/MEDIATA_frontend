@@ -41,12 +41,7 @@ function protectedSummary(group, sources, releases, exact) {
   return addProtectedDistribution(group, parts, releases, moments);
 }
 
-/**
- * Compose approved exact summaries with the appropriate protected distribution.
- * Secure aggregation is a transport layer for protected contributions, not a
- * stronger privacy allowance. Never replace a failed secure round with an
- * unmasked cross-node request. Existing approved exact fields remain exact.
- */
+// Keep approved exact values and use protected distributions to fill the remaining statistics.
 export function combineFeatureSummary(group, sources, releases, secureResults) {
   const renamed = group.members.map((member) => mappedSource(sources.get(sourceKey(member)), member, group.label));
   const exact = buildCombinedStatistics(
@@ -61,6 +56,7 @@ export function combineFeatureSummary(group, sources, releases, secureResults) {
     contributions: renamed.map((source) => ({ source, status: "Not available" })),
   };
 
+  // A failed secure round must not fall back to requesting individual node contributions.
   const summary = secureResults?.has(group.id)
     ? securePooledSummary(group, exact, secureResults.get(group.id))
     : releases
