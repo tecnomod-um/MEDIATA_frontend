@@ -15,3 +15,10 @@ it("distinguishes absent modes, protected uncertainty and an unavailable source"
   expect(statisticValue({unavailable:"A participant disconnected"},"mean",null)).toBe("Unavailable");
   expect(statisticValue({count:4},"median",null)).toBe("Not released");
 });
+
+it("distinguishes inapplicable and unestablished range diagnostics without exposing withheld values",()=>{
+  expect(statisticValue({count:100},"supportedMin",null)).toBe("Not applicable");
+  expect(statisticValue({count:4,approximate:true},"supportedMax",null)).toBe("Not established");
+  expect(statisticValue({count:4,approximate:true},"supportedMin",0)).toBe(0);
+  expect(statisticValue({unavailable:"Withheld"},"supportedMin",12)).toBe("Unavailable");
+});

@@ -64,6 +64,25 @@ const summaryTables = {
   },
 };
 
+// Keep row notes short; calculation details remain on the underlying summaries.
+function summaryNote(summary, type, pooled) {
+  if (summary.unavailable) return summary.unavailable;
+  const notes = [];
+  if (summary.approximate) {
+    notes.push(summary.reusedSiteMoments ? "Includes privacy-protected site estimates" : "Privacy-protected estimate");
+  } else {
+    const fields = [summary.estimatedQuantiles && "quartiles", summary.estimatedMode && "mode"].filter(Boolean);
+    if (fields.length) notes.push(`Estimated ${fields.join(" and ")}`);
+  }
+  if (summary.lowPrecision) notes.push("Low precision");
+  if (type === "continuous") {
+    if (pooled && summary.q1 == null) notes.push("Pooled quartiles unavailable");
+    if (!summary.modes?.length && !summary.modeBand && summary.modeStatus
+      && !["Available", "No repeated value"].includes(summary.modeStatus)) notes.push("Mode unavailable");
+  }
+  return notes.join(". ");
+}
+
 function summaryRow(summary, type, pooled) {
   const raw = field => summary.unavailable ? null : finite(summary[field]);
   const value = field => statisticValue(summary,field,raw(field));
@@ -74,17 +93,14 @@ function summaryRow(summary, type, pooled) {
     const mode = (category, second=false) => category ? [category.value,category.count,finite(category.percent)]
       : Array(3).fill(summary.unavailable?"Unavailable":second?"Not applicable: no second category":statisticValue(summary,"mode",null));
     return { values: [...counts, summary.unavailable || !summary.categories ? value("cardinality") : categories.length, ...mode(categories[0]), ...mode(categories[1],true)],
-      note: summary.unavailable || summary.note };
+      note: summaryNote(summary, type, pooled) };
   }
-  if (type === "date") return { values: [...counts, value("mean"), value("stdDev"), ...quantiles], note: summary.unavailable || summary.note };
+  if (type === "date") return { values: [...counts, value("mean"), value("stdDev"), ...quantiles], note: summaryNote(summary, type, pooled) };
 
   const modes = summary.unavailable ? [] : (summary.modes || []).filter(Number.isFinite);
   const modeCount = raw("modeFrequency");
   const sampleSd = statisticValue(summary,"sampleStdDev",raw("sampleStdDev") ?? sampleStandardDeviation(raw("count"), raw("stdDev")));
-  const note = summary.unavailable || summary.note || [
-    pooled && summary.q1 == null ? "Pooled quartiles unavailable" : "",
-    !modes.length && summary.modeStatus && summary.modeStatus !== "Available" ? `Mode: ${summary.modeStatus}` : "",
-  ].filter(Boolean).join(". ");
+  const note = summaryNote(summary, type, pooled);
   return {
     values: [...counts, value("mean"), sampleSd, ...quantiles, statisticValue(summary,"mode",raw("modeBand") ?? (modes.length > 1 ? modes.join(", ") : modes[0] ?? null)),
       statisticValue(summary,"modeFrequency",modeCount), statisticValue(summary,"modePercent",modeCount != null && summary.count > 0 ? 100 * modeCount / summary.count : null),
@@ -161,7 +177,10 @@ export function buildStatisticsReport({ data, sourceData, selectedEntries = [], 
   const sourceLabel = source => `${site(source)} / ${source.fileName}`;
   const featureRows = [];
   const summaries = { continuous: [], categorical: [], date: [] };
-  const includeSupportedRange = exported.some(feature => (feature.combinedSummary || feature.estimatedSummary)?.supportedMin != null);
+  const includeSupportedRange = exported.some(feature => {
+    const summary = feature.combinedSummary || feature.estimatedSummary;
+    return Number.isFinite(summary?.supportedMin) && Number.isFinite(summary?.supportedMax);
+  });
 
   for (const feature of exported) {
     const name = sourceColumn(feature);
@@ -176,7 +195,7 @@ export function buildStatisticsReport({ data, sourceData, selectedEntries = [], 
     const summary = tableExportFeatures({ [featureArrays[feature.type]]: [feature] })[0];
     const { values, note } = summaryRow(summary, feature.type, feature.pooled);
     const range = feature.type === "continuous" && includeSupportedRange
-      ? [statisticValue(summary,"supportedMin",summary.supportedMin),statisticValue(summary,"supportedMax",summary.supportedMax)] : [];
+      ? ["supportedMin", "supportedMax"].map(field => statisticValue(summary, field, summary[field])) : [];
     summaries[feature.type].push({ row: [name, siteName, dataset, ...values, ...range], note });
   }
 

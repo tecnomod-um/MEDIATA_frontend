@@ -76,7 +76,7 @@ it("preserves exact site rows in exports and includes a small protected site in 
   const { rows } = buildStatisticsReport({ data: table, sourceData }).find(sheet => sheet.name === "Continuous statistics");
   const mean = rows[0].indexOf("Mean"), count = rows[0].indexOf("Non-missing count"), note = rows[0].indexOf("Notes");
   expect(rows.slice(2).map(row => [row[count], row[mean]])).toEqual([[40, 2], [60, 8]]);
-  expect(rows[1][note]).toContain("Privacy-protected pooled estimate");
+  expect(rows[1][note]).toContain("Privacy-protected estimate");
 
   const hidden = { ...sourceData, continuousFeatures: sourceData.continuousFeatures.filter(feature => feature.nodeId !== 1) };
   const withHiddenMember = combineMappedTableData(hidden, results, active, [group], releases);
@@ -115,7 +115,7 @@ it("fills distribution statistics independently of exact moments and exports the
     min: base.min, max: base.max, median: 5, modeBand: "0–10", status: "Combined · estimated distribution" });
   expect(row.combinedSummary.approximate).toBeUndefined();
   const { rows } = buildStatisticsReport({ data: table, sourceData }).find(sheet => sheet.name === "Continuous statistics");
-  expect(rows[1][rows[0].indexOf("Notes")]).toContain("Quartiles are estimated from protected frequency counts");
+  expect(rows[1][rows[0].indexOf("Notes")]).toContain("Estimated quartiles");
   expect(rows[1][rows[0].indexOf("Mode")]).toBe("0–10");
 });
 

@@ -61,7 +61,7 @@ it("reuses already released site moments without dropping exact contributions or
   const table=combineMappedTableData(data,sources,[true,true,true],[group],releases,secure);
   const sheet=buildStatisticsReport({data:table,sourceData:data,includeBreakdown:false}).find(item=>item.name==="Continuous statistics");
   expect(sheet.rows[1][sheet.rows[0].indexOf("Mean")]).toBeCloseTo(mean,12);
-  expect(sheet.rows[1][sheet.rows[0].indexOf("Notes")]).toContain("site-level privacy cost");
+  expect(sheet.rows[1][sheet.rows[0].indexOf("Notes")]).toContain("Includes privacy-protected site estimates");
   expect(sources[2].continuousFeatures).toBeUndefined();
 });
 
@@ -99,7 +99,7 @@ it("uses the existing table and CSV report path without treating protected input
   expect(table.continuousFeatures[0].combinedSummary.contributions.every(part=>!part.feature)).toBe(true);
   const sheet=buildStatisticsReport({data:table,sourceData:data,includeBreakdown:false}).find(item=>item.name==="Continuous statistics");
   expect(sheet.rows[1][sheet.rows[0].indexOf("Mean")]).toBe(3);
-  expect(sheet.rows[1][sheet.rows[0].indexOf("Notes")]).toContain("Secure aggregation");
+  expect(sheet.rows[1][sheet.rows[0].indexOf("Notes")]).toContain("Privacy-protected estimate");
   expect(data.continuousFeatures).toEqual([]);
 });
 
@@ -129,5 +129,5 @@ it("exports categorical score counts through the same report after a type switch
   const sheet=buildStatisticsReport({data:table,sourceData:data,includeBreakdown:false}).find(item=>item.name==="Categorical statistics");
   expect(sheet.rows[1][sheet.rows[0].indexOf("Mode")]).toBe("0");
   expect(sheet.rows[1][sheet.rows[0].indexOf("Mode count")]).toBe(70);
-  expect(sheet.rows[1][sheet.rows[0].indexOf("Notes")]).toContain("normalized score labels");
+  expect(sheet.rows[1][sheet.rows[0].indexOf("Notes")]).toContain("Privacy-protected estimate");
 });

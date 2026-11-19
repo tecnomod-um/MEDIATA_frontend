@@ -92,6 +92,35 @@ it("labels withheld pooled values explicitly and keeps their note and merge mapp
   expect(sheetRecords(sheets, "Features")[0]["Merged from"]).toContain("Hospital (2) / patients.csv: Age");
 });
 
+it("exports short estimation notes and distinguishes inapplicable histogram diagnostics", () => {
+  const fixture = reportFixture();
+  const original = fixture.data.continuousFeatures[0];
+  const feature = summary => ({...original,combinedSummary:{...original.combinedSummary,
+    modes:[21],modeFrequency:2,modeStatus:"Estimated",...summary}});
+  const data={continuousFeatures:[
+    feature({featureName:"Full estimate",approximate:true,lowPrecision:true,supportedMin:15,supportedMax:25,
+      note:"Privacy-protected estimate. Counts include random noise. Long calculation details."}),
+    feature({featureName:"Partial estimate",estimatedQuantiles:true,estimatedMode:true,q1:20,median:21,q3:22}),
+    feature({featureName:"Site estimates",approximate:true,reusedSiteMoments:true}),
+  ]};
+  const sheets=buildStatisticsReport({...fixture,data,includeBreakdown:false});
+  const sheet=sheets.find(sheet=>sheet.name==="Continuous statistics");
+  const rows=records(sheet);
+  expect(rows.map(row=>row.Notes)).toEqual([
+    "Privacy-protected estimate. Low precision. Pooled quartiles unavailable",
+    "Estimated quartiles and mode",
+    "Includes privacy-protected site estimates. Pooled quartiles unavailable",
+  ]);
+  expect(rows[0]["Supported range lower"]).toBe(15);
+  expect(rows[0]["Supported range upper"]).toBe(25);
+  expect(rows[1]["Supported range lower"]).toBe("Not applicable");
+  expect(rows[2]["Supported range upper"]).toBe("Not established");
+  expect(rows[0].Min).toBe(original.combinedSummary.min);
+  expect(rows[0].Max).toBe(original.combinedSummary.max);
+  expect(rows[0].Mean).toBe(original.combinedSummary.mean);
+  expect(data.continuousFeatures[0].combinedSummary.note).toContain("Long calculation details");
+});
+
 it("downloads explicit unavailable labels even when every source is withheld", async () => {
   const fixture = reportFixture();
   const feature = fixture.data.continuousFeatures[0];
