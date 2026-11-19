@@ -18,6 +18,7 @@ import { createColumnMappings, activeColumnMappings, validateColumnMappings, rec
 import { filterDiscoveryDatasets } from "../../components/Discovery/CombinedStatistics/filterDiscoveryDatasets";
 import { loadApproximatePooling, protectedPoolingMembers } from "../../components/Discovery/CombinedStatistics/approximatePooling";
 import { protectedSourceMembers, protectedSourceTableData } from "../../components/Discovery/CombinedStatistics/protectedSourceStatistics";
+import {loadSecurePooling,securePoolingGroups,securePoolingFailure} from "../../components/Discovery/CombinedStatistics/securePooling";
 import { fileFilterConditions } from "../../components/Discovery/FilterModal/filterFeatures";
 import { buildAppliedFilters, tableFilterDescriptions } from "../../components/Discovery/FilterModal/appliedFilters";
 import useRelationshipStatistics from "../../components/Discovery/CombinedStatistics/useRelationshipStatistics";
@@ -37,6 +38,8 @@ function Discovery() {
   const toggleView = useCallback(() => setShowIndividualView(previous => !previous), []);
   const [combineTables, setCombineTables] = useState(false);
   const [approximateResult, setApproximateResult] = useState(null);
+  const [secureResult,setSecureResult] = useState(null);
+  const [secureAttempt,setSecureAttempt] = useState(0);
   const [customMappings, setCustomMappings] = useState(null);
   const [mappingDialogOpen, setMappingDialogOpen] = useState(false);
   const [exportRelationships, setExportRelationships] = useState(false);
@@ -322,10 +325,35 @@ function Discovery() {
   const appliedFilters = useMemo(() => buildAppliedFilters(filterStatistics, filters, filterLogic, dataResults, columnMappings), [filterStatistics, filters, filterLogic, dataResults, columnMappings]);
   const activeMappings = useMemo(() => activeColumnMappings(columnMappings, dataResults, activeFileIndices), [columnMappings, dataResults, activeFileIndices]);
   const combinedTablesActive = combineTables && activeMappings.length > 0;
+  const secureRequest=useMemo(()=>{
+    if(!combinedTablesActive || isCombining) return null;
+    const groups=securePoolingGroups(activeMappings,dataResults);
+    if(!groups.length) return null;
+    return {groups,filtersFor:source=>{
+      const conditions=fileFilterConditions(filterStatistics,filters,filterLogic.operators,source,
+        dataResults.length,filterLogic.matchColumns,columnMappings);
+      return Object.keys(conditions).length?{conditions,operator:filterLogic.operator}:null;
+    }};
+  },[combinedTablesActive,isCombining,activeMappings,dataResults,filterStatistics,filters,filterLogic,columnMappings,secureAttempt]);
+  useEffect(()=>{
+    if(!secureRequest) return;
+    const controller=new AbortController();
+    loadSecurePooling(secureRequest.groups,selectedNodes,secureRequest.filtersFor,controller.signal)
+      .then(groups=>{if(!controller.signal.aborted)setSecureResult({request:secureRequest,groups});})
+      .catch(error=>{if(!controller.signal.aborted)setSecureResult({request:secureRequest,error:securePoolingFailure(error),
+        groups:new Map(secureRequest.groups.map(group=>[group.id,{unavailable:securePoolingFailure(error)}]))});});
+    return ()=>controller.abort();
+  },[secureRequest,selectedNodes]);
+  const securePending=Boolean(secureRequest && secureResult?.request!==secureRequest);
+  const secureGroups=secureRequest && secureResult?.request===secureRequest?secureResult.groups:undefined;
+  const secureError=secureRequest && secureResult?.request===secureRequest?secureResult.error:null;
   const approximateRequest = useMemo(() => {
     if (isCombining) return null;
-    const members = protectedSourceMembers(dataResults, baselineResultsRef.current, activeFileIndices);
-    if (combinedTablesActive) for (const [key, member] of protectedPoolingMembers(activeMappings, dataResults)) members.set(key, member);
+    const members = combinedTablesActive ? new Map() : protectedSourceMembers(dataResults, baselineResultsRef.current, activeFileIndices);
+    // A combination entirely inside one node retains its existing approved
+    // path. Cross-node combinations use the masked protocol exclusively.
+    if (combinedTablesActive) for (const group of activeMappings.filter(group=>new Set(group.members.map(member=>String(member.nodeId))).size===1))
+      for (const [key, member] of protectedPoolingMembers([group], dataResults)) members.set(key, member);
     if (!members.size) return null;
     return { members, filtersFor: source => {
       const conditions = fileFilterConditions(filterStatistics, filters, filterLogic.operators, source,
@@ -351,13 +379,13 @@ function Discovery() {
     baselineResultsRef.current, approximateReleases, hiddenFeaturesRef.current),
   [filteredDataStatistics, dataResults, approximateReleases]);
   const tableStatistics = useMemo(() => !combinedTablesActive || !sourceTableStatistics ? sourceTableStatistics
-    : combineMappedTableData(sourceTableStatistics, dataResults, activeFileIndices, columnMappings, approximateReleases),
-  [combinedTablesActive, sourceTableStatistics, dataResults, activeFileIndices, columnMappings, approximateReleases]);
+    : combineMappedTableData(sourceTableStatistics, dataResults, activeFileIndices, columnMappings, approximateReleases,secureGroups),
+  [combinedTablesActive, sourceTableStatistics, dataResults, activeFileIndices, columnMappings, approximateReleases,secureGroups]);
   const combinedRelationships = combinedTablesActive;
   const relationships = useRelationshipStatistics(combinedRelationships ? tableStatistics : filteredDataStatistics,
     dataResults, combinedRelationships, !showIndividualView || exportRelationships);
   const relationshipStatistics = relationships.statistics;
-  const statisticsBusy = isCombining || relationships.pending || approximatePending;
+  const statisticsBusy = isCombining || relationships.pending || approximatePending || securePending;
   const relationshipFilters = useMemo(() => tableFilterDescriptions(combinedRelationships ? tableStatistics : filteredDataStatistics, appliedFilters), [combinedRelationships, tableStatistics, filteredDataStatistics, appliedFilters]);
   const featureFilters = useMemo(() => tableFilterDescriptions(tableStatistics, appliedFilters), [tableStatistics, appliedFilters]);
   const statisticsExport = useMemo(() => ({ data: tableStatistics, sourceData: sourceTableStatistics, appliedFilters }),
@@ -492,8 +520,8 @@ function Discovery() {
             <span>{relationships.pending ? "Calculating relationships…" : "Refreshing statistics…"}</span>
             <LinearProgress aria-label={relationships.pending ? "Calculating relationships" : "Refreshing statistics"} />
           </div>}
-          {relationships.error && <div className={DiscoveryStyles.calculationStatus} role="alert">
-            <span>{relationships.error}</span><button onClick={relationships.retry}>Retry calculation</button>
+          {(relationships.error || secureError) && <div className={DiscoveryStyles.calculationStatus} role="alert">
+            <span>{secureError || relationships.error}</span><button onClick={()=>secureError?setSecureAttempt(attempt=>attempt+1):relationships.retry()}>Retry calculation</button>
           </div>}
           <TransitionGroup>
             {showIndividualView ? (

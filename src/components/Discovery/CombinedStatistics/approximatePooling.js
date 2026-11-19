@@ -11,6 +11,8 @@ import { noiseCellCount, coherentFeatureCounts } from "./protectedCohortCounts";
 import { supportedVariation } from "./protectedShapeStatistics";
 import { fitProtectedCounts } from "./protectedDistributionFit";
 import { APPROVED_QUARTILES_NOTE } from "./approvedQuartiles";
+import {supportedBins} from "./protectedSupport";
+import {geometricMeanInterval} from "./geometricMeanInterval";
 
 const MAX_WIRE_COUNT = 1_000_000_000;
 const NOTES = "Privacy-protected estimate. Counts include random noise. Numerical values use the node's published domains. The mean interval includes binning, privacy noise and sampling uncertainty for independent observations assumed to lie within the published bounds.";
@@ -48,7 +50,7 @@ function validRelease(source) {
 }
 
 function estimateGroupTotal(source, referenceVariance) {
-  let precision = 0, weightedTotal = 0;
+  let precision = 0, weightedTotal = 0, tailScale=0;
   for (const feature of Object.values(source.features)) {
     const wireLength = feature?.domain?.boundaries?.length
       ?? (Array.isArray(feature?.domain?.categories) ? feature.domain.categories.length + 2 : 0);
@@ -59,10 +61,13 @@ function estimateGroupTotal(source, referenceVariance) {
       || (feature.domain.categories && feature.domain.unlistedCategoriesAllowed === false && feature.counts.at(-2) !== 0)) continue;
     // Each histogram includes missingness. Combine the noisy group sizes by inverse variance.
     const weight = referenceVariance / variance;
+    for(const v of feature.noiseComponents || [variance]) {
+      const q=v/(v+1+Math.sqrt(2*v+1));tailScale=Math.max(tailScale,1/(1-q));
+    }
     precision += weight / length;
     weightedTotal += weight * (feature.counts.reduce((sum, count) => sum + count, 0) / length);
   }
-  return { total: weightedTotal / precision, variance: referenceVariance / precision };
+  return { total: weightedTotal / precision, variance: referenceVariance / precision,tailScale };
 }
 
 function histogramFor(group, sources) {
@@ -101,10 +106,14 @@ function histogramFor(group, sources) {
   const coherent = pieces.map(({cell, variance}, index) => coherentFeatureCounts(totals[index], cell, variance));
   return {
     labels, boundaries, lowerEdges, upperEdges, scores, otherIndex,
+    supportedReconstruction:pieces.every(({source})=>source.postprocessing==="supported-frequencies"),
+    support: scores && group.type!=="categorical" && pieces.every(({source})=>source.postprocessing==="supported-frequencies")
+      ? supportedBins(labels.map((_,index)=>aligned.reduce((sum,{counts})=>sum+counts[index],0)),variances) : null,
     cells: labels.map((_, index) => aligned.reduce((sum, { counts }) => sum + counts[index], 0)),
     count: coherent.reduce((sum, feature) => sum + feature.count, 0),
     missing: coherent.reduce((sum, feature) => sum + feature.missing, 0),
     countEstimate: coherent.reduce((sum, feature) => sum + feature.estimate, 0),
+    countScale:Math.max(...totals.map(total=>total.tailScale)),
     variances, binNoise, countNoise: Math.sqrt(coherent.reduce((sum, feature) => sum + feature.variance, 0)),
   };
 }
@@ -124,7 +133,8 @@ function releasePrivacyNote(group,releases) {
   const costs=group.members.map(member=>releases.get(sourceKey(member))?.rowEpsilon).filter(value=>Number.isFinite(value)&&value>0);
   if (!costs.length) return "";
   const low=Math.min(...costs).toFixed(3), high=Math.max(...costs).toFixed(3);
-  return `Cumulative protected-histogram privacy cost (epsilon per dataset version): ${low===high?low:`${low} to ${high}`}. Higher values mean weaker row privacy; metadata and exact endpoints are outside this accounting.`;
+  const secure=group.members.some(member=>member.nodeId==="secure-pool");
+  return `Cumulative protected-histogram privacy cost (${secure?"epsilon summed across participating dataset versions":"epsilon per dataset version"}): ${low===high?low:`${low} to ${high}`}. Higher values mean weaker row privacy; metadata and exact endpoints are outside this accounting.`;
 }
 
 export function addProtectedDistribution(group, parts, releases, summary) {
@@ -139,7 +149,7 @@ export function addProtectedDistribution(group, parts, releases, summary) {
   const exactEntries = approved.flatMap(({ feature }) => feature.valueCounts.map(({ value, count }) => [value, count]));
   const count = summary.count - exactEntries.reduce((total, [, frequency]) => total + frequency, 0);
   if (count < 0) return summary;
-  const bins = count ? fitProtectedCounts(histogram.cells, count) : histogram.cells.map(() => 0);
+  const bins = count ? fitProtectedCounts(histogram.cells, count, histogram.support) : histogram.cells.map(() => 0);
   if (!bins) return summary;
   const entries = [...exactEntries, ...histogram.labels.map((value, index) => [value, bins[index]])]
     .filter(([, frequency]) => frequency > 0).sort((a, b) => a[0] - b[0]);
@@ -226,7 +236,7 @@ function needsProtectedDistribution({ withheld, feature }) {
 
 function combinedNumerical(histogram, exact, summary) {
   const { cells, count, labels, boundaries, binNoise } = histogram;
-  const bins = count ? fitProtectedCounts(cells, count)
+  const bins = count ? fitProtectedCounts(cells, count, histogram.support)
     : cells.map(() => 0);
   if (!bins) return { ...summary, lowPrecision:true, note: "Estimated count only. The numerical bin counts are too close to the privacy noise to estimate the distribution." };
   const moments = poolMoments(count ? [...exact, numericalEstimates(labels, bins, count)] : exact);
@@ -239,7 +249,9 @@ function combinedNumerical(histogram, exact, summary) {
     min: Math.min(...exact.map(part => part.min)),
     max: Math.max(...exact.map(part => part.max)),
   };
-  const interval = approximateMeanInterval(cells, histogram, fixed);
+  const rawInterval = histogram.supportedReconstruction ? geometricMeanInterval(cells,histogram,fixed)
+    : approximateMeanInterval(cells, histogram, fixed);
+  const interval={meanCiLower:Math.min(rawInterval.meanCiLower,moments.mean),meanCiUpper:Math.max(rawInterval.meanCiUpper,moments.mean)};
   const lowPrecision = summary.lowPrecision || interval.meanCiUpper - interval.meanCiLower >=
     (Math.max(boundaries.at(-1), fixed.max) - Math.min(boundaries[0], fixed.min)) / 2;
   const { stdDev, sumCubedDeviations, sumFourthDeviations } = moments;
@@ -251,17 +263,19 @@ function combinedNumerical(histogram, exact, summary) {
   const quantile = probability => frequencyQuantile(entries, summary.count, probability);
   const note = [
     summary.note,
+    histogram.support && "The numerical reconstruction retains bins supported at a 5% false-discovery rate under the declared noise model; rare values may be omitted, so estimated extrema and shape are exploratory.",
     exact.length && "The mean interval includes binning, privacy noise and sampling uncertainty for independent observations assumed to lie within the published bounds.",
     lowPrecision && "Low precision: the protected count is small relative to its noise or the mean interval is wide.",
     shapeSupported ? "Estimated skewness and kurtosis are sensitive to noise in tail counts and should be treated as exploratory."
       : "Skewness and kurtosis describe the reconstruction only; variation is not distinguishable from privacy noise, so nonzero shape estimates are unreliable.",
     (summary.count<4 || stdDev===0) && "Sample SD needs two observations, skewness three and kurtosis four; zero reconstructed variance leaves shape statistics undefined.",
   ].filter(Boolean).join(" ");
-  const occupied=labels.filter((_,index)=>bins[index]>0);
-  const extrema=[...occupied,...exact.flatMap(part=>[part.min,part.max])];
+  const minima=(histogram.supportedReconstruction?histogram.lowerEdges:labels).filter((_,index)=>bins[index]>0);
+  const maxima=(histogram.supportedReconstruction?histogram.upperEdges:labels).filter((_,index)=>bins[index]>0);
   return { ...summary, ...moments, ...interval, lowPrecision, note:note+
     " Min and max are estimated endpoints of the reconstructed distribution; noise may omit or introduce extreme values.",
-    ...(extrema.length ? {min:Math.min(...extrema),max:Math.max(...extrema),estimatedExtrema:true} : {}),
+    ...(minima.length || exact.length ? {min:Math.min(...minima,...exact.map(part=>part.min)),
+      max:Math.max(...maxima,...exact.map(part=>part.max)),estimatedExtrema:true} : {}),
     sampleStdDev: sampleStandardDeviation(summary.count, stdDev),
     skewness: adjustedSkewness(summary.count, stdDev, sumCubedDeviations),
     kurtosis: adjustedKurtosis(summary.count, stdDev, sumFourthDeviations),

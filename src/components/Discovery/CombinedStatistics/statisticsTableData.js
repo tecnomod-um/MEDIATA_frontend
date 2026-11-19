@@ -3,11 +3,12 @@ import { activeColumnMappings, memberKey } from "./columnMappings.js";
 import { addProtectedDistribution, buildApproximateSummary } from "./approximatePooling.js";
 import { summaryTableFeature } from "./summaryTableFeature";
 import { poolingContributions, needsProtectedMoments } from "./poolingContributions.js";
+import {securePooledSummary} from "./securePooledSummary";
 
 
 // Adapt released pooled summaries to the same shape used by the existing tables.
 // Charts retain individual distributions; pooled quantiles need complete approved frequencies.
-export function combineMappedTableData(data, results, activeIndices, mappings, approximateReleases) {
+export function combineMappedTableData(data, results, activeIndices, mappings, approximateReleases, secureResults) {
   const visible = new Set(Object.values(arrays).flatMap(key => (data[key] || []).map(feature => memberKey({ ...feature, column: feature.originalName || feature.featureName }))));
   for (const feature of data.omittedFeatures || []) {
     visible.add(memberKey({ ...feature, column: feature.originalName || feature.featureName }));
@@ -33,7 +34,8 @@ export function combineMappedTableData(data, results, activeIndices, mappings, a
       return renamed;
     });
     const exact = buildCombinedStatistics(sources, sources.map(() => true)).features.find(feature => feature.featureName === group.label)
-      || { featureName: group.label, type: group.type, includedSources: 0, totalSources: sources.length, unavailable: "No matching records", contributions: [] };
+      || { featureName: group.label, type: group.type, includedSources: 0, totalSources: sources.length, unavailable: "No matching records",
+        contributions: sources.map(source => ({ source, status: "Not available" })) };
     const parts = approximateReleases ? poolingContributions(group, bySource) : [];
     const withheld = parts.filter(part => needsProtectedMoments(part, group.type));
     const moments = exact.unavailable && withheld.length && parts.every(part => part.feature || part.empty || part.withheld)
@@ -44,7 +46,8 @@ export function combineMappedTableData(data, results, activeIndices, mappings, a
           status: empty ? "No matching records" : undefined,
         })) }
       : exact;
-    const summary = approximateReleases ? addProtectedDistribution(group, parts, approximateReleases, moments) : moments;
+    const summary = secureResults?.has(group.id) ? securePooledSummary(group,exact,secureResults.get(group.id))
+      : approximateReleases ? addProtectedDistribution(group, parts, approximateReleases, moments) : moments;
     summary.contributions = summary.contributions.map(contribution => {
       const member = group.members.find(member => sourceKey(member) === sourceKey(contribution.source));
       const original = bySource.get(sourceKey(member));

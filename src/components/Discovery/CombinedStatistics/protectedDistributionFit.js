@@ -1,8 +1,12 @@
 // Minimum-distance reconstruction of an already released histogram. Projection
 // enforces nonnegative frequencies and the shared estimated non-missing total.
-export function fitProtectedCounts(cells, total) {
+export function fitProtectedCounts(cells, total, support) {
   if (!Number.isSafeInteger(total) || total < 0 || !cells.length || !cells.every(Number.isFinite)) return null;
   if (!total) return cells.map(() => 0);
+  if(support?.length && support.length<cells.length) {
+    const fitted=fitProtectedCounts(support.map(index=>cells[index]),total);
+    const result=cells.map(()=>0);support.forEach((index,i)=>{result[index]=fitted[i];});return result;
+  }
   const ordered = [...cells].sort((a,b) => b-a);
   let sum = 0, threshold = 0;
   for (let index=0; index<ordered.length; index++) {
