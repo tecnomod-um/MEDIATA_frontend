@@ -246,7 +246,7 @@ function needsProtectedDistribution({ withheld, feature }) {
 }
 
 function combinedNumerical(histogram, exact, summary) {
-  const { cells, count, labels, boundaries, binNoise } = histogram;
+  const { cells, count, labels, boundaries } = histogram;
   const bins = count ? fitProtectedCounts(cells, count, histogram.support)
     : cells.map(() => 0);
   if (!bins) return { ...summary, lowPrecision:true, note: "Estimated count only. The numerical bin counts are too close to the privacy noise to estimate the distribution." };
