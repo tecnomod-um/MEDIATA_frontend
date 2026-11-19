@@ -445,8 +445,9 @@ export const filterMultipleFiles = async (payload, serviceUrl, { signal, allowWi
   }
 };
 
-export async function getApproximatePoolingSource(fileName, filters, serviceUrl, signal) {
-  const response = await nodeAxiosInstance.post("/taniwha/api/data/approximatePool", { fileName, filters },
+export async function getApproximatePoolingSource(fileName, filters, serviceUrl, signal, featureTypes) {
+  const response = await nodeAxiosInstance.post("/taniwha/api/data/approximatePool", { fileName, filters,
+    ...(Object.keys(featureTypes || {}).length?{featureTypes}:{}) },
     { baseURL: getResolvedNodeBaseURL(serviceUrl), signal });
   return response.data;
 }

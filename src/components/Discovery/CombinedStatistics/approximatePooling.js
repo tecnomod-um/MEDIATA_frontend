@@ -25,7 +25,7 @@ function validCounts(cells, length) {
 }
 
 function histogramVariance(source, feature) {
-  if (![1, 2, 3, 4].includes(source?.version)) return null;
+  if (![1, 2, 3, 4, 5].includes(source?.version)) return null;
   const variance = source.version === 1 ? source.noiseVariance : feature?.noiseVariance;
   if (!Number.isFinite(variance) || variance <= 0 || variance > MAX_WIRE_COUNT) return null;
   if (feature?.noiseComponents != null && (!Array.isArray(feature.noiseComponents)
@@ -38,7 +38,8 @@ function histogramVariance(source, feature) {
 function validRelease(source) {
   if (source.version >= 3) {
     if (!Number.isFinite(source.rowEpsilon) || source.rowEpsilon <= 0) return false;
-    const charge = Object.values(source.features || {}).reduce((total, histogram) => {
+    const mechanisms=[...Object.values(source.features || {}),...(source.cohortCount?[source.cohortCount]:[])];
+    const charge = mechanisms.reduce((total, histogram) => {
       const v = histogram?.noiseVariance;
       if (!Number.isFinite(v) || v <= 0 || v > MAX_WIRE_COUNT) return Infinity;
       const q = v / (v + 1 + Math.sqrt(2 * v + 1));
@@ -51,6 +52,16 @@ function validRelease(source) {
 
 function estimateGroupTotal(source, referenceVariance) {
   let precision = 0, weightedTotal = 0, tailScale=0;
+  const cohort=source.cohortCount;
+  if(cohort) {
+    const variance=histogramVariance(source,cohort);
+    if(variance===null || !Number.isSafeInteger(cohort.count) || Math.abs(cohort.count)>MAX_WIRE_COUNT) return {total:NaN,variance:NaN,tailScale:NaN};
+    precision=referenceVariance/variance;
+    weightedTotal=precision*cohort.count;
+    for(const v of cohort.noiseComponents || [variance]) {
+      const q=v/(v+1+Math.sqrt(2*v+1));tailScale=Math.max(tailScale,1/(1-q));
+    }
+  }
   for (const feature of Object.values(source.features)) {
     const wireLength = feature?.domain?.boundaries?.length
       ?? (Array.isArray(feature?.domain?.categories) ? feature.domain.categories.length + 2 : 0);
@@ -349,7 +360,7 @@ export function protectedPoolingMembers(groups, results) {
     const parts = poolingContributions(group, sources);
     return parts.every(part => part.feature || part.empty || part.withheld)
       ? parts.filter(part => needsProtectedMoments(part, group.type) || (group.type === "continuous" && needsProtectedDistribution(part)))
-        .map(({ member }) => [sourceKey(member), member]) : [];
+        .map(({ member,source }) => [sourceKey(member), {...member,...(source.featureTypes?{featureTypes:source.featureTypes}:{})}]) : [];
   }));
 }
 
@@ -359,7 +370,7 @@ export async function loadApproximatePooling(members, nodes, filtersFor, signal)
     if (!node?.serviceUrl) return [key, null];
     const filters = filtersFor(member);
     try {
-      return [key, await getApproximatePoolingSource(member.fileName, filters, node.serviceUrl, signal)];
+      return [key, await getApproximatePoolingSource(member.fileName, filters, node.serviceUrl, signal,...(member.featureTypes?[member.featureTypes]:[]))];
     } catch (error) {
       if (signal?.aborted) throw error;
       const detail = error?.response?.data?.detail;

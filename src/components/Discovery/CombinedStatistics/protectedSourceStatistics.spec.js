@@ -74,7 +74,7 @@ it("explains missing cached features without recalibrating an old saved release"
   expect(table.omittedFeatures[0].reason).toContain("saved protected release does not include this feature");
   const report = buildStatisticsReport({data:table,sourceData:table});
   const sheet = report.find(sheet => sheet.name === "Continuous statistics");
-  expect(sheet.rows[1][sheet.rows[0].indexOf("Mean")]).toBeNull();
+  expect(sheet.rows[1][sheet.rows[0].indexOf("Mean")]).toBe("Unavailable");
 });
 
 it("uses the shared distribution code for site modes and exports supported ranges as estimates", () => {

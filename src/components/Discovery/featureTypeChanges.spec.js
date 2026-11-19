@@ -3,6 +3,13 @@ import {requestFeatureTypeChanges, reconcileFeatureVisibility} from "./featureTy
 import {filterDiscoveryDatasets} from "./CombinedStatistics/filterDiscoveryDatasets";
 vi.mock("./CombinedStatistics/filterDiscoveryDatasets", () => ({filterDiscoveryDatasets: vi.fn()}));
 beforeEach(() => vi.resetAllMocks());
+
+it("accepts a confirmed type change when the exact summary is withheld for protected reconstruction",async()=>{
+  const response={featureTypeSummaryVersion:1,featureTypes:{"Age (years)":"categorical"},
+    omittedFeatures:[{featureName:"Age (years)",type:"categorical",reason:"Suppressed for privacy: category counts"}]};
+  filterDiscoveryDatasets.mockResolvedValue([response]);
+  expect((await requestFeatureTypeChanges(options()))[0]).toMatchObject({type:"categorical",response});
+});
 const source = {nodeId: 0, nodeName: "Alpha", fileName: "same.csv", featureTypes: {Flag: "categorical"}};
 const entry = {featureName: "Age (years) (same.csv · Alpha)", originalName: "Age (years)", nodeId: 0, fileName: "same.csv", type: "continuous"};
 const options = () => ({entries: [entry], targetType: "categorical", statistics: {continuousFeatures: [entry]}, sources: [source, {...source, nodeId: 2}], nodes: [{nodeId: 0, serviceUrl: "http://alpha"}]});

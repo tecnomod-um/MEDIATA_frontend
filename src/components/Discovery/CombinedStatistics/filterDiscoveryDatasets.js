@@ -36,6 +36,7 @@ export async function filterDiscoveryDatasets(results, nodes, getFilters, option
         throw new Error(`The node did not preserve feature types for ${source.fileName}. Update the node before retrying.`);
       const release = matches[0];
       const types = new Map(sourceColumns(source).map(({ column, type }) => [column, type]));
+      Object.entries(source.featureTypes || {}).forEach(([column,type])=>types.set(column,type));
       return { ...release, ...identity, ...(release.omittedFeatures?.length ? {
         omittedFeatures: release.omittedFeatures.map(feature => ({
           ...feature, type: types.get(feature.featureName) ?? null,

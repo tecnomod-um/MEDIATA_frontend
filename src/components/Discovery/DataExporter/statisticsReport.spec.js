@@ -26,7 +26,7 @@ it("keeps the feature inventory small and distinguishes identically named sites 
     { Feature: "Age", Type: "continuous", Site: "Hospital (2)", Dataset: "patients.csv", "Merged from": null },
   ]);
   const age = sheetRecords(sheets, "Continuous statistics").filter(row => row.Feature === "Age");
-  expect(age[0]).toMatchObject({ Dataset: "Combined", "Non-missing count": 60, "Q1 (25%)": null });
+  expect(age[0]).toMatchObject({ Dataset: "Combined", "Non-missing count": 60, "Q1 (25%)": "Not released" });
   expect(age[0].Notes).toContain("Pooled quartiles unavailable");
   expect(age[1]).toMatchObject({ Site: "Hospital", Mean: 20.123456789123, "Q1 (25%)": 18.123456789123 });
   expect(age[2]).toMatchObject({ Site: "Hospital (2)", Mean: 80 });
@@ -81,18 +81,18 @@ it("exports the selected combined and per-dataset relationships once with clear 
   expect(rows.every(row => !row["Feature 1"].includes("VisitDate"))).toBe(true);
 });
 
-it("leaves withheld pooled values blank and keeps a note and merge mapping", () => {
+it("labels withheld pooled values explicitly and keeps their note and merge mapping", () => {
   const fixture = reportFixture();
   const feature = fixture.data.continuousFeatures[0];
   const data = { continuousFeatures: [{ ...feature, combinedSummary: { ...feature.combinedSummary, mean: 123, unavailable: "Withheld by a source" } }] };
   const sheets = buildStatisticsReport({ ...fixture, data, includeBreakdown: false });
   expect(sheetRecords(sheets, "Continuous statistics")[0]).toMatchObject({
-    Mean: null, "Std. Dev. (sample)": null, "Non-missing count": null, Notes: "Withheld by a source",
+    Mean: "Unavailable", "Std. Dev. (sample)": "Unavailable", "Non-missing count": "Unavailable", Notes: "Withheld by a source",
   });
   expect(sheetRecords(sheets, "Features")[0]["Merged from"]).toContain("Hospital (2) / patients.csv: Age");
 });
 
-it("downloads withheld site rows as blank figures even when every source is withheld", async () => {
+it("downloads explicit unavailable labels even when every source is withheld", async () => {
   const fixture = reportFixture();
   const feature = fixture.data.continuousFeatures[0];
   const reason = "Statistics withheld by disclosure controls";
@@ -106,7 +106,7 @@ it("downloads withheld site rows as blank figures even when every source is with
   const report = buildStatisticsReport({ data, sourceData, includeBreakdown: true });
   const values = sheetRecords(report, "Continuous statistics");
   expect(values).toHaveLength(3);
-  expect(values.every(row => row.Mean === null && row["Non-missing count"] === null)).toBe(true);
+  expect(values.every(row => row.Mean === "Unavailable" && row["Non-missing count"] === "Unavailable")).toBe(true);
   expect(values.slice(1).map(row => row.Notes)).toEqual([reason, reason]);
   const local = buildStatisticsReport({ data: sourceData, sourceData });
   expect(sheetRecords(local, "Continuous statistics")).toHaveLength(2);

@@ -22,6 +22,17 @@ const withheld = member => ({ ...member, omittedFeatures: [
 
 vi.mock("../../../util/petitionHandler", () => ({ getApproximatePoolingSource: vi.fn() }));
 
+it("uses the protected cohort count when a wide noisy histogram would collapse a small group",()=>{
+  const input={version:5,group:"A",rowEpsilon:20,cohortCount:{count:4,noiseVariance:.000001,noiseComponents:[.000001]},
+    features:{Value:{domain:{boundaries:[5,15,25,35],values:[10,20,30],type:"continuous",missingAllowed:false},counts:[2,2,-30,0],noiseVariance:4}}};
+  const summary=buildApproximateSummary({...group,members:members.slice(0,1)},new Map([[keys[0],input]]));
+  expect(summary).toMatchObject({count:4,mean:15,missing:0});
+  expect(summary.sampleStdDev).toBeCloseTo(Math.sqrt(100/3));
+  expect(summary).toMatchObject({q1:10,median:15,q3:20});
+  const invalid={...input,cohortCount:{...input.cohortCount,count:1.5}};
+  expect(buildApproximateSummary({...group,members:members.slice(0,1)},new Map([[keys[0],invalid]])).unavailable).toBeTruthy();
+});
+
 it("requests only withheld contributions and skips complete groups", async () => {
   const nodes = members.map(member => ({ ...member, serviceUrl: String(member.nodeId) }));
   const filters = { conditions: { Group: [] }, operator: "AND" };

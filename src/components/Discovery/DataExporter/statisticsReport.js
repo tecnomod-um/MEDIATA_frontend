@@ -4,6 +4,7 @@ import { sampleStandardDeviation } from "../CombinedStatistics/numericalSummary"
 import { selectionKey, sourceFeatureSelection } from "../featureSelection";
 import { sourceFilter } from "../FilterModal/appliedFilters";
 import { relationshipStatistics } from "../discoveryStatistics";
+import {statisticValue} from "./statisticAvailability";
 
 export function exportFeatures(data, sourceData, selectedEntries = [], selectedOnly = false) {
   const features = [
@@ -64,27 +65,29 @@ const summaryTables = {
 };
 
 function summaryRow(summary, type, pooled) {
-  const value = field => summary.unavailable ? null : finite(summary[field]);
+  const raw = field => summary.unavailable ? null : finite(summary[field]);
+  const value = field => statisticValue(summary,field,raw(field));
   const quantiles = ["min", "q1", "median", "q3", "max"].map(value);
   const counts = ["count", "missing", "percentMissing"].map(value);
   if (type === "categorical") {
     const categories = summary.unavailable ? [] : summary.categories || [];
-    const mode = category => [category?.value ?? null, category?.count ?? null, finite(category?.percent)];
-    return { values: [...counts, summary.unavailable || !summary.categories ? null : categories.length, ...mode(categories[0]), ...mode(categories[1])],
+    const mode = (category, second=false) => category ? [category.value,category.count,finite(category.percent)]
+      : Array(3).fill(summary.unavailable?"Unavailable":second?"Not applicable: no second category":statisticValue(summary,"mode",null));
+    return { values: [...counts, summary.unavailable || !summary.categories ? value("cardinality") : categories.length, ...mode(categories[0]), ...mode(categories[1],true)],
       note: summary.unavailable || summary.note };
   }
   if (type === "date") return { values: [...counts, value("mean"), value("stdDev"), ...quantiles], note: summary.unavailable || summary.note };
 
   const modes = summary.unavailable ? [] : (summary.modes || []).filter(Number.isFinite);
-  const modeCount = value("modeFrequency");
-  const sampleSd = value("sampleStdDev") ?? sampleStandardDeviation(value("count"), value("stdDev"));
+  const modeCount = raw("modeFrequency");
+  const sampleSd = statisticValue(summary,"sampleStdDev",raw("sampleStdDev") ?? sampleStandardDeviation(raw("count"), raw("stdDev")));
   const note = summary.unavailable || summary.note || [
     pooled && summary.q1 == null ? "Pooled quartiles unavailable" : "",
     !modes.length && summary.modeStatus && summary.modeStatus !== "Available" ? `Mode: ${summary.modeStatus}` : "",
   ].filter(Boolean).join(". ");
   return {
-    values: [...counts, value("mean"), sampleSd, ...quantiles, value("modeBand") ?? (modes.length > 1 ? modes.join(", ") : modes[0] ?? null),
-      modeCount, modeCount != null && summary.count > 0 ? 100 * modeCount / summary.count : null,
+    values: [...counts, value("mean"), sampleSd, ...quantiles, statisticValue(summary,"mode",raw("modeBand") ?? (modes.length > 1 ? modes.join(", ") : modes[0] ?? null)),
+      statisticValue(summary,"modeFrequency",modeCount), statisticValue(summary,"modePercent",modeCount != null && summary.count > 0 ? 100 * modeCount / summary.count : null),
       ...["skewness", "kurtosis", "meanCiLower", "meanCiUpper"].map(value)],
     note,
   };
@@ -173,7 +176,7 @@ export function buildStatisticsReport({ data, sourceData, selectedEntries = [], 
     const summary = tableExportFeatures({ [featureArrays[feature.type]]: [feature] })[0];
     const { values, note } = summaryRow(summary, feature.type, feature.pooled);
     const range = feature.type === "continuous" && includeSupportedRange
-      ? [finite(summary.supportedMin), finite(summary.supportedMax)] : [];
+      ? [statisticValue(summary,"supportedMin",summary.supportedMin),statisticValue(summary,"supportedMax",summary.supportedMax)] : [];
     summaries[feature.type].push({ row: [name, siteName, dataset, ...values, ...range], note });
   }
 

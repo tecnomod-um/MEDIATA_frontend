@@ -12,7 +12,7 @@ export function protectedSourceMembers(results, baseline, activeIndices) {
     if (!activeIndices[index]) return [];
     return sourceColumns(source).flatMap(({column, type}) => {
       if (!featureArrays[type]) return [];
-      const member = {nodeId:source.nodeId, fileName:source.fileName, column};
+      const member = {nodeId:source.nodeId, fileName:source.fileName, column, ...(source.featureTypes?{featureTypes:source.featureTypes}:{})};
       const [part] = poolingContributions({type, members:[member]}, sources);
       return part.withheld || (type === "continuous" && needsProtectedMode(part.feature)) ? [[sourceKey(source), member]] : [];
     });

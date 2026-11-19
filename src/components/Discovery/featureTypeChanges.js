@@ -23,7 +23,10 @@ export async function requestFeatureTypeChanges({entries, targetType, statistics
   const responses = await filterDiscoveryDatasets(requested, nodes, () => null, ...(signal ? [{signal}] : []));
   return [...groups.values()].flatMap(({source, columns}, index) => [...columns].map(column => {
     const response = responses[index];
-    const actualType = Object.keys(columnArrays).find(type => response[columnArrays[type]]?.some(feature => feature.featureName === column));
+    const omitted=response.omittedFeatures?.some(feature=>feature.featureName===column);
+    const accepted=omitted && response.featureTypeSummaryVersion===1 && response.featureTypes?.[column]===targetType;
+    const actualType = Object.keys(columnArrays).find(type => response[columnArrays[type]]?.some(feature => feature.featureName === column))
+      || (accepted?targetType:undefined);
     if (!actualType) throw new Error(`${column} was withheld or could not be interpreted. The previous statistics were kept.`);
     if (actualType !== targetType && !(targetType === "continuous" && actualType === "date"))
       throw new Error("The node did not return the requested feature interpretation.");
