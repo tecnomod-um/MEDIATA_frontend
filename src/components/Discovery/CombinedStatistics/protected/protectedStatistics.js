@@ -13,7 +13,7 @@ import { APPROVED_QUARTILES_NOTE } from "../exact/approvedQuartiles";
 import { geometricMeanInterval } from "./geometricMeanInterval";
 
 const NOTES =
-  "Privacy-protected estimate. Counts include random noise. Numerical values use the node's published domains. The mean interval includes binning, privacy noise and sampling uncertainty for independent observations assumed to lie within the published bounds.";
+  "Privacy-protected estimate. Numerical values use the node's published domains. The mean interval includes binning, privacy noise and sampling uncertainty for independent observations assumed to lie within the published bounds.";
 const COUNT_ONLY =
   "No positive non-missing count could be established from the protected release. Point statistics are undefined for an empty reconstruction.";
 const MIXED_NOTES = "Privacy-protected pooled estimate.";
@@ -45,7 +45,7 @@ function releasePrivacyNote(group, releases) {
   return `Cumulative protected-histogram privacy cost (${secure ? "epsilon summed across participating dataset versions" : "epsilon per dataset version"}): ${low === high ? low : `${low} to ${high}`}. Higher values mean weaker row privacy; metadata and exact endpoints are outside this accounting.`;
 }
 
-export function addProtectedDistribution(group, parts, releases, summary) {
+export function addProtectedDistribution(group, parts, releases, summary, approvedTotals) {
   if (
     group.type !== "continuous" ||
     summary.unavailable ||
@@ -58,7 +58,7 @@ export function addProtectedDistribution(group, parts, releases, summary) {
     return summary;
   const selected = parts.filter(needsProtectedDistribution);
   if (!selected.length) return summary;
-  const histogram = protectedHistogram({ ...group, members: selected.map((part) => part.member) }, releases);
+  const histogram = protectedHistogram({ ...group, members: selected.map((part) => part.member) }, releases, approvedTotals);
   if (!histogram) return summary;
   const approved = parts.filter(({ feature }) => feature && completeNumericalFrequencies(feature));
   const exactEntries = approved.flatMap(({ feature }) => feature.valueCounts.map(({ value, count }) => [value, count]));
@@ -77,7 +77,7 @@ export function addProtectedDistribution(group, parts, releases, summary) {
   const protectedRange =
     withheld.length === selected.length
       ? histogram
-      : summary.approximate && protectedHistogram({ ...group, members: withheld.map((part) => part.member) }, releases);
+      : summary.approximate && protectedHistogram({ ...group, members: withheld.map((part) => part.member) }, releases, approvedTotals);
   const extrema = summary.approximate && protectedRange ? supportedRange(parts, protectedRange) : {};
   const mode = summary.modes?.length ? {} : protectedMode(exactEntries, histogram, bins);
   const previous =
@@ -298,12 +298,12 @@ function combinedCategories(histogram, exact, summary) {
     lowPrecision: Boolean(lowPrecision),
     categories,
     cardinality: categories.length,
-    note: `${exact.length ? MIXED_NOTES : "Privacy-protected estimate."} Category frequencies and cardinality are estimated from a nonnegative reconstruction of protected counts. Rare categories may be omitted or introduced by noise. Unlisted category totals are excluded from mode rankings. Percentages use the full estimated non-missing count; near ties can change rank.`,
+    note: `${exact.length ? MIXED_NOTES : "Privacy-protected estimate."} Category frequencies and cardinality are estimated from a nonnegative reconstruction of protected counts. Rare categories may be omitted or introduced by noise. Unlisted category totals are excluded from mode rankings. Percentages use the full ${summary.countEstimated ? "estimated " : ""}non-missing count; near ties can change rank.`,
   };
 }
 
-export function buildApproximateSummary(group, releases, exact = [], totalSources = group.members.length) {
-  const histogram = protectedHistogram(group, releases);
+export function buildApproximateSummary(group, releases, exact = [], totalSources = group.members.length, approvedTotals) {
+  const histogram = protectedHistogram(group, releases, approvedTotals);
   const identity = { featureName: group.label, type: group.type, approximate: true };
   if (!histogram) {
     const failure = group.members.map((member) => releases.get(sourceKey(member))?.unavailable).find(Boolean);
@@ -348,6 +348,7 @@ export function buildApproximateSummary(group, releases, exact = [], totalSource
     lowPrecision: count <= 3 * histogram.countNoise,
     count,
     missing,
+    countEstimated: histogram.countEstimated,
     percentMissing: count + missing ? (100 * missing) / (count + missing) : null,
     includedSources: group.members.length + exact.length,
     totalSources,

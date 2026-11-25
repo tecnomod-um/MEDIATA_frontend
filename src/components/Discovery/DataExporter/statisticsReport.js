@@ -69,11 +69,12 @@ function summaryNote(summary, type, pooled) {
   if (summary.unavailable) return summary.unavailable;
   const notes = [];
   if (summary.approximate) {
-    notes.push(summary.reusedSiteMoments ? "Includes privacy-protected site estimates" : "Privacy-protected estimate");
+    notes.push(summary.reusedSiteSummaries ? "Includes privacy-protected site estimates" : "Privacy-protected estimate");
   } else {
     const fields = [summary.estimatedQuantiles && "quartiles", summary.estimatedMode && "mode"].filter(Boolean);
     if (fields.length) notes.push(`Estimated ${fields.join(" and ")}`);
   }
+  if (summary.countEstimated) notes.push("Count estimated");
   if (summary.lowPrecision) notes.push("Low precision");
   if (type === "continuous") {
     if (pooled && summary.q1 == null) notes.push("Pooled quartiles unavailable");

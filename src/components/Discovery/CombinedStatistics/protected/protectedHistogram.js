@@ -88,11 +88,11 @@ function estimateGroupTotal(source, referenceVariance) {
   return { total: weightedTotal / precision, variance: referenceVariance / precision, tailScale };
 }
 
-export function protectedHistogram(group, sources) {
+export function protectedHistogram(group, sources, approvedTotals = new Map()) {
   const pieces = group.members.map((member) => {
     const source = sources.get(sourceKey(member));
     const cell = source?.features?.[member.column];
-    return { source, cell, variance: source && validRelease(source) ? histogramVariance(source, cell) : null };
+    return { member, source, cell, variance: source && validRelease(source) ? histogramVariance(source, cell) : null };
   });
   const first = pieces[0]?.cell;
   if (
@@ -147,7 +147,15 @@ export function protectedHistogram(group, sources) {
     Array.from({ length: aligned[index].fanIn }, () => cell.noiseComponents || [variance]).flat(),
   );
   const binNoise = Math.sqrt(variances.reduce((sum, variance) => sum + variance, 0));
-  const totals = pieces.map(({ source, variance }) => estimateGroupTotal(source, variance));
+  const totals = pieces.map(({ member, source, variance }) => {
+    const estimate = estimateGroupTotal(source, variance);
+    const approved = approvedTotals.get(sourceKey(member));
+    // Validate the release even when an approved total is available.
+    return Number.isFinite(estimate.total) && Number.isSafeInteger(approved) && approved >= 0
+      ? { ...estimate, total: approved, variance: 0, approved: true }
+      : estimate;
+  });
+  if (totals.some((total) => !Number.isFinite(total.total))) return null;
   // The feature's missing cell also contributes to its site's estimated total.
   const coherent = pieces.map(({ cell, variance }, index) => coherentFeatureCounts(totals[index], cell, variance));
   return {
@@ -170,6 +178,7 @@ export function protectedHistogram(group, sources) {
     cells: labels.map((_, index) => aligned.reduce((sum, { counts }) => sum + counts[index], 0)),
     count: coherent.reduce((sum, feature) => sum + feature.count, 0),
     missing: coherent.reduce((sum, feature) => sum + feature.missing, 0),
+    countEstimated: pieces.some(({ cell }, index) => !totals[index].approved || cell.domain.missingAllowed !== false),
     countEstimate: coherent.reduce((sum, feature) => sum + feature.estimate, 0),
     countScale: Math.max(...totals.map((total) => total.tailScale)),
     variances,

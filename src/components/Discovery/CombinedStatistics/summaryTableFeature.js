@@ -5,6 +5,7 @@ export function summaryTableFeature(summary) {
   const feature = {
     featureName: summary.featureName,
     count: summary.unavailable ? null : summary.count,
+    countEstimated: summary.countEstimated,
     missingValuesCount: summary.unavailable ? null : summary.missing,
     mean: summary.mean,
     stdDev: summary.stdDev,

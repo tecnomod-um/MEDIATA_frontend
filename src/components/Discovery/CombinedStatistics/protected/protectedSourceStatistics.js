@@ -3,6 +3,7 @@ import { sourceColumns, memberKey } from "../columnMappings";
 import { poolingContributions, needsProtectedMode } from "../poolingContributions";
 import { addProtectedDistribution, buildApproximateSummary } from "./protectedStatistics";
 import { summaryTableFeature, tableExportFeatures } from "../summaryTableFeature";
+import { releasedCohortCounts } from "../releasedCohortCounts";
 
 export function protectedSourceMembers(results, baseline, activeIndices) {
   const sources = new Map(results.map((source) => [sourceKey(source), source]));
@@ -30,6 +31,7 @@ export function protectedSourceMembers(results, baseline, activeIndices) {
 export function protectedSourceTableData(data, results, baseline, releases, hidden = new Set()) {
   if (!data || !releases?.size) return data;
   const sources = new Map(results.map((source) => [sourceKey(source), source]));
+  const approvedTotals = releasedCohortCounts(sources);
   const definitions = new Map(
     baseline.flatMap((source) =>
       sourceColumns(source).map(({ column, type }) => [memberKey({ ...source, column }), type]),
@@ -48,7 +50,8 @@ export function protectedSourceTableData(data, results, baseline, releases, hidd
     const group = { label: entry.featureName, type, members: [member] };
     const parts = poolingContributions(group, sources);
     if (!parts[0].withheld) return [entry];
-    const summary = addProtectedDistribution(group, parts, releases, buildApproximateSummary(group, releases));
+    const summary = addProtectedDistribution(group, parts, releases,
+      buildApproximateSummary(group, releases, [], 1, approvedTotals), approvedTotals);
     if (summary.unavailable)
       return [{ ...entry, reason: [entry.reason, summary.unavailable].filter(Boolean).join(" ") }];
     const source = sources.get(sourceKey(member));
@@ -67,7 +70,7 @@ export function protectedSourceTableData(data, results, baseline, releases, hidd
     const member = { ...entry, column: entry.originalName || entry.featureName };
     const group = { label: entry.featureName, type: "continuous", members: [member] };
     const summary = tableExportFeatures({ continuousFeatures: [entry] })[0];
-    const updated = addProtectedDistribution(group, poolingContributions(group, sources), releases, summary);
+    const updated = addProtectedDistribution(group, poolingContributions(group, sources), releases, summary, approvedTotals);
     if (updated === summary) return entry;
     return {
       ...entry,

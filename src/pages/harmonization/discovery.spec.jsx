@@ -308,7 +308,7 @@ test("Merge automatically estimates a withhold after filtering and restores exac
   expect(mockGetApproximatePoolingSource).toHaveBeenCalledTimes(1);
 });
 
-test("reuses released site moments across table views and invalidates them when the filter changes", async () => {
+test("keeps pooled and site counts consistent when filters change in the combined view", async () => {
   mockSelectedNodes.push({nodeId:2,name:"Node-B",serviceUrl:"http://nodeB"});
   mockGetNodeDatasets.mockResolvedValue(DATASETS_FIXTURE);
   mockGetApproximatePoolingSource.mockResolvedValue({version:1,group:"1",noiseVariance:4,
@@ -347,21 +347,21 @@ test("reuses released site moments across table views and invalidates them when 
   await waitFor(()=>expect(mockStatsProps.tableData.continuousFeatures.some(feature=>feature.estimatedSummary?.count===4)).toBe(true));
   expect(mockGetApproximatePoolingSource).toHaveBeenCalledTimes(1);
   merge();
-  await waitFor(()=>expect(pooled()?.combinedSummary.reusedSiteMoments).toBe(true));
+  await waitFor(()=>expect(pooled()?.combinedSummary.reusedSiteSummaries).toBe(true));
   expect(pooled().mean).toBeCloseTo((100*40+4*60)/104);
-  expect(mockGetApproximatePoolingSource).toHaveBeenCalledTimes(1);
-  await setGroup(2);
-  await waitFor(()=>expect(pooled()?.count).toBe(100));
-  expect(pooled().combinedSummary.reusedSiteMoments).not.toBe(true);
-  expect(pooled().mean).toBe(8);
   expect(mockGetApproximatePoolingSource).toHaveBeenCalledTimes(1);
   mockGetApproximatePoolingSource.mockResolvedValue({version:1,group:"2",noiseVariance:4,
     features:{Age:{domain:{boundaries:[0,40,80]},counts:[4,0,0]}}});
+  await setGroup(2);
+  await waitFor(()=>expect(pooled()?.combinedSummary.reusedSiteSummaries).toBe(true));
+  expect(pooled().count).toBe(104);
+  expect(pooled().mean).toBeCloseTo((100*40+4*20)/104);
+  expect(mockGetApproximatePoolingSource).toHaveBeenCalledTimes(2);
   separate();
   await waitFor(()=>expect(mockGetApproximatePoolingSource).toHaveBeenCalledTimes(2));
   await waitFor(()=>expect(mockStatsProps.tableData.continuousFeatures.some(feature=>feature.estimatedSummary?.mean===20)).toBe(true));
   merge();
-  await waitFor(()=>expect(pooled()?.combinedSummary.reusedSiteMoments).toBe(true));
+  await waitFor(()=>expect(pooled()?.combinedSummary.reusedSiteSummaries).toBe(true));
   expect(pooled().mean).toBeCloseTo((100*40+4*20)/104);
 });
 

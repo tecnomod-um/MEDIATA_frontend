@@ -101,6 +101,7 @@ const StatisticsDisplay = React.memo(
     const rowTitles = useMemo(() => Object.fromEntries(["continuousFeatures", "categoricalFeatures", "dateFeatures"].flatMap(key => (tableData[key] || [])
       .filter(feature => feature.pooled || feature.estimatedSummary).map(feature => [feature.featureName,
         [feature.pooled && feature.combinedSummary.contributions.map(contribution => `${sourceLabel(contribution.source)} / ${contribution.columnName || contribution.feature?.featureName || feature.featureName}`).join(" ↔ "),
+          feature.countEstimated && "Non-missing count is estimated.",
           (feature.estimatedSummary || feature.combinedSummary)?.note].filter(Boolean).join("\n")]))), [tableData]);
 
     const formatMissingEntries = useCallback((count, missingValuesCount) => {

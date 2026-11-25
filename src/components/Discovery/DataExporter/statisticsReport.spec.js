@@ -101,7 +101,7 @@ it("exports short estimation notes and distinguishes inapplicable histogram diag
     feature({featureName:"Full estimate",approximate:true,lowPrecision:true,supportedMin:15,supportedMax:25,
       note:"Privacy-protected estimate. Counts include random noise. Long calculation details."}),
     feature({featureName:"Partial estimate",estimatedQuantiles:true,estimatedMode:true,q1:20,median:21,q3:22}),
-    feature({featureName:"Site estimates",approximate:true,reusedSiteMoments:true}),
+    feature({featureName:"Site estimates",approximate:true,reusedSiteSummaries:true}),
   ]};
   const sheets=buildStatisticsReport({...fixture,data,includeBreakdown:false});
   const sheet=sheets.find(sheet=>sheet.name==="Continuous statistics");

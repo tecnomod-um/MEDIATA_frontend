@@ -1,9 +1,19 @@
 import { sourceKey } from "../exact/combinedStatistics";
 import { addProtectedDistribution, buildApproximateSummary } from "../protected/protectedStatistics";
 
+function reusableSummary(summary, type) {
+  if (!summary || summary.unavailable || !Number.isSafeInteger(summary.count) || summary.count <= 0) return false;
+  if (type === "continuous") return Number.isFinite(summary.mean) && Number.isFinite(summary.stdDev);
+  if (type !== "categorical" || !summary.categories?.length) return false;
+  const labels = new Set(summary.categories.map((category) => category.value));
+  return labels.size === summary.categories.length
+    && summary.categories.every((category) => Number.isSafeInteger(category.count) && category.count > 0)
+    && summary.categories.reduce((sum, category) => sum + category.count, 0) <= summary.count;
+}
+
 // Adapt the finalized aggregate to the shared estimators. Preserve approved
 // exact fields and retain the original feature/source identities for exports.
-export function securePooledSummary(group, exact, entry, released) {
+export function securePooledSummary(group, exact, entry, released, approvedTotal) {
   const unavailable = (reason) =>
     exact.unavailable
       ? { ...exact, unavailable: reason }
@@ -32,21 +42,16 @@ export function securePooledSummary(group, exact, entry, released) {
   const member = { nodeId: "secure-pool", fileName: cohort, column: wireId };
   const target = { label: group.label, type: group.type, members: [member] };
   const releases = new Map([[sourceKey(member), release]]);
+  const approvedTotals = new Map([[sourceKey(member), approvedTotal]]);
   // Published site releases can preserve approved moments without another query or noise draw.
-  const secure = exact.unavailable ? buildApproximateSummary(target, releases) : exact;
-  const reuseSiteMoments =
+  const secure = exact.unavailable ? buildApproximateSummary(target, releases, [], 1, approvedTotals) : exact;
+  const reuseSiteSummaries =
     exact.unavailable &&
     !secure.unavailable &&
-    group.type === "continuous" &&
-    released &&
-    !released.unavailable &&
-    Number.isSafeInteger(released.count) &&
-    released.count > 0 &&
-    Number.isFinite(released.mean) &&
-    Number.isFinite(released.stdDev);
-  let summary = reuseSiteMoments ? { ...released, reusedSiteMoments: true } : secure;
-  summary = addProtectedDistribution(target, [{ member, withheld: true }], releases, summary);
-  if (reuseSiteMoments && !secure.unavailable) {
+    reusableSummary(released, group.type);
+  let summary = reuseSiteSummaries ? { ...released, reusedSiteSummaries: true } : secure;
+  summary = addProtectedDistribution(target, [{ member, withheld: true }], releases, summary, approvedTotals);
+  if (reuseSiteSummaries && group.type === "continuous") {
     // Keep the secure interval's uncertainty; expanding it to include the new point estimate cannot narrow it.
     if (Number.isFinite(secure.meanCiLower) && Number.isFinite(secure.meanCiUpper)) {
       summary.meanCiLower = Math.min(secure.meanCiLower, summary.meanCiLower ?? Infinity, summary.mean);
@@ -55,7 +60,7 @@ export function securePooledSummary(group, exact, entry, released) {
     // Fall back if separately released estimates cannot describe an ordered distribution together.
     const ordered = [summary.min, summary.q1, summary.median, summary.q3, summary.max].filter(Number.isFinite);
     if (ordered.some((value, index) => index > 0 && value < ordered[index - 1])) {
-      summary = addProtectedDistribution(target, [{ member, withheld: true }], releases, secure);
+      summary = addProtectedDistribution(target, [{ member, withheld: true }], releases, secure, approvedTotals);
     } else {
       if (Number.isFinite(summary.supportedMin) && Number.isFinite(summary.supportedMax)) {
         const lower = Math.max(summary.min, summary.supportedMin);
@@ -73,8 +78,8 @@ export function securePooledSummary(group, exact, entry, released) {
     contributions: exact.contributions,
     note: [
       summary.note,
-      summary.reusedSiteMoments
-        ? "Pooled moments and estimated extrema reuse already released site summaries. Their site-level privacy cost still applies; the independent secure-pooling allowance alone does not cover these reused values."
+      summary.reusedSiteSummaries
+        ? "Pooled statistics reuse already released site summaries. Their site-level privacy cost still applies; the independent secure-pooling allowance alone does not cover these reused values."
         : null,
       "Secure aggregation: nodes mask their independent cached protected contributions; only the combined histogram is released. The secure-path cost is additional to site-level releases and conditional on published metadata. Selected rows are pooled without patient deduplication.",
       group.type === "categorical"

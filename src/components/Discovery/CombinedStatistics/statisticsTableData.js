@@ -2,6 +2,7 @@ import { sourceKey, featureArrays as arrays } from "./exact/combinedStatistics";
 import { activeColumnMappings, memberKey } from "./columnMappings";
 import { combineFeatureSummary } from "./combinedFeatureSummary";
 import { summaryTableFeature } from "./summaryTableFeature";
+import { releasedCohortCounts } from "./releasedCohortCounts";
 
 // Adapt released pooled summaries to the same shape used by the existing tables.
 // Charts retain individual distributions; pooled quantiles need complete approved frequencies.
@@ -38,8 +39,9 @@ export function combineMappedTableData(data, results, activeIndices, mappings, a
     );
   }
   const bySource = new Map(results.map((source) => [sourceKey(source), source]));
+  const approvedTotals = releasedCohortCounts(bySource);
   for (const group of groups) {
-    const summary = combineFeatureSummary(group, bySource, approximateReleases, secureResults);
+    const summary = combineFeatureSummary(group, bySource, approximateReleases, secureResults, approvedTotals);
     const type = summary.type || group.type;
     const feature = { ...summaryTableFeature(summary), pooled: true, mappingId: group.id, combinedSummary: summary };
     tableData[arrays[type]].push(feature);

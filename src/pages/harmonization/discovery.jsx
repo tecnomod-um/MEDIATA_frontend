@@ -352,17 +352,19 @@ function Discovery() {
   const secureError=secureRequest && secureResult?.request===secureRequest?secureResult.error:null;
   const approximateRequest = useMemo(() => {
     if (isCombining) return null;
-    const members = combinedTablesActive ? new Map() : protectedSourceMembers(dataResults, baselineResultsRef.current, activeFileIndices);
-    // Cross-node requests stay masked; previously released site summaries can be reused below.
+    const members = protectedSourceMembers(dataResults, baselineResultsRef.current, activeFileIndices);
+    // Both views reuse the same protected site releases; cross-node distributions still use secure pooling.
     if (combinedTablesActive) for (const group of activeMappings.filter(group=>new Set(group.members.map(member=>String(member.nodeId))).size===1))
       for (const [key, member] of protectedPoolingMembers([group], dataResults)) members.set(key, member);
+    if (approximateResult?.context === protectedContext)
+      for (const key of approximateResult.releases.keys()) members.delete(key);
     if (!members.size) return null;
     return { members, filtersFor: source => {
       const conditions = fileFilterConditions(filterStatistics, filters, filterLogic.operators, source,
         dataResults.length, filterLogic.matchColumns, columnMappings);
       return Object.keys(conditions).length ? { conditions, operator: filterLogic.operator } : null;
     } };
-  }, [combinedTablesActive, appliedFilters, activeMappings, activeFileIndices, filterStatistics, filters, filterLogic, dataResults, columnMappings, isCombining]);
+  }, [combinedTablesActive, appliedFilters, activeMappings, activeFileIndices, filterStatistics, filters, filterLogic, dataResults, columnMappings, isCombining, approximateResult, protectedContext]);
   useEffect(() => {
     if (!approximateRequest) return;
     const controller = new AbortController();
@@ -373,7 +375,11 @@ function Discovery() {
         releases: new Map([...(previous?.context === protectedContext ? previous.releases : []), ...releases]),
       }));
     }).catch(() => {
-      if (!controller.signal.aborted) setApproximateResult({ request: approximateRequest, context: protectedContext, releases: new Map() });
+      if (!controller.signal.aborted) setApproximateResult(previous => ({
+        request: approximateRequest, context: protectedContext,
+        releases: new Map([...(previous?.context === protectedContext ? previous.releases : []),
+          ...[...members.keys()].map(key => [key, {unavailable: "Protected statistics could not be loaded."}])]),
+      }));
     });
     return () => controller.abort();
   }, [approximateRequest, selectedNodes, protectedContext]);

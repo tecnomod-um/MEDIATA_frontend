@@ -22,6 +22,39 @@ const withheld = member => ({ ...member, omittedFeatures: [
   { featureName: member.column, type: "continuous", reason: "Suppressed for privacy: release controls" },
 ] });
 
+it("fits protected frequencies to an already released population without redrawing noise", () => {
+  const categorical = { ...group, type: "categorical", members: [members[0]] };
+  const input = { version: 1, group: "selected", noiseVariance: 4, features: { Value: {
+    domain: { categories: ["North", "South"], type: "categorical", missingAllowed: false, unlistedCategoriesAllowed: false },
+    counts: [8, 6, 0, 0],
+  } } };
+  const releases = new Map([[keys[0], input]]);
+  const original = structuredClone(input);
+  const approved = new Map([[keys[0], 10]]);
+  const summary = buildApproximateSummary(categorical, releases, [], 1, approved);
+  expect(summary).toMatchObject({ count: 10, missing: 0, countEstimated: false });
+  expect(summary.categories.map(category => category.count)).toEqual([6, 4]);
+  expect(summary.categories.reduce((sum, category) => sum + category.percent, 0)).toBe(100);
+  expect(buildApproximateSummary(categorical, releases)).toMatchObject({ count: 14, countEstimated: true });
+  expect(buildApproximateSummary(categorical, releases, [], 1, approved)).toEqual(summary);
+  expect(input).toEqual(original);
+  const malformed = new Map([[keys[0], { ...input, cohortCount: { count: 1.5, noiseVariance: 4 } }]]);
+  expect(buildApproximateSummary(categorical, malformed, [], 1, approved).unavailable).toBeTruthy();
+});
+
+it("retains estimated missingness instead of forcing every feature count to the population size", () => {
+  const categorical = { ...group, type: "categorical", members: [members[0]] };
+  const input = { version: 1, group: "selected", noiseVariance: 4, features: { Value: {
+    domain: { categories: ["North", "South"], type: "categorical", unlistedCategoriesAllowed: false },
+    counts: [8, 6, 0, 3],
+  } } };
+  const summary = buildApproximateSummary(categorical, new Map([[keys[0], input]]), [], 1, new Map([[keys[0], 10]]));
+  expect(summary).toMatchObject({ count: 7, missing: 3, percentMissing: 30, countEstimated: true });
+  expect(summary.categories.reduce((sum, category) => sum + category.count, 0)).toBe(7);
+  expect(buildApproximateSummary(categorical, new Map([[keys[0], input]]), [], 1,
+    new Map([[keys[0], 0]]))).toMatchObject({ count: 0, missing: 0 });
+});
+
 vi.mock("../../../../util/petitionHandler", () => ({ getApproximatePoolingSource: vi.fn() }));
 
 it("uses the protected cohort count when a wide noisy histogram would collapse a small group",()=>{

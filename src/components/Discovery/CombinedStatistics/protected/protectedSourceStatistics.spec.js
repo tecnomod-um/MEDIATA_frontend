@@ -16,6 +16,24 @@ const release = {version:3,group:"Treatment",rowEpsilon:2*Math.log(2), features:
   Arm:{domain:{categories:["North","South"],type:"categorical"},counts:[160,40,0,0],noiseVariance:4}}};
 const releases = new Map([[sourceKey(source), release]]);
 
+it("uses current approved cohort counts for withheld features, not unfiltered baseline counts", () => {
+  const current = [{ ...results[0], continuousFeatures: [{ featureName: "Released reading", count: 12, missingValuesCount: 3 }] }];
+  const original = [{ ...baseline[0], continuousFeatures: [{ featureName: "Released reading", count: 200, missingValuesCount: 0 }] }];
+  const input = { ...release, features: { Arm: { ...release.features.Arm,
+    domain: { ...release.features.Arm.domain, missingAllowed: false, unlistedCategoriesAllowed: false } } } };
+  const table = protectedSourceTableData(collectDiscoveryStatistics(current, [true]), current, original,
+    new Map([[sourceKey(source), input]]));
+  expect(table.categoricalFeatures[0]).toMatchObject({ count: 15, countEstimated: false });
+  expect(Object.values(table.categoricalFeatures[0].categoryCounts).reduce((sum, count) => sum + count, 0)).toBe(15);
+  const sheet = buildStatisticsReport({ data: table, sourceData: table }).find(sheet => sheet.name === "Categorical statistics");
+  expect(sheet.rows[1][sheet.rows[0].indexOf("Non-missing count")]).toBe(15);
+  expect(sheet.rows[1][sheet.rows[0].indexOf("Notes")]).not.toContain("Count estimated");
+  const unknown = protectedSourceTableData(collectDiscoveryStatistics(results, [true]), results, original,
+    new Map([[sourceKey(source), input]]));
+  const unknownSheet = buildStatisticsReport({ data: unknown, sourceData: unknown }).find(sheet => sheet.name === "Categorical statistics");
+  expect(unknownSheet.rows[1][unknownSheet.rows[0].indexOf("Notes")]).toContain("Count estimated");
+});
+
 it("requests one saved release per withheld active dataset, independent of merged mode", () => {
   expect([...protectedSourceMembers(results,baseline,[true]).keys()]).toEqual([sourceKey(source)]);
   expect(protectedSourceMembers(results,baseline,[false]).size).toBe(0);

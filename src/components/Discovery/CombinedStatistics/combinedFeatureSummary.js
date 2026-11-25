@@ -2,6 +2,7 @@ import { buildCombinedStatistics, featureArrays, sourceKey } from "./exact/combi
 import { poolingContributions, needsProtectedMoments } from "./poolingContributions";
 import { addProtectedDistribution, buildApproximateSummary } from "./protected/protectedStatistics";
 import { securePooledSummary } from "./secure/securePooledSummary";
+import { releasedCohortCounts, combinedCohortCount } from "./releasedCohortCounts";
 
 function mappedSource(source, member, label) {
   const renamed = { ...source };
@@ -16,7 +17,7 @@ function mappedSource(source, member, label) {
   return renamed;
 }
 
-function protectedSummary(group, sources, releases, exact) {
+function protectedSummary(group, sources, releases, exact, approvedTotals) {
   const parts = poolingContributions(group, sources);
   const withheld = parts.filter((part) => needsProtectedMoments(part, group.type));
   const moments =
@@ -29,6 +30,7 @@ function protectedSummary(group, sources, releases, exact) {
               .filter((part) => part.feature && !needsProtectedMoments(part, group.type))
               .map((part) => part.feature),
             group.members.length,
+            approvedTotals,
           ),
           contributions: parts.map(({ source, feature, empty }) => ({
             source,
@@ -38,11 +40,11 @@ function protectedSummary(group, sources, releases, exact) {
           })),
         }
       : exact;
-  return addProtectedDistribution(group, parts, releases, moments);
+  return addProtectedDistribution(group, parts, releases, moments, approvedTotals);
 }
 
 // Keep approved exact values and use protected distributions to fill the remaining statistics.
-export function combineFeatureSummary(group, sources, releases, secureResults) {
+export function combineFeatureSummary(group, sources, releases, secureResults, approvedTotals = releasedCohortCounts(sources)) {
   const renamed = group.members.map((member) => mappedSource(sources.get(sourceKey(member)), member, group.label));
   const exact = buildCombinedStatistics(
     renamed,
@@ -58,13 +60,13 @@ export function combineFeatureSummary(group, sources, releases, secureResults) {
 
   // Reuse only site releases already supplied by the caller; never request them to replace a secure round.
   const released =
-    exact.unavailable && group.type === "continuous" && releases?.size
-      ? protectedSummary(group, sources, releases, exact)
+    exact.unavailable && releases?.size
+      ? protectedSummary(group, sources, releases, exact, approvedTotals)
       : undefined;
   const summary = secureResults?.has(group.id)
-    ? securePooledSummary(group, exact, secureResults.get(group.id), released)
+    ? securePooledSummary(group, exact, secureResults.get(group.id), released, combinedCohortCount(group, approvedTotals))
     : releases
-      ? protectedSummary(group, sources, releases, exact)
+      ? protectedSummary(group, sources, releases, exact, approvedTotals)
       : exact;
 
   return {
