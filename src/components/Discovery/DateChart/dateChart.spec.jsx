@@ -35,6 +35,14 @@ vi.mock('react-chartjs-2', () => ({
 }));
 
 describe('<DateChart />', () => {
+  it('plots released calendar intervals without recreating individual date frequencies', () => {
+    render(<DateChart dateData={{ dateHistogram: {}, outliers: [], histogramStatus: 'COARSENED', dateBins: [
+      { start: '2020-01-01', end: '2020-01-14', count: 12 }, { start: '2020-01-15', end: '2020-01-31', count: 18 },
+    ] }} dateDataKey="Visit" showOutliers />);
+    const payload = JSON.parse(screen.getByTestId('mock-line').textContent);
+    expect(payload.data.labels).toEqual(['2020-01-01', '2020-01-15']);
+    expect(payload.data.datasets[0].data).toEqual([12, 18]);
+  });
   const baseDateData = {
     dateHistogram: {
       '2020-01-01': 1,

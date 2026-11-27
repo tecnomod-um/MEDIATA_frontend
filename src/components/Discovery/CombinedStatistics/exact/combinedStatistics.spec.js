@@ -89,8 +89,8 @@ describe("combined cohort statistics", () => {
     expect(row.stdDev).toBeCloseTo(direct.stdDev, 10);
   });
   it.each([
-    [{ "2024-02-30": 6 }, "Incomplete date distribution"],
-    [{ "2024-03-01": 5 }, "Incomplete distribution in the returned summaries"],
+    [{ "2024-02-30": 6 }, "Incomplete date summaries"],
+    [{ "2024-03-01": 5 }, "Incomplete date summaries"],
   ])("withholds pooled dates for invalid or incomplete source frequencies", (histogram, reason) => {
     const site = (id, dateHistogram) => ({ ...source(id, []), dateFeatures: [
       { featureName: "Date", count: 6, missingValuesCount: 0, dateHistogram },

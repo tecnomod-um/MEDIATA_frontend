@@ -15,12 +15,14 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
   const selectionGesture = useFeatureSelectionGesture(onClick, onDoubleClick);
 
   const sortedEntries = useMemo(() =>
-    Object.entries(dateData.dateHistogram).sort(
+    (dateData.histogramStatus === "COARSENED"
+      ? (dateData.dateBins || []).map(bin => [bin.start, bin.count, bin.end])
+      : Object.entries(dateData.dateHistogram || {})).sort(
       (a, b) => new Date(a[0]) - new Date(b[0])
-    ), [dateData.dateHistogram]);
+    ), [dateData.dateHistogram, dateData.dateBins, dateData.histogramStatus]);
 
   const outlierDatesSet = useMemo(() =>
-    new Set(dateData.outliers)
+    new Set(dateData.outliers || [])
     , [dateData.outliers]);
 
   const labels = useMemo(() => {
@@ -91,6 +93,11 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
     plugins: {
       legend: { display: false },
       title: { display: true, text: distributionTitle({...dateData, featureName:dateDataKey}, filterDescription, " Distribution Over Time") },
+      tooltip: { callbacks: { title: items => {
+        const label = items[0]?.label;
+        const entry = sortedEntries.find(([date]) => date === labels[items[0]?.dataIndex]);
+        return entry?.[2] ? `${entry[0]} – ${entry[2]}` : label;
+      } } },
     },
     elements: {
       line: {
@@ -100,7 +107,7 @@ function DateChart({ dateData, dateDataKey, showOutliers, onClick, onDoubleClick
         radius: 0,
       },
     },
-  }), [dateData, dateDataKey, filterDescription, inOverview]);
+  }), [dateData, dateDataKey, filterDescription, inOverview, sortedEntries, labels]);
 
   useEffect(() => {
     const handleResize = () => {

@@ -5,6 +5,8 @@ export function statisticValue(summary, field, value) {
   if(value != null && (typeof value!=="number" || Number.isFinite(value))) return value;
   if(field==="supportedMin" || field==="supportedMax") return summary.approximate ? "Not established" : "Not applicable";
   if(summary.count===0) return "Undefined: no non-missing observations";
+  if(summary.categoryCountsStatus === "COARSENED"
+    && ["mode", "modeFrequency", "modeFrequencyPercentage", "secondMode", "secondModeFrequency", "secondModePercentage"].includes(field)) return "Withheld";
   const required={sampleStdDev:2,skewness:3,kurtosis:4,meanCiLower:2,meanCiUpper:2};
   if(required[field] && summary.count<required[field]) return `Undefined: fewer than ${required[field]} observations`;
   if((field==="skewness" || field==="kurtosis") && (summary.stdDev===0 || summary.sampleStdDev===0)) return "Undefined: constant feature";

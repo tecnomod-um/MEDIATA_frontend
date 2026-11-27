@@ -26,18 +26,20 @@ export function approvedQuartiles(parts) {
         !Array.isArray(part.histogram) ||
         !part.histogram.length ||
         part.histogram.length > 200 ||
-        !Array.isArray(part.binRanges) ||
-        part.histogram.length !== part.binRanges.length ||
+        (!Array.isArray(part.binRanges) && !Array.isArray(part.histogramBounds)) ||
+        part.histogram.length !== (part.histogramBounds || part.binRanges).length ||
         part.histogram.some((value) => !Number.isSafeInteger(value) || value < 0) ||
         part.histogram.reduce((sum, value) => sum + value, 0) !== part.count
       )
         return null;
       for (let index = 0; index < part.histogram.length; index++) {
         if (!part.histogram[index]) continue;
-        const match = part.binRanges[index].match(rangePattern);
-        if (!match) return null;
-        const low = Math.max(part.min, Number(match[1]) - rounding(match[1]));
-        const high = Math.min(part.max, Number(match[2]) + rounding(match[2]));
+        const explicit = Array.isArray(part.histogramBounds);
+        const bounds = explicit ? part.histogramBounds[index] : null;
+        const match = explicit ? null : part.binRanges[index]?.match(rangePattern);
+        if (explicit ? !Array.isArray(bounds) || bounds.length !== 2 || bounds.some(value => !Number.isFinite(value)) : !match) return null;
+        const low = Math.max(part.min, explicit ? bounds[0] : Number(match[1]) - rounding(match[1]));
+        const high = Math.min(part.max, explicit ? bounds[1] : Number(match[2]) + rounding(match[2]));
         if (!Number.isFinite(low) || !Number.isFinite(high) || low > high) return null;
         lower.push([low, part.histogram[index]]);
         upper.push([high, part.histogram[index]]);

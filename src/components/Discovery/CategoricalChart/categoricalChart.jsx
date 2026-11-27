@@ -25,7 +25,9 @@ const CategoricalChart = React.memo(
   ({ feature, onClick, onDoubleClick, isSelected, inOverview, filterDescription }) => {
     const chartRef = useRef(null);
     const selectionGesture = useFeatureSelectionGesture(onClick, onDoubleClick);
-    const stats = useMemo(() => feature.categoryCounts || {}, [feature.categoryCounts]);
+    const stats = useMemo(() => feature.categoryCountsStatus === "COARSENED"
+      ? Object.fromEntries((feature.categoryBins || []).map(bin => [bin.label, bin.count]))
+      : feature.categoryCounts || {}, [feature.categoryCounts, feature.categoryBins, feature.categoryCountsStatus]);
 
     const { finalLabels, finalDataValues, finalColors, omittedCount, omittedTotal } = useMemo(() => {
       const entries = Object.entries(stats)
@@ -96,14 +98,14 @@ const CategoricalChart = React.memo(
           title: {
             display: true,
             text: distributionTitle(feature, filterDescription,
-              omittedCount > 0 ? ` (${omittedCount} categories grouped)` : ""),
+              omittedCount > 0 ? ` (${omittedCount} categories grouped)` : feature.categoryCountsStatus === "COARSENED" ? " (grouped categories)" : ""),
           },
           tooltip: {
             callbacks: {
               footer: () =>
                 omittedCount > 0
                   ? `Grouped into "Other": ${omittedCount} categories (total ${omittedTotal})`
-                  : "",
+                  : feature.categoryCountsStatus === "COARSENED" ? "Rare categories are grouped; individual counts are protected." : "",
             },
           },
         },

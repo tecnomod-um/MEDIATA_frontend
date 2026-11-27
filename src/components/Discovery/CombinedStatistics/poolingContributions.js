@@ -1,8 +1,8 @@
-import { completeNumericalFrequencies, featureArrays, sourceKey } from "./exact/combinedStatistics";
-import { numericalDateFeature } from "./protected/protectedDateSummary";
+import { completeNumericalFrequencies, featureArrays, sourceKey, numericalDateFeature } from "./exact/combinedStatistics";
 
 export function needsProtectedMoments(part, type) {
-  return part.withheld || (type === "date" && part.feature && !numericalDateFeature(part.feature));
+  return part.withheld || (type === "categorical" && part.feature?.categoryCountsStatus === "COARSENED")
+    || (type === "date" && part.feature && !numericalDateFeature(part.feature));
 }
 
 export function needsProtectedMode(feature) {

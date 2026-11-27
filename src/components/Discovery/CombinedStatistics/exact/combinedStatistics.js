@@ -114,6 +114,7 @@ export function dayNumber(value) {
 function dateSummary(histogram) {
   const entries = Object.entries(histogram)
     .map(([day, count]) => [dayNumber(day), count])
+    .filter(([, count]) => count !== 0)
     .sort((a, b) => a[0] - b[0]);
   if (!entries.length || entries.some(([day, n]) => !finite(day) || !validCount(n))) return null;
   const count = entries.reduce((n, entry) => n + entry[1], 0);
@@ -132,6 +133,58 @@ function dateSummary(histogram) {
     q1: percentile(0.25),
     median: percentile(0.5),
     q3: percentile(0.75),
+  };
+}
+
+// Coarsened calendar bins describe intervals, never observations at their endpoints.
+export function numericalDateFeature(feature) {
+  const entries = Object.entries(feature.dateHistogram || {}).map(([date, count]) => [dayNumber(date), count]).filter(([, count]) => count !== 0);
+  const complete = entries.length > 0 && entries.every(([day, count]) => finite(day) && validCount(count))
+    && entries.reduce((sum, [, count]) => sum + count, 0) === feature.count;
+  const hasMoments = Number.isSafeInteger(feature.sumEpochDays) && finite(feature.sumSquaredDeviations)
+    && feature.sumSquaredDeviations >= 0 && validCount(feature.count) && feature.count > 0;
+  if (!complete && !hasMoments) return null;
+  const moments = hasMoments ? { count: feature.count, mean: feature.sumEpochDays / feature.count,
+    stdDev: Math.sqrt(feature.sumSquaredDeviations / feature.count) }
+    : poolMoments(entries.map(([mean, count]) => ({ mean, count, stdDev: 0 })));
+  if (!moments) return null;
+  const lower = dayNumber(feature.earliestDate), upper = dayNumber(feature.latestDate);
+  const min = finite(lower) ? lower : complete ? Math.min(...entries.map(([day]) => day)) : NaN;
+  const max = finite(upper) ? upper : complete ? Math.max(...entries.map(([day]) => day)) : NaN;
+  if (!finite(min) || !finite(max) || min > max || moments.mean < min || moments.mean > max) return null;
+  const bins = (feature.dateBins || []).map(bin => ({ low: dayNumber(bin.start), high: dayNumber(bin.end), count: bin.count }));
+  const approved = bins.length > 0 && bins.length <= 200
+    && bins.every(bin => finite(bin.low) && finite(bin.high) && bin.low <= bin.high && validCount(bin.count) && bin.count >= 6)
+    && bins.reduce((sum, bin) => sum + bin.count, 0) === feature.count;
+  const sumEpochDays = hasMoments ? feature.sumEpochDays
+    : Number(entries.reduce((sum, [day, count]) => sum + BigInt(day) * BigInt(count), 0n));
+  return { ...feature, ...moments, min, max, sumEpochDays,
+    valueCounts: complete ? entries.map(([value, count]) => ({ value, count })) : [],
+    histogram: approved ? bins.map(bin => bin.count) : [],
+    histogramBounds: approved ? bins.map(bin => [bin.low, bin.high]) : [],
+  };
+}
+
+function pooledDates(parts) {
+  const numeric = parts.map(numericalDateFeature);
+  if (numeric.some(part => !part)) return null;
+  const complete = numeric.every(part => part.valueCounts.length > 0);
+  if (complete) {
+    const counts = new Map();
+    for (const part of numeric) for (const cell of part.valueCounts) {
+      const date = dateString(cell.value);
+      counts.set(date, (counts.get(date) || 0) + cell.count);
+    }
+    return dateSummary(Object.fromEntries(counts));
+  }
+  const moments = poolMoments(numeric);
+  if (!moments) return null;
+  const quantiles = approvedQuartiles(numeric.map(part => ({ ...part, valueCounts: part.valueCounts.length ? part.valueCounts : null })));
+  const sum = numeric.every(part => Number.isSafeInteger(part.sumEpochDays))
+    ? numeric.reduce((total, part) => total + BigInt(part.sumEpochDays), 0n) : null;
+  return { ...moments, mean: dateString(sum == null ? moments.mean : Number(sum / BigInt(moments.count))),
+    min: dateString(Math.min(...numeric.map(part => part.min))), max: dateString(Math.max(...numeric.map(part => part.max))),
+    ...(quantiles ? { ...quantiles, q1: dateString(quantiles.q1), median: dateString(quantiles.median), q3: dateString(quantiles.q3) } : {}),
   };
 }
 
@@ -211,17 +264,17 @@ export function buildCombinedStatistics(results, activeIndices) {
               ) || {}),
         };
       }
-      const field = type === "date" ? "dateHistogram" : "categoryCounts";
+      if (type === "date") {
+        const summary = pooledDates(parts);
+        return summary ? { ...base, ...summary } : { ...base, countsReleased: true, unavailable: "Incomplete date summaries" };
+      }
+      const field = "categoryCounts";
       const counts = new Map();
       for (const part of parts) {
         const entries = Object.entries(part[field] || {});
         if (entries.some(([, n]) => !validCount(n)) || entries.reduce((n, entry) => n + entry[1], 0) !== part.count)
-          return { ...base, unavailable: "Incomplete distribution in the returned summaries" };
+          return { ...base, countsReleased: true, unavailable: "Incomplete distribution in the returned summaries" };
         entries.filter(([, n]) => n > 0).forEach(([value, n]) => counts.set(value, (counts.get(value) || 0) + n));
-      }
-      if (type === "date") {
-        const summary = dateSummary(Object.fromEntries(counts));
-        return summary ? { ...base, ...summary } : { ...base, unavailable: "Incomplete date distribution" };
       }
       return { ...base, cardinality: counts.size, categories: categoryFrequencies(counts, count) };
     });

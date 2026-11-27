@@ -28,8 +28,8 @@ vi.mock('./nodeAxiosSetup', () => {
 });
 
 describe('petitionHandler', () => {
-  it('accepts the whole-file policy through synchronous, asynchronous and typed profiling requests', async () => {
-    const data = [{ fileName: 'source.csv', disclosurePolicyVersion: 3, disclosureMode: 'WHOLE_DATASET',
+  it.each([3, 4])('accepts whole-file policy %s through synchronous, asynchronous and typed profiling requests', async version => {
+    const data = [{ fileName: 'source.csv', disclosurePolicyVersion: version, disclosureMode: 'WHOLE_DATASET',
       statisticsConventionVersion: 1, continuousFeatures: [], omittedFeatures: [{ featureName: 'Sparse reading',
         type: 'continuous', count: 4, missingValuesCount: 8, countsReleased: true,
         reason: 'Suppressed for privacy: fewer than six observations' }] }];
@@ -43,7 +43,8 @@ describe('petitionHandler', () => {
   it.each([
     { disclosurePolicyVersion: 3, disclosureMode: 'COHORT_AGGREGATES' },
     { disclosurePolicyVersion: 3 },
-    { disclosurePolicyVersion: 4, disclosureMode: 'WHOLE_DATASET' },
+    { disclosurePolicyVersion: 4, disclosureMode: 'COHORT_AGGREGATES' },
+    { disclosurePolicyVersion: 5, disclosureMode: 'WHOLE_DATASET' },
   ])('rejects unsupported disclosure contracts: %j', async contract => {
     nodeAxiosInstance.post.mockResolvedValue({ status: 200, data: [{ ...contract,
       fileName: 'source.csv', statisticsConventionVersion: 1, continuousFeatures: [] }] });

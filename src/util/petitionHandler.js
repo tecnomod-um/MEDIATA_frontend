@@ -21,7 +21,7 @@ const releasedAnalytics = (data, allowWithheld = false) => {
   if (failed) { const error = new Error(failed.message); error.code = "ANALYTICS_FAILED"; throw error; }
   const unguarded = (Array.isArray(data) ? data : [data]).some(item => item && typeof item === "object" && ("continuousFeatures" in item || "numericPairSummaries" in item)
     && !(item.disclosurePolicyVersion === 2
-      || (item.disclosurePolicyVersion === 3 && item.disclosureMode === "WHOLE_DATASET")));
+      || ([3, 4].includes(item.disclosurePolicyVersion) && item.disclosureMode === "WHOLE_DATASET")));
   if (unguarded) { const error = new Error("The selected node requires the Discovery disclosure-controls update before releasing statistics."); error.code = "DISCLOSURE_UPDATE_REQUIRED"; throw error; }
   const oldConventions = (Array.isArray(data) ? data : [data]).some(item => item && typeof item === "object"
     && ("continuousFeatures" in item || "numericPairSummaries" in item) && item.statisticsConventionVersion !== 1);

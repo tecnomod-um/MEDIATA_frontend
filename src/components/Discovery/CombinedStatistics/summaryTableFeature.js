@@ -4,9 +4,10 @@ import { categoryFrequencies, featureArrays as arrays } from "./exact/combinedSt
 export function summaryTableFeature(summary) {
   const feature = {
     featureName: summary.featureName,
-    count: summary.unavailable ? null : summary.count,
+    count: summary.unavailable && !summary.countsReleased ? null : summary.count,
+    countsReleased: summary.countsReleased,
     countEstimated: summary.countEstimated,
-    missingValuesCount: summary.unavailable ? null : summary.missing,
+    missingValuesCount: summary.unavailable && !summary.countsReleased ? null : summary.missing,
     mean: summary.mean,
     stdDev: summary.stdDev,
     min: summary.min,
@@ -77,7 +78,8 @@ export function tableExportFeatures(data) {
         totalSources: 1,
         contributions: [{ source: feature, feature }],
         categories:
-          type === "categorical" ? categoryFrequencies(Object.entries(feature.categoryCounts || {}), count) : undefined,
+          type === "categorical" && feature.categoryCountsStatus !== "COARSENED"
+            ? categoryFrequencies(Object.entries(feature.categoryCounts || {}), count) : undefined,
       };
     }),
   );

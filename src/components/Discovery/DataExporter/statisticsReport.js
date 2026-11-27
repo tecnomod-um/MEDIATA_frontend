@@ -78,6 +78,7 @@ function summaryNote(summary, type, pooled) {
   }
   if (summary.countEstimated) notes.push("Count estimated");
   if (summary.lowPrecision) notes.push("Low precision");
+  if (type === "categorical" && summary.categoryCountsStatus === "COARSENED") notes.push("Some category frequencies withheld");
   if (type === "continuous") {
     if (pooled && summary.q1 == null) notes.push("Pooled quartiles unavailable");
     if (!summary.modes?.length && !summary.modeBand && summary.modeStatus
@@ -93,6 +94,15 @@ function summaryRow(summary, type, pooled) {
   const quantiles = ["min", "q1", "median", "q3", "max"].map(value);
   const counts = ["count", "missing", "percentMissing"].map(value);
   if (type === "categorical") {
+    if (summary.categoryCountsStatus === "COARSENED" && !summary.unavailable) {
+      const mode = (second = false) => {
+        const label = second ? "secondMode" : "mode";
+        const frequency = second ? "secondModeFrequency" : "modeFrequency";
+        const percentage = second ? "secondModePercentage" : "modeFrequencyPercentage";
+        return [label, frequency, percentage].map(field => value(field));
+      };
+      return { values: [...counts, value("cardinality"), ...mode(), ...mode(true)], note: summaryNote(summary, type, pooled) };
+    }
     const categories = summary.unavailable ? [] : summary.categories || [];
     const mode = (category, second=false) => category ? [category.value,category.count,finite(category.percent)]
       : Array(3).fill(summary.unavailable?"Unavailable":second?"Not applicable: no second category":statisticValue(summary,"mode",null));
