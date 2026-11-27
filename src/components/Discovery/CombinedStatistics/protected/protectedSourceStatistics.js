@@ -9,6 +9,7 @@ export function protectedSourceMembers(results, baseline, activeIndices) {
   const sources = new Map(results.map((source) => [sourceKey(source), source]));
   return new Map(
     baseline.flatMap((source) => {
+      if (sources.get(sourceKey(source))?.disclosureMode === "WHOLE_DATASET") return [];
       const index = results.findIndex((result) => sourceKey(result) === sourceKey(source));
       if (!activeIndices[index]) return [];
       return sourceColumns(source).flatMap(({ column, type }) => {

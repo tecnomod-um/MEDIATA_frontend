@@ -1,7 +1,7 @@
 // Missing numerical results carry a reason in CSV/Excel instead of an empty
 // cell. These labels never turn undefined statistics into invented numbers.
 export function statisticValue(summary, field, value) {
-  if(summary.unavailable) return "Unavailable";
+  if(summary.unavailable && !(summary.countsReleased && ["count", "missing", "percentMissing"].includes(field))) return "Unavailable";
   if(value != null && (typeof value!=="number" || Number.isFinite(value))) return value;
   if(field==="supportedMin" || field==="supportedMax") return summary.approximate ? "Not established" : "Not applicable";
   if(summary.count===0) return "Undefined: no non-missing observations";

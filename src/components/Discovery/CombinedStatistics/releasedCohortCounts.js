@@ -4,7 +4,8 @@ import { featureArrays, sourceKey } from "./exact/combinedStatistics";
 export function releasedCohortCounts(sources) {
   const totals = new Map();
   for (const source of sources.values()) {
-    const counts = Object.values(featureArrays).flatMap((key) => source[key] || [])
+    const counts = [...Object.values(featureArrays).flatMap((key) => source[key] || []),
+      ...(source.omittedFeatures || []).filter(feature => feature.countsReleased)]
       .filter((feature) => !feature.approximate && !feature.estimatedSummary && !feature.combinedSummary)
       .filter((feature) => Number.isSafeInteger(feature.count) && feature.count >= 0
         && Number.isSafeInteger(feature.missingValuesCount) && feature.missingValuesCount >= 0)

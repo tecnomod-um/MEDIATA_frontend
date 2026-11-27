@@ -113,6 +113,16 @@ describe('AggregateDisplay', () => {
     expect(omission).not.toHaveTextContent('Missing:');
   });
 
+  test('displays approved whole-file missingness while the values remain withheld', () => {
+    render(<AggregateDisplay omittedFeatures={[{
+      featureName: 'Sparse reading', reason: 'Suppressed for privacy: fewer than six observations',
+      countsReleased: true, count: 4, missingValuesCount: 8, percentMissing: 100 * 8 / 12,
+    }]} />);
+    const omission = screen.getByText(/Suppressed for privacy/);
+    expect(omission).toHaveTextContent('Missing: 66.67%');
+    expect(omission).toHaveTextContent('Non-missing: 4; missing: 8');
+  });
+
   test('splitter drag updates (reduces) top-panel height', () => {
     render(<AggregateDisplay covariances={COV} />);
 

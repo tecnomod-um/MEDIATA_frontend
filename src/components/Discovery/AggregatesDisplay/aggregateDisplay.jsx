@@ -150,8 +150,9 @@ const AggregateDisplay = ({ covariances = {}, pearsonCorrelations = {}, spearman
           <div key={i}>
             <strong>{feature.featureName}: </strong>
             {feature.reason}
-            {!feature.reason?.startsWith("Suppressed for privacy:") &&
+            {(feature.countsReleased || !feature.reason?.startsWith("Suppressed for privacy:")) &&
               Number.isFinite(feature.percentMissing) && ` (Missing: ${feature.percentMissing.toFixed(2)}%)`}
+            {feature.countsReleased && ` Non-missing: ${feature.count}; missing: ${feature.missingValuesCount}.`}
           </div>
         ))}
       </div>

@@ -9,8 +9,10 @@ import {statisticValue} from "./statisticAvailability";
 export function exportFeatures(data, sourceData, selectedEntries = [], selectedOnly = false) {
   const features = [
     ...Object.entries(featureArrays).flatMap(([type, key]) => (data?.[key] || []).map(feature => ({ ...feature, type }))),
-    ...(data?.omittedFeatures || []).map(({ featureName, originalName, nodeId, nodeName, fileName, type, reason }) => ({
+    ...(data?.omittedFeatures || []).map(({ featureName, originalName, nodeId, nodeName, fileName, type, reason,
+      countsReleased, count, missingValuesCount, percentMissing }) => ({
       featureName, originalName, nodeId, nodeName, fileName, type: type ?? null,
+      countsReleased, count, missingValuesCount, percentMissing,
       unavailable: reason || "Statistics unavailable",
     })),
   ];
@@ -85,7 +87,8 @@ function summaryNote(summary, type, pooled) {
 }
 
 function summaryRow(summary, type, pooled) {
-  const raw = field => summary.unavailable ? null : finite(summary[field]);
+  const raw = field => summary.unavailable && !(summary.countsReleased && ["count", "missing", "percentMissing"].includes(field))
+    ? null : finite(summary[field]);
   const value = field => statisticValue(summary,field,raw(field));
   const quantiles = ["min", "q1", "median", "q3", "max"].map(value);
   const counts = ["count", "missing", "percentMissing"].map(value);
