@@ -28,6 +28,28 @@ vi.mock('./nodeAxiosSetup', () => {
 });
 
 describe('petitionHandler', () => {
+  it('accepts the whole-file policy through synchronous, asynchronous and typed profiling requests', async () => {
+    const data = [{ fileName: 'source.csv', disclosurePolicyVersion: 3, disclosureMode: 'WHOLE_DATASET',
+      statisticsConventionVersion: 1, continuousFeatures: [], omittedFeatures: [{ featureName: 'Sparse reading',
+        type: 'continuous', count: 4, missingValuesCount: 8, countsReleased: true,
+        reason: 'Suppressed for privacy: fewer than six observations' }] }];
+    nodeAxiosInstance.post.mockResolvedValue({ status: 200, data });
+    await expect(petitionHandler.processSelectedDatasets(['source.csv'])).resolves.toEqual({ mode: 'sync', results: data });
+    await expect(petitionHandler.filterMultipleFiles({ multipleFileFilters: [] })).resolves.toEqual(data);
+    nodeAxiosInstance.get.mockResolvedValue({ data });
+    await expect(petitionHandler.getProcessSelectedDatasetsResult('job')).resolves.toEqual(data);
+  });
+
+  it.each([
+    { disclosurePolicyVersion: 3, disclosureMode: 'COHORT_AGGREGATES' },
+    { disclosurePolicyVersion: 3 },
+    { disclosurePolicyVersion: 4, disclosureMode: 'WHOLE_DATASET' },
+  ])('rejects unsupported disclosure contracts: %j', async contract => {
+    nodeAxiosInstance.post.mockResolvedValue({ status: 200, data: [{ ...contract,
+      fileName: 'source.csv', statisticsConventionVersion: 1, continuousFeatures: [] }] });
+    await expect(petitionHandler.processSelectedDatasets(['source.csv'])).rejects.toMatchObject({ code: 'DISCLOSURE_UPDATE_REQUIRED' });
+  });
+
   it('refuses legacy statistical conventions before displaying, filtering or pooling results', async () => {
     const data=[{fileName:'legacy.csv',disclosurePolicyVersion:2,continuousFeatures:[]}];
     nodeAxiosInstance.post.mockResolvedValue({status:200,data});
